@@ -54,3 +54,21 @@ TestResult.xml
 nunit-*.xml
 
 .bin
+.vs/GerenciamentoMecanicaSistema.slnx/DesignTimeBuild/.dtbcache.v2
+.vs/GerenciamentoMecanicaSistema.slnx/FileContentIndex/381f46ff-1918-4deb-8ea4-625aececbaa2.vsidx
+.vs/GerenciamentoMecanicaSistema.slnx/FileContentIndex/56850133-c058-4db3-b2a5-d84763645c0a.vsidx
+.vs/GerenciamentoMecanicaSistema.slnx/FileContentIndex/61b50b00-9e51-443c-af69-0e96b8b50e25.vsidx
+.vs/GerenciamentoMecanicaSistema.slnx/FileContentIndex/ca243d65-3165-405f-bdd2-9dfb404e5edc.vsidx
+.vs/GerenciamentoMecanicaSistema.slnx/FileContentIndex/fd98b6d9-9ee0-43c9-8bab-eec5e47215ac.vsidx
+.vs/GerenciamentoMecanicaSistema.slnx/v18/.futdcache.v2
+.vs/GerenciamentoMecanicaSistema.slnx/v18/.suo
+.vs/GerenciamentoMecanicaSistema.slnx/v18/TestStore/0/058.testlog
+.vs/GerenciamentoMecanicaSistema.slnx/v18/TestStore/0/testlog.manifest
+.vs/GerenciamentoMecanicaSistema.slnx/v18/TestStore/OutputMessages/cdc9d8b2-0950-deed-5f3a-60f8c5f30c9b/StandardOutput.txt
+.vs/GerenciamentoMecanicaSistema/CopilotIndices/18.7.1150.25285/CodeChunks.db
+.vs/GerenciamentoMecanicaSistema/CopilotIndices/18.7.1150.25285/SemanticSymbols.db
+.vs/ProjectEvaluation/gerenciamentomecanicasistema.metadata.v10.bin
+.vs/ProjectEvaluation/gerenciamentomecanicasistema.projects.v10.bin
+.vs/ProjectEvaluation/gerenciamentomecanicasistema.strings.v10.bin
+Infrastructure.Interface/Infrastructure.Interface.csproj
+Infrastructure/Infrastructure.csproj
