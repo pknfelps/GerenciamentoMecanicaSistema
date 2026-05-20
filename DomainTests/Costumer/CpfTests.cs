@@ -1,0 +1,62 @@
+﻿using Domain.Costumer;
+
+namespace DomainTests.Costumer
+{
+    public class CpfTests
+    {
+        [Test]
+        public void MustNotCreateCpfIfNullOrWhiteSpace()
+        {
+            Assert.Catch<ArgumentNullException>(() => new Cpf(""));
+            Assert.Catch<ArgumentNullException>(() => new Cpf(" "));
+            Assert.Catch<ArgumentNullException>(() => new Cpf(null));
+
+        }
+
+        [Test]
+        public void MustNotCreateCpfIfContainsWhiteSpace()
+        {
+            Assert.Catch<ArgumentNullException>(() => new Cpf("123 456 789 12"));
+        }
+
+        [Test]
+        public void MustNotCreateCpfIfContainsAnyLetter()
+        {
+            Assert.Catch<ArgumentException>(() => new Cpf("123A5678912"));
+        }
+
+        [Test]
+        public void MustNotCreateCpfIfLessThan11Digits()
+        {
+            Assert.Catch<ArgumentException>(() => new Cpf("1234567891"));
+        }
+
+        [Test]
+        public void MustCreateCpf()
+        {
+            Documento cpf = DocumentWrapper.CreateDocument("123.456.789-12");
+
+            Assert.That(cpf, Is.Not.Null);
+            Assert.That(cpf.Id, Is.Not.Null);
+            Assert.That(cpf.Id, Is.Not.Empty);
+        }
+
+        [Test]
+        public void MustCreateCpfByWrapper()
+        {
+            Documento cpf = DocumentWrapper.CreateDocument("123.456.789-12");
+
+            Assert.That(cpf, Is.Not.Null);
+            Assert.That(cpf, Is.TypeOf<Cpf>());
+        }
+
+        [Test]
+        public void MustCreateCpfAndNormalize()
+        {
+            Cpf cpf = new("12345678912");
+
+            Assert.That(cpf, Is.Not.Null);
+            Assert.That(cpf.Id, Is.EqualTo("123.456.789-12"));
+        }
+    }
+}
