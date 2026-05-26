@@ -14,15 +14,17 @@ namespace ControllerTests
         private HttpClient TestClient {get;set;}
         private IClienteService ClienteService {get;set;}
 
-        private readonly ClienteDto ClienteToCreate = new("Fulano", "12345678912", "11912345678", "fulano@gmail.com");
+        private readonly ClienteDto ClienteToCreate = new(Guid.NewGuid(), "Fulano", "12345678912", "11912345678", "fulano@gmail.com");
+
+        private static readonly Guid ExistingClienteGuid = Guid.NewGuid();
 
         private readonly List<ClienteDto> ExistingClientes =
         [
-            new ClienteDto("Ciclano", "12.123.456/0001-12", "(11) 91234-5678", "ciclano@gmail.com"),
-            new ClienteDto("Beltrano", "12.123.456/0001-15", "(11) 93214-6578", "beltrano@gmail.com"),
+            new ClienteDto(ExistingClienteGuid, "Ciclano", "12.123.456/0001-12", "(11) 91234-5678", "ciclano@gmail.com"),
+            new ClienteDto(Guid.NewGuid(), "Beltrano", "12.123.456/0001-15", "(11) 93214-6578", "beltrano@gmail.com"),
         ];
 
-        private readonly ClienteDto ClienteToUpdate = new("Ciclano", "12.123.456/0001-12", "(11) 94321-8765", "ciclano.company@gmail.com");
+        private readonly ClienteDto ClienteToUpdate = new(ExistingClienteGuid, "Ciclano", "12.123.456/0001-12", "(11) 94321-8765", "ciclano.company@gmail.com");
 
         [SetUp]
         public void Setup()

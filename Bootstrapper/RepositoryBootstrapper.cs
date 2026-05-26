@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Repository;
 using Repository.Interface;
@@ -6,15 +7,18 @@ using System.Data;
 
 namespace Bootstrapper
 {
-    public class RepositoryBootstrapper
+    public static class RepositoryBootstrapper
     {
-        private const string ConnectionString = "host=host.docker.internal;port=5432;database=postgres;User Id=postgres;password=adm123;";
+        private const string DbConnectionString = "DefaultConnection";
 
-        public static async void Register(IServiceCollection service)
+        public static void Register(IServiceCollection service, IConfiguration configuration)
         {
+            var connectionString = configuration.GetConnectionString(DbConnectionString)
+                ?? throw new InvalidOperationException($"Connection string '{DbConnectionString}' not found.");
+
             service.AddScoped<IDbConnection>(provider =>
             {
-                var connection = new NpgsqlConnection(ConnectionString);
+                var connection = new NpgsqlConnection(connectionString);
                 connection.Open();
                 return connection;
             });

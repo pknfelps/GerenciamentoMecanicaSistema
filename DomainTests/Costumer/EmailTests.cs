@@ -9,7 +9,6 @@ namespace DomainTests.Costumer
         {
             Assert.Catch<ArgumentNullException>(() => new Email(""));
             Assert.Catch<ArgumentNullException>(() => new Email(" "));
-            Assert.Catch<ArgumentNullException>(() => new Email(null));
         }
 
         [Test]

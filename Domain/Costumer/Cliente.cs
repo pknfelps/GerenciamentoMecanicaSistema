@@ -4,6 +4,7 @@ namespace Domain.Costumer
 {
     public class Cliente : ICliente
     {
+        public Guid Id { get; private set; }
         public string Nome { get; private set; }
         public IDocumento Documento { get; private set; }
         public ICelular Celular { get; private set; }
@@ -14,6 +15,7 @@ namespace Domain.Costumer
             if (string.IsNullOrWhiteSpace(nome))
                 throw new ArgumentNullException(nameof(nome), $"{nameof(nome)} deve ser preenchido");
 
+            Id = Guid.NewGuid();
             Nome = nome;
             Documento = DocumentWrapper.CreateDocument(documento);
             Celular = new Celular(celular);

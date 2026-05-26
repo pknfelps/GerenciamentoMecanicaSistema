@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <File Path="docker-compose.yaml" />
     <Project Path="Bootstrapper/Bootstrapper.csproj" />
     <Project Path="Domain.Interface/Domain.Interface.csproj" />
     <Project Path="Domain/Domain.csproj" />
@@ -9,6 +10,9 @@
     <Project Path="Repository/Repository.csproj" />
     <Project Path="Service.Interface/Service.Interface.csproj" />
     <Project Path="Service/Service.csproj" />
+  </Folder>
+  <Folder Name="/src/InitDb/">
+    <File Path="Init.sql" />
   </Folder>
   <Folder Name="/testes/">
     <Project Path="ControllerTests/ControllerTests.csproj" Id="d9e83580-8bee-4957-a1c8-ec04071a5762" />

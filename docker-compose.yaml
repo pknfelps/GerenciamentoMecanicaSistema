@@ -1,0 +1,16 @@
+# docker-compose.yml
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: adm123
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./InitDb:/docker-entrypoint-initdb.d
+      - db_data:/var/lib/postgresql/data
+    
+volumes:
+  db_data:

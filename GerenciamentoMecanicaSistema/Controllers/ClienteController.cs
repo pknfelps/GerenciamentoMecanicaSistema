@@ -1,5 +1,4 @@
-﻿using Domain.Costumer;
-using DTOs;
+﻿using DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interface;
 using System.ComponentModel.DataAnnotations;
@@ -35,7 +34,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         }
 
         [HttpGet("GetClienteByDocumento/{documento}")]
-        public async Task<IActionResult> GetClienteByDocumento([FromRoute][RegularExpression(@"^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}|\d{11}|\d{14})$", ErrorMessage = "Documento inválido")] string documento)
+        public async Task<IActionResult> GetClienteByDocumento([FromRoute][RegularExpression(@"^(\d{11}|\d{14})$", ErrorMessage = "Documento inválido")] string documento)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -63,7 +62,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         }
 
         [HttpDelete("DeleteCliente/{documento}")]
-        public async Task<IActionResult> DeleteCliente([FromRoute][RegularExpression(@"^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}|\d{11}|\d{14})$", ErrorMessage = "Documento inválido")] string documento)
+        public async Task<IActionResult> DeleteCliente([FromRoute][RegularExpression(@"^(\d{11}|\d{14})$", ErrorMessage = "Documento inválido")] string documento)
         {
             Console.WriteLine($"Requisitando deleção do cliente de documento {documento}");
             await ClienteService.DeleteCliente(documento);

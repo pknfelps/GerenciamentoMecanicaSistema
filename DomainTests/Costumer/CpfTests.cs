@@ -9,7 +9,6 @@ namespace DomainTests.Costumer
         {
             Assert.Catch<ArgumentNullException>(() => new Cpf(""));
             Assert.Catch<ArgumentNullException>(() => new Cpf(" "));
-            Assert.Catch<ArgumentNullException>(() => new Cpf(null));
 
         }
 

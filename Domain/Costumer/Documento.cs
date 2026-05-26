@@ -4,11 +4,11 @@ namespace Domain.Costumer
 {
     public abstract class Documento : IDocumento
     {
-        public string Id { get; private set; }
+        public string Id { get; protected set; }
 
         protected abstract int DocumentDigitCount { get; set; }
 
-        public Documento(string documento)
+        protected Documento(string documento)
         {
             if (string.IsNullOrWhiteSpace(documento))
                 throw new ArgumentNullException(nameof(documento), $"{this} deve ser preenchido.");
@@ -24,7 +24,7 @@ namespace Domain.Costumer
             if (numbers.Length != DocumentDigitCount)
                 throw new ArgumentException($"{this} inválido.", nameof(documento));
 
-            Id = NormalizeDocument(numbers);
+            Id = numbers;
         }
 
         protected abstract string NormalizeDocument(string document);

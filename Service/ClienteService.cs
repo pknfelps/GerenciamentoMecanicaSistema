@@ -61,7 +61,7 @@ namespace Service
 
         private static Cliente CreateClienteFromDto(ClienteDto clienteDto) => new(clienteDto.Nome, clienteDto.Documento, clienteDto.Celular, clienteDto.Email);
 
-        public static ClienteDto CreateDtoFromCliente(Cliente cliente) => new(cliente.Nome, cliente.Documento.Id, cliente.Celular.Numero, cliente.Email.Endereco);
+        public static ClienteDto CreateDtoFromCliente(Cliente cliente) => new(cliente.Id, cliente.Nome, cliente.Documento.Id, cliente.Celular.Numero, cliente.Email.Endereco);
 
         private async Task<bool> CheckIfClienteExists(string documento)
         {

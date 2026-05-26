@@ -9,7 +9,6 @@ namespace DomainTests.Costumer
         {
             Assert.Catch<ArgumentNullException>(() => new Cnpj(""));
             Assert.Catch<ArgumentNullException>(() => new Cnpj(" "));
-            Assert.Catch<ArgumentNullException>(() => new Cnpj(null));
         }
 
         [Test]

@@ -1,6 +1,6 @@
-@GerenciamentoMecanicaSistema_HostAddress = http://localhost:32768
+@GerenciamentoMecanicaSistema_HostAddress = http://localhost:32776
 
-### CREATE
+### CREATE ### ADICIONAR RETORNO DO CLIENTE AO CRIAR
 ### Criar Cliente Felipe com CPF
 
 POST {{GerenciamentoMecanicaSistema_HostAddress}}/cliente/CreateCliente/
@@ -19,10 +19,22 @@ POST {{GerenciamentoMecanicaSistema_HostAddress}}/cliente/CreateCliente/
 Content-Type: application/json
 
 {
-  "nome": "Digao",
+  "nome": "Rodrigo",
   "documento": "12.123.456/0001-15",
   "celular": "(14) 91234-5678",
   "email": "digao@gmail.com"
+}
+
+### Criar Cliente Editável com CNPJ
+
+POST {{GerenciamentoMecanicaSistema_HostAddress}}/cliente/CreateCliente/
+Content-Type: application/json
+
+{
+  "nome": "Rebecca",
+  "documento": "98765432100",
+  "celular": "(18) 91918-1716",
+  "email": "rebecca@gmail.com"
 }
 
 ### READ
@@ -69,10 +81,10 @@ Content-Type: application/json
 ### DELETE
 ### Deleta Cliente de Documento 12345678912 (CPF)
 
-POST {{GerenciamentoMecanicaSistema_HostAddress}}/cliente/DeleteCliente/12345678912
+DELETE {{GerenciamentoMecanicaSistema_HostAddress}}/cliente/DeleteCliente/12345678912
 Accept: application/json
 
 ### Deleta Cliente de Documento 12123456000112 (CNPJ)
 
-POST {{GerenciamentoMecanicaSistema_HostAddress}}/cliente/DeleteCliente/12123456000112
+DELETE {{GerenciamentoMecanicaSistema_HostAddress}}/cliente/DeleteCliente/12123456000112
 Accept: application/json

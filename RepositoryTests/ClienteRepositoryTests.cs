@@ -8,21 +8,23 @@ using Testcontainers.PostgreSql;
 
 namespace RepositoryTests
 {
-    public class Tests
+    public class ClienteRepositoryTests
     {
         private PostgreSqlContainer PostgresContainer { get; set; }
         private IDbConnection Connection { get; set; }
         private IClienteRepository Repository { get; set; }
 
-        private readonly ClienteDto ClienteToCreate = new("Fulano", "123.456.789-12", "(11) 31234-5678", "fulano@gmail.com");
+        private readonly ClienteDto ClienteToCreate = new(Guid.NewGuid(), "Fulano", "123.456.789-12", "(11) 31234-5678", "fulano@gmail.com");
+
+        private static readonly Guid ExistingClienteId = Guid.NewGuid();
 
         private readonly List<ClienteDto> ExistingClientes =
         [
-            new ClienteDto("Ciclano", "12.123.456/0001-12", "(11) 91234-5678", "ciclano@gmail.com"),
-            new ClienteDto("Beltrano", "12.123.456/0001-15", "(11) 93214-6578", "beltrano@gmail.com"),
+            new ClienteDto(ExistingClienteId, "Ciclano", "12.123.456/0001-12", "(11) 91234-5678", "ciclano@gmail.com"),
+            new ClienteDto(Guid.NewGuid(), "Beltrano", "12.123.456/0001-15", "(11) 93214-6578", "beltrano@gmail.com"),
         ];
 
-        private readonly ClienteDto ClienteToUpdate = new("Ciclano", "12.123.456/0001-12", "(11) 94321-8765", "ciclano.company@gmail.com");
+        private readonly ClienteDto ClienteToUpdate = new(ExistingClienteId, "Ciclano", "12.123.456/0001-12", "(11) 94321-8765", "ciclano.company@gmail.com");
 
         [SetUp]
         public async Task Setup()
@@ -40,8 +42,9 @@ namespace RepositoryTests
 
             await Connection.ExecuteAsync("""
                 CREATE TABLE IF NOT EXISTS public.clientes (
+                id UUID PRIMARY KEY,
                 nome TEXT,
-                documento TEXT PRIMARY KEY,
+                documento TEXT,
                 celular TEXT,
                 email TEXT);
                 """);

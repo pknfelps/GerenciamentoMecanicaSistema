@@ -10,24 +10,24 @@ namespace Repository
         private IDbConnection Connection { get; set; } = connection;
 
         public static string CreateClienteSql { get; private set; } = """
-                INSERT INTO public.clientes(nome, documento, celular, email)
-                VALUES (@Nome, @Documento, @Celular, @Email);
+                INSERT INTO clientes(id, nome, documento, celular, email)
+                VALUES (@Id, @Nome, @Documento, @Celular, @Email);
                 """;
 
         public static string GetClientesSql { get; private set; } = """
-                 SELECT nome, documento, celular, email
-                FROM public.clientes
+                 SELECT id, nome, documento, celular, email
+                FROM clientes
                 LIMIT 50;
                 """;
 
         public static string GetClientesByDocumentoSql { get; private set; } = """
-                 SELECT nome, documento, celular, email
-                FROM public.clientes
+                 SELECT id, nome, documento, celular, email
+                FROM clientes
                 WHERE documento = @documento;
                 """;
 
         public static string UpdateClienteSql { get; private set; } = $"""
-                UPDATE public.clientes
+                UPDATE clientes
                 SET Nome = @Nome,
                     Celular = @Celular,
                     Email = @Email
@@ -35,7 +35,7 @@ namespace Repository
                 """;
 
         public static string DeleClienteSql { get; private set; } = """
-                DELETE FROM public.clientes
+                DELETE FROM clientes
                 WHERE documento = @documento;
                 """;
 

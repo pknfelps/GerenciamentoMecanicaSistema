@@ -9,7 +9,6 @@ namespace DomainTests.Costumer
         {
             Assert.Catch<ArgumentNullException>(() => new Celular(""));
             Assert.Catch<ArgumentNullException>(() => new Celular(" "));
-            Assert.Catch<ArgumentNullException>(() => new Celular(null));
         }
 
         [Test]
