@@ -29,10 +29,9 @@ namespace Repository
         public static string UpdateClienteSql { get; private set; } = $"""
                 UPDATE clientes
                 SET nome = @Nome,
-                    documento = @Documento,
                     celular = @Celular,
                     email = @Email
-                WHERE id = @Id;
+                WHERE documento = @Documento;
                 """;
 
         public static string DeleClienteSql { get; private set; } = """
