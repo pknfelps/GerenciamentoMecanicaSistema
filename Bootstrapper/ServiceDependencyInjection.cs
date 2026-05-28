@@ -2,13 +2,15 @@
 using Service;
 using Service.Interface;
 
-namespace Bootstrapper
+namespace DependencyInjection
 {
-    public static class ServiceBootstrapper
+    public static class ServiceDependencyInjection
     {
         public static void Register(IServiceCollection service)
         {
             service.AddTransient<IClienteService, ClienteService>();
+            service.AddTransient<IUsuarioService, UsuarioService>();
+            service.AddTransient<IAuthenticationService, AuthenticationService>();
         }
     }
 }

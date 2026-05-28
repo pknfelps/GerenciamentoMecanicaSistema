@@ -22,7 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DTOs\DTOs.csproj" />
     <ProjectReference Include="..\Repository.Interface\Repository.Interface.csproj" />
     <ProjectReference Include="..\Service.Interface\Service.Interface.csproj" />
     <ProjectReference Include="..\Service\Service.csproj" />

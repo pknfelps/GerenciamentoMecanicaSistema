@@ -5,9 +5,9 @@ using Repository;
 using Repository.Interface;
 using System.Data;
 
-namespace Bootstrapper
+namespace DependencyInjection
 {
-    public static class RepositoryBootstrapper
+    public static class RepositoryDependencyInjection
     {
         private const string DbConnectionString = "DefaultConnection";
 
@@ -24,6 +24,7 @@ namespace Bootstrapper
             });
 
             service.AddScoped<IClienteRepository, ClienteRepository>();
+            service.AddScoped<IUsuarioRepository, UsuarioRepository>();
         }
     }
 }

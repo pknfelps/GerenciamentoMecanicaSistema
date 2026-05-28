@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DTOs\DTOs.csproj" />
+    <ProjectReference Include="..\Domain.Interface\Domain.Interface.csproj" />
   </ItemGroup>
 
 </Project>

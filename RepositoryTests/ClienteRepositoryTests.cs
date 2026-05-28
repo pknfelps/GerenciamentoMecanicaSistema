@@ -1,11 +1,13 @@
 using Dapper;
-using DTOs;
+using Domain.Costumer;
+using Domain.Interface.Costumer;
 using Npgsql;
 using Repository;
 using Repository.Interface;
 using System.Data;
 using Testcontainers.PostgreSql;
 
+#pragma warning disable CA1859
 namespace RepositoryTests
 {
     public class ClienteRepositoryTests
@@ -14,17 +16,14 @@ namespace RepositoryTests
         private IDbConnection Connection { get; set; }
         private IClienteRepository Repository { get; set; }
 
-        private readonly ClienteDto ClienteToCreate = new(Guid.NewGuid(), "Fulano", "123.456.789-12", "(11) 31234-5678", "fulano@gmail.com");
-
+        private static readonly ICliente ClienteToCreate = new Cliente("Fulano", "123.456.789-12", "(11) 31234-5678", "fulano@gmail.com");
         private static readonly Guid ExistingClienteId = Guid.NewGuid();
-
-        private readonly List<ClienteDto> ExistingClientes =
+        private static readonly List<ICliente> ExistingClientes =
         [
-            new ClienteDto(ExistingClienteId, "Ciclano", "12.123.456/0001-12", "(11) 91234-5678", "ciclano@gmail.com"),
-            new ClienteDto(Guid.NewGuid(), "Beltrano", "12.123.456/0001-15", "(11) 93214-6578", "beltrano@gmail.com"),
+            new Cliente(ExistingClienteId, "Ciclano", "12.123.456/0001-12", "(11) 91234-5678", "ciclano@gmail.com"),
+            new Cliente("Beltrano", "12.123.456/0001-15", "(11) 93214-6578", "beltrano@gmail.com"),
         ];
-
-        private readonly ClienteDto ClienteToUpdate = new(ExistingClienteId, "Ciclano", "12.123.456/0001-12", "(11) 94321-8765", "ciclano.company@gmail.com");
+        private static readonly ICliente ClienteToUpdate = new Cliente(ExistingClienteId, "Ciclano", "12.123.456/0001-12", "(11) 94321-8765", "ciclano.company@gmail.com");
 
         [SetUp]
         public async Task Setup()
@@ -41,7 +40,7 @@ namespace RepositoryTests
             Connection.Open();
 
             await Connection.ExecuteAsync("""
-                CREATE TABLE IF NOT EXISTS public.clientes (
+                CREATE TABLE IF NOT EXISTS clientes (
                 id UUID PRIMARY KEY,
                 nome TEXT,
                 documento TEXT,
@@ -51,7 +50,7 @@ namespace RepositoryTests
 
             Repository = new ClienteRepository(Connection);
 
-            foreach (ClienteDto cliente in ExistingClientes)
+            foreach (ICliente cliente in ExistingClientes)
                 await Repository.CreateCliente(cliente);
         }
 
@@ -65,12 +64,9 @@ namespace RepositoryTests
         [Test]
         public async Task MustCreateCliente()
         {
-            await Repository.CreateCliente(ClienteToCreate);
+            var registro = await Repository.CreateCliente(ClienteToCreate);
 
-            var cliente = await Repository.GetClienteByDocumento(ClienteToCreate.Documento);
-
-            Assert.That(cliente, Is.Not.Null);
-            Assert.That(cliente.Equals(ClienteToCreate), Is.True);
+            Assert.That(registro, Is.Not.EqualTo(0));
         }
 
         [Test]
@@ -82,23 +78,38 @@ namespace RepositoryTests
 
             Assert.Multiple(() =>
             {
-                Assert.That(clientes[0], Is.EqualTo(ExistingClientes[0]));
-                Assert.That(clientes[1], Is.EqualTo(ExistingClientes[1]));
+                Assert.That(clientes[0].Nome, Is.EqualTo(ExistingClientes[0].Nome));
+                Assert.That(clientes[0].Documento.Id, Is.EqualTo(ExistingClientes[0].Documento.Id));
+                Assert.That(clientes[0].Celular.Numero, Is.EqualTo(ExistingClientes[0].Celular.Numero));
+            });
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(clientes[1].Nome, Is.EqualTo(ExistingClientes[1].Nome));
+                Assert.That(clientes[1].Documento.Id, Is.EqualTo(ExistingClientes[1].Documento.Id));
+                Assert.That(clientes[1].Celular.Numero, Is.EqualTo(ExistingClientes[1].Celular.Numero));
             });
         }
 
         [Test]
         public async Task MustGetClienteByDocumento()
         {
-            var cliente = await Repository.GetClienteByDocumento(ExistingClientes[0].Documento);
+            var cliente = await Repository.GetClienteByDocumento(ExistingClientes[0].Documento.Id);
 
-            Assert.That(cliente, Is.EqualTo(ExistingClientes[0]));
+            Assert.That(cliente, Is.Not.Null);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(cliente.Nome, Is.EqualTo(ExistingClientes[0].Nome));
+                Assert.That(cliente.Documento.Id, Is.EqualTo(ExistingClientes[0].Documento.Id));
+                Assert.That(cliente.Celular.Numero, Is.EqualTo(ExistingClientes[0].Celular.Numero));
+            });
         }
 
         [Test]
         public async Task MustGetClienteByDocumentoWithWrongDocumento()
         {
-            ClienteDto? cliente = await Repository.GetClienteByDocumento(ClienteToCreate.Documento);
+            ICliente? cliente = await Repository.GetClienteByDocumento(ClienteToCreate.Documento.Id);
 
             Assert.That(cliente, Is.Null);
         }
@@ -108,23 +119,35 @@ namespace RepositoryTests
         {
             await Repository.UpdateCliente(ClienteToUpdate);
 
-            var cliente = await Repository.GetClienteByDocumento(ExistingClientes[0].Documento);
+            var cliente = await Repository.GetClienteByDocumento(ExistingClientes[0].Documento.Id);
 
             Assert.That(cliente, Is.Not.Null);
 
             Assert.Multiple(() =>
             {
-                Assert.That(cliente.Equals(ExistingClientes[0]), Is.False);
-                Assert.That(cliente.Equals(ClienteToUpdate), Is.True);
+                Assert.That(cliente.Id, Is.EqualTo(ExistingClientes[0].Id));
+                Assert.That(cliente.Nome, Is.EqualTo(ExistingClientes[0].Nome));
+                Assert.That(cliente.Documento.Id, Is.EqualTo(ExistingClientes[0].Documento.Id));
+                Assert.That(cliente.Celular.Numero, Is.Not.EqualTo(ExistingClientes[0].Celular.Numero));
+                Assert.That(cliente.Email.Endereco, Is.Not.EqualTo(ExistingClientes[0].Email.Endereco));
+            });
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(cliente.Id, Is.EqualTo(ClienteToUpdate.Id));
+                Assert.That(cliente.Nome, Is.EqualTo(ClienteToUpdate.Nome));
+                Assert.That(cliente.Documento.Id, Is.EqualTo(ClienteToUpdate.Documento.Id));
+                Assert.That(cliente.Celular.Numero, Is.EqualTo(ClienteToUpdate.Celular.Numero));
+                Assert.That(cliente.Email.Endereco, Is.EqualTo(ClienteToUpdate.Email.Endereco));
             });
         }
 
         [Test]
         public async Task MustDeleteCliente()
         {
-            await Repository.DeleteCliente(ExistingClientes[0].Documento);
+            await Repository.DeleteCliente(ExistingClientes[0].Documento.Id);
 
-            ClienteDto? cliente = await Repository.GetClienteByDocumento(ExistingClientes[0].Documento);
+            ICliente? cliente = await Repository.GetClienteByDocumento(ExistingClientes[0].Documento.Id);
 
             Assert.That(cliente, Is.Null);
         }
@@ -132,7 +155,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustReturnTrueWhenCheckIfClienteExistsWithExistingCliente()
         {
-            var result = await Repository.CheckIfClienteExists(ExistingClientes[0].Documento);
+            var result = await Repository.CheckIfClienteExists(ExistingClientes[0].Documento.Id);
 
             Assert.That(result, Is.True);
         }
@@ -140,7 +163,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustReturnFalseWhenCheckIfClienteExistsWithNotAnExistingCliente()
         {
-            var result = await Repository.CheckIfClienteExists(ClienteToCreate.Documento);
+            var result = await Repository.CheckIfClienteExists(ClienteToCreate.Documento.Id);
 
             Assert.That(result, Is.False);
         }

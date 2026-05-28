@@ -1,37 +1,38 @@
 ﻿using Dapper;
-using DTOs;
+using Domain.Costumer;
+using Domain.Interface.Costumer;
+using Repository.Dto;
 using Repository.Interface;
 using System.Data;
 
 namespace Repository
 {
-    public class ClienteRepository(IDbConnection connection) : IClienteRepository
+    public class ClienteRepository(IDbConnection connection) : BaseRepository(connection), IClienteRepository
     {
-        private IDbConnection Connection { get; set; } = connection;
-
         public static string CreateClienteSql { get; private set; } = """
                 INSERT INTO clientes(id, nome, documento, celular, email)
                 VALUES (@Id, @Nome, @Documento, @Celular, @Email);
                 """;
 
         public static string GetClientesSql { get; private set; } = """
-                 SELECT id, nome, documento, celular, email
+                SELECT id, nome, documento, celular, email
                 FROM clientes
                 LIMIT 50;
                 """;
 
         public static string GetClientesByDocumentoSql { get; private set; } = """
-                 SELECT id, nome, documento, celular, email
+                SELECT id, nome, documento, celular, email
                 FROM clientes
                 WHERE documento = @documento;
                 """;
 
         public static string UpdateClienteSql { get; private set; } = $"""
                 UPDATE clientes
-                SET Nome = @Nome,
-                    Celular = @Celular,
-                    Email = @Email
-                WHERE documento = @Documento;
+                SET nome = @Nome,
+                    documento = @Documento,
+                    celular = @Celular,
+                    email = @Email
+                WHERE id = @Id;
                 """;
 
         public static string DeleClienteSql { get; private set; } = """
@@ -39,36 +40,47 @@ namespace Repository
                 WHERE documento = @documento;
                 """;
 
-        public async Task CreateCliente(ClienteDto clienteDto)
+        public async Task<int> CreateCliente(ICliente cliente)
         {
-            await Connection.ExecuteScalarAsync(CreateClienteSql, clienteDto);
+            return await Connection.ExecuteAsync(CreateClienteSql, ToDb(cliente));
         }
 
-        public async Task<IEnumerable<ClienteDto>> GetClientes()
+        public async Task<IEnumerable<ICliente>> GetClientes()
         {
-            return await Connection.QueryAsync<ClienteDto>(GetClientesSql);
+            var clientes = await Connection.QueryAsync<ClienteDb>(GetClientesSql);
+
+            return clientes.Select(ToDomain);
         }
 
-        public async Task<ClienteDto?> GetClienteByDocumento(string documento)
+        public async Task<ICliente?> GetClienteByDocumento(string documento)
         {
-            return await Connection.QuerySingleOrDefaultAsync<ClienteDto?>(GetClientesByDocumentoSql, new { documento });
+            var cliente = await Connection.QuerySingleOrDefaultAsync<ClienteDb?>(GetClientesByDocumentoSql, new { documento });
+
+            if (cliente == null)
+                return null;
+
+            return ToDomain(cliente);
         }
 
-        public async Task UpdateCliente(ClienteDto clienteDto)
+        public async Task<int> UpdateCliente(ICliente cliente)
         {
-            await Connection.ExecuteScalarAsync(UpdateClienteSql, clienteDto);
+            return await Connection.ExecuteAsync(UpdateClienteSql, ToDb(cliente));
         }
 
-        public async Task DeleteCliente(string documento)
+        public async Task<int> DeleteCliente(string documento)
         {
-            await Connection.ExecuteScalarAsync(DeleClienteSql, new { documento });
+            return await Connection.ExecuteAsync(DeleClienteSql, new { documento });
         }
 
         public async Task<bool> CheckIfClienteExists(string documento)
         {
-            var cliente = await Connection.QuerySingleOrDefaultAsync<ClienteDto>(GetClientesByDocumentoSql, new { documento });
+            var cliente = await GetClienteByDocumento(documento);
 
             return cliente != null;
         }
+
+        private static ClienteDb ToDb(ICliente cliente) => new(cliente.Id, cliente.Nome, cliente.Documento.Id, cliente.Celular.Numero, cliente.Email.Endereco);
+
+        private static Cliente ToDomain(ClienteDb cliente) => new(cliente.Id, cliente.Nome, cliente.Documento, cliente.Celular, cliente.Email);
     }
 }

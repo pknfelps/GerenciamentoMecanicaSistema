@@ -1,9 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Dto
+namespace Service.Interface.Dto
 {
-    public class ClienteDto(string nome, string documento, string celular, string email)
+    public class ClienteDto(Guid id, string nome, string documento, string celular, string email)
     {
+        public Guid Id { get; private set; } = id;
         [Required]
         public string Nome { get; private set; } = nome;
         [Required, RegularExpression(@"^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}|\d{11}|\d{14})$")]
@@ -12,6 +13,8 @@ namespace Dto
         public string Celular { get; private set; } = celular;
         [Required, RegularExpression(@"^[^\s]+\@[^\s]+\.[^\s]+$")]
         public string Email { get; private set; } = email;
+
+        public ClienteDto(string nome, string documento, string celular, string email) : this(Guid.Empty, nome, documento, celular, email) { }
 
         public override bool Equals(object? obj)
         {

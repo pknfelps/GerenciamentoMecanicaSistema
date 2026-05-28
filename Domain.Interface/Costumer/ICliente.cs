@@ -1,8 +1,7 @@
 ﻿namespace Domain.Interface.Costumer
 {
-    public interface ICliente
+    public interface ICliente : IEntity
     {
-        Guid Id { get; }
         string Nome{ get; }
         IDocumento Documento { get; }
         ICelular Celular { get; }

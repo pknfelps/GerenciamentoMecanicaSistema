@@ -1,10 +1,11 @@
 <Solution>
   <Folder Name="/src/">
     <File Path="docker-compose.yaml" />
-    <Project Path="Bootstrapper/Bootstrapper.csproj" />
+    <File Path="GerenciamentoMecanicaSistema/appsettings.Development.json" />
+    <File Path="GerenciamentoMecanicaSistema/appsettings.json" />
+    <Project Path="Bootstrapper/DependencyInjection.csproj" />
     <Project Path="Domain.Interface/Domain.Interface.csproj" />
     <Project Path="Domain/Domain.csproj" />
-    <Project Path="DTOs/DTOs.csproj" Id="6fd6d649-94b9-41c1-bdc6-17683266a4b1" />
     <Project Path="GerenciamentoMecanicaSistema/GerenciamentoMecanicaSistema.csproj" />
     <Project Path="Repository.Interface/Repository.Interface.csproj" />
     <Project Path="Repository/Repository.csproj" />

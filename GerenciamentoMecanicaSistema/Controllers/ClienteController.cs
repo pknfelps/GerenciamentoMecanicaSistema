@@ -1,12 +1,14 @@
-﻿using DTOs;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interface;
+using Service.Interface.Dto;
 using System.ComponentModel.DataAnnotations;
 
 namespace GerenciamentoMecanicaSistema.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize(Roles = "Admin")]
     public class ClienteController(IClienteService clienteService) : ControllerBase
     {
         private IClienteService ClienteService { get; set; } = clienteService;
@@ -14,9 +16,6 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [HttpPost("CreateCliente")]
         public async Task<IActionResult> CreateCliente([FromBody] ClienteDto clienteDto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
             Console.WriteLine("Requisitando criação do cliente");
             await ClienteService.CreateCliente(clienteDto);
             Console.WriteLine("Cliente criado");
@@ -36,9 +35,6 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [HttpGet("GetClienteByDocumento/{documento}")]
         public async Task<IActionResult> GetClienteByDocumento([FromRoute][RegularExpression(@"^(\d{11}|\d{14})$", ErrorMessage = "Documento inválido")] string documento)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
             Console.WriteLine($"Requisitando cliente com documento {documento}");
             var cliente = await ClienteService.GetClienteByDocumento(documento);
 
@@ -51,9 +47,6 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [HttpPatch("UpdateCliente")]
         public async Task<IActionResult> UpdateCliente([FromBody] ClienteDto clienteDto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest();
-
             Console.WriteLine($"Requisitando atualização do cliente");
             await ClienteService.UpdateCliente(clienteDto);
             Console.WriteLine($"Cliente atualizado");
