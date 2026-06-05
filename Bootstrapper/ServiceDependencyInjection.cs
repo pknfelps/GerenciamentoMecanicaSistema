@@ -11,6 +11,8 @@ namespace DependencyInjection
             service.AddTransient<IClienteService, ClienteService>();
             service.AddTransient<IUsuarioService, UsuarioService>();
             service.AddTransient<IAuthenticationService, AuthenticationService>();
+            service.AddTransient<IStockService, StockService>();
+            service.AddTransient<IVehicleService, VehicleService>();
         }
     }
 }

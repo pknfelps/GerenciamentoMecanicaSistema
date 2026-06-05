@@ -3,12 +3,24 @@
   "WorkspaceRootPath": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\repository\\clienterepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|solutionrelative:repository\\clienterepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{D9E83580-8BEE-4957-A1C8-EC04071A5762}|ControllerTests\\ControllerTests.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\controllertests\\vehiclecontrollertests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D9E83580-8BEE-4957-A1C8-EC04071A5762}|ControllerTests\\ControllerTests.csproj|solutionrelative:controllertests\\vehiclecontrollertests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\gerenciamentomecanicasistema\\controllers\\clientecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|solutionrelative:gerenciamentomecanicasistema\\controllers\\clientecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\gerenciamentomecanicasistema\\controllers\\vehiclecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|solutionrelative:gerenciamentomecanicasistema\\controllers\\vehiclecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D9E83580-8BEE-4957-A1C8-EC04071A5762}|ControllerTests\\ControllerTests.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\controllertests\\testwebapplicationfactory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D9E83580-8BEE-4957-A1C8-EC04071A5762}|ControllerTests\\ControllerTests.csproj|solutionrelative:controllertests\\testwebapplicationfactory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{02B79BC5-153E-2FD9-CAE3-8149E0D9044F}|Service\\Service.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\service\\vehicleservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{02B79BC5-153E-2FD9-CAE3-8149E0D9044F}|Service\\Service.csproj|solutionrelative:service\\vehicleservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D9E83580-8BEE-4957-A1C8-EC04071A5762}|ControllerTests\\ControllerTests.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\controllertests\\clientecontrollertests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D9E83580-8BEE-4957-A1C8-EC04071A5762}|ControllerTests\\ControllerTests.csproj|solutionrelative:controllertests\\clientecontrollertests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -18,7 +30,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Bookmark",
@@ -26,28 +38,67 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "ClienteRepository.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\ClienteRepository.cs",
-              "RelativeDocumentMoniker": "Repository\\ClienteRepository.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\ClienteRepository.cs",
-              "RelativeToolTip": "Repository\\ClienteRepository.cs",
-              "ViewState": "AgIAAD0AAAAAAAAAAAAuwEUAAAAJAAAAAAAAAA==",
+              "DocumentIndex": 4,
+              "Title": "ClienteControllerTests.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\ClienteControllerTests.cs",
+              "RelativeDocumentMoniker": "ControllerTests\\ClienteControllerTests.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\ClienteControllerTests.cs",
+              "RelativeToolTip": "ControllerTests\\ClienteControllerTests.cs",
+              "ViewState": "AgIAAEEAAAAAAAAAAAAgwEgAAAAUAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-28T13:22:02.069Z",
+              "WhenOpened": "2026-06-05T14:26:11.596Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "TestWebApplicationFactory.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\TestWebApplicationFactory.cs",
+              "RelativeDocumentMoniker": "ControllerTests\\TestWebApplicationFactory.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\TestWebApplicationFactory.cs",
+              "RelativeToolTip": "ControllerTests\\TestWebApplicationFactory.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAcwBUAAAA5AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-05T13:57:56.016Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "VehicleControllerTests.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\VehicleControllerTests.cs",
+              "RelativeDocumentMoniker": "ControllerTests\\VehicleControllerTests.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\VehicleControllerTests.cs",
+              "RelativeToolTip": "ControllerTests\\VehicleControllerTests.cs",
+              "ViewState": "AgIAAC4AAAAAAAAAAAAuwD8AAABOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-05T13:40:24.997Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "ClienteController.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\ClienteController.cs",
-              "RelativeDocumentMoniker": "GerenciamentoMecanicaSistema\\Controllers\\ClienteController.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\ClienteController.cs",
-              "RelativeToolTip": "GerenciamentoMecanicaSistema\\Controllers\\ClienteController.cs",
-              "ViewState": "AgIAADIAAAAAAAAAAAA1wDkAAAA2AAAAAAAAAA==",
+              "Title": "VehicleController.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\VehicleController.cs",
+              "RelativeDocumentMoniker": "GerenciamentoMecanicaSistema\\Controllers\\VehicleController.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\VehicleController.cs",
+              "RelativeToolTip": "GerenciamentoMecanicaSistema\\Controllers\\VehicleController.cs",
+              "ViewState": "AgIAACYAAAAAAAAAAAAhwCsAAAAhAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-28T12:12:47.902Z",
+              "WhenOpened": "2026-06-05T13:27:50.827Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "VehicleService.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\VehicleService.cs",
+              "RelativeDocumentMoniker": "Service\\VehicleService.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\VehicleService.cs",
+              "RelativeToolTip": "Service\\VehicleService.cs",
+              "ViewState": "AgIAAEQAAAAAAAAAAAAywE0AAACOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-05T00:09:19.487Z",
               "EditorCaption": ""
             }
           ]

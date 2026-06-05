@@ -34,7 +34,7 @@ namespace Repository
                 WHERE documento = @Documento;
                 """;
 
-        public static string DeleClienteSql { get; private set; } = """
+        public static string DeleteClienteSql { get; private set; } = """
                 DELETE FROM clientes
                 WHERE documento = @documento;
                 """;
@@ -68,14 +68,7 @@ namespace Repository
 
         public async Task<int> DeleteCliente(string documento)
         {
-            return await Connection.ExecuteAsync(DeleClienteSql, new { documento });
-        }
-
-        public async Task<bool> CheckIfClienteExists(string documento)
-        {
-            var cliente = await GetClienteByDocumento(documento);
-
-            return cliente != null;
+            return await Connection.ExecuteAsync(DeleteClienteSql, new { documento });
         }
 
         private static ClienteDb ToDb(ICliente cliente) => new(cliente.Id, cliente.Nome, cliente.Documento.Id, cliente.Celular.Numero, cliente.Email.Endereco);

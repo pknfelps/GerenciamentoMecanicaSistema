@@ -1,7 +1,7 @@
-﻿using Domain;
-using Domain.Interface;
+﻿using Domain.Interface.User;
+using Domain.User;
 
-namespace DomainTests
+namespace DomainTests.User
 {
     public class UsuarioTests
     {

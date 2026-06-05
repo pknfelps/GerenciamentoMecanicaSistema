@@ -1,5 +1,5 @@
-﻿using Domain;
-using Domain.Interface;
+﻿using Domain.Interface.User;
+using Domain.User;
 using Repository.Interface;
 using Service.Interface;
 using Service.Interface.Dto;
@@ -12,9 +12,9 @@ namespace Service
 
         public async Task RegisterUsuario(UsuarioDto usuarioDto)
         {
-            var usuario = CreateUsuarioFromoDto(usuarioDto);
+            var usuario = ToDomain(usuarioDto);
 
-            if (await Repository.CheckIfUsuarioExists(usuario.Nome, usuario.Cargo.ToString()))
+            if (await CheckIfUsuarioExists(usuario.Nome, usuario.Cargo.ToString()))
                 throw new InvalidOperationException("Usuario já cadastrado no sistema");
 
             var cadastro = await Repository.RegisterUsuario(usuario);
@@ -30,11 +30,16 @@ namespace Service
             if (usuario == null)
                 return null;
 
-            return CreateDtoFromUsuario(usuario);
+            return ToDto(usuario);
         }
 
-        private static Usuario CreateUsuarioFromoDto(UsuarioDto usuarioDto) => new(usuarioDto.Nome, usuarioDto.Senha, usuarioDto.Cargo);
+        private async Task<bool> CheckIfUsuarioExists(string nome, string cargo)
+        {
+            return await Repository.GetUsuarioByNomeAndCargo(nome, cargo) != null;
+        }
 
-        private static UsuarioDto CreateDtoFromUsuario(IUsuario usuario) => new(usuario.Nome, usuario.Senha.Senha, usuario.Cargo.ToString());
+        private static Usuario ToDomain(UsuarioDto usuarioDto) => new(usuarioDto.Nome, usuarioDto.Senha, usuarioDto.Cargo);
+
+        private static UsuarioDto ToDto(IUsuario usuario) => new(usuario.Nome, usuario.Senha.Senha, usuario.Cargo.ToString());
     }
 }

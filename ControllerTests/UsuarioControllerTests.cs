@@ -15,10 +15,8 @@ namespace ControllerTests
         private readonly UsuarioDto UsuarioExistente = new("Ciclano", "Ciclano@123", "Admin");
         private readonly UsuarioDto UsuarioExistenteSemSenha = new("Ciclano", "", "Admin");
 
-        public override void SetUp()
+        protected override void MockService()
         {
-            base.SetUp();
-
             UsuarioService = TestWebAppFactory.UsuarioServiceMock;
         }
 

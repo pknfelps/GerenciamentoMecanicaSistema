@@ -1,19 +1,14 @@
 using Dapper;
 using Domain.Costumer;
 using Domain.Interface.Costumer;
-using Npgsql;
 using Repository;
 using Repository.Interface;
-using System.Data;
-using Testcontainers.PostgreSql;
 
 #pragma warning disable CA1859
 namespace RepositoryTests
 {
-    public class ClienteRepositoryTests
+    public class ClienteRepositoryTests : BaseRepositoryTests
     {
-        private PostgreSqlContainer PostgresContainer { get; set; }
-        private IDbConnection Connection { get; set; }
         private IClienteRepository Repository { get; set; }
 
         private static readonly ICliente ClienteToCreate = new Cliente("Fulano", "123.456.789-12", "(11) 31234-5678", "fulano@gmail.com");
@@ -25,40 +20,21 @@ namespace RepositoryTests
         ];
         private static readonly ICliente ClienteToUpdate = new Cliente(ExistingClienteId, "Ciclano", "12.123.456/0001-12", "(11) 94321-8765", "ciclano.company@gmail.com");
 
-        [SetUp]
-        public async Task Setup()
+        protected override async Task InternalSetup()
         {
-            PostgresContainer = new PostgreSqlBuilder("postgres:18")
-                .WithDatabase("postgres")
-                .WithUsername("postgres")
-                .WithPassword("adm123")
-                .Build();
-
-            await PostgresContainer.StartAsync();
-
-            Connection = new NpgsqlConnection(PostgresContainer.GetConnectionString());
-            Connection.Open();
-
             await Connection.ExecuteAsync("""
                 CREATE TABLE IF NOT EXISTS clientes (
-                id UUID PRIMARY KEY,
-                nome TEXT,
-                documento TEXT,
-                celular TEXT,
-                email TEXT);
+                id UUID PRIMARY KEY NOT NULL,
+                nome TEXT NOT NULL,
+                documento TEXT NOT NULL,
+                celular TEXT NOT NULL,
+                email TEXT NOT NULL);
                 """);
 
             Repository = new ClienteRepository(Connection);
 
             foreach (ICliente cliente in ExistingClientes)
                 await Repository.CreateCliente(cliente);
-        }
-
-        [TearDown]
-        public async Task TearDown()
-        {
-            await PostgresContainer.DisposeAsync();
-            Connection.Dispose();
         }
 
         [Test]
@@ -150,22 +126,6 @@ namespace RepositoryTests
             ICliente? cliente = await Repository.GetClienteByDocumento(ExistingClientes[0].Documento.Id);
 
             Assert.That(cliente, Is.Null);
-        }
-
-        [Test]
-        public async Task MustReturnTrueWhenCheckIfClienteExistsWithExistingCliente()
-        {
-            var result = await Repository.CheckIfClienteExists(ExistingClientes[0].Documento.Id);
-
-            Assert.That(result, Is.True);
-        }
-
-        [Test]
-        public async Task MustReturnFalseWhenCheckIfClienteExistsWithNotAnExistingCliente()
-        {
-            var result = await Repository.CheckIfClienteExists(ClienteToCreate.Documento.Id);
-
-            Assert.That(result, Is.False);
         }
     }
 }

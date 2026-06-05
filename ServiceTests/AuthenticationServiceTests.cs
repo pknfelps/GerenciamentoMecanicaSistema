@@ -1,5 +1,8 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Domain.Interface.User;
+using Domain.User;
+using Microsoft.Extensions.Configuration;
 using NSubstitute;
+using Repository.Interface;
 using Service;
 using Service.Interface;
 using Service.Interface.Dto;
@@ -9,7 +12,7 @@ namespace ServiceTests
     public class AuthenticationServiceTests
     {
         private IAuthenticationService AuthenticationService { get; set; }
-        private IUsuarioService UsuarioService { get; set; }
+        private IUsuarioRepository UsuarioRepository { get; set; }
         private IConfiguration Configuration { get; set; }
 
         private static readonly UsuarioDto UsuarioExistente = new("Admin", "Admin@123", "Admin");
@@ -19,24 +22,16 @@ namespace ServiceTests
         [SetUp]
         public void SetUp()
         {
-            UsuarioService = Substitute.For<IUsuarioService>();
+            UsuarioRepository = Substitute.For<IUsuarioRepository>();
             Configuration = Substitute.For<IConfiguration>();
 
-            UsuarioService.GetUsuario(Arg.Any<UsuarioDto>()).Returns(callInfo =>
-            {
-                var usuario = callInfo.ArgAt<UsuarioDto>(0);
-
-                if (usuario.Nome == UsuarioExistente.Nome && usuario.Cargo == UsuarioExistente.Cargo)
-                    return UsuarioExistente;
-
-                return null;
-            });
+            UsuarioRepository.GetUsuarioByNomeAndCargo(UsuarioExistente.Nome, UsuarioExistente.Cargo).Returns(new Usuario(UsuarioExistente.Nome, UsuarioExistente.Senha, UsuarioExistente.Cargo));
 
             Configuration["Jwt:Key"].Returns("chaveTestesecurityKeyfortestingTokengeneration");
             Configuration["Jwt:Issuer"].Returns("admin");
             Configuration["Jwt:Audience"].Returns("mecanica");
 
-            AuthenticationService = new AuthenticationService(Configuration, UsuarioService);
+            AuthenticationService = new AuthenticationService(Configuration, UsuarioRepository);
         }
 
         [Test]
@@ -46,7 +41,7 @@ namespace ServiceTests
 
             Assert.That(string.IsNullOrEmpty(token), Is.False);
 
-            await UsuarioService.Received(1).GetUsuario(UsuarioExistente);
+            await UsuarioRepository.Received(1).GetUsuarioByNomeAndCargo(UsuarioExistente.Nome, UsuarioExistente.Cargo);
         }
 
         [Test]
@@ -56,7 +51,7 @@ namespace ServiceTests
 
             Assert.That(string.IsNullOrEmpty(token), Is.True);
 
-            await UsuarioService.Received(1).GetUsuario(UsuarioInexistente);
+            await UsuarioRepository.Received(1).GetUsuarioByNomeAndCargo(UsuarioInexistente.Nome, UsuarioInexistente.Cargo);
         }
 
         [Test]
@@ -66,7 +61,7 @@ namespace ServiceTests
 
             Assert.That(string.IsNullOrEmpty(token), Is.True);
 
-            await UsuarioService.Received(1).GetUsuario(UsuarioExistenteComSenhaErrada);
+            await UsuarioRepository.Received(1).GetUsuarioByNomeAndCargo(UsuarioExistenteComSenhaErrada.Nome, UsuarioExistenteComSenhaErrada.Cargo);
         }
     }
 }

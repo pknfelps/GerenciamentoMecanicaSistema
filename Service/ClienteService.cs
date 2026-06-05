@@ -12,7 +12,7 @@ namespace Service
 
         public async Task CreateCliente(ClienteDto clienteDto)
         {
-            Cliente cliente = CreateClienteFromDto(clienteDto);
+            Cliente cliente = ToDomain(clienteDto);
 
             if (await CheckIfClienteExists(cliente.Documento.Id))
                 throw new InvalidOperationException("Cliente já existe no sistema");
@@ -30,9 +30,7 @@ namespace Service
             var clientes = await Repository.GetClientes();
 
             Console.WriteLine("Convertendo para Dto");
-            var clientesDto = clientes.Select(CreateDtoFromCliente);
-            
-            return clientesDto;
+            return clientes.Select(ToDto);
         }
 
         public async Task<ClienteDto?> GetClienteByDocumento(string documento)
@@ -45,12 +43,12 @@ namespace Service
             if (cliente == null)
                 return null;
 
-            return CreateDtoFromCliente(cliente);
+            return ToDto(cliente);
         }
 
         public async Task UpdateCliente(ClienteDto clienteDto)
         {
-            Cliente cliente = CreateClienteFromDto(clienteDto);
+            Cliente cliente = ToDomain(clienteDto);
 
             if (!await CheckIfClienteExists(cliente.Documento.Id))
                 throw new InvalidOperationException("Cliente não existe no sistema");
@@ -76,14 +74,14 @@ namespace Service
                 throw new InvalidOperationException("Falha ao deletar o cliente");
         }
 
-        private static Cliente CreateClienteFromDto(ClienteDto clienteDto) => new(clienteDto.Nome, clienteDto.Documento, clienteDto.Celular, clienteDto.Email);
-
-        public static ClienteDto? CreateDtoFromCliente(ICliente cliente) => new(cliente.Nome, cliente.Documento.Id, cliente.Celular.Numero, cliente.Email.Endereco);
-
         private async Task<bool> CheckIfClienteExists(string documento)
         {
             Console.WriteLine("Verificando se cliente existe");
-            return await Repository.CheckIfClienteExists(documento);
+            return await Repository.GetClienteByDocumento(documento) != null;
         }
+
+        private static Cliente ToDomain(ClienteDto clienteDto) => new(clienteDto.Nome, clienteDto.Documento, clienteDto.Celular, clienteDto.Email);
+
+        public static ClienteDto? ToDto(ICliente cliente) => new(cliente.Nome, cliente.Documento.Id, cliente.Celular.Numero, cliente.Email.Endereco);
     }
 }

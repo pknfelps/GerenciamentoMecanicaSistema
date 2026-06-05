@@ -55,13 +55,6 @@ namespace ServiceTests
                 return ExistingClientes.FirstOrDefault(x => x.Documento.Id.Equals(documento));
             });
 
-            ClienteRepository.CheckIfClienteExists(Arg.Any<string>()).Returns(callInfo =>
-            {
-                string documento = callInfo.ArgAt<string>(0);
-
-                return ExistingClientes.FirstOrDefault(x => x.Documento.Id.Equals(documento)) != null;
-            });
-
             ClienteRepository.UpdateCliente(Arg.Any<ICliente>()).Returns(callInfo =>
             {
                 var cliente = callInfo.ArgAt<ICliente>(0);
@@ -90,7 +83,6 @@ namespace ServiceTests
         {
             await ClienteService.CreateCliente(ClienteToCreate);
 
-            await ClienteRepository.Received(1).CheckIfClienteExists(ClienteToCreateFormated.Documento);
             await ClienteRepository.ReceivedWithAnyArgs(1).CreateCliente(Arg.Any<ICliente>());
         }
 
@@ -98,8 +90,6 @@ namespace ServiceTests
         public async Task MustNotCreateClienteIfExists()
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await ClienteService.CreateCliente(ExistingClienteDto));
-
-            await ClienteRepository.Received(1).CheckIfClienteExists(ExistingClientes[0].Documento.Id);
         }
 
         [Test]
@@ -107,7 +97,6 @@ namespace ServiceTests
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await ClienteService.CreateCliente(ClienteToFailCreation));
 
-            await ClienteRepository.Received(1).CheckIfClienteExists(ClienteToFailCreation.Documento);
             await ClienteRepository.ReceivedWithAnyArgs(1).CreateCliente(Arg.Any<ICliente>());
         }
 
@@ -152,7 +141,6 @@ namespace ServiceTests
         {
             await ClienteService.UpdateCliente(ClienteToUpdateDto);
 
-            await ClienteRepository.Received(1).CheckIfClienteExists(ClienteToUpdateDto.Documento);
             await ClienteRepository.Received(1).UpdateCliente(Arg.Any<ICliente>());
         }
 
@@ -160,8 +148,6 @@ namespace ServiceTests
         public async Task MustNotUpdateClienteIfNotExists()
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await ClienteService.UpdateCliente(ClienteToCreate));
-
-            await ClienteRepository.Received(1).CheckIfClienteExists(ClienteToCreateFormated.Documento);
         }
 
         [Test]
@@ -169,7 +155,6 @@ namespace ServiceTests
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await ClienteService.UpdateCliente(ClienteToFailtUpdateDto));
 
-            await ClienteRepository.Received(1).CheckIfClienteExists(ClienteToFailtUpdateDto.Documento);
             await ClienteRepository.Received(1).UpdateCliente(Arg.Any<ICliente>());
         }
 
@@ -178,7 +163,6 @@ namespace ServiceTests
         {
             await ClienteService.DeleteCliente(ExistingClientes[0].Documento.Id);
 
-            await ClienteRepository.Received(1).CheckIfClienteExists(ExistingClientes[0].Documento.Id);
             await ClienteRepository.Received(1).DeleteCliente(ExistingClientes[0].Documento.Id);
         }
 
@@ -186,16 +170,13 @@ namespace ServiceTests
         public async Task MustNotDeleteClienteIfNotExists()
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await ClienteService.DeleteCliente(ClienteToCreate.Documento));
-
-            await ClienteRepository.Received(1).CheckIfClienteExists(ClienteToCreateFormated.Documento);
         }
 
         [Test]
-        public async Task MustThrowExceptionIfFailtToDelete()
+        public async Task MustThrowExceptionIfFailToDelete()
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await ClienteService.DeleteCliente(ExistingClientes[1].Documento.Id));
 
-            await ClienteRepository.Received(1).CheckIfClienteExists(ExistingClientes[1].Documento.Id);
             await ClienteRepository.Received(1).DeleteCliente(ExistingClientes[1].Documento.Id);
         }
     }

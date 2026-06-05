@@ -2,7 +2,9 @@
 {
     public class Cnpj : Documento
     {
-        protected override int DocumentDigitCount { get; set; } = 14;
+        public const int DigitCount = 14;
+
+        protected override int DocumentDigitCount { get; set; } = DigitCount;
 
         public Cnpj(string id) : base(id)
         {

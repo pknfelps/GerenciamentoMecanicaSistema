@@ -1,5 +1,5 @@
-﻿using Domain;
-using Domain.Interface;
+﻿using Domain.Interface.User;
+using Domain.User;
 using NSubstitute;
 using Repository.Interface;
 using Service;
@@ -40,17 +40,6 @@ namespace ServiceTests
                 return 0;
             });
 
-            UsuarioRepository.CheckIfUsuarioExists(Arg.Any<string>(), Arg.Any<string>()).Returns(callInfo =>
-            {
-                var nome = callInfo.ArgAt<string>(0);
-                var cargo = callInfo.ArgAt<string>(1);
-
-                if (nome == UsuariosExistentes[0].Nome && cargo == UsuariosExistentes[0].Cargo.ToString())
-                    return true;
-
-                return false;
-            });
-
             UsuarioRepository.GetUsuarioByNomeAndCargo(Arg.Any<string>(), Arg.Any<string>()).Returns(callInfo =>
             {
                 var nome = callInfo.ArgAt<string>(0);
@@ -67,7 +56,6 @@ namespace ServiceTests
         {
             await UsuarioService.RegisterUsuario(UsuarioParaCadastrar);
 
-            await UsuarioRepository.ReceivedWithAnyArgs(1).CheckIfUsuarioExists(Arg.Any<string>(), Arg.Any<string>());
             await UsuarioRepository.ReceivedWithAnyArgs(1).RegisterUsuario(Arg.Any<IUsuario>());
         }
 
@@ -76,7 +64,6 @@ namespace ServiceTests
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await UsuarioService.RegisterUsuario(UsuarioExistenteDto));
 
-            await UsuarioRepository.ReceivedWithAnyArgs(1).CheckIfUsuarioExists(Arg.Any<string>(), Arg.Any<string>());
             await UsuarioRepository.ReceivedWithAnyArgs(0).RegisterUsuario(Arg.Any<IUsuario>());
         }
 
@@ -85,7 +72,6 @@ namespace ServiceTests
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await UsuarioService.RegisterUsuario(UsuarioParaFalhar));
 
-            await UsuarioRepository.ReceivedWithAnyArgs(1).CheckIfUsuarioExists(Arg.Any<string>(), Arg.Any<string>());
             await UsuarioRepository.ReceivedWithAnyArgs(1).RegisterUsuario(Arg.Any<IUsuario>());
         }
 

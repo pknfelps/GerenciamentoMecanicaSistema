@@ -1,4 +1,4 @@
-﻿namespace Domain.Interface
+﻿namespace Domain.Interface.User
 {
     public enum Cargos
     {

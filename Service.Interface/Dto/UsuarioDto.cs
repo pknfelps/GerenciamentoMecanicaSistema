@@ -5,10 +5,11 @@ namespace Service.Interface.Dto
     public class UsuarioDto(string nome, string senha, string cargo)
     {
         [Required]
-        public string Nome { get; private set; } = nome;
+        public string Nome { get; set; } = nome;
         [Required]
-        public string Senha { get; private set; } = senha;
-        public string Cargo { get; private set; } = cargo;
+        public string Senha { get; set; } = senha;
+        [Required]
+        public string Cargo { get; set; } = cargo;
 
         public override bool Equals(object? obj)
         {

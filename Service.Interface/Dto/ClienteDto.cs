@@ -5,13 +5,13 @@ namespace Service.Interface.Dto
     public class ClienteDto(string nome, string documento, string celular, string email)
     {
         [Required]
-        public string Nome { get; private set; } = nome;
+        public string Nome { get; set; } = nome;
         [Required, RegularExpression(@"^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}|\d{11}|\d{14})$")]
-        public string Documento { get; private set; } = documento;
+        public string Documento { get; set; } = documento;
         [Required, RegularExpression(@"(?:\D*\d){11}")]
-        public string Celular { get; private set; } = celular;
+        public string Celular { get; set; } = celular;
         [Required, RegularExpression(@"^[^\s]+\@[^\s]+\.[^\s]+$")]
-        public string Email { get; private set; } = email;
+        public string Email { get; set; } = email;
 
         public override bool Equals(object? obj)
         {

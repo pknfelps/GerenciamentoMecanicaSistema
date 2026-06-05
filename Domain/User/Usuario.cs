@@ -1,6 +1,6 @@
-﻿using Domain.Interface;
+﻿using Domain.Interface.User;
 
-namespace Domain
+namespace Domain.User
 {
     public class Usuario : IUsuario
     {

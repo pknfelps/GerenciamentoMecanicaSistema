@@ -22,6 +22,11 @@ namespace ControllerTests
             TestWebAppFactory = new TestWebApplicationFactory();
             TestClient = TestWebAppFactory.CreateClient();
 
+            MockService();
+        }
+
+        protected override void MockService()
+        {
             AuthenticationService = TestWebAppFactory.AuthenticationServiceMock;
 
             AuthenticationService.Login(Arg.Any<UsuarioDto>()).Returns(callInfo =>

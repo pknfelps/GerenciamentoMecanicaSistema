@@ -1,6 +1,6 @@
-﻿using Domain;
+﻿using Domain.User;
 
-namespace DomainTests
+namespace DomainTests.User
 {
     public class PasswordTests
     {

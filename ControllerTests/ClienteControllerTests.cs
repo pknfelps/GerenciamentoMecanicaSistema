@@ -22,10 +22,8 @@ namespace ControllerTests
 
         private readonly ClienteDto ClienteParaAtualizar = new("Ciclano", "12.123.456/0001-12", "(11) 94321-8765", "ciclano.company@gmail.com");
 
-        public override void SetUp()
+        protected override void MockService()
         {
-            base.SetUp();
-
             ClienteService = TestWebAppFactory.ClienteServiceMock;
         }
 

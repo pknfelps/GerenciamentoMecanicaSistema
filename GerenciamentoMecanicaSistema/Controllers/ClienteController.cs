@@ -16,9 +16,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [HttpPost("CreateCliente")]
         public async Task<IActionResult> CreateCliente([FromBody] ClienteDto clienteDto)
         {
-            Console.WriteLine("Requisitando criação do cliente");
             await ClienteService.CreateCliente(clienteDto);
-            Console.WriteLine("Cliente criado");
 
             return Created();
         }
@@ -26,7 +24,6 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [HttpGet("GetClientes")]
         public async Task<OkObjectResult> GetClientes()
         {
-            Console.WriteLine("Requisitando lista de clientes");
             var clientes = await ClienteService.GetClientes();
 
             return Ok(clientes);
@@ -35,7 +32,6 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [HttpGet("GetClienteByDocumento/{documento}")]
         public async Task<IActionResult> GetClienteByDocumento([FromRoute][RegularExpression(@"^(\d{11}|\d{14})$", ErrorMessage = "Documento inválido")] string documento)
         {
-            Console.WriteLine($"Requisitando cliente com documento {documento}");
             var cliente = await ClienteService.GetClienteByDocumento(documento);
 
             if (cliente is null)
@@ -47,9 +43,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [HttpPatch("UpdateCliente")]
         public async Task<IActionResult> UpdateCliente([FromBody] ClienteDto clienteDto)
         {
-            Console.WriteLine($"Requisitando atualização do cliente");
             await ClienteService.UpdateCliente(clienteDto);
-            Console.WriteLine($"Cliente atualizado");
 
             return Ok();
         }
@@ -57,9 +51,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [HttpDelete("DeleteCliente/{documento}")]
         public async Task<IActionResult> DeleteCliente([FromRoute][RegularExpression(@"^(\d{11}|\d{14})$", ErrorMessage = "Documento inválido")] string documento)
         {
-            Console.WriteLine($"Requisitando deleção do cliente de documento {documento}");
             await ClienteService.DeleteCliente(documento);
-            Console.WriteLine($"Cliente deletado");
 
             return Ok();
         }

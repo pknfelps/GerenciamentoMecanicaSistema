@@ -1,0 +1,4 @@
+# For more info on HTTP files go to https://aka.ms/vs/httpfile
+
+GET http://localhost:32768/openapi/v1.json
+Accept: application/json

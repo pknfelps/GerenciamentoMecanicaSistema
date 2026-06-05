@@ -2,7 +2,9 @@
 {
     public class Cpf : Documento
     {
-        protected override int DocumentDigitCount { get; set; } = 11;
+        public const int DigitCount = 11;
+
+        protected override int DocumentDigitCount { get; set; } = DigitCount;
 
         public Cpf(string id) : base(id) 
         {

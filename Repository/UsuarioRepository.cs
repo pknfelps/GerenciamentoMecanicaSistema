@@ -1,6 +1,6 @@
 ﻿using Dapper;
-using Domain;
-using Domain.Interface;
+using Domain.Interface.User;
+using Domain.User;
 using Repository.Dto;
 using Repository.Interface;
 using System.Data;
@@ -34,13 +34,6 @@ namespace Repository
                 return null;
 
             return ToDomain(usuario);
-        }
-
-        public async Task<bool> CheckIfUsuarioExists(string nome, string cargo)
-        {
-            var usuarioDb = await GetUsuarioByNomeAndCargo(nome, cargo);
-
-            return usuarioDb != null;
         }
 
         private static UsuarioDb ToDb(IUsuario usuario) => new(usuario.Id, usuario.Nome, usuario.Senha.Senha, usuario.Cargo.ToString());

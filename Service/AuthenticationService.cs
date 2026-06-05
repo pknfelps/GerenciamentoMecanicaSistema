@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Repository.Interface;
 using Service.Interface;
 using Service.Interface.Dto;
 using System.IdentityModel.Tokens.Jwt;
@@ -8,19 +9,19 @@ using System.Text;
 
 namespace Service
 {
-    public class AuthenticationService(IConfiguration configuration, IUsuarioService usuarioService) : IAuthenticationService
+    public class AuthenticationService(IConfiguration configuration, IUsuarioRepository usuarioRepository) : IAuthenticationService
     {
         private IConfiguration Configuration { get; set; } = configuration;
-        private IUsuarioService UsuarioService { get; set; } = usuarioService;
+        private IUsuarioRepository UsuarioRepository { get; set; } = usuarioRepository;
 
         public async Task<string> Login(UsuarioDto usuarioDto)
         {
-            var usuario = await UsuarioService.GetUsuario(usuarioDto);
+            var usuario = await UsuarioRepository.GetUsuarioByNomeAndCargo(usuarioDto.Nome, usuarioDto.Cargo);
 
             if (usuario == null)
                 return string.Empty;
 
-            if (!usuarioDto.Equals(usuario))
+            if (usuarioDto.Senha != usuario.Senha.Senha)
                 return string.Empty;
 
             SymmetricSecurityKey secretKey = new(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"] ?? string.Empty));
@@ -35,7 +36,7 @@ namespace Service
                 claims:
                 [
                     new Claim(type: ClaimTypes.Name, usuario.Nome),
-                    new Claim(type: ClaimTypes.Role, usuario.Cargo)
+                    new Claim(type: ClaimTypes.Role, usuario.Cargo.ToString())
                 ],
                 expires: DateTime.UtcNow.AddMinutes(10),
                 signingCredentials: signinCredentials);

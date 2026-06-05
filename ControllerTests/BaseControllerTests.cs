@@ -19,7 +19,11 @@ namespace ControllerTests
             TestWebAppFactory = new TestWebApplicationFactory();
             TestClient = TestWebAppFactory.CreateClient();
             TestClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GerarTokenTeste());
+
+            MockService();
         }
+
+        protected abstract void MockService();
 
         [TearDown]
         public void TearDown()

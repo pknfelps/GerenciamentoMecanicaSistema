@@ -14,11 +14,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         private IUsuarioService UsuarioService { get; set; } = usuarioService;
 
         [HttpPost("RegisterUsuario")]
-        public async Task<IActionResult> CreateUsuario([FromBody] UsuarioDto usuarioDto)
+        public async Task<IActionResult> RegisterUsuario([FromBody] UsuarioDto usuarioDto)
         {
-            Console.WriteLine("Requisitando criação do usuario");
             await UsuarioService.RegisterUsuario(usuarioDto);
-            Console.WriteLine("Usuário criado");
 
             return Created();
         }
@@ -28,7 +26,6 @@ namespace GerenciamentoMecanicaSistema.Controllers
             [FromRoute][RegularExpression(@"^[a-zA-ZÀ-ÿ]{2,}$", ErrorMessage = "Nome inválido")] string nome, 
             [FromRoute][RegularExpression(@"^[a-zA-ZÀ-ÿ]{2,}$", ErrorMessage = "Cargo inválido")] string cargo)
         {
-            Console.WriteLine($"Requisitando usuario com nome {nome}");
             var usuario = await UsuarioService.GetUsuario(new UsuarioDto(nome, "", cargo));
 
             if (usuario is null)
