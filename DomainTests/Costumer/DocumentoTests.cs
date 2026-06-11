@@ -1,4 +1,4 @@
-﻿using Domain.Costumer;
+﻿using Domain.Customer;
 
 namespace DomainTests.Costumer
 {

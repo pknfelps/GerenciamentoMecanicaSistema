@@ -2,26 +2,26 @@
 using Microsoft.IdentityModel.Tokens;
 using Repository.Interface;
 using Service.Interface;
-using Service.Interface.Dto;
+using Service.Interface.Dto.User;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
 namespace Service
 {
-    public class AuthenticationService(IConfiguration configuration, IUsuarioRepository usuarioRepository) : IAuthenticationService
+    public class AuthenticationService(IConfiguration configuration, IUserRepository userRepository) : IAuthenticationService
     {
         private IConfiguration Configuration { get; set; } = configuration;
-        private IUsuarioRepository UsuarioRepository { get; set; } = usuarioRepository;
+        private IUserRepository UserRepository { get; set; } = userRepository;
 
-        public async Task<string> Login(UsuarioDto usuarioDto)
+        public async Task<string> Authenticate(CreateUserDto userDto)
         {
-            var usuario = await UsuarioRepository.GetUsuarioByNomeAndCargo(usuarioDto.Nome, usuarioDto.Cargo);
+            var user = await UserRepository.GetUser(userDto.Name, userDto.Role);
 
-            if (usuario == null)
+            if (user == null)
                 return string.Empty;
 
-            if (usuarioDto.Senha != usuario.Senha.Senha)
+            if (userDto.Password != user.Password.Secret)
                 return string.Empty;
 
             SymmetricSecurityKey secretKey = new(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"] ?? string.Empty));
@@ -35,8 +35,8 @@ namespace Service
                 audience: audience,
                 claims:
                 [
-                    new Claim(type: ClaimTypes.Name, usuario.Nome),
-                    new Claim(type: ClaimTypes.Role, usuario.Cargo.ToString())
+                    new Claim(type: ClaimTypes.Name, user.Name),
+                    new Claim(type: ClaimTypes.Role, user.Role.ToString())
                 ],
                 expires: DateTime.UtcNow.AddMinutes(10),
                 signingCredentials: signinCredentials);

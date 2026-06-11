@@ -1,6 +1,5 @@
 ﻿using Dapper;
 using Domain.Interface.Stock;
-using Domain.Stock;
 using Repository.Dto;
 using Repository.Interface;
 using System.Data;
@@ -9,78 +8,92 @@ namespace Repository
 {
     public class StockRepository(IDbConnection connection) : BaseRepository(connection), IStockRepository
     {
-        public static string RegisterItemSql { get; private set; } = """
-                INSERT INTO stock(item_name, brand, price, amount, reserved_amount)
-                VALUES (@Name, @Brand, @Price, @Amount, @ReservedAmount);
+        public static string RegisterPartSql { get; private set; } = """
+                INSERT INTO stock(id, name, brand, price, amount, reserved_amount)
+                VALUES (@Id, @Name, @Brand, @Price, @Amount, @Reserved_Amount);
                 """;
 
         public static string GetItensSql { get; private set; } = """
-                SELECT item_name, brand, price, amount, reserved_amount
+                SELECT id, name, brand, price, amount, reserved_amount
                 FROM stock
                 LIMIT 50;
                 """;
 
-        public static string GetItemSql { get; private set; } = """
-                SELECT item_name, brand, price, amount, reserved_amount
+        public static string GetPartByNameAndBrandSql { get; private set; } = """
+                SELECT id, name, brand, price, amount, reserved_amount
                 FROM stock
-                WHERE item_name = @Name AND brand = @Brand;
+                WHERE name = @Name AND brand = @Brand;
                 """;
 
-        public static string UpdateItemPriceSql { get; private set; } = """
+        public static string GetPartByIdSql { get; private set; } = """
+                SELECT id, name, brand, price, amount, reserved_amount
+                FROM stock
+                WHERE id = @partId;
+                """;
+
+        public static string UpdatePartPriceSql { get; private set; } = """
                 UPDATE stock
                 SET price = @Price
-                WHERE item_name = @Name AND brand = @Brand;
+                WHERE id = @Id;
                 """;
 
-        public static string UpdateItemAmountSql { get; private set; } = """
+        public static string UpdatePartAmountSql { get; private set; } = """
                 UPDATE stock
                 SET amount = @Amount,
-                    reserved_amount = @ReservedAmount
-                WHERE item_name = @Name AND brand = @Brand;
+                    reserved_amount = @Reserved_Amount
+                WHERE id = @Id;
                 """;
 
-        public static string DeleItemSql { get; private set; } = """
+        public static string DelePartSql { get; private set; } = """
                 DELETE FROM stock
-                WHERE item_name = @Name AND brand = @Brand;
+                WHERE id = @Id;
                 """;
 
-        public async Task<int> RegisterNewItem(IStockItem item)
+        public async Task<int> RegisterNewPart(IPart part)
         {
-            return await Connection.ExecuteAsync(RegisterItemSql, item);
+            return await Connection.ExecuteAsync(RegisterPartSql, PartDb.Create(part));
         }
 
-        public async Task<IEnumerable<IStockItem?>> GetItens()
+        public async Task<IEnumerable<IPart?>> GetParts()
         {
-            var itens = await Connection.QueryAsync<StockItemDb>(GetItensSql);
+            var parts = await Connection.QueryAsync<PartDb>(GetItensSql);
 
-            return itens.Select(ToDomain);
+            return parts.Select(part => part.ToDomain());
         }
 
-        public async Task<IStockItem?> GetItem(string name, string brand)
+        public async Task<IPart?> GetPart(string name, string brand)
         {
-            var item = await Connection.QuerySingleOrDefaultAsync<StockItemDb>(GetItemSql, new { Name = name, Brand = brand });
+            var part = await Connection.QuerySingleOrDefaultAsync<PartDb>(GetPartByNameAndBrandSql, new { Name = name, Brand = brand });
 
-            if (item == null)
+            if (part == null)
                 return null;
 
-            return ToDomain(item);
+            return part.ToDomain();
         }
 
-        public async Task<int> UpdateItemPrice(IStockItem item)
+        public async Task<IPart?> GetPart(Guid partId)
         {
-            return await Connection.ExecuteAsync(UpdateItemPriceSql, item);
+            var part = await Connection.QuerySingleOrDefaultAsync<PartDb>(GetPartByIdSql, new { partId });
+
+            if (part == null)
+                return null;
+
+            return part.ToDomain();
         }
 
-        public async Task<int> UpdateItemAmount(IStockItem item)
+        public async Task<int> UpdatePartPrice(IPart part)
         {
-            return await Connection.ExecuteAsync(UpdateItemAmountSql, item);
+            return await Connection.ExecuteAsync(UpdatePartPriceSql, PartDb.Create(part));
         }
 
-        public async Task<int> DeleteItem(string name, string brand)
+        public async Task<int> UpdatePartAmount(IPart part)
         {
-            return await Connection.ExecuteAsync(DeleItemSql, new { Name = name, Brand = brand });
+            return await Connection.ExecuteAsync(UpdatePartAmountSql, PartDb.Create(part));
         }
 
-        private static StockItem ToDomain(StockItemDb item) => new(item.Name, item.Brand, item.Price, item.Amount, item.ReservedAmount);
+        public async Task<int> DeletePart(Guid partId)
+        {
+            return await Connection.ExecuteAsync(DelePartSql, new { Id = partId });
+        }
     }
 }

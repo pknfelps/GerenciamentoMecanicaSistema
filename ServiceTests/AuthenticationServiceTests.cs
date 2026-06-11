@@ -1,31 +1,30 @@
-﻿using Domain.Interface.User;
-using Domain.User;
+﻿using Domain.User;
 using Microsoft.Extensions.Configuration;
 using NSubstitute;
 using Repository.Interface;
 using Service;
 using Service.Interface;
-using Service.Interface.Dto;
+using Service.Interface.Dto.User;
 
 namespace ServiceTests
 {
     public class AuthenticationServiceTests
     {
         private IAuthenticationService AuthenticationService { get; set; }
-        private IUsuarioRepository UsuarioRepository { get; set; }
+        private IUserRepository UsuarioRepository { get; set; }
         private IConfiguration Configuration { get; set; }
 
-        private static readonly UsuarioDto UsuarioExistente = new("Admin", "Admin@123", "Admin");
-        private static readonly UsuarioDto UsuarioExistenteComSenhaErrada = new("Admin", "Teste@123", "Admin");
-        private static readonly UsuarioDto UsuarioInexistente = new("Fulano", "Fulano@123", "Usuario");
+        private static readonly UserDto UsuarioExistente = new(Guid.NewGuid(), "Admin", "Admin@123", "Admin");
+        private static readonly UserDto UsuarioExistenteComSenhaErrada = new(Guid.NewGuid(), "Admin", "Teste@123", "Admin");
+        private static readonly UserDto UsuarioInexistente = new(Guid.NewGuid(), "Fulano", "Fulano@123", "Usuario");
 
         [SetUp]
         public void SetUp()
         {
-            UsuarioRepository = Substitute.For<IUsuarioRepository>();
+            UsuarioRepository = Substitute.For<IUserRepository>();
             Configuration = Substitute.For<IConfiguration>();
 
-            UsuarioRepository.GetUsuarioByNomeAndCargo(UsuarioExistente.Nome, UsuarioExistente.Cargo).Returns(new Usuario(UsuarioExistente.Nome, UsuarioExistente.Senha, UsuarioExistente.Cargo));
+            UsuarioRepository.GetUser(UsuarioExistente.Name, UsuarioExistente.Role).Returns(new User(UsuarioExistente.Name, UsuarioExistente.Password, UsuarioExistente.Role));
 
             Configuration["Jwt:Key"].Returns("chaveTestesecurityKeyfortestingTokengeneration");
             Configuration["Jwt:Issuer"].Returns("admin");
@@ -37,31 +36,31 @@ namespace ServiceTests
         [Test]
         public async Task MustLogInAndGenerateToken()
         {
-            var token = await AuthenticationService.Login(UsuarioExistente);
+            var token = await AuthenticationService.Authenticate(UsuarioExistente);
 
             Assert.That(string.IsNullOrEmpty(token), Is.False);
 
-            await UsuarioRepository.Received(1).GetUsuarioByNomeAndCargo(UsuarioExistente.Nome, UsuarioExistente.Cargo);
+            await UsuarioRepository.Received(1).GetUser(UsuarioExistente.Name, UsuarioExistente.Role);
         }
 
         [Test]
         public async Task MustNotLogInAndNotGenerateTokenIfUsuarioNotExists()
         {
-            var token = await AuthenticationService.Login(UsuarioInexistente);
+            var token = await AuthenticationService.Authenticate(UsuarioInexistente);
 
             Assert.That(string.IsNullOrEmpty(token), Is.True);
 
-            await UsuarioRepository.Received(1).GetUsuarioByNomeAndCargo(UsuarioInexistente.Nome, UsuarioInexistente.Cargo);
+            await UsuarioRepository.Received(1).GetUser(UsuarioInexistente.Name, UsuarioInexistente.Role);
         }
 
         [Test]
         public async Task MustNotLogInAndNotGenerateTokenIfUsuarioTypedWrongPassword()
         {
-            var token = await AuthenticationService.Login(UsuarioExistenteComSenhaErrada);
+            var token = await AuthenticationService.Authenticate(UsuarioExistenteComSenhaErrada);
 
             Assert.That(string.IsNullOrEmpty(token), Is.True);
 
-            await UsuarioRepository.Received(1).GetUsuarioByNomeAndCargo(UsuarioExistenteComSenhaErrada.Nome, UsuarioExistenteComSenhaErrada.Cargo);
+            await UsuarioRepository.Received(1).GetUser(UsuarioExistenteComSenhaErrada.Name, UsuarioExistenteComSenhaErrada.Role);
         }
     }
 }

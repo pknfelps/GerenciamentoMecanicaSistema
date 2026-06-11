@@ -1,11 +1,11 @@
-﻿using Domain.Interface.Costumer;
+﻿using Domain.Interface.Custumer;
 using Domain.Interface.Vehicle;
 using Domain.Vehicle;
 using NSubstitute;
 using Repository.Interface;
 using Service;
 using Service.Interface;
-using Service.Interface.Dto;
+using Service.Interface.Dto.Vehicle;
 
 namespace ServiceTests
 {
@@ -14,18 +14,18 @@ namespace ServiceTests
         private IVehicleService VehicleService { get; set; }
         private IVehicleRepository Repository { get; set; }
 
-        private static readonly VehicleDto VehicleToRegister = new("Fiat", "Mobi", 2025, "FIT4M08");
-        private static readonly VehicleDto VehicleToFailRegister = new("Test", "Test", 0000, "TST1234");
+        private static readonly CreateVehicleDto VehicleToRegister = new("12345678912", "Fiat", "Mobi", 2025, "FIT4M08");
+        private static readonly CreateVehicleDto VehicleToFailRegister = new("12345678912", "Test", "Test", 0000, "TST1234");
 
         private static readonly List<Vehicle> Vehicles = 
         [
-            Substitute.For<Vehicle>("Honda", "Civic", 2024, "CVC2024"),
-            Substitute.For<Vehicle>("Ford", "Ka", 2020, "FKA0F20")
+            Substitute.For<Vehicle>(Substitute.For<IDocument>(), "Honda", "Civic", 2024, "CVC2024"),
+            Substitute.For<Vehicle>(Substitute.For<IDocument>(), "Ford", "Ka", 2020, "FKA0F20")
         ];
 
-        private static readonly VehicleDto ExistingVehicleDto = new("Honda", "Civic", 2024, "CVC2024");
-        private static readonly VehicleDto ExistingVehicleToUpdate = new("Honda", "City", 2020, "CVC2024");
-        private static readonly VehicleDto ExistingVehicleToFailUpdateOrDelete = new("Test", "Test", 2020, "FKA0F20");
+        private static readonly VehicleDto ExistingVehicleDto = new(Guid.NewGuid(), "12345678912", "Honda", "Civic", 2024, "CVC2024");
+        private static readonly VehicleDto ExistingVehicleToUpdate = new(Guid.NewGuid(), "12345678912", "Honda", "City", 2020, "CVC2024");
+        private static readonly VehicleDto ExistingVehicleToFailUpdateOrDelete = new(Guid.NewGuid(), "12345678912", "Test", "Test", 2020, "FKA0F20");
 
         [SetUp]
         public void SetUp()
@@ -64,11 +64,11 @@ namespace ServiceTests
                 return 0;
             });
 
-            Repository.DeleteVehicle(Arg.Any<string>()).Returns(callInfo =>
+            Repository.DeleteVehicle(Arg.Any<Guid>()).Returns(callInfo =>
             {
-                var license = callInfo.ArgAt<string>(0);
+                var id = callInfo.ArgAt<Guid>(0);
 
-                if (Vehicles[0].LicensePlate.License.Equals(license))
+                if (Vehicles[0].Id.Equals(id))
                     return 1;
 
                 return 0;
@@ -167,7 +167,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotUpdateVehicleIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.UpdateVehicle(VehicleToRegister));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.UpdateVehicle(Arg.Any<VehicleDto>()));
 
             await Repository.Received(1).GetVehicle(VehicleToRegister.LicensePlate);
             await Repository.ReceivedWithAnyArgs(0).UpdateVehicle(Arg.Any<IVehicle>());
@@ -188,7 +188,7 @@ namespace ServiceTests
             await VehicleService.DeleteVehicle(Vehicles[0].LicensePlate.License);
 
             await Repository.Received(1).GetVehicle(Vehicles[0].LicensePlate.License);
-            await Repository.ReceivedWithAnyArgs(1).DeleteVehicle(Vehicles[0].LicensePlate.License);
+            await Repository.ReceivedWithAnyArgs(1).DeleteVehicle(Vehicles[0].Id);
         }
 
         [Test]
@@ -197,7 +197,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.DeleteVehicle(VehicleToRegister.LicensePlate));
 
             await Repository.Received(1).GetVehicle(VehicleToRegister.LicensePlate);
-            await Repository.ReceivedWithAnyArgs(0).DeleteVehicle(VehicleToRegister.LicensePlate);
+            await Repository.ReceivedWithAnyArgs(0).DeleteVehicle(Arg.Any<Guid>());
         }
 
         [Test]
@@ -206,7 +206,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.DeleteVehicle(ExistingVehicleToFailUpdateOrDelete.LicensePlate));
 
             await Repository.Received(1).GetVehicle(ExistingVehicleToFailUpdateOrDelete.LicensePlate);
-            await Repository.ReceivedWithAnyArgs(1).DeleteVehicle(ExistingVehicleToUpdate.LicensePlate);
+            await Repository.ReceivedWithAnyArgs(1).DeleteVehicle(Vehicles[1].Id);
         }
     }
 }

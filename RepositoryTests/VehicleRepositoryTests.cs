@@ -3,6 +3,8 @@ using Domain.Interface.Vehicle;
 using Domain.Vehicle;
 using Repository;
 using Repository.Interface;
+using Repository.Dto;
+using Domain.Customer;
 
 namespace RepositoryTests
 {
@@ -10,26 +12,44 @@ namespace RepositoryTests
     {
         private IVehicleRepository VehicleRepository { get; set; }
 
+        private static CustomerDb ExistingCostumer = new() { Id = Guid.NewGuid(), Name = "Teste", Document = "123.456.789-12", Phone = "(11) 91234-5678", Email = "teste@gmail.com" };
+
         private static Guid ExistingVehicleId = Guid.NewGuid();
 
         private List<IVehicle> ExistingVehicles =
         [
-            new Vehicle(ExistingVehicleId, "Porsche", "911", 1990, "PRX3911"),
-            new Vehicle("Dodge", "Challenger", 1980, "DOG3E80")
+            new Vehicle(ExistingCostumer.Document, "Porsche", "911", 1990, "PRX3911"),
+            new Vehicle(ExistingCostumer.Document, "Dodge", "Challenger", 1980, "DOG3E80")
         ];
 
-        private IVehicle VehicleToRegister = new Vehicle("Mitsubishi", "Lancer Evolution X", 2016, "LNC1234");
-        private IVehicle VehicleToUpdate = new Vehicle(ExistingVehicleId, "Porsche", "911 Carrera", 2002, "PRC4911");
+        private IVehicle VehicleToRegister = new Vehicle(ExistingCostumer.Document, "Mitsubishi", "Lancer Evolution X", 2016, "LNC1234");
+
+        private IVehicle VehicleToUpdate = new Vehicle(ExistingCostumer.Document, "Porsche", "911 Carrera", 2002, "PRX3911");
 
         protected override async Task InternalSetup()
         {
             await Connection.ExecuteAsync("""
+                CREATE TABLE IF NOT EXISTS costumers (
+                id UUID PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                document VARCHAR(100) NOT NULL UNIQUE,
+                phone VARCHAR(100) NOT NULL,
+                email VARCHAR(100) NOT NULL);
+                """);
+
+            await Connection.ExecuteAsync($"""
+                INSERT INTO costumers(id, name, document, phone, email)
+                VALUES (@Id, @Name, @Document, @Phone, @Email);
+                """, ExistingCostumer);
+
+            await Connection.ExecuteAsync("""
                 CREATE TABLE IF NOT EXISTS vehicles (
                 id UUID PRIMARY KEY,
+                costumer_document VARCHAR(100) NOT NULL REFERENCES costumers(document),
                 brand VARCHAR(100) NOT NULL,
                 model VARCHAR(100) NOT NULL,
                 year INT NOT NULL,
-                license_plate VARCHAR(100) NOT NULL);
+                license_plate VARCHAR(7) NOT NULL);
                 """);
 
             VehicleRepository = new VehicleRepository(Connection);
@@ -105,7 +125,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustDeleteVehicle()
         {
-            var registry = await VehicleRepository.DeleteVehicle(ExistingVehicles[0].LicensePlate.License);
+            var registry = await VehicleRepository.DeleteVehicle(ExistingVehicles[0].Id);
 
             Assert.That(registry, Is.Not.EqualTo(0));
         }

@@ -13,7 +13,7 @@ namespace RepositoryTests
         [SetUp]
         public async Task SetUp()
         {
-            PostgresContainer = new PostgreSqlBuilder("postgres:18")
+            PostgresContainer = new PostgreSqlBuilder("postgres:16")
                 .WithDatabase("postgres")
                 .WithUsername("postgres")
                 .WithPassword("adm123")

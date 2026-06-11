@@ -10,31 +10,31 @@ namespace ControllerTests
     {
         private IStockService StockService { get; set; }
 
-        private static readonly StockItemDto ItemToRegister = new("Óleo de motor", "Lubrax", 41.90, 5, 0);
-        private static readonly StockItemDto InvalidItemToRegister = new("", "", 0.00, 0, 0);
-        private static readonly StockItemDto ItemToFailRegister = new("Teste", "Testando", 15, 1, 0);
-        private static readonly StockItemUpdateDto<int> ItemToFailIntOperations = new(ItemToRegister.Name, ItemToRegister.Brand, 5);
-        private static readonly StockItemUpdateDto<double> ItemToFailDoubleOperations = new(ItemToRegister.Name, ItemToRegister.Brand, 10.00);
-        private static readonly StockItemUpdateDto<int> InvalidIntItemUpdate = new("", "", 0);
-        private static readonly StockItemUpdateDto<double> InvalidDoubleItemUpdate = new("", "", 0);
+        private static readonly CreatePartDto ItemToRegister = new("Óleo de motor", "Lubrax", 41.90, 5);
+        private static readonly CreatePartDto InvalidItemToRegister = new("", "", 0.00, 0);
+        private static readonly CreatePartDto ItemToFailRegister = new("Teste", "Testando", 15, 1);
+        private static readonly PartUpdateDto<int> ItemToFailIntOperations = new(Guid.NewGuid(), 5);
+        private static readonly PartUpdateDto<double> ItemToFailDoubleOperations = new(Guid.NewGuid(), 10.00);
+        private static readonly PartUpdateDto<int> InvalidIntItemUpdate = new(Guid.NewGuid(), 0);
+        private static readonly PartUpdateDto<double> InvalidDoubleItemUpdate = new(Guid.NewGuid(), 0);
 
-        private static readonly List<StockItemDto> StockItems =
+        private static readonly List<PartDto> StockItems =
         [
-            new ("Vela de ignição", "Bosch", 6.00, 20, 5),
-            new ("Flúido para radiador", "Gitanes", 30.00, 5, 0)
+            new (Guid.NewGuid(), "Vela de ignição", "Bosch", 6.00, 20, 5),
+            new (Guid.NewGuid(), "Flúido para radiador", "Gitanes", 30.00, 5, 0)
         ];
 
-        private static readonly StockItemUpdateDto<int> IntItemUpdate = new(StockItems[0].Name, StockItems[0].Brand, 5);
+        private static readonly PartUpdateDto<int> IntItemUpdate = new(StockItems[0].Id, 5);
 
-        private static readonly StockItemUpdateDto<double> DoubleItemToUpdate = new(StockItems[0].Name, StockItems[0].Brand, 8.45);
+        private static readonly PartUpdateDto<double> DoubleItemToUpdate = new(StockItems[0].Id, 8.45);
 
         protected override void MockService()
         {
             StockService = TestWebAppFactory.StockServiceMock;
 
-            StockService.RegisterNewItem(Arg.Any<StockItemDto>()).Returns(callInfo =>
+            StockService.RegisterNewPart(Arg.Any<PartDto>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<StockItemDto>(0);
+                var item = callInfo.ArgAt<PartDto>(0);
 
                 if (item.Equals(ItemToRegister))
                     return Task.CompletedTask;
@@ -42,9 +42,9 @@ namespace ControllerTests
                 throw new InvalidOperationException();
             });
 
-            StockService.GetItens().Returns(StockItems);
+            StockService.GetParts().Returns(StockItems);
 
-            StockService.GetItem(Arg.Any<string>(), Arg.Any<string>()).Returns(callInfo =>
+            StockService.GetPart(Arg.Any<string>(), Arg.Any<string>()).Returns(callInfo =>
             {
                 var name = callInfo.ArgAt<string>(0);
                 var brand = callInfo.ArgAt<string>(1);
@@ -52,57 +52,57 @@ namespace ControllerTests
                 return StockItems.FirstOrDefault(x => x.Name == name && x.Brand == brand);
             });
 
-            StockService.AddItemAmount(Arg.Any<StockItemUpdateDto<int>>()).Returns(callInfo =>
+            StockService.AddPartAmount(Arg.Any<PartUpdateDto<int>>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<StockItemUpdateDto<int>>(0);
+                var item = callInfo.ArgAt<PartUpdateDto<int>>(0);
 
-                if (StockItems.FirstOrDefault(x => x.Name == item.Name && x.Brand == item.Brand) != default)
+                if (StockItems.FirstOrDefault(x => x.Id == item.Id) != default)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
             });
 
-            StockService.RemoveItemAmount(Arg.Any<StockItemUpdateDto<int>>()).Returns(callInfo =>
+            StockService.RemovePartAmount(Arg.Any<PartUpdateDto<int>>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<StockItemUpdateDto<int>>(0);
+                var item = callInfo.ArgAt<PartUpdateDto<int>>(0);
 
-                if (StockItems.FirstOrDefault(x => x.Name == item.Name && x.Brand == item.Brand) != default)
+                if (StockItems.FirstOrDefault(x => x.Id == item.Id) != default)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
             });
 
-            StockService.ReserveItemAmount(Arg.Any<StockItemUpdateDto<int>>()).Returns(callInfo =>
+            StockService.ReservePartAmount(Arg.Any<PartUpdateDto<int>>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<StockItemUpdateDto<int>>(0);
+                var item = callInfo.ArgAt<PartUpdateDto<int>>(0);
 
-                if (StockItems.FirstOrDefault(x => x.Name == item.Name && x.Brand == item.Brand) != default)
+                if (StockItems.FirstOrDefault(x => x.Id == item.Id) != default)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
             });
 
-            StockService.RestoreItemAmount(Arg.Any<StockItemUpdateDto<int>>()).Returns(callInfo =>
+            StockService.RestorePartAmount(Arg.Any<PartUpdateDto<int>>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<StockItemUpdateDto<int>>(0);
+                var item = callInfo.ArgAt<PartUpdateDto<int>>(0);
 
-                if (StockItems.FirstOrDefault(x => x.Name == item.Name && x.Brand == item.Brand) != default)
+                if (StockItems.FirstOrDefault(x => x.Id == item.Id) != default)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
             });
 
-            StockService.UpdateItemPrice(Arg.Any<StockItemUpdateDto<double>>()).Returns(callInfo =>
+            StockService.UpdatePartPrice(Arg.Any<PartUpdateDto<double>>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<StockItemUpdateDto<double>>(0);
+                var item = callInfo.ArgAt<PartUpdateDto<double>>(0);
 
-                if (StockItems.FirstOrDefault(x => x.Name == item.Name && x.Brand == item.Brand) != default)
+                if (StockItems.FirstOrDefault(x => x.Id == item.Id) != default)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
             });
 
-            StockService.DeleteItem(Arg.Any<string>(), Arg.Any<string>()).Returns(callInfo =>
+            StockService.DeletePart(Arg.Any<string>(), Arg.Any<string>()).Returns(callInfo =>
             {
                 var name = callInfo.ArgAt<string>(0);
                 var brand = callInfo.ArgAt<string>(1);
@@ -121,7 +121,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
 
-            await StockService.Received(1).RegisterNewItem(ItemToRegister);
+            await StockService.Received(1).RegisterNewPart(ItemToRegister);
         }
 
         [Test]
@@ -131,7 +131,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await StockService.Received(0).RegisterNewItem(Arg.Any<StockItemDto>());
+            await StockService.Received(0).RegisterNewPart(Arg.Any<PartDto>());
         }
 
         [Test]
@@ -141,7 +141,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await StockService.Received(1).RegisterNewItem(ItemToFailRegister);
+            await StockService.Received(1).RegisterNewPart(ItemToFailRegister);
         }
 
         [Test]
@@ -151,10 +151,10 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            var result = await response.Content.ReadFromJsonAsync<IEnumerable<StockItemDto>>();
+            var result = await response.Content.ReadFromJsonAsync<IEnumerable<PartDto>>();
             var intens = result.ToList();
 
-            await StockService.Received(1).GetItens();
+            await StockService.Received(1).GetParts();
 
             Assert.Multiple(() =>
             {
@@ -170,9 +170,9 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            var result = await response.Content.ReadFromJsonAsync<StockItemDto>();
+            var result = await response.Content.ReadFromJsonAsync<PartDto>();
 
-            await StockService.Received(1).GetItem(StockItems[0].Name, StockItems[0].Brand);
+            await StockService.Received(1).GetPart(StockItems[0].Name, StockItems[0].Brand);
 
             Assert.That(result, Is.Not.Null);
             Assert.That(result.Equals(StockItems[0]), Is.True);
@@ -185,7 +185,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
 
-            await StockService.Received(1).GetItem(ItemToRegister.Name, ItemToRegister.Brand);
+            await StockService.Received(1).GetPart(ItemToRegister.Name, ItemToRegister.Brand);
         }
 
         [Test]
@@ -195,7 +195,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await StockService.Received(0).GetItem(Arg.Any<string>(), Arg.Any<string>());
+            await StockService.Received(0).GetPart(Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Test]
@@ -205,7 +205,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            await StockService.Received(1).AddItemAmount(Arg.Any<StockItemUpdateDto<int>>());
+            await StockService.Received(1).AddPartAmount(Arg.Any<PartUpdateDto<int>>());
         }
 
         [Test]
@@ -215,7 +215,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await StockService.Received(1).AddItemAmount(Arg.Any<StockItemUpdateDto<int>>());
+            await StockService.Received(1).AddPartAmount(Arg.Any<PartUpdateDto<int>>());
         }
 
         [Test]
@@ -225,7 +225,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await StockService.Received(0).AddItemAmount(Arg.Any<StockItemUpdateDto<int>>());
+            await StockService.Received(0).AddPartAmount(Arg.Any<PartUpdateDto<int>>());
         }
 
         [Test]
@@ -235,7 +235,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            await StockService.Received(1).RemoveItemAmount(Arg.Any<StockItemUpdateDto<int>>());
+            await StockService.Received(1).RemovePartAmount(Arg.Any<PartUpdateDto<int>>());
         }
 
         [Test]
@@ -245,7 +245,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await StockService.Received(1).RemoveItemAmount(Arg.Any<StockItemUpdateDto<int>>());
+            await StockService.Received(1).RemovePartAmount(Arg.Any<PartUpdateDto<int>>());
         }
 
         [Test]
@@ -255,7 +255,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await StockService.Received(0).RemoveItemAmount(Arg.Any<StockItemUpdateDto<int>>());
+            await StockService.Received(0).RemovePartAmount(Arg.Any<PartUpdateDto<int>>());
         }
 
         [Test]
@@ -265,7 +265,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            await StockService.Received(1).ReserveItemAmount(Arg.Any<StockItemUpdateDto<int>>());
+            await StockService.Received(1).ReservePartAmount(Arg.Any<PartUpdateDto<int>>());
         }
 
         [Test]
@@ -275,7 +275,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await StockService.Received(1).ReserveItemAmount(Arg.Any<StockItemUpdateDto<int>>());
+            await StockService.Received(1).ReservePartAmount(Arg.Any<PartUpdateDto<int>>());
         }
 
         [Test]
@@ -285,7 +285,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await StockService.Received(0).ReserveItemAmount(Arg.Any<StockItemUpdateDto<int>>());
+            await StockService.Received(0).ReservePartAmount(Arg.Any<PartUpdateDto<int>>());
         }
 
         [Test]
@@ -295,7 +295,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            await StockService.Received(1).RestoreItemAmount(Arg.Any<StockItemUpdateDto<int>>());
+            await StockService.Received(1).RestorePartAmount(Arg.Any<PartUpdateDto<int>>());
         }
 
         [Test]
@@ -305,7 +305,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await StockService.Received(1).RestoreItemAmount(Arg.Any<StockItemUpdateDto<int>>());
+            await StockService.Received(1).RestorePartAmount(Arg.Any<PartUpdateDto<int>>());
         }
 
         [Test]
@@ -315,7 +315,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await StockService.Received(0).RestoreItemAmount(Arg.Any<StockItemUpdateDto<int>>());
+            await StockService.Received(0).RestorePartAmount(Arg.Any<PartUpdateDto<int>>());
         }
 
         [Test]
@@ -325,7 +325,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            await StockService.Received(1).UpdateItemPrice(Arg.Any<StockItemUpdateDto<double>>());
+            await StockService.Received(1).UpdatePartPrice(Arg.Any<PartUpdateDto<double>>());
         }
 
         [Test]
@@ -335,7 +335,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await StockService.Received(1).UpdateItemPrice(Arg.Any<StockItemUpdateDto<double>>());
+            await StockService.Received(1).UpdatePartPrice(Arg.Any<PartUpdateDto<double>>());
         }
 
         [Test]
@@ -345,7 +345,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await StockService.Received(0).UpdateItemPrice(Arg.Any<StockItemUpdateDto<double>>());
+            await StockService.Received(0).UpdatePartPrice(Arg.Any<PartUpdateDto<double>>());
         }
 
         [Test]
@@ -355,7 +355,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            await StockService.Received(1).DeleteItem(StockItems[0].Name, StockItems[0].Brand);
+            await StockService.Received(1).DeletePart(StockItems[0].Name, StockItems[0].Brand);
         }
 
         [Test]
@@ -365,7 +365,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await StockService.Received(1).DeleteItem(ItemToRegister.Name, ItemToRegister.Brand);
+            await StockService.Received(1).DeletePart(ItemToRegister.Name, ItemToRegister.Brand);
         }
 
         [Test]
@@ -375,7 +375,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await StockService.Received(0).DeleteItem(Arg.Any<string>(), Arg.Any<string>());
+            await StockService.Received(0).DeletePart(Arg.Any<string>(), Arg.Any<string>());
         }
     }
 }

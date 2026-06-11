@@ -8,6 +8,6 @@ namespace Repository.Interface
         Task<IEnumerable<IVehicle>> GetVehicles();
         Task<IVehicle?> GetVehicle(string licensePlate);
         Task<int> UpdateVehicle(IVehicle vehicle);
-        Task<int> DeleteVehicle(string licensePlate);
+        Task<int> DeleteVehicle(Guid vehicleId);
     }
 }

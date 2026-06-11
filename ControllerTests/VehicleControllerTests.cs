@@ -1,8 +1,6 @@
-﻿using Domain.Vehicle;
-using NSubstitute;
-using Service;
+﻿using NSubstitute;
 using Service.Interface;
-using Service.Interface.Dto;
+using Service.Interface.Dto.Vehicle;
 using System.Net;
 using System.Net.Http.Json;
 
@@ -12,25 +10,24 @@ namespace ControllerTests
     {
         private IVehicleService VehicleService { get; set; }
 
-        private static readonly VehicleDto VehicleToRegister = new("Fiat", "Mobi", 2025, "FIT4M08");
-        private static readonly VehicleDto VehicleToFailRegister = new("Test", "Test", 0000, "TST1234");
+        private static readonly CreateVehicleDto VehicleToRegister = new("123.456.789-12", "Fiat", "Mobi", 2025, "FIT4M08");
+
+        private static Guid ExistingVehicleId = Guid.NewGuid();
 
         private static readonly List<VehicleDto> Vehicles =
         [
-            new("Honda", "Civic", 2024, "CVC2024"),
-            new("Ford", "Ka", 2020, "FKA0F20")
+            new(ExistingVehicleId, "123.456.789-12", "Honda", "Civic", 2024, "CVC2024"),
+            new(Guid.NewGuid(), "123.456.789-12", "Ford", "Ka", 2020, "FKA0F20")
         ];
-
-        private static readonly VehicleDto VehicleToUpdate = new("Honda", "City", 2020, "CVC2024");
-        private static readonly VehicleDto ExistingVehicleToFailUpdateOrDelete = new("Test", "Test", 2020, "FKA0F20");
+        private static readonly VehicleDto VehicleToUpdate = new(ExistingVehicleId, "123.456.789-12", "Honda", "City", 2020, "CVC2024");
 
         protected override void MockService()
         {
             VehicleService = TestWebAppFactory.VehicleServiceMock;
 
-            VehicleService.RegisterVehicle(Arg.Any<VehicleDto>()).Returns(callInfo =>
+            VehicleService.RegisterVehicle(Arg.Any<CreateVehicleDto>()).Returns(callInfo =>
             {
-                var vehicle = callInfo.ArgAt<VehicleDto>(0);
+                var vehicle = callInfo.ArgAt<CreateVehicleDto>(0);
 
                 if (vehicle.Equals(VehicleToRegister))
                     return Task.CompletedTask;
@@ -85,7 +82,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await VehicleService.Received(0).RegisterVehicle(Arg.Any<VehicleDto>());
+            await VehicleService.Received(0).RegisterVehicle(Arg.Any<CreateVehicleDto>());
         }
 
         [Test]
@@ -102,7 +99,7 @@ namespace ControllerTests
         public async Task MustGetVehicles()
         {
             var response = await TestClient.GetAsync("/Vehicle/GetVehicles");
-            var result = await response.Content.ReadFromJsonAsync<IEnumerable<VehicleDto>>();
+            var result = await response.Content.ReadFromJsonAsync<IEnumerable<CreateVehicleDto>>();
             var vehicles = result?.ToList();
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
@@ -126,7 +123,7 @@ namespace ControllerTests
         public async Task MustGetVehicle()
         {
             var response = await TestClient.GetAsync($"/Vehicle/GetVehicle/{Vehicles[0].LicensePlate}");
-            var vehicle = await response.Content.ReadFromJsonAsync<VehicleDto>();
+            var vehicle = await response.Content.ReadFromJsonAsync<CreateVehicleDto>();
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
@@ -176,7 +173,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await VehicleService.Received(1).UpdateVehicle(VehicleToRegister);
+            await VehicleService.Received(1).UpdateVehicle(Arg.Any<VehicleDto>());
         }
 
         [Test]

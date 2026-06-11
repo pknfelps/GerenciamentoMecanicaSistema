@@ -13,85 +13,84 @@ namespace ServiceTests
         private IStockService Service { get; set; }
         private IStockRepository Repository { get; set; }
 
-        private static readonly StockItemDto ItemToRegister = new("Óleo de motor", "Lubrax", 41.90, 5, 0);
-        private static readonly StockItemDto ItemToFailRegister = new("Teste", "Testando", 15, 1, 0);
-        private static readonly StockItemUpdateDto<int> ItemToFailIntOperations = new(ItemToRegister.Name, ItemToRegister.Brand, 5);
-        private static readonly StockItemUpdateDto<double> ItemToFailDoubleOperations = new(ItemToRegister.Name, ItemToRegister.Brand, 10.00);
-        private static List<IStockItem> StockItems;
-        private static List<StockItemDto> StockItemsDtos;
-        private static StockItemUpdateDto<int> ItemToAddAmount;
-        private static StockItemUpdateDto<int> ItemToFailAddAmount;
-        private static StockItemUpdateDto<double> ItemToUpdatePrice;
-        private static StockItemUpdateDto<double> ItemToFailUpdatePrice;
+        private static readonly CreatePartDto PartToRegister = new("Óleo de motor", "Lubrax", 41.90, 5);
+        private static readonly CreatePartDto PartToFailRegister = new("Teste", "Testando", 15, 1);
+        private static readonly PartUpdateDto<int> PartToFailIntOperations = new(Guid.NewGuid(), 5);
+        private static readonly PartUpdateDto<double> PartToFailDoubleOperations = new(Guid.NewGuid(), 10.00);
+        private static List<IPart> StockParts;
+        private static List<PartDto> StockPartsDtos;
+        private static PartUpdateDto<int> PartToAddAmount;
+        private static PartUpdateDto<int> PartToFailAddAmount;
+        private static PartUpdateDto<double> PartToUpdatePrice;
+        private static PartUpdateDto<double> PartToFailUpdatePrice;
 
         [SetUp]
         public void SetUp()
         {
-            StockItems = 
+            StockParts = 
             [ 
-                new StockItem("Vela de ignição", "Bosch", 6.00, 20, 5),
-                new StockItem("Flúido para radiador", "Gitanes", 30.00, 5, 0)
+                new Part(Guid.NewGuid(), "Vela de ignição", "Bosch", 6.00, 20, 5),
+                new Part(Guid.NewGuid(), "Flúido para radiador", "Gitanes", 30.00, 5, 0)
             ];
 
-            StockItemsDtos =
+            StockPartsDtos =
             [
-                new StockItemDto("Vela de ignição", "Bosch", 6.00, 20, 5),
-                new StockItemDto("Flúido para radiador", "Gitanes", 30.00, 5, 0)
+                new PartDto(Guid.NewGuid(), "Vela de ignição", "Bosch", 6.00, 20, 5),
+                new PartDto(Guid.NewGuid(), "Flúido para radiador", "Gitanes", 30.00, 5, 0)
             ];
 
-            ItemToAddAmount = new(StockItems[0].Name, StockItems[0].Brand, 5);
-            ItemToFailAddAmount = new(StockItems[1].Name, StockItems[1].Brand, 5);
-            ItemToUpdatePrice = new(StockItems[0].Name, StockItems[0].Brand, 10.00);
-            ItemToFailUpdatePrice = new(StockItems[1].Name, StockItems[1].Brand, 35.00);
+            PartToAddAmount = new(StockParts[0].Id, 5);
+            PartToFailAddAmount = new(StockParts[1].Id, 5);
+            PartToUpdatePrice = new(StockParts[0].Id, 10.00);
+            PartToFailUpdatePrice = new(StockParts[1].Id, 35.00);
 
             Repository = Substitute.For<IStockRepository>();
 
-            Repository.RegisterNewItem(Arg.Any<IStockItem>()).Returns(callInfo =>
+            Repository.RegisterNewPart(Arg.Any<IPart>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<IStockItem>(0);
+                var item = callInfo.ArgAt<IPart>(0);
 
-                if (item.Name == ItemToRegister.Name && item.Brand == ItemToRegister.Brand && item.Price == ItemToRegister.Price && item.Amount == ItemToRegister.Amount)
+                if (item.Name == PartToRegister.Name && item.Brand == PartToRegister.Brand && item.Price == PartToRegister.Price && item.Amount == PartToRegister.Amount)
                     return 1;
 
                 return 0;
             });
 
-            Repository.GetItens().Returns(StockItems);
+            Repository.GetParts().Returns(StockParts);
 
-            Repository.GetItem(Arg.Any<string>(), Arg.Any<string>()).Returns(callInfo =>
+            Repository.GetPart(Arg.Any<string>(), Arg.Any<string>()).Returns(callInfo =>
             {
                 var name = callInfo.ArgAt<string>(0);
                 var brand = callInfo.ArgAt<string>(1);
 
-                return StockItems.FirstOrDefault(x => x.Name == name && x.Brand == brand);
+                return StockParts.FirstOrDefault(x => x.Name == name && x.Brand == brand);
             });
 
-            Repository.UpdateItemAmount(Arg.Any<IStockItem>()).Returns(callInfo =>
+            Repository.UpdatePartAmount(Arg.Any<IPart>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<IStockItem>(0);
+                var item = callInfo.ArgAt<IPart>(0);
 
-                if (item.Name == StockItems[0].Name && item.Brand == StockItems[0].Brand)
+                if (item.Name == StockParts[0].Name && item.Brand == StockParts[0].Brand)
                     return 1;
 
                 return 0;
             });
 
-            Repository.UpdateItemPrice(Arg.Any<IStockItem>()).Returns(callInfo =>
+            Repository.UpdatePartPrice(Arg.Any<IPart>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<IStockItem>(0);
+                var item = callInfo.ArgAt<IPart>(0);
 
-                if (item.Name == StockItems[0].Name && item.Brand == StockItems[0].Brand)
+                if (item.Name == StockParts[0].Name && item.Brand == StockParts[0].Brand)
                     return 1;
 
                 return 0;
             });
 
-            Repository.DeleteItem(Arg.Any<string>(), Arg.Any<string>()).Returns(callInfo =>
+            Repository.DeletePart(Arg.Any<Guid>()).Returns(callInfo =>
             {
-                var name = callInfo.ArgAt<string>(0);
-                var brand = callInfo.ArgAt<string>(1);
+                var id = callInfo.ArgAt<Guid>(0);
 
-                if (name == StockItems[0].Name && brand == StockItems[0].Brand)
+                if (id == StockParts[0].Id)
                     return 1;
 
                 return 0;
@@ -101,200 +100,200 @@ namespace ServiceTests
         }
 
         [Test]
-        public async Task MustRegisterNewItem()
+        public async Task MustRegisterNewPart()
         {
-            await Service.RegisterNewItem(ItemToRegister);
+            await Service.RegisterNewPart(PartToRegister);
 
-            await Repository.Received(1).GetItem(ItemToRegister.Name, ItemToRegister.Brand);
-            await Repository.ReceivedWithAnyArgs(1).RegisterNewItem(Arg.Any<IStockItem>());
+            await Repository.Received(1).GetPart(PartToRegister.Name, PartToRegister.Brand);
+            await Repository.ReceivedWithAnyArgs(1).RegisterNewPart(Arg.Any<IPart>());
         }
 
         [Test]
-        public async Task MustNotRegisterNewItemIfAlreadyExists()
+        public async Task MustNotRegisterNewPartIfAlreadyExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RegisterNewItem(StockItemsDtos[0]));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RegisterNewPart(StockPartsDtos[0]));
 
-            await Repository.Received(1).GetItem(StockItemsDtos[0].Name, StockItemsDtos[0].Brand);
+            await Repository.Received(1).GetPart(StockPartsDtos[0].Name, StockPartsDtos[0].Brand);
         }
 
         [Test]
-        public async Task MustThrowExceptionIfFailedToRegisterNewItem()
+        public async Task MustThrowExceptionIfFailedToRegisterNewPart()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RegisterNewItem(ItemToFailRegister));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RegisterNewPart(PartToFailRegister));
 
-            await Repository.Received(1).GetItem(ItemToFailRegister.Name, ItemToFailRegister.Brand);
-            await Repository.ReceivedWithAnyArgs(1).RegisterNewItem(Arg.Any<IStockItem>());
+            await Repository.Received(1).GetPart(PartToFailRegister.Name, PartToFailRegister.Brand);
+            await Repository.ReceivedWithAnyArgs(1).RegisterNewPart(Arg.Any<IPart>());
         }
 
         [Test]
-        public async Task MustAddItemAmount()
+        public async Task MustAddPartAmount()
         {
-            await Service.AddItemAmount(ItemToAddAmount);
+            await Service.AddPartAmount(PartToAddAmount);
 
-            await Repository.Received(1).GetItem(StockItems[0].Name, StockItems[0].Brand);
-            await Repository.Received(1).UpdateItemAmount(Arg.Any<IStockItem>());
+            await Repository.Received(1).GetPart(StockParts[0].Name, StockParts[0].Brand);
+            await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
         }
 
         [Test]
-        public async Task MustNotAddItemAmountIfItemDoentExist()
+        public async Task MustNotAddPartAmountIfPartDoentExist()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddItemAmount(ItemToFailIntOperations));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddPartAmount(PartToFailIntOperations));
 
-            await Repository.Received(1).GetItem(ItemToRegister.Name, ItemToRegister.Brand);
-            await Repository.Received(0).UpdateItemAmount(Arg.Any<IStockItem>());
+            await Repository.Received(1).GetPart(PartToRegister.Name, PartToRegister.Brand);
+            await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
         }
 
         [Test]
-        public async Task MustRemoveItemAmount()
+        public async Task MustRemovePartAmount()
         {
-            await Service.RemoveItemAmount(ItemToAddAmount);
+            await Service.RemovePartAmount(PartToAddAmount);
 
-            await Repository.Received(1).GetItem(StockItems[0].Name, StockItems[0].Brand);
-            await Repository.Received(1).UpdateItemAmount(Arg.Any<IStockItem>());
+            await Repository.Received(1).GetPart(StockParts[0].Name, StockParts[0].Brand);
+            await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
         }
 
         [Test]
-        public async Task MustNotRemoveItemAmountIfItemDoentExist()
+        public async Task MustNotRemovePartAmountIfPartDoentExist()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveItemAmount(ItemToFailIntOperations));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemovePartAmount(PartToFailIntOperations));
 
-            await Repository.Received(1).GetItem(ItemToRegister.Name, ItemToRegister.Brand);
-            await Repository.Received(0).UpdateItemAmount(Arg.Any<IStockItem>());
+            await Repository.Received(1).GetPart(PartToRegister.Name, PartToRegister.Brand);
+            await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
         }
 
         [Test]
-        public async Task MustReserveItemAmount()
+        public async Task MustReservePartAmount()
         {
-            await Service.ReserveItemAmount(ItemToAddAmount);
+            await Service.ReservePartAmount(PartToAddAmount);
 
-            await Repository.Received(1).GetItem(StockItems[0].Name, StockItems[0].Brand);
-            await Repository.Received(1).UpdateItemAmount(Arg.Any<IStockItem>());
+            await Repository.Received(1).GetPart(StockParts[0].Name, StockParts[0].Brand);
+            await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
         }
 
         [Test]
-        public async Task MustNotReserveItemAmountIfItemDoentExist()
+        public async Task MustNotReservePartAmountIfPartDoentExist()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ReserveItemAmount(ItemToFailIntOperations));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ReservePartAmount(PartToFailIntOperations));
 
-            await Repository.Received(1).GetItem(ItemToRegister.Name, ItemToRegister.Brand);
-            await Repository.Received(0).UpdateItemAmount(Arg.Any<IStockItem>());
+            await Repository.Received(1).GetPart(PartToRegister.Name, PartToRegister.Brand);
+            await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
         }
 
         [Test]
-        public async Task MustRestoreItemAmount()
+        public async Task MustRestorePartAmount()
         {
-            await Service.RestoreItemAmount(ItemToAddAmount);
+            await Service.RestorePartAmount(PartToAddAmount);
 
-            await Repository.Received(1).GetItem(StockItems[0].Name, StockItems[0].Brand);
-            await Repository.Received(1).UpdateItemAmount(Arg.Any<IStockItem>());
+            await Repository.Received(1).GetPart(StockParts[0].Name, StockParts[0].Brand);
+            await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
         }
 
         [Test]
-        public async Task MustNotRestoreItemAmountIfItemDoentExist()
+        public async Task MustNotRestorePartAmountIfPartDoentExist()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RestoreItemAmount(ItemToFailIntOperations));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RestorePartAmount(PartToFailIntOperations));
 
-            await Repository.Received(1).GetItem(ItemToRegister.Name, ItemToRegister.Brand);
-            await Repository.Received(0).UpdateItemAmount(Arg.Any<IStockItem>());
+            await Repository.Received(1).GetPart(PartToRegister.Name, PartToRegister.Brand);
+            await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
         }
 
         [Test]
-        public async Task MustThrowExceptionIfFailUpdateItemAmount()
+        public async Task MustThrowExceptionIfFailUpdatePartAmount()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddItemAmount(ItemToFailAddAmount));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddPartAmount(PartToFailAddAmount));
 
-            await Repository.Received(1).GetItem(StockItems[1].Name, StockItems[1].Brand);
-            await Repository.Received(1).UpdateItemAmount(Arg.Any<IStockItem>());
+            await Repository.Received(1).GetPart(StockParts[1].Name, StockParts[1].Brand);
+            await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
         }
 
         [Test]
-        public async Task MustGetItems()
+        public async Task MustGetParts()
         {
-            var itens = (await Service.GetItens()).ToList();
+            var itens = (await Service.GetParts()).ToList();
 
-            await Repository.Received(1).GetItens();
+            await Repository.Received(1).GetParts();
 
             Assert.That(itens, Has.Count.EqualTo(2));
             Assert.Multiple(() =>
             {
-                Assert.That(itens[0].Equals(StockItemsDtos[0]), Is.True);
-                Assert.That(itens[1].Equals(StockItemsDtos[1]), Is.True);
+                Assert.That(itens[0].Equals(StockPartsDtos[0]), Is.True);
+                Assert.That(itens[1].Equals(StockPartsDtos[1]), Is.True);
             });
         }
 
         [Test]
-        public async Task MustGetItem()
+        public async Task MustGetPart()
         {
-            var item = await Service.GetItem(StockItems[0].Name, StockItems[0].Brand);
+            var item = await Service.GetPart(StockParts[0].Name, StockParts[0].Brand);
 
-            await Repository.Received(1).GetItem(StockItems[0].Name, StockItems[0].Brand);
+            await Repository.Received(1).GetPart(StockParts[0].Name, StockParts[0].Brand);
 
             Assert.That(item, Is.Not.Null);
-            Assert.That(item.Equals(StockItemsDtos[0]), Is.True);
+            Assert.That(item.Equals(StockPartsDtos[0]), Is.True);
         }
 
         [Test]
-        public async Task MustNotGetItemIfNotExists()
+        public async Task MustNotGetPartIfNotExists()
         {
-            var item = await Service.GetItem(ItemToRegister.Name, ItemToRegister.Brand);
+            var item = await Service.GetPart(PartToRegister.Name, PartToRegister.Brand);
 
-            await Repository.Received(1).GetItem(ItemToRegister.Name, ItemToRegister.Brand);
+            await Repository.Received(1).GetPart(PartToRegister.Name, PartToRegister.Brand);
 
             Assert.That(item, Is.Null);
         }
 
         [Test]
-        public async Task MustUpdateItemPrice()
+        public async Task MustUpdatePartPrice()
         {
-            await Service.UpdateItemPrice(ItemToUpdatePrice);
+            await Service.UpdatePartPrice(PartToUpdatePrice);
 
-            await Repository.Received(1).GetItem(StockItems[0].Name, StockItems[0].Brand);
-            await Repository.Received(1).UpdateItemPrice(Arg.Any<IStockItem>());
+            await Repository.Received(1).GetPart(StockParts[0].Name, StockParts[0].Brand);
+            await Repository.Received(1).UpdatePartPrice(Arg.Any<IPart>());
         }
 
         [Test]
-        public async Task MustNotUpdateItemPriceIfNotExists()
+        public async Task MustNotUpdatePartPriceIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdateItemPrice(ItemToFailDoubleOperations));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdatePartPrice(PartToFailDoubleOperations));
 
-            await Repository.Received(1).GetItem(ItemToRegister.Name, ItemToRegister.Brand);
-            await Repository.Received(0).UpdateItemPrice(Arg.Any<IStockItem>());
+            await Repository.Received(1).GetPart(PartToRegister.Name, PartToRegister.Brand);
+            await Repository.Received(0).UpdatePartPrice(Arg.Any<IPart>());
         }
 
         [Test]
-        public async Task MustThrowExceptionIfFailtToUpdateItemPrice()
+        public async Task MustThrowExceptionIfFailtToUpdatePartPrice()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdateItemPrice(ItemToFailUpdatePrice));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdatePartPrice(PartToFailUpdatePrice));
 
-            await Repository.Received(1).GetItem(StockItems[1].Name, StockItems[1].Brand);
-            await Repository.Received(1).UpdateItemPrice(Arg.Any<IStockItem>());
+            await Repository.Received(1).GetPart(StockParts[1].Name, StockParts[1].Brand);
+            await Repository.Received(1).UpdatePartPrice(Arg.Any<IPart>());
         }
 
         [Test]
-        public async Task MustDeleteItem()
+        public async Task MustDeletePart()
         {
-            await Service.DeleteItem(StockItems[0].Name, StockItems[0].Brand);
+            await Service.DeletePart(StockParts[0].Name, StockParts[0].Brand);
 
-            await Repository.Received(1).GetItem(StockItems[0].Name, StockItems[0].Brand);
-            await Repository.Received(1).DeleteItem(StockItems[0].Name, StockItems[0].Brand);
+            await Repository.Received(1).GetPart(StockParts[0].Name, StockParts[0].Brand);
+            await Repository.Received(1).DeletePart(StockParts[0].Id);
         }
 
         [Test]
-        public async Task MustNotDeleteItemIfNotExists()
+        public async Task MustNotDeletePartIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeleteItem(ItemToRegister.Name, ItemToRegister.Brand));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeletePart(PartToRegister.Name, PartToRegister.Brand));
 
-            await Repository.Received(1).GetItem(ItemToRegister.Name, ItemToRegister.Brand);
-            await Repository.Received(0).DeleteItem(Arg.Any<string>(), Arg.Any<string>());
+            await Repository.Received(1).GetPart(PartToRegister.Name, PartToRegister.Brand);
+            await Repository.Received(0).DeletePart(Arg.Any<Guid>());
         }
 
         [Test]
-        public async Task MustThrowExceptionIfFailToDeleteItem()
+        public async Task MustThrowExceptionIfFailToDeletePart()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeleteItem(StockItems[1].Name, StockItems[1].Brand));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeletePart(StockParts[1].Name, StockParts[1].Brand));
 
-            await Repository.Received(1).GetItem(StockItems[1].Name, StockItems[1].Brand);
-            await Repository.Received(1).DeleteItem(StockItems[1].Name, StockItems[1].Brand);
+            await Repository.Received(1).GetPart(StockParts[1].Name, StockParts[1].Brand);
+            await Repository.Received(1).DeletePart(StockParts[1].Id);
         }
     }
 }

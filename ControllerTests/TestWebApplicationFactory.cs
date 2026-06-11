@@ -9,8 +9,8 @@ namespace ControllerTests
 {
     public class TestWebApplicationFactory : WebApplicationFactory<Program>
     {
-        public IClienteService ClienteServiceMock { get; private set; } = Substitute.For<IClienteService>();
-        public IUsuarioService UsuarioServiceMock { get; private set; } = Substitute.For<IUsuarioService>();
+        public ICustomerService CostumerServiceMock { get; private set; } = Substitute.For<ICustomerService>();
+        public IUserService UserServiceMock { get; private set; } = Substitute.For<IUserService>();
         public IAuthenticationService AuthenticationServiceMock { get; private set; } = Substitute.For<IAuthenticationService>();
         public IStockService StockServiceMock { get; private set; } = Substitute.For<IStockService>();
         public IVehicleService VehicleServiceMock { get; private set; } = Substitute.For<IVehicleService>();
@@ -21,8 +21,8 @@ namespace ControllerTests
             {
                 List<ServiceDescriptor?> servicesToMock =
                 [
-                    services.SingleOrDefault(d => d.ServiceType == typeof(IClienteService)),
-                    services.SingleOrDefault(d => d.ServiceType == typeof(IUsuarioService)),
+                    services.SingleOrDefault(d => d.ServiceType == typeof(ICustomerService)),
+                    services.SingleOrDefault(d => d.ServiceType == typeof(IUserService)),
                     services.SingleOrDefault(d => d.ServiceType == typeof(IAuthenticationService)),
                     services.SingleOrDefault(d => d.ServiceType == typeof(IStockService)),
                     services.SingleOrDefault(d => d.ServiceType == typeof(IVehicleService)),
@@ -32,8 +32,8 @@ namespace ControllerTests
                     if (serviceDescriptor != null)
                         services.Remove(serviceDescriptor);
 
-                services.AddSingleton(ClienteServiceMock);
-                services.AddSingleton(UsuarioServiceMock);
+                services.AddSingleton(CostumerServiceMock);
+                services.AddSingleton(UserServiceMock);
                 services.AddSingleton(AuthenticationServiceMock);
                 services.AddSingleton(StockServiceMock);
                 services.AddSingleton(VehicleServiceMock);

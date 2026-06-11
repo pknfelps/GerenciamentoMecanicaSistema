@@ -1,7 +1,7 @@
 ﻿using NSubstitute;
 using Service;
 using Service.Interface;
-using Service.Interface.Dto;
+using Service.Interface.Dto.User;
 using System.Net;
 using System.Net.Http.Json;
 
@@ -11,9 +11,9 @@ namespace ControllerTests
     {
         private IAuthenticationService AuthenticationService { get; set; }
 
-        private readonly UsuarioDto UsuarioExistente = new("Ciclano", "Ciclano@123", "Admin");
-        private readonly UsuarioDto UsuarioExistenteComSenhaErrada = new("Ciclano", "Ciclano@321", "Admin");
-        private readonly UsuarioDto UsuarioInexistente = new("Fulano", "Fulano@123", "Usuario");
+        private readonly UserDto UsuarioExistente = new(Guid.NewGuid(), "Ciclano", "Ciclano@123", "Admin");
+        private readonly UserDto UsuarioExistenteComSenhaErrada = new(Guid.NewGuid(), "Ciclano", "Ciclano@321", "Admin");
+        private readonly UserDto UsuarioInexistente = new(Guid.NewGuid(), "Fulano", "Fulano@123", "Usuario");
         private readonly string TokenValido = "TokenvalidoCriadocomsUcessoaPartirDetestedeController";
         private readonly string UnauthorizedMessage = "Usuário ou senha inválidos";
 
@@ -29,9 +29,9 @@ namespace ControllerTests
         {
             AuthenticationService = TestWebAppFactory.AuthenticationServiceMock;
 
-            AuthenticationService.Login(Arg.Any<UsuarioDto>()).Returns(callInfo =>
+            AuthenticationService.Authenticate(Arg.Any<UserDto>()).Returns(callInfo =>
             {
-                var usuario = callInfo.Arg<UsuarioDto>();
+                var usuario = callInfo.Arg<UserDto>();
 
                 if (usuario.Equals(UsuarioExistente))
                     return TokenValido;
@@ -47,7 +47,7 @@ namespace ControllerTests
 
             var token = await response.Content.ReadAsStringAsync();
 
-            await AuthenticationService.Received(1).Login(UsuarioExistente);
+            await AuthenticationService.Received(1).Authenticate(UsuarioExistente);
 
             Assert.Multiple(() =>
             {
@@ -65,7 +65,7 @@ namespace ControllerTests
 
             var token = await response.Content.ReadAsStringAsync();
 
-            await AuthenticationService.Received(1).Login(UsuarioInexistente);
+            await AuthenticationService.Received(1).Authenticate(UsuarioInexistente);
 
             Assert.Multiple(() =>
             {
@@ -81,7 +81,7 @@ namespace ControllerTests
 
             var token = await response.Content.ReadAsStringAsync();
 
-            await AuthenticationService.Received(1).Login(UsuarioExistenteComSenhaErrada);
+            await AuthenticationService.Received(1).Authenticate(UsuarioExistenteComSenhaErrada);
 
             Assert.Multiple(() =>
             {
@@ -95,7 +95,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PostAsJsonAsync("/Authentication/Login", new { Nome = "Teste", Cargo = "Inválido" });
 
-            await AuthenticationService.ReceivedWithAnyArgs(0).Login(Arg.Any<UsuarioDto>());
+            await AuthenticationService.ReceivedWithAnyArgs(0).Authenticate(Arg.Any<UserDto>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }

@@ -1,6 +1,5 @@
 ﻿using Dapper;
-using Domain.Costumer;
-using Domain.Interface.Costumer;
+using Domain.Customer;
 using Domain.Interface.Vehicle;
 using Domain.Vehicle;
 using Repository.Dto;
@@ -12,18 +11,18 @@ namespace Repository
     public class VehicleRepository(IDbConnection connection) : BaseRepository(connection), IVehicleRepository
     {
         public static string RegisterVehicleSql { get; private set; } = """
-                INSERT INTO vehicles(id, brand, model, year, license_plate)
-                VALUES (@Id, @Brand, @Model, @Year, @LicensePlate);
+                INSERT INTO vehicles(id, customer_document, brand, model, year, license_plate)
+                VALUES (@Id, @Customer_Document, @Brand, @Model, @Year, @License_Plate);
                 """;
 
         public static string GetVehiclesSql { get; private set; } = """
-                SELECT id, brand, model, year, license_plate
+                SELECT id, customer_document, brand, model, year, license_plate
                 FROM vehicles
                 LIMIT 50;
                 """;
 
         public static string GetVehicleSql { get; private set; } = """
-                SELECT id, brand, model, year, license_plate
+                SELECT id, customer_document, brand, model, year, license_plate
                 FROM vehicles
                 WHERE license_plate = @licensePlate;
                 """;
@@ -33,24 +32,24 @@ namespace Repository
                 SET brand = @Brand,
                     model = @Model,
                     year = @Year
-                WHERE license_plate = @LicensePlate;
+                WHERE license_plate = @License_Plate;
                 """;
 
         public static string DeleteVehicleSql { get; private set; } = """
                 DELETE FROM vehicles
-                WHERE license_plate = @licensePlate;
+                WHERE id = @vehicleId;
                 """;
 
         public async Task<int> RegisterVehicle(IVehicle vehicle)
         {
-            return await Connection.ExecuteAsync(RegisterVehicleSql, ToDb(vehicle));
+            return await Connection.ExecuteAsync(RegisterVehicleSql, VehicleDb.Create(vehicle));
         }
 
         public async Task<IEnumerable<IVehicle>> GetVehicles()
         {
             var vehicles = await Connection.QueryAsync<VehicleDb>(GetVehiclesSql);
 
-            return vehicles.Select(ToDomain);
+            return vehicles.Select(vehicle => vehicle.ToDomain());
         }
 
         public async Task<IVehicle?> GetVehicle(string licensePlate)
@@ -60,21 +59,17 @@ namespace Repository
             if (vehicle == null)
                 return null;
 
-            return ToDomain(vehicle);
+            return vehicle.ToDomain();
         }
 
         public async Task<int> UpdateVehicle(IVehicle vehicle)
         {
-            return await Connection.ExecuteAsync(UpdateVehicleSql, ToDb(vehicle));
+            return await Connection.ExecuteAsync(UpdateVehicleSql, VehicleDb.Create(vehicle));
         }
 
-        public async Task<int> DeleteVehicle(string licensePlate)
+        public async Task<int> DeleteVehicle(Guid vehicleId)
         {
-            return await Connection.ExecuteAsync(DeleteVehicleSql, new { licensePlate });
+            return await Connection.ExecuteAsync(DeleteVehicleSql, new { vehicleId });
         }
-
-        private static VehicleDb ToDb(IVehicle vehicle) => new(vehicle.Id, vehicle.Brand, vehicle.Model, vehicle.Year, vehicle.LicensePlate.License);
-
-        private static Vehicle ToDomain(VehicleDb vehicle) => new(vehicle.Id, vehicle.Brand, vehicle.Model, vehicle.Year, vehicle.LicensePlate);
     }
 }

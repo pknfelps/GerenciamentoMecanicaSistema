@@ -8,11 +8,13 @@ namespace DependencyInjection
     {
         public static void Register(IServiceCollection service)
         {
-            service.AddTransient<IClienteService, ClienteService>();
-            service.AddTransient<IUsuarioService, UsuarioService>();
+            service.AddTransient<ICustomerService, CustomerService>();
+            service.AddTransient<IUserService, UserService>();
             service.AddTransient<IAuthenticationService, AuthenticationService>();
             service.AddTransient<IStockService, StockService>();
             service.AddTransient<IVehicleService, VehicleService>();
+            service.AddTransient<IMechanicalServiceService, MechanicalServiceService>();
+            service.AddTransient<IWorkOrderService, WorkOrderService>();
         }
     }
 }

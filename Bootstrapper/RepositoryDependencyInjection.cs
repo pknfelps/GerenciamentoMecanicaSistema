@@ -23,10 +23,12 @@ namespace DependencyInjection
                 return connection;
             });
 
-            service.AddScoped<IClienteRepository, ClienteRepository>();
-            service.AddScoped<IUsuarioRepository, UsuarioRepository>();
+            service.AddScoped<ICustomerRepository, CustomerRepository>();
+            service.AddScoped<IUserRepository, UserRepository>();
             service.AddScoped<IStockRepository, StockRepository>();
             service.AddScoped<IVehicleRepository, VehicleRepository>();
+            service.AddScoped<IMechanicalServiceRepository, MechanicalServiceRepository>();
+            service.AddScoped<IWorkOrderRepository, WorkOrderRepository>();
         }
     }
 }

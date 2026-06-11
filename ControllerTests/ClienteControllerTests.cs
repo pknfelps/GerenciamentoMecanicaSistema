@@ -1,203 +1,207 @@
 ﻿using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Service.Interface;
-using Service.Interface.Dto;
+using Service.Interface.Dto.Customer;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 
 namespace ControllerTests
 {
-    public partial class ClienteControllerTests : BaseControllerTests
+    public partial class CostumerControllerTests : BaseControllerTests
     {
-        private IClienteService ClienteService { get; set; }
+        private ICustomerService CostumerService { get; set; }
 
-        private readonly ClienteDto ClienteParaCriar = new("Fulano", "12345678912", "11912345678", "fulano@gmail.com");
+        private readonly CreateCustomerDto CostumerToRegister = new("Fulano", "12345678912", "11912345678", "fulano@gmail.com");
 
-        private readonly List<ClienteDto> ClientesExistentes =
+        private static Guid ExistingCustomerId = Guid.NewGuid();
+
+        private readonly List<CustomerDto> ExistingCostumer =
         [
-            new ClienteDto("Ciclano", "12.123.456/0001-12", "(11) 91234-5678", "ciclano@gmail.com"),
-            new ClienteDto("Beltrano", "12.123.456/0001-15", "(11) 93214-6578", "beltrano@gmail.com"),
+            new CustomerDto(ExistingCustomerId, "Ciclano", "12.123.456/0001-12", "(11) 91234-5678", "ciclano@gmail.com"),
+            new CustomerDto(Guid.NewGuid(), "Beltrano", "12.123.456/0001-15", "(11) 93214-6578", "beltrano@gmail.com"),
         ];
 
-        private readonly ClienteDto ClienteParaAtualizar = new("Ciclano", "12.123.456/0001-12", "(11) 94321-8765", "ciclano.company@gmail.com");
+        private readonly CustomerDto CostumerToUpdate = new(ExistingCustomerId, "Ciclano", "12.123.456/0001-12", "(11) 94321-8765", "ciclano.company@gmail.com");
 
         protected override void MockService()
         {
-            ClienteService = TestWebAppFactory.ClienteServiceMock;
+            CostumerService = TestWebAppFactory.CostumerServiceMock;
         }
 
         [Test]
-        public async Task MustCreateCliente()
+        public async Task MustCreateCostumer()
         {
-            ClienteService.CreateCliente(ClienteParaCriar).Returns(Task.CompletedTask);
+            CostumerService.RegisterCustomer(CostumerToRegister).Returns(Task.CompletedTask);
 
-            var response = await TestClient.PostAsJsonAsync("/Cliente/CreateCliente", ClienteParaCriar);
+            var response = await TestClient.PostAsJsonAsync("/Costumer/RegisterCostumer", CostumerToRegister);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
 
-            await ClienteService.Received(1).CreateCliente(ClienteParaCriar);
+            await CostumerService.Received(1).RegisterCustomer(CostumerToRegister);
         }
 
         [Test]
-        public async Task MustReturnBadRequestIfTryCreateAClienteThatIsNotValid()
+        public async Task MustReturnBadRequestIfTryCreateACostumerThatIsNotValid()
         {
-            var response = await TestClient.PostAsJsonAsync("/Cliente/CreateCliente", new { Nome = "Teste" });
+            var response = await TestClient.PostAsJsonAsync("/Costumer/RegisterCostumer", new { Nome = "Teste" });
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await ClienteService.ReceivedWithAnyArgs(0).CreateCliente(Arg.Any<ClienteDto>());
+            await CostumerService.ReceivedWithAnyArgs(0).RegisterCustomer(Arg.Any<CustomerDto>());
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfTryCreateAClienteThatAlreadyExists()
+        public async Task MustReturnInternalServerErrorIfTryCreateACostumerThatAlreadyExists()
         {
-            ClienteService.CreateCliente(Arg.Any<ClienteDto>()).Throws<InvalidOperationException>();
+            CostumerService.RegisterCustomer(Arg.Any<CustomerDto>()).Throws<InvalidOperationException>();
 
-            var response = await TestClient.PostAsJsonAsync("/Cliente/CreateCliente", ClientesExistentes[0]);
+            var response = await TestClient.PostAsJsonAsync("/Costumer/RegisterCostumer", ExistingCostumer[0]);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await ClienteService.Received(1).CreateCliente(ClientesExistentes[0]);
+            await CostumerService.Received(1).RegisterCustomer(ExistingCostumer[0]);
         }
 
         [Test]
-        public async Task MustGetClientes()
+        public async Task MustGetCostumers()
         {
-            ClienteService.GetClientes().Returns(ClientesExistentes);
+            CostumerService.GetCustomers().Returns(ExistingCostumer);
 
-            var response = await TestClient.GetAsync("/Cliente/GetClientes");
+            var response = await TestClient.GetAsync("/Costumer/GetCostumers");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            var resultado = await response.Content.ReadFromJsonAsync<IEnumerable<ClienteDto>>();
-            var clientes = resultado?.ToList();
+            var resultado = await response.Content.ReadFromJsonAsync<IEnumerable<CustomerDto>>();
+            var Costumers = resultado?.ToList();
 
-            await ClienteService.Received(1).GetClientes();
+            await CostumerService.Received(1).GetCustomers();
 
-            Assert.That(clientes, Has.Count.EqualTo(2));
+            Assert.That(Costumers, Has.Count.EqualTo(2));
 
             Assert.Multiple(() =>
             {
-                Assert.That(clientes[0].Equals(ClientesExistentes[0]), Is.True);
-                Assert.That(clientes[1].Equals(ClientesExistentes[1]), Is.True);
+                Assert.That(Costumers[0].Equals(ExistingCostumer[0]), Is.True);
+                Assert.That(Costumers[1].Equals(ExistingCostumer[1]), Is.True);
             });
         }
 
         [Test]
-        public async Task MustGetClienteByDocumento()
+        public async Task MustGetCostumerByDocumento()
         {
-            ClienteService.GetClienteByDocumento(Arg.Any<string>()).Returns(callInfo =>
+            CostumerService.GetCustomer(Arg.Any<string>()).Returns(callInfo =>
             {
                 var documento = callInfo.ArgAt<string>(0);
 
-                return ClientesExistentes.FirstOrDefault(x => RegexRemovePunctuation().Replace(x.Documento, "") == documento);
+                return ExistingCostumer.FirstOrDefault(x => RegexRemovePunctuation().Replace(x.Document, "") == documento);
             });
 
-            var documento = RegexRemovePunctuation().Replace(ClientesExistentes[0].Documento, "");
+            var documento = RegexRemovePunctuation().Replace(ExistingCostumer[0].Document, "");
 
-            var response = await TestClient.GetAsync($"/Cliente/GetClienteByDocumento/{documento}");
+            var response = await TestClient.GetAsync($"/Costumer/GetCostumer/{documento}");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            var cliente = await response.Content.ReadFromJsonAsync<ClienteDto>();
+            var Costumer = await response.Content.ReadFromJsonAsync<CustomerDto>();
 
-            await ClienteService.Received(1).GetClienteByDocumento(documento);
+            await CostumerService.Received(1).GetCustomer(documento);
 
-            Assert.That(cliente, Is.Not.Null);
-            Assert.That(cliente.Equals(ClientesExistentes[0]), Is.True);
+            Assert.That(Costumer, Is.Not.Null);
+            Assert.That(Costumer.Equals(ExistingCostumer[0]), Is.True);
         }
 
         [Test]
-        public async Task MustReturnNotFoundIfTryGetClienteThatNotExists()
+        public async Task MustReturnNotFoundIfTryGetCostumerThatNotExists()
         {
-            ClienteService.GetClienteByDocumento(Arg.Any<string>()).Returns((ClienteDto?)null);
+            CostumerService.GetCustomer(Arg.Any<string>()).Returns((CustomerDto?)null);
 
-            var response = await TestClient.GetAsync($"/Cliente/GetClienteByDocumento/{ClienteParaCriar.Documento}");
+            var response = await TestClient.GetAsync($"/Costumer/GetCostumer/{CostumerToRegister.Document}");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
 
-            await ClienteService.Received(1).GetClienteByDocumento(ClienteParaCriar.Documento);
+            await CostumerService.Received(1).GetCustomer(CostumerToRegister.Document);
         }
 
         [Test]
-        public async Task MustReturnBadRequestIfTryGetClienteWithInvalidDocumento()
+        public async Task MustReturnBadRequestIfTryGetCostumerWithInvalidDocumento()
         {
-            var response = await TestClient.GetAsync($"/Cliente/GetClienteByDocumento/teste");
+            var response = await TestClient.GetAsync($"/Costumer/GetCostumer/teste");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await ClienteService.ReceivedWithAnyArgs(0).GetClienteByDocumento(Arg.Any<string>());
+            await CostumerService.ReceivedWithAnyArgs(0).GetCustomer(Arg.Any<string>());
         }
 
         [Test]
-        public async Task MustUpdateCliente()
+        public async Task MustUpdateCostumer()
         {
-            ClienteService.UpdateCliente(ClienteParaAtualizar).Returns(Task.CompletedTask);
+            CostumerService.UpdateCustomer(CostumerToUpdate).Returns(Task.CompletedTask);
 
-            var response = await TestClient.PatchAsJsonAsync("/Cliente/UpdateCliente", ClienteParaAtualizar);
+            var response = await TestClient.PatchAsJsonAsync("/Costumer/UpdateCostumer", CostumerToUpdate);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            await ClienteService.Received(1).UpdateCliente(ClienteParaAtualizar);
+            await CostumerService.Received(1).UpdateCustomer(CostumerToUpdate);
         }
 
         [Test]
         public async Task MustReturnBadRequestIfTryUpdateWithInvalidClient()
         {
-            var response = await TestClient.PatchAsJsonAsync("/Cliente/UpdateCliente", new { Nome = "Teste" });
+            var response = await TestClient.PatchAsJsonAsync("/Costumer/UpdateCostumer", new { Nome = "Teste" });
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await ClienteService.ReceivedWithAnyArgs(0).UpdateCliente(Arg.Any<ClienteDto>());
+            await CostumerService.ReceivedWithAnyArgs(0).UpdateCustomer(Arg.Any<CustomerDto>());
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfTryUpdateAClienteThatNotExists()
+        public async Task MustReturnInternalServerErrorIfTryUpdateACostumerThatNotExists()
         {
-            ClienteService.UpdateCliente(ClienteParaCriar).Throws<InvalidOperationException>();
+            var customerToFail = new CustomerDto(Guid.NewGuid(), "Nome", "000.000.000-12", "(11) 00000-0000", "nome@gmai.com");
 
-            var response = await TestClient.PatchAsJsonAsync("/Cliente/UpdateCliente", ClienteParaCriar);
+            CostumerService.UpdateCustomer(customerToFail).Throws<InvalidOperationException>();
+
+            var response = await TestClient.PatchAsJsonAsync("/Costumer/UpdateCostumer", customerToFail);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await ClienteService.Received(1).UpdateCliente(ClienteParaCriar);
+            await CostumerService.Received(1).UpdateCustomer(customerToFail);
         }
 
         [Test]
-        public async Task MustDeleteCliente()
+        public async Task MustDeleteCostumer()
         {
-            var documento = RegexRemovePunctuation().Replace(ClientesExistentes[0].Documento, "");
+            var documento = RegexRemovePunctuation().Replace(ExistingCostumer[0].Document, "");
 
-            ClienteService.DeleteCliente(documento).Returns(Task.CompletedTask);
+            CostumerService.DeleteCustomer(documento).Returns(Task.CompletedTask);
 
-            var response = await TestClient.DeleteAsync($"/Cliente/DeleteCliente/{documento}");
+            var response = await TestClient.DeleteAsync($"/Costumer/DeleteCostumer/{documento}");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            await ClienteService.Received(1).DeleteCliente(documento);
+            await CostumerService.Received(1).DeleteCustomer(documento);
         }
 
         [Test]
-        public async Task MustReturnBadRequestIfTryDeleteAClienteWithInvalidDocumento()
+        public async Task MustReturnBadRequestIfTryDeleteACostumerWithInvalidDocumento()
         {
-            var response = await TestClient.DeleteAsync($"/Cliente/DeleteCliente/teste");
+            var response = await TestClient.DeleteAsync($"/Costumer/DeleteCostumer/teste");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await ClienteService.ReceivedWithAnyArgs(0).DeleteCliente(Arg.Any<string>());
+            await CostumerService.ReceivedWithAnyArgs(0).DeleteCustomer(Arg.Any<string>());
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfTryDeleteAClienteThatNotExists()
+        public async Task MustReturnInternalServerErrorIfTryDeleteACostumerThatNotExists()
         {
-            ClienteService.DeleteCliente(ClienteParaCriar.Documento).Throws<InvalidOperationException>();
+            CostumerService.DeleteCustomer(CostumerToRegister.Document).Throws<InvalidOperationException>();
 
-            var response = await TestClient.DeleteAsync($"/Cliente/DeleteCliente/{ClienteParaCriar.Documento}");
+            var response = await TestClient.DeleteAsync($"/Costumer/DeleteCostumer/{CostumerToRegister.Document}");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await ClienteService.Received(1).DeleteCliente(ClienteParaCriar.Documento);
+            await CostumerService.Received(1).DeleteCustomer(CostumerToRegister.Document);
         }
 
         [GeneratedRegex(@"\p{P}")]

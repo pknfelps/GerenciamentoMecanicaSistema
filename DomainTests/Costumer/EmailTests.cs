@@ -1,4 +1,4 @@
-﻿using Domain.Costumer;
+﻿using Domain.Customer;
 
 namespace DomainTests.Costumer
 {
@@ -29,7 +29,7 @@ namespace DomainTests.Costumer
             Email email = new("testeemail@gmail.com");
 
             Assert.That(email, Is.Not.Null);
-            Assert.That(email.Endereco, Is.EqualTo("testeemail@gmail.com"));
+            Assert.That(email.Address, Is.EqualTo("testeemail@gmail.com"));
         }
     }
 }

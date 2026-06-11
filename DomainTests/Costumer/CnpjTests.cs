@@ -1,4 +1,4 @@
-﻿using Domain.Costumer;
+﻿using Domain.Customer;
 
 namespace DomainTests.Costumer
 {
@@ -32,7 +32,7 @@ namespace DomainTests.Costumer
         [Test]
         public void MustCreateCnpj()
         {
-            Documento cnpj = DocumentWrapper.CreateDocument("12.345.678/0001-01");
+            Document cnpj = DocumentWrapper.CreateDocument("12.345.678/0001-01");
 
             Assert.That(cnpj, Is.Not.Null);
             Assert.That(cnpj.Id, Is.Not.Null);
@@ -42,7 +42,7 @@ namespace DomainTests.Costumer
         [Test]
         public void MustCreateCnpjByWrapper()
         {
-            Documento cnpj = DocumentWrapper.CreateDocument("12.345.678/0001-01");
+            Document cnpj = DocumentWrapper.CreateDocument("12.345.678/0001-01");
 
             Assert.That(cnpj, Is.Not.Null);
             Assert.That(cnpj, Is.TypeOf<Cnpj>());

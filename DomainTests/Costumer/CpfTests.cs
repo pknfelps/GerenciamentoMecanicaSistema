@@ -1,4 +1,4 @@
-﻿using Domain.Costumer;
+﻿using Domain.Customer;
 
 namespace DomainTests.Costumer
 {
@@ -33,7 +33,7 @@ namespace DomainTests.Costumer
         [Test]
         public void MustCreateCpf()
         {
-            Documento cpf = DocumentWrapper.CreateDocument("123.456.789-12");
+            Document cpf = DocumentWrapper.CreateDocument("123.456.789-12");
 
             Assert.That(cpf, Is.Not.Null);
             Assert.That(cpf.Id, Is.Not.Null);
@@ -43,7 +43,7 @@ namespace DomainTests.Costumer
         [Test]
         public void MustCreateCpfByWrapper()
         {
-            Documento cpf = DocumentWrapper.CreateDocument("123.456.789-12");
+            Document cpf = DocumentWrapper.CreateDocument("123.456.789-12");
 
             Assert.That(cpf, Is.Not.Null);
             Assert.That(cpf, Is.TypeOf<Cpf>());

@@ -14,98 +14,61 @@ namespace GerenciamentoMecanicaSistema.Controllers
         public IStockService StockService { get; private set; } = stockService;
 
         [HttpPost("RegisterItem")]
-        public async Task<IActionResult> RegisterItem([FromBody] StockItemDto itemDto)
+        public async Task<IActionResult> RegisterItem([FromBody] CreatePartDto itemDto)
         {
-            Console.WriteLine("Requisitando criação do item");
-            await StockService.RegisterNewItem(itemDto);
+            await StockService.RegisterNewPart(itemDto);
 
-            Console.WriteLine("Item criado");
             return Created();
         }
 
-        [HttpGet("GetItens")]
-        public async Task<OkObjectResult> GetItens()
+        [HttpGet("GetItems")]
+        public async Task<OkObjectResult> GetItems()
         {
-            Console.WriteLine("Requisitando itens");
-            var itens = await StockService.GetItens();
+            var itens = await StockService.GetParts();
 
-            Console.WriteLine("Retornando itens");
             return Ok(itens);
         }
 
         [HttpGet("GetItem/{name}/{brand}")]
         public async Task<IActionResult> GetItem([FromRoute, RegularExpression(@"^[a-zA-ZÀ-ÿ\s]{3,}$")] string name, [FromRoute, RegularExpression(@"^[a-zA-ZÀ-ÿ\s]{3,}$")] string brand)
         {
-            Console.WriteLine("Requisitando item");
-            var item = await StockService.GetItem(name, brand);
+            var item = await StockService.GetPart(name, brand);
 
             if (item == null)
-            {
-                Console.WriteLine("Item não encontrado");
                 return NotFound("Item não encontrado");
-            }
 
-            Console.WriteLine("Retornando item");
             return Ok(item);
         }
 
         [HttpPatch("AddItemAmount")]
-        public async Task<IActionResult> AddItemAmount([FromBody] StockItemUpdateDto<int> itemDto)
+        public async Task<IActionResult> AddItemAmount([FromBody] PartUpdateDto<int> itemDto)
         {
-            Console.WriteLine("Rquisitando adição do item");
-            await StockService.AddItemAmount(itemDto);
+            await StockService.AddPartAmount(itemDto);
 
-            Console.WriteLine("Adição concluida com sucesso");
             return Ok();
         }
 
         [HttpPatch("RemoveItemAmount")]
-        public async Task<IActionResult> RemoveItemAmount([FromBody] StockItemUpdateDto<int> itemDto)
+        public async Task<IActionResult> RemoveItemAmount([FromBody] PartUpdateDto<int> itemDto)
         {
-            Console.WriteLine("Requisitando remoção do item");
-            await StockService.RemoveItemAmount(itemDto);
+            await StockService.RemovePartAmount(itemDto);
 
-            Console.WriteLine("Remoção concluida com sucesso");
-            return Ok();
-        }
-
-        [HttpPatch("ReserveItemAmount")]
-        public async Task<IActionResult> ReserveItemAmount([FromBody] StockItemUpdateDto<int> itemDto)
-        {
-            Console.WriteLine("Requisitando reserva do item");
-            await StockService.ReserveItemAmount(itemDto);
-
-            Console.WriteLine("Reserva realizada com sucesso");
-            return Ok();
-        }
-
-        [HttpPatch("RestoreItemAmount")]
-        public async Task<IActionResult> RestoreItemAmount([FromBody] StockItemUpdateDto<int> itemDto)
-        {
-            Console.WriteLine("Requisitando restauração do itten");
-            await StockService.RestoreItemAmount(itemDto);
-
-            Console.WriteLine("Item restaurado com sucesso");
             return Ok();
         }
 
         [HttpPatch("UpdateItemPrice")]
-        public async Task<IActionResult> UpdateItemPrice([FromBody] StockItemUpdateDto<double> itemDto)
+        public async Task<IActionResult> UpdateItemPrice([FromBody] PartUpdateDto<double> itemDto)
         {
-            Console.WriteLine("Requisitando atualização do preço");
-            await StockService.UpdateItemPrice(itemDto);
+            await StockService.UpdatePartPrice(itemDto);
 
-            Console.WriteLine("Preço atualizado com sucesso");
             return Ok();
         }
 
         [HttpDelete("DeleteItem/{name}/{brand}")]
         public async Task<IActionResult> DeleteItem([FromRoute, RegularExpression(@"^[a-zA-ZÀ-ÿ\s]{3,}$")] string name, [FromRoute, RegularExpression(@"^[a-zA-ZÀ-ÿ\s]{3,}$")] string brand)
         {
-            Console.WriteLine("Requisitando deleção do iten");
-            await StockService.DeleteItem(name, brand);
+            await StockService.DeletePart(name, brand);
 
-            Console.WriteLine("Item deletado com sucesso");
             return Ok();
         }
     }

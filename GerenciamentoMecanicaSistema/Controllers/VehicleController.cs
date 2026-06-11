@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Service;
 using Service.Interface;
-using Service.Interface.Dto;
+using Service.Interface.Dto.Vehicle;
 using System.ComponentModel.DataAnnotations;
 
 namespace GerenciamentoMecanicaSistema.Controllers
@@ -15,7 +14,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         private IVehicleService VehicleService { get; set; } = vehicleService;
 
         [HttpPost("RegisterVehicle")]
-        public async Task<IActionResult> RegisterVehicle([FromBody] VehicleDto vehicleDto)
+        public async Task<IActionResult> RegisterVehicle([FromBody] CreateVehicleDto vehicleDto)
         {
             await VehicleService.RegisterVehicle(vehicleDto);
 

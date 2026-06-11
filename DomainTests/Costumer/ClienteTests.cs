@@ -1,4 +1,4 @@
-﻿using Domain.Costumer;
+﻿using Domain.Customer;
 
 namespace DomainTests.Costumer
 {
@@ -7,7 +7,7 @@ namespace DomainTests.Costumer
         [Test]
         public void MustCreateClienteWithoutId()
         {
-            Cliente cliente = new("Fulano", "123.456.789-12", "11 91234-5678", "fulano@gmail.com");
+            Customer cliente = new("Fulano", "123.456.789-12", "11 91234-5678", "fulano@gmail.com");
 
             Assert.That(cliente, Is.Not.Null);
 
@@ -15,26 +15,26 @@ namespace DomainTests.Costumer
 
             Assert.Multiple(() =>
             {
-                Assert.That(cliente.Nome, Is.Not.Null);
-                Assert.That(cliente.Nome, Is.EqualTo("Fulano"));
+                Assert.That(cliente.Name, Is.Not.Null);
+                Assert.That(cliente.Name, Is.EqualTo("Fulano"));
             });
 
             Assert.Multiple(() =>
             {
-                Assert.That(cliente.Documento, Is.Not.Null);
-                Assert.That(cliente.Documento.Id, Is.EqualTo("123.456.789-12"));
+                Assert.That(cliente.Document, Is.Not.Null);
+                Assert.That(cliente.Document.Id, Is.EqualTo("123.456.789-12"));
             });
 
             Assert.Multiple(() =>
             {
-                Assert.That(cliente.Celular, Is.Not.Null);
-                Assert.That(cliente.Celular.Numero, Is.EqualTo("(11) 91234-5678"));
+                Assert.That(cliente.Phone, Is.Not.Null);
+                Assert.That(cliente.Phone.Number, Is.EqualTo("(11) 91234-5678"));
             });
 
             Assert.Multiple(() =>
             {
                 Assert.That(cliente.Email, Is.Not.Null);
-                Assert.That(cliente.Email.Endereco, Is.EqualTo("fulano@gmail.com"));
+                Assert.That(cliente.Email.Address, Is.EqualTo("fulano@gmail.com"));
             });
         }
 
@@ -43,7 +43,7 @@ namespace DomainTests.Costumer
         {
             Guid clienteId = Guid.NewGuid();
 
-            Cliente cliente = new(clienteId, "Fulano", "123.456.789-12", "11 91234-5678", "fulano@gmail.com");
+            Customer cliente = new(clienteId, "Fulano", "123.456.789-12", "11 91234-5678", "fulano@gmail.com");
 
             Assert.That(cliente, Is.Not.Null);
 
@@ -51,34 +51,34 @@ namespace DomainTests.Costumer
 
             Assert.Multiple(() =>
             {
-                Assert.That(cliente.Nome, Is.Not.Null);
-                Assert.That(cliente.Nome, Is.EqualTo("Fulano"));
+                Assert.That(cliente.Name, Is.Not.Null);
+                Assert.That(cliente.Name, Is.EqualTo("Fulano"));
             });
 
             Assert.Multiple(() =>
             {
-                Assert.That(cliente.Documento, Is.Not.Null);
-                Assert.That(cliente.Documento.Id, Is.EqualTo("123.456.789-12"));
+                Assert.That(cliente.Document, Is.Not.Null);
+                Assert.That(cliente.Document.Id, Is.EqualTo("123.456.789-12"));
             });
 
             Assert.Multiple(() =>
             {
-                Assert.That(cliente.Celular, Is.Not.Null);
-                Assert.That(cliente.Celular.Numero, Is.EqualTo("(11) 91234-5678"));
+                Assert.That(cliente.Phone, Is.Not.Null);
+                Assert.That(cliente.Phone.Number, Is.EqualTo("(11) 91234-5678"));
             });
 
             Assert.Multiple(() =>
             {
                 Assert.That(cliente.Email, Is.Not.Null);
-                Assert.That(cliente.Email.Endereco, Is.EqualTo("fulano@gmail.com"));
+                Assert.That(cliente.Email.Address, Is.EqualTo("fulano@gmail.com"));
             });
         }
 
         [Test]
         public void MustNotCreateClienteIfNomeIsEmpty()
         {
-            Assert.Throws<ArgumentNullException>(() => new Cliente("", "123.456.789-12", "11 91234-5678", "fulano@gmail.com"));
-            Assert.Throws<ArgumentNullException>(() => new Cliente(" ", "123.456.789-12", "11 91234-5678", "fulano@gmail.com"));
+            Assert.Throws<ArgumentNullException>(() => new Customer("", "123.456.789-12", "11 91234-5678", "fulano@gmail.com"));
+            Assert.Throws<ArgumentNullException>(() => new Customer(" ", "123.456.789-12", "11 91234-5678", "fulano@gmail.com"));
         }
     }
 }

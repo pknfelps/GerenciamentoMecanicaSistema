@@ -4,14 +4,16 @@ namespace Service.Interface
 {
     public interface IStockService
     {
-        Task RegisterNewItem(StockItemDto itemDto);
-        Task AddItemAmount(StockItemUpdateDto<int> itemDto);
-        Task RemoveItemAmount(StockItemUpdateDto<int> itemDto);
-        Task ReserveItemAmount(StockItemUpdateDto<int> itemDto);
-        Task RestoreItemAmount(StockItemUpdateDto<int> itemDto);
-        Task<IEnumerable<StockItemDto?>> GetItens();
-        Task<StockItemDto?> GetItem(string name, string brand);
-        Task UpdateItemPrice(StockItemUpdateDto<double> itemDto);
-        Task DeleteItem(string name, string brand);
+        Task RegisterNewPart(CreatePartDto partDto);
+        Task AddPartAmount(PartUpdateDto<int> partDto);
+        Task RemovePartAmount(PartUpdateDto<int> partDto);
+        Task ReservePartAmount(PartUpdateDto<int> partDto);
+        Task RestorePartAmount(PartUpdateDto<int> partDto);
+        Task ConsumeReservedAmount(PartUpdateDto<int> partDto);
+        Task<IEnumerable<PartDto?>> GetParts();
+        Task<PartDto?> GetPart(Guid partId);
+        Task<PartDto?> GetPart(string name, string brand);
+        Task UpdatePartPrice(PartUpdateDto<double> partDto);
+        Task DeletePart(string name, string brand);
     }
 }
