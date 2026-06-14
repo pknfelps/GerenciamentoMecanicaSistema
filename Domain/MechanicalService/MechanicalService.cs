@@ -9,8 +9,9 @@ namespace Domain.MechanicalService
         public float Hours { get; private set; }
         public double PricePerHour { get; private set; }
         public int Amount { get; private set; }
-        public double Price => (Hours * PricePerHour) * Amount;
+        public double Price => Hours * PricePerHour;
 
+        public MechanicalService(string description, float hours, double pricePerHour) : this(Guid.NewGuid(), description, hours, pricePerHour, 1) { }
 
         public MechanicalService(string description, float hours, double pricePerHour, int amount) : this(Guid.NewGuid(), description, hours, pricePerHour, amount) { }
 

@@ -65,7 +65,7 @@ namespace Service
 
             order.StartDiagnosis();
 
-            var registry = await Repository.UpdateOrderStatus(orderId, ServiceOrderStatus.InDiagnosis);
+            var registry = await Repository.UpdateOrderStatus(orderId, WorkOrderStatus.InDiagnosis);
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao atualizar a ordem");
@@ -133,10 +133,8 @@ namespace Service
 
         public async Task AddPartOrSupplieToOrder(OrderUpdateItemDto orderItem)
         {
-            Console.WriteLine("Get order");
             var order = await Repository.GetOrder(orderItem.OrderId) ?? throw new InvalidOperationException("Ordem não encontrada");
 
-            Console.WriteLine("Reserve");
             await StockService.ReservePartAmount(new(orderItem.ItemId, orderItem.Amount));
 
             var part = order.Parts.FirstOrDefault(x => x.Id == orderItem.ItemId);
@@ -147,17 +145,13 @@ namespace Service
 
                 if (part == null)
                 {
-                    Console.WriteLine("Get part");
                     var stockItem = await StockService.GetPart(orderItem.ItemId) ?? throw new InvalidOperationException("Item não encontrado no estoque");
 
-                    Console.WriteLine("Create part");
                     var item = new Part(stockItem.Id, stockItem.Name, stockItem.Brand, stockItem.Price, orderItem.Amount);
 
-                    Console.WriteLine("Add");
                     var itemAdded = order.AddPartOrSupplie(item);
 
-                    Console.WriteLine("AddNew");
-                    registry = await Repository.AddPartOrSupplieToOrder(orderItem.OrderId, itemAdded);
+                    registry = await Repository.AddPartToOrder(orderItem.OrderId, itemAdded);
                 }
                 else
                 {
@@ -165,7 +159,7 @@ namespace Service
                     part.AddAmount(orderItem.Amount);
 
                     Console.WriteLine("Update");
-                    registry = await Repository.UpdatePartOrSupplieFromOrder(orderItem.OrderId, part);
+                    registry = await Repository.UpdatePartFromOrder(orderItem.OrderId, part);
                 }
 
                 if (registry == 0)
@@ -195,9 +189,9 @@ namespace Service
                 int registry;
 
                 if (itemRemoved.Amount == 0)
-                    registry = await Repository.RemovePartOrSupplieFromOrder(orderItem.OrderId, item.Id);
+                    registry = await Repository.RemovePartFromOrder(orderItem.OrderId, item.Id);
                 else
-                    registry = await Repository.UpdatePartOrSupplieFromOrder(orderItem.OrderId, itemRemoved);
+                    registry = await Repository.UpdatePartFromOrder(orderItem.OrderId, itemRemoved);
 
                 if (registry == 0)
                     throw new InvalidOperationException("Erro ao salvar serviço");
@@ -230,7 +224,7 @@ namespace Service
             }
             catch
             {
-                await Repository.UpdateOrderStatus(orderId, ServiceOrderStatus.InDiagnosis);
+                await Repository.UpdateOrderStatus(orderId, WorkOrderStatus.InDiagnosis);
             }
 
         }

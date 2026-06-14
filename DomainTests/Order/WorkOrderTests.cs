@@ -8,237 +8,405 @@ namespace DomainTests.Order
 {
     public class WorkOrderTests
     {
-        private IWorkOrder Service { get; set; }
+        private IWorkOrder ReceivedOrder { get; set; }
+        private IWorkOrder OrderInExecution { get; set; }
         private string Document { get; set; } = "123.456.789-12";
         private string LicensePlate { get; set; } = "CAR1234";
 
         [SetUp]
         public void SetUp()
         {
-            Service = new WorkOrder(Document, LicensePlate);
+            ReceivedOrder = new WorkOrder(Document, LicensePlate);
+            OrderInExecution = new WorkOrder(Guid.NewGuid(), Document, LicensePlate, [], [], 10.0, WorkOrderStatus.InExecution, DateTime.Now, DateTime.MinValue);
         }
 
         [Test]
-        public void MustCreateServiceOrder()
+        public void MustCreateWorkOrderWithoutId()
         {
-            Assert.That(Service, Is.Not.Null);
+            Assert.That(ReceivedOrder, Is.Not.Null);
 
             Assert.Multiple(() =>
             {
-                Assert.That(Service.Id, Is.Not.EqualTo(Guid.Empty));
-                Assert.That(Service.CustomerDocument, Is.Not.Null);
-                Assert.That(Service.VehicleLicensePlate, Is.Not.Null);
-                Assert.That(Service.Services, Is.Empty);
-                Assert.That(Service.Parts, Is.Empty);
-                Assert.That(Service.Budget, Is.EqualTo(0.0));
-                Assert.That(Service.Status, Is.EqualTo(ServiceOrderStatus.Received));
+                Assert.That(ReceivedOrder.Id, Is.Not.EqualTo(Guid.Empty));
+                Assert.That(ReceivedOrder.CustomerDocument, Is.Not.Null);
+                Assert.That(ReceivedOrder.VehicleLicensePlate, Is.Not.Null);
+                Assert.That(ReceivedOrder.Services, Is.Empty);
+                Assert.That(ReceivedOrder.Parts, Is.Empty);
+                Assert.That(ReceivedOrder.Budget, Is.EqualTo(0.0));
+                Assert.That(ReceivedOrder.Status, Is.EqualTo(WorkOrderStatus.Received));
             });
         }
 
         [Test]
-        public void MustNotCreateServiceOrderIfIdIsEmpty()
+        public void MustNotCreateWorkOrderIfIdIsEmpty()
         {
-            Assert.Throws<ArgumentException>(() => new WorkOrder(Guid.Empty, Document, LicensePlate, [], [], 0.0, ServiceOrderStatus.Received, DateTime.Now, DateTime.MinValue));
+            Assert.Throws<ArgumentException>(() => new WorkOrder(Guid.Empty, Document, LicensePlate, [], [], 0.0, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue));
         }
 
         [Test]
-        public void MustNotCreateServiceOrderIfClientIsNull()
+        public void MustNotCreateWorkOrderIfClientIsNull()
         {
             Assert.Throws<ArgumentException>(() => new WorkOrder("", LicensePlate));
         }
 
         [Test]
-        public void MustNotCreateServiceOrderIfVehicleIsNull()
+        public void MustNotCreateWorkOrderIfVehicleIsNull()
         {
             Assert.Throws<ArgumentException>(() => new WorkOrder(Document, ""));
         }
 
         [Test]
+        public void MustNotCreateWorkOrderIfBudgetIsLowerThan0()
+        {
+            Assert.Throws<ArgumentException>(() => new WorkOrder(Guid.NewGuid(), Document, LicensePlate, [], [], -1.0, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue));
+        }
+
+        [Test]
         public void MustStartDiagnosis()
         {
-            Service.StartDiagnosis();
+            ReceivedOrder.StartDiagnosis();
 
-            Assert.That(Service.Status, Is.EqualTo(ServiceOrderStatus.InDiagnosis));
+            Assert.That(ReceivedOrder.Status, Is.EqualTo(WorkOrderStatus.InDiagnosis));
         }
 
         [Test]
         public void MustNotStartDiagnosisIfNotInAValidState()
         {
-            Service.StartDiagnosis();
+            ReceivedOrder.StartDiagnosis();
 
-            Assert.That(Service.Status, Is.EqualTo(ServiceOrderStatus.InDiagnosis));
+            Assert.That(ReceivedOrder.Status, Is.EqualTo(WorkOrderStatus.InDiagnosis));
 
-            Assert.Throws<InvalidOperationException>(() => Service.StartDiagnosis());
+            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.StartDiagnosis());
         }
 
         [Test]
         public void MustAddService()
         {
-            Service.StartDiagnosis();
+            ReceivedOrder.StartDiagnosis();
 
-            Service.AddService(Substitute.For<IMechanicalService>());
+            ReceivedOrder.AddService(Substitute.For<IMechanicalService>());
 
-            Assert.That(Service.Services, Has.Count.EqualTo(1));
+            Assert.That(ReceivedOrder.Services, Has.Count.EqualTo(1));
         }
 
         [Test]
-        public void MustNotAddServiceIfNotInAValidState()
+        public void MustAddServiceAmount()
         {
-            Assert.Throws<InvalidOperationException>(() => Service.AddService(Substitute.For<IMechanicalService>()));
+            ReceivedOrder.StartDiagnosis();
+
+            var serviceId = Guid.NewGuid();
+            var service = Substitute.For<IMechanicalService>();
+            service.Id.Returns(serviceId);
+            service.Amount.Returns(1);
+            service.When(s => s.AddServiceAmount(1)).Do(_ => service.Amount.Returns(2));
+
+            ReceivedOrder.AddService(service);
+            ReceivedOrder.AddService(service);
+
+            Assert.That(ReceivedOrder.Services, Has.Count.EqualTo(1));
+            Assert.That(ReceivedOrder.Services[0].Amount, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void MustNotAddServiceIfStatusIsReceived()
+        {
+            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.AddService(Substitute.For<IMechanicalService>()));
+        }
+
+        [Test]
+        public void MustNotAddServiceIfServiceAlreadyStarted()
+        {
+            Assert.Throws<InvalidOperationException>(() => OrderInExecution.AddService(Substitute.For<IMechanicalService>()));
+        }
+
+        [Test]
+        public void MustRemoveService()
+        {
+            ReceivedOrder.StartDiagnosis();
+
+            var serviceId = Guid.NewGuid();
+            var service = Substitute.For<IMechanicalService>();
+            service.Id.Returns(serviceId);
+            service.Amount.Returns(1);
+            service.When(s => s.RemoveServiceAmount(1)).Do(_ => service.Amount.Returns(0));
+
+            ReceivedOrder.AddService(service);
+
+            ReceivedOrder.RemoveService(service);
+
+            Assert.That(ReceivedOrder.Services, Is.Empty);
+        }
+
+        [Test]
+        public void MustRemoveServiceAmount()
+        {
+            ReceivedOrder.StartDiagnosis();
+
+            var serviceId = Guid.NewGuid();
+            var serviceToAdd = Substitute.For<IMechanicalService>();
+            serviceToAdd.Id.Returns(serviceId);
+            serviceToAdd.Amount.Returns(5);
+            serviceToAdd.When(s => s.RemoveServiceAmount(1)).Do(_ => serviceToAdd.Amount.Returns(4));
+
+            ReceivedOrder.AddService(serviceToAdd);
+
+            var serviceToRemove = Substitute.For<IMechanicalService>();
+            serviceToRemove.Id.Returns(serviceId);
+            serviceToRemove.Amount.Returns(1);
+
+            ReceivedOrder.RemoveService(serviceToRemove);
+
+            Assert.That(ReceivedOrder.Services, Has.Count.EqualTo(1));
+            Assert.That(ReceivedOrder.Services[0].Amount, Is.EqualTo(4));
+        }
+
+        [Test]
+        public void MustNotRemoveServiceIfStatusIsReceived()
+        {
+            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.RemoveService(Substitute.For<IMechanicalService>()));
+        }
+
+        [Test]
+        public void MustNotRemoveServiceIfStatusIsServiceAlreadyStarted()
+        {
+            Assert.Throws<InvalidOperationException>(() => OrderInExecution.RemoveService(Substitute.For<IMechanicalService>()));
         }
 
         [Test]
         public void MustAddPartOrSupplie()
         {
-            Service.StartDiagnosis();
+            ReceivedOrder.StartDiagnosis();
 
-            Service.AddPartOrSupplie(Substitute.For<IPart>());
+            ReceivedOrder.AddPartOrSupplie(Substitute.For<IPart>());
 
-            Assert.That(Service.Parts, Has.Count.EqualTo(1));
+            Assert.That(ReceivedOrder.Parts, Has.Count.EqualTo(1));
         }
 
         [Test]
-        public void MustNotAddPartOrSupplieIfNotInAValidState()
+        public void MustAddPartOrSupplieAmount()
         {
-            Assert.Throws<InvalidOperationException>(() => Service.AddPartOrSupplie(Substitute.For<IPart>()));
+            ReceivedOrder.StartDiagnosis();
+
+            var partId = Guid.NewGuid();
+            var part = Substitute.For<IPart>();
+            part.Id.Returns(partId);
+            part.Amount.Returns(1);
+            part.When(part => part.AddAmount(1)).Do(_ => part.Amount.Returns(2));
+
+            ReceivedOrder.AddPartOrSupplie(part);
+            ReceivedOrder.AddPartOrSupplie(part);
+
+            Assert.That(ReceivedOrder.Parts, Has.Count.EqualTo(1));
+            Assert.That(ReceivedOrder.Parts[0].Amount, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void MustNotAddPartOrSupplieIfStatusIsReceived()
+        {
+            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.AddPartOrSupplie(Substitute.For<IPart>()));
+        }
+
+        [Test]
+        public void MustNotAddPartOrSupplieIfServiceAlreadyStarted()
+        {
+            Assert.Throws<InvalidOperationException>(() => OrderInExecution.AddPartOrSupplie(Substitute.For<IPart>()));
+        }
+
+        [Test]
+        public void MustRemovePartOsSupplie()
+        {
+            ReceivedOrder.StartDiagnosis();
+
+            var partId = Guid.NewGuid();
+            var part = Substitute.For<IPart>();
+            part.Id.Returns(partId);
+            part.Amount.Returns(1);
+            part.When(p => p.RemoveAmount(1)).Do(_ => part.Amount.Returns(0));
+
+            ReceivedOrder.AddPartOrSupplie(part);
+
+            ReceivedOrder.RemovePartOrSupplie(part);
+
+            Assert.That(ReceivedOrder.Parts, Is.Empty);
+        }
+
+        [Test]
+        public void MustRemovePartOsSupplieAmount()
+        {
+            ReceivedOrder.StartDiagnosis();
+
+            var partId = Guid.NewGuid();
+            var partToAdd = Substitute.For<IPart>();
+            partToAdd.Id.Returns(partId);
+            partToAdd.Amount.Returns(5);
+            partToAdd.When(p => p.RemoveAmount(1)).Do(_ => partToAdd.Amount.Returns(4));
+
+            ReceivedOrder.AddPartOrSupplie(partToAdd);
+
+            var partToRemove = Substitute.For<IPart>();
+            partToRemove.Id.Returns(partId);
+            partToRemove.Amount.Returns(1);
+
+            ReceivedOrder.RemovePartOrSupplie(partToRemove);
+
+            Assert.That(ReceivedOrder.Parts, Has.Count.EqualTo(1));
+            Assert.That(ReceivedOrder.Parts[0].Amount, Is.EqualTo(4));
+        }
+
+        [Test]
+        public void MustNotRemovePartOrSupplieIfStatusIsReceived()
+        {
+            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.RemovePartOrSupplie(Substitute.For<IPart>()));
+        }
+
+        [Test]
+        public void MustNotRemovePartOrSupplieIfServiceAlreadyStarted()
+        {
+            Assert.Throws<InvalidOperationException>(() => OrderInExecution.RemovePartOrSupplie(Substitute.For<IPart>()));
         }
 
         [Test]
         public void MustFinalizeDiagnosis()
         {
-            Service.StartDiagnosis();
+            ReceivedOrder.StartDiagnosis();
 
             var service = Substitute.For<IMechanicalService>();
             service.Price.Returns(10);
-            Service.AddService(service);
+            service.Amount.Returns(2);
+            ReceivedOrder.AddService(service);
 
-            Service.FinalizeDiagnosis();
+            var part = Substitute.For<IPart>();
+            part.Price.Returns(10);
+            part.Amount.Returns(2);
+            ReceivedOrder.AddPartOrSupplie(part);
+
+            ReceivedOrder.FinalizeDiagnosis();
 
             Assert.Multiple(() =>
             {
-                Assert.That(Service.Status, Is.EqualTo(ServiceOrderStatus.WaitingForApproval));
-                Assert.That(Service.Budget, Is.EqualTo(10));
+                Assert.That(ReceivedOrder.Status, Is.EqualTo(WorkOrderStatus.WaitingForApproval));
+                Assert.That(ReceivedOrder.Budget, Is.EqualTo(40));
             });
         }
 
         [Test]
         public void MustNotFinalizeDiagnosisIfNotInAValidState()
         {
-            Assert.Throws<InvalidOperationException>(() => Service.FinalizeDiagnosis());
+            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.FinalizeDiagnosis());
         }
 
         [Test]
         public void MustNotFinalizeDiagnosisIfNoServiceWasAdded()
         {
-            Service.StartDiagnosis();
+            ReceivedOrder.StartDiagnosis();
 
-            Assert.Throws<InvalidOperationException>(() => Service.FinalizeDiagnosis());
+            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.FinalizeDiagnosis());
         }
 
         [Test]
         public void MustApproveService()
         {
-            Service.StartDiagnosis();
+            ReceivedOrder.StartDiagnosis();
 
-            Service.AddService(Substitute.For<IMechanicalService>());
+            ReceivedOrder.AddService(Substitute.For<IMechanicalService>());
 
-            Service.FinalizeDiagnosis();
+            ReceivedOrder.FinalizeDiagnosis();
 
-            Service.ApproveService(true);
+            ReceivedOrder.ApproveService(true);
 
-            Assert.That(Service.Status, Is.EqualTo(ServiceOrderStatus.WaitingForExecution));
+            Assert.That(ReceivedOrder.Status, Is.EqualTo(WorkOrderStatus.WaitingForExecution));
         }
 
         [Test]
         public void MustRefuseService()
         {
-            Service.StartDiagnosis();
+            ReceivedOrder.StartDiagnosis();
 
-            Service.AddService(Substitute.For<IMechanicalService>());
+            ReceivedOrder.AddService(Substitute.For<IMechanicalService>());
 
-            Service.FinalizeDiagnosis();
+            ReceivedOrder.FinalizeDiagnosis();
 
-            Service.ApproveService(false);
+            ReceivedOrder.ApproveService(false);
 
-            Assert.That(Service.Status, Is.EqualTo(ServiceOrderStatus.Finished));
+            Assert.That(ReceivedOrder.Status, Is.EqualTo(WorkOrderStatus.Finished));
         }
 
         [Test]
         public void MustNotApproveServiceIfNotInAValidState()
         {
-            Assert.Throws<InvalidOperationException>(() => Service.ApproveService(true));
+            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.ApproveService(true));
         }
 
         [Test]
         public void MustStartService()
         {
-            Service.StartDiagnosis();
+            ReceivedOrder.StartDiagnosis();
 
-            Service.AddService(Substitute.For<IMechanicalService>());
+            ReceivedOrder.AddService(Substitute.For<IMechanicalService>());
 
-            Service.FinalizeDiagnosis();
+            ReceivedOrder.FinalizeDiagnosis();
 
-            Service.ApproveService(true);
+            ReceivedOrder.ApproveService(true);
 
-            Service.StartService();
+            ReceivedOrder.StartService();
 
-            Assert.That(Service.Status, Is.EqualTo(ServiceOrderStatus.InExecution));
+            Assert.That(ReceivedOrder.Status, Is.EqualTo(WorkOrderStatus.InExecution));
         }
 
         [Test]
         public void MustNotStartServiceIfNotInAValidState()
         {
-            Assert.Throws<InvalidOperationException>(() => Service.StartService());
+            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.StartService());
         }
 
         [Test]
         public void MustCompleteService()
         {
-            Service.StartDiagnosis();
+            ReceivedOrder.StartDiagnosis();
 
-            Service.AddService(Substitute.For<IMechanicalService>());
+            ReceivedOrder.AddService(Substitute.For<IMechanicalService>());
 
-            Service.FinalizeDiagnosis();
+            ReceivedOrder.FinalizeDiagnosis();
 
-            Service.ApproveService(true);
+            ReceivedOrder.ApproveService(true);
 
-            Service.StartService();
+            ReceivedOrder.StartService();
 
-            Service.CompleteService();
+            ReceivedOrder.CompleteService();
 
-            Assert.That(Service.Status, Is.EqualTo(ServiceOrderStatus.Finished));
+            Assert.That(ReceivedOrder.Status, Is.EqualTo(WorkOrderStatus.Finished));
         }
 
         [Test]
         public void MustNotCompleteServiceIfNotInAValidState()
         {
-            Assert.Throws<InvalidOperationException>(() => Service.CompleteService());
+            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.CompleteService());
         }
 
         [Test]
         public void MustFinalizeServiceByDeliveringCar()
         {
-            Service.StartDiagnosis();
+            ReceivedOrder.StartDiagnosis();
 
-            Service.AddService(Substitute.For<IMechanicalService>());
+            ReceivedOrder.AddService(Substitute.For<IMechanicalService>());
 
-            Service.FinalizeDiagnosis();
+            ReceivedOrder.FinalizeDiagnosis();
 
-            Service.ApproveService(true);
+            ReceivedOrder.ApproveService(true);
 
-            Service.StartService();
+            ReceivedOrder.StartService();
 
-            Service.CompleteService();
+            ReceivedOrder.CompleteService();
 
-            Service.VehicleDelivered();
+            ReceivedOrder.VehicleDelivered();
 
-            Assert.That(Service.Status, Is.EqualTo(ServiceOrderStatus.Delivered));
+            Assert.That(ReceivedOrder.Status, Is.EqualTo(WorkOrderStatus.Delivered));
         }
 
         [Test]
         public void MustNotFinalizeServiceByDeliveringCarIfNotInAValidState()
         {
-            Assert.Throws<InvalidOperationException>(() => Service.VehicleDelivered());
+            Assert.Throws<InvalidOperationException>(ReceivedOrder.VehicleDelivered);
         }
     }
 }

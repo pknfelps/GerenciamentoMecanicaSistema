@@ -63,7 +63,7 @@ namespace Repository.Dto
             var services = Services == null ? new List<IMechanicalService>() : [.. Services.Select(service => service.ToDomain())];
             var parts = Services == null ? new List<IPart>() : [.. Parts.Select(part => part.ToDomain())];
 
-            return new WorkOrder(Id, Customer_Document, Vehicle_License_Plate, services, parts, Budget, Enum.Parse<ServiceOrderStatus>(Status), Date_Created, Date_Finished);
+            return new WorkOrder(Id, Customer_Document, Vehicle_License_Plate, services, parts, Budget, Enum.Parse<WorkOrderStatus>(Status), Date_Created, Date_Finished);
         }
     }
 }

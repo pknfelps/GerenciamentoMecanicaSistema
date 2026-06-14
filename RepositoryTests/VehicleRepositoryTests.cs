@@ -29,7 +29,7 @@ namespace RepositoryTests
         protected override async Task InternalSetup()
         {
             await Connection.ExecuteAsync("""
-                CREATE TABLE IF NOT EXISTS costumers (
+                CREATE TABLE IF NOT EXISTS customers (
                 id UUID PRIMARY KEY,
                 name VARCHAR(100) NOT NULL,
                 document VARCHAR(100) NOT NULL UNIQUE,
@@ -38,18 +38,18 @@ namespace RepositoryTests
                 """);
 
             await Connection.ExecuteAsync($"""
-                INSERT INTO costumers(id, name, document, phone, email)
+                INSERT INTO customers(id, name, document, phone, email)
                 VALUES (@Id, @Name, @Document, @Phone, @Email);
                 """, ExistingCostumer);
 
             await Connection.ExecuteAsync("""
                 CREATE TABLE IF NOT EXISTS vehicles (
                 id UUID PRIMARY KEY,
-                costumer_document VARCHAR(100) NOT NULL REFERENCES costumers(document),
+                customer_document VARCHAR(100) NOT NULL REFERENCES customers(document),
                 brand VARCHAR(100) NOT NULL,
                 model VARCHAR(100) NOT NULL,
                 year INT NOT NULL,
-                license_plate VARCHAR(7) NOT NULL);
+                license_plate VARCHAR(7) NOT NULL UNIQUE);
                 """);
 
             VehicleRepository = new VehicleRepository(Connection);

@@ -138,9 +138,15 @@ namespace Repository
             WHERE id = @Id AND order_id = @orderId;
             """;
 
-        public static string AddPartOrSupplieToOrderSql { get; private set; } = """
+        public static string AddPartToOrderSql { get; private set; } = """
             INSERT INTO order_items(id, order_id, name, brand, price, amount)
             VALUES (@Id, @orderId, @Name, @Brand, @Price, @Amount);
+            """;
+
+        public static string UpdatePartFromOrderSql { get; private set; } = """
+            UPDATE order_items
+            SET amount = @Amount
+            WHERE id = @Id AND order_id = @order_id;
             """;
 
         public static string DeleteServiceFromOrderSql { get; private set; } = """
@@ -148,15 +154,9 @@ namespace Repository
             WHERE id = @serviceId AND order_id = @orderId;
             """;
 
-        public static string RemovePartOrSupplieFromOrderSql { get; private set; } = """
+        public static string RemovePartFromOrderSql { get; private set; } = """
             DELETE FROM order_items
             WHERE id = @partId AND order_id = @orderId;
-            """;
-
-        public static string UpdatePartOrSupplieFromOrderSql { get; private set; } = """
-            UPDATE order_items
-            SET amount = @Amount
-            WHERE id = @Id AND order_id = @order_id;
             """;
 
         public static string UpdateOrderBudgetSql { get; private set; } = """
@@ -170,7 +170,7 @@ namespace Repository
             WHERE order_id = @orderId;
             """;
 
-        public static string RemovePartsAndSuppliesFromOrderSql { get; private set; } = """
+        public static string RemovePartsFromOrderSql { get; private set; } = """
             DELETE FROM order_items
             WHERE order_id = @orderId;
             """;
@@ -209,17 +209,7 @@ namespace Repository
             return orders.Select(order => order.ToDomain());
         }
 
-        public async Task<IMechanicalService?> GetServiceFromOrder(Guid serviceId, Guid orderId)
-        {
-            var service = await Connection.QuerySingleOrDefaultAsync<MechanicalServiceDb>(GetServiceFromOrderSql, new { service_Id = serviceId, order_Id = orderId });
-
-            if (service == null)
-                return null;
-
-            return service.ToDomain();
-        }
-
-        public async Task<int> UpdateOrderStatus(Guid orderId, ServiceOrderStatus status)
+        public async Task<int> UpdateOrderStatus(Guid orderId, WorkOrderStatus status)
         {
             return await Connection.ExecuteAsync(UpdateOrderStatusSql, new { Id = orderId, Status = status.ToString() });
         }
@@ -239,23 +229,23 @@ namespace Repository
             return await Connection.ExecuteAsync(DeleteServiceFromOrderSql, new { orderId, serviceId });
         }
 
-        public async Task<int> AddPartOrSupplieToOrder(Guid orderId, IPart part)
+        public async Task<int> AddPartToOrder(Guid orderId, IPart part)
         {
             var partDb = PartDb.Create(part);
 
-            return await Connection.ExecuteAsync(AddPartOrSupplieToOrderSql, new { Id = partDb.Id, orderId = orderId, Name = partDb.Name, Brand = partDb.Brand, Price = partDb.Price, Amount = partDb.Amount });
+            return await Connection.ExecuteAsync(AddPartToOrderSql, new { Id = partDb.Id, orderId = orderId, Name = partDb.Name, Brand = partDb.Brand, Price = partDb.Price, Amount = partDb.Amount });
         }
 
-        public async Task<int> RemovePartOrSupplieFromOrder(Guid orderId, Guid partId)
+        public async Task<int> RemovePartFromOrder(Guid orderId, Guid partId)
         {
-            return await Connection.ExecuteAsync(RemovePartOrSupplieFromOrderSql, new { orderId, partId });
+            return await Connection.ExecuteAsync(RemovePartFromOrderSql, new { orderId, partId });
         }
 
-        public async Task<int> UpdatePartOrSupplieFromOrder(Guid orderId, IPart part)
+        public async Task<int> UpdatePartFromOrder(Guid orderId, IPart part)
         {
             var partDb = PartDb.Create(part);
 
-            return await Connection.ExecuteAsync(UpdatePartOrSupplieFromOrderSql, new { order_id = orderId, Id = partDb.Id, Amount = partDb.Amount });
+            return await Connection.ExecuteAsync(UpdatePartFromOrderSql, new { order_id = orderId, Id = partDb.Id, Amount = partDb.Amount });
         }
 
         public async Task<int> UpdateOrderBudget(Guid id, double budget)
@@ -267,7 +257,7 @@ namespace Repository
         {
             await Connection.ExecuteAsync(DeleteServicesFromOrderSql, new { orderId });
 
-            await Connection.ExecuteAsync(RemovePartsAndSuppliesFromOrderSql, new { orderId });
+            await Connection.ExecuteAsync(RemovePartsFromOrderSql, new { orderId });
 
             return await Connection.ExecuteAsync(DeleteOrderSql, new { orderId });
         }

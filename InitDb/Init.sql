@@ -48,8 +48,7 @@ CREATE TABLE services (
     id UUID PRIMARY KEY,
     description VARCHAR(255) NOT NULL,
     hours FLOAT NOT NULL,
-    price_per_hour DOUBLE PRECISION NOT NULL,
-    amount INT NOT NULL
+    price_per_hour DOUBLE PRECISION NOT NULL
 );
 
 CREATE TABLE order_items (

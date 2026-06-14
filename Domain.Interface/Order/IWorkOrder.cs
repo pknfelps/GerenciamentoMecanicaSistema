@@ -12,13 +12,13 @@ namespace Domain.Interface.Order
         List<IMechanicalService> Services { get; }
         List<IPart> Parts { get; }
         double Budget { get; }
-        ServiceOrderStatus Status { get; }
+        WorkOrderStatus Status { get; }
         DateTime DateCreated { get; }
         DateTime DateFinished { get; }
 
         void StartDiagnosis();
-        void AddService(IMechanicalService serviceToAdd);
-        void RemoveService(IMechanicalService serviceToRemove);
+        IMechanicalService AddService(IMechanicalService serviceToAdd);
+        IMechanicalService RemoveService(IMechanicalService serviceToRemove);
         IPart AddPartOrSupplie(IPart itemToAdd);
         IPart RemovePartOrSupplie(IPart itemToRemove);
         void FinalizeDiagnosis();

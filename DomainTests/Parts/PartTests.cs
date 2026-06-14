@@ -1,11 +1,11 @@
 ﻿using Domain.Stock;
 
-namespace DomainTests.Stock
+namespace DomainTests.Parts
 {
-    public class StockItemTests
+    public class PartTests
     {
         [Test]
-        public void MustCreateStockItem()
+        public void MustCreatePart()
         {
             var item = new Part("Óleo de motor", "Lubrax", 41.90, 25);
 
@@ -22,32 +22,32 @@ namespace DomainTests.Stock
         }
 
         [Test]
-        public void MustNotCreateStockItemIfNameIsEmpty()
+        public void MustNotCreatePartIfNameIsEmpty()
         {
             Assert.Throws<ArgumentException>(() => new Part("", "Lubrax", 41.90, 25));
         }
 
         [Test]
-        public void MustNotCreateStockItemIfBrandIsEmpty()
+        public void MustNotCreatePartIfBrandIsEmpty()
         {
             Assert.Throws<ArgumentException>(() => new Part("Óleo de motor", "", 41.90, 25));
         }
 
         [Test]
-        public void MustNotCreateStockItemIfPriceIsEqualOrLowerThan0()
+        public void MustNotCreatePartIfPriceIsEqualOrLowerThan0()
         {
             Assert.Throws<ArgumentException>(() => new Part("Óleo de motor", "Lubrax", 0, 25));
             Assert.Throws<ArgumentException>(() => new Part("Óleo de motor", "Lubrax", -1, 25));
         }
 
         [Test]
-        public void MustNotCreateStockItemIfAmountIsLowerThan0()
+        public void MustNotCreatePartIfAmountIsLowerThan0()
         {
             Assert.Throws<ArgumentException>(() => new Part("Óleo de motor", "Lubrax", 41.90, -1));
         }
 
         [Test]
-        public void MustNotCreateStockItemIfReservedAmountIsLowerThan0()
+        public void MustNotCreatePartIfReservedAmountIsLowerThan0()
         {
             Assert.Throws<ArgumentException>(() => new Part(Guid.NewGuid(), "Óleo de motor", "Lubrax", 41.90, 5, -1));
         }
@@ -136,6 +136,28 @@ namespace DomainTests.Stock
                 Assert.That(item.Amount, Is.EqualTo(25));
                 Assert.That(item.ReservedAmount, Is.EqualTo(5));
             });
+        }
+
+        [Test]
+        public void MustConsumeReservedAmount()
+        {
+            var item = new Part(Guid.NewGuid(), "Óleo de motor", "Lubrax", 41.90, 25, 5);
+
+            item.ConsumeReservedAmount(5);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(item.Amount, Is.EqualTo(25));
+                Assert.That(item.ReservedAmount, Is.EqualTo(0));
+            });
+        }
+
+        [Test]
+        public void MustNotConsumeReservedAmountIfMoreThanReserved()
+        {
+            var item = new Part(Guid.NewGuid(), "Óleo de motor", "Lubrax", 41.90, 25, 5);
+
+            Assert.Throws<InvalidOperationException>(() => item.ConsumeReservedAmount(10));
         }
 
         [Test]

@@ -50,7 +50,7 @@ namespace RepositoryTests
         }
 
         [Test]
-        public async Task MustGetItens()
+        public async Task MustGetParts()
         {
             var itens = (await Repository.GetParts()).ToList();
 
@@ -77,7 +77,7 @@ namespace RepositoryTests
         }
 
         [Test]
-        public async Task MustGetPart()
+        public async Task MustGetPartByNameAndBrand()
         {
             var item = await Repository.GetPart(StockParts[0].Name, StockParts[0].Brand);
 
@@ -91,6 +91,39 @@ namespace RepositoryTests
                 Assert.That(item.Amount, Is.EqualTo(StockParts[0].Amount));
                 Assert.That(item.ReservedAmount, Is.EqualTo(StockParts[0].ReservedAmount));
             });
+        }
+
+        [Test]
+        public async Task MustNotGetPartByNameAndBrandIfNotExists()
+        {
+            var item = await Repository.GetPart(PartToRegister.Name, PartToRegister.Brand);
+
+            Assert.That(item, Is.Null);
+        }
+
+        [Test]
+        public async Task MustGetPartById()
+        {
+            var item = await Repository.GetPart(StockParts[0].Id);
+
+            Assert.That(item, Is.Not.Null);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(item.Name, Is.EqualTo(StockParts[0].Name));
+                Assert.That(item.Brand, Is.EqualTo(StockParts[0].Brand));
+                Assert.That(item.Price, Is.EqualTo(StockParts[0].Price));
+                Assert.That(item.Amount, Is.EqualTo(StockParts[0].Amount));
+                Assert.That(item.ReservedAmount, Is.EqualTo(StockParts[0].ReservedAmount));
+            });
+        }
+
+        [Test]
+        public async Task MustNotGetPartByIdIfNotExists()
+        {
+            var item = await Repository.GetPart(PartToRegister.Id);
+
+            Assert.That(item, Is.Null);
         }
 
         [Test]

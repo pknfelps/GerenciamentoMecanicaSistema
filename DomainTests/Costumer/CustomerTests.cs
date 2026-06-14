@@ -2,10 +2,10 @@
 
 namespace DomainTests.Costumer
 {
-    public class ClienteTests
+    public class CustomerTests
     {
         [Test]
-        public void MustCreateClienteWithoutId()
+        public void MustCreateCustomerWithoutId()
         {
             Customer cliente = new("Fulano", "123.456.789-12", "11 91234-5678", "fulano@gmail.com");
 
@@ -39,7 +39,7 @@ namespace DomainTests.Costumer
         }
 
         [Test]
-        public void MustCreateClienteWithId()
+        public void MustCreateCustomerWithId()
         {
             Guid clienteId = Guid.NewGuid();
 
@@ -75,7 +75,7 @@ namespace DomainTests.Costumer
         }
 
         [Test]
-        public void MustNotCreateClienteIfNomeIsEmpty()
+        public void MustNotCreateCustomerIfNomeIsEmpty()
         {
             Assert.Throws<ArgumentNullException>(() => new Customer("", "123.456.789-12", "11 91234-5678", "fulano@gmail.com"));
             Assert.Throws<ArgumentNullException>(() => new Customer(" ", "123.456.789-12", "11 91234-5678", "fulano@gmail.com"));

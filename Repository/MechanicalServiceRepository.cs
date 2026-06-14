@@ -9,23 +9,23 @@ namespace Repository
     public class MechanicalServiceRepository(IDbConnection connection) : BaseRepository(connection), IMechanicalServiceRepository
     {
         public static string RegisterServiceSql { get; private set; } = """
-            INSERT INTO services(id, description, hours, price_per_hour, amount)
-            VALUES (@Id, @Description, @Hours, @Price_Per_Hour, @Amount);
+            INSERT INTO services(id, description, hours, price_per_hour)
+            VALUES (@Id, @Description, @Hours, @Price_Per_Hour);
             """;
 
         public static string GetServicesSql { get; private set; } = """
-            SELECT id, description, hours, price_per_hour, amount
+            SELECT id, description, hours, price_per_hour
             FROM services;
             """;
 
         public static string GetServiceByIdSql { get; private set; } = """
-            SELECT id, description, hours, price_per_hour, amount
+            SELECT id, description, hours, price_per_hour
             FROM services
             WHERE id = @Id;
             """;
 
         public static string GetServiceByDescriptionSql { get; private set; } = """
-            SELECT id, description, hours, price_per_hour, amount
+            SELECT id, description, hours, price_per_hour
             FROM services
             WHERE description = @Description;
             """;

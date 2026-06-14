@@ -1,6 +1,6 @@
 ﻿namespace Domain.Interface.Order
 {
-    public enum ServiceOrderStatus
+    public enum WorkOrderStatus
     {
         Received,
         InDiagnosis,

@@ -1,66 +1,65 @@
 ﻿using Domain.Interface.User;
-using Domain.User;
 
 namespace DomainTests.User
 {
-    public class UsuarioTests
+    public class UserTests
     {
-        private static readonly string NomeUsuario = "Fulano";
-        private static readonly string SenhaUsuario = "Senha@123";
-        private static readonly string CargoUsuario = Roles.Manager.ToString();
+        private static readonly string NameUser = "Fulano";
+        private static readonly string PasswordUser = "Senha@123";
+        private static readonly string RoleUser = Roles.Manager.ToString();
 
         [Test]
-        public void MustCreateUsuario()
+        public void MustCreateUser()
         {
-            var usuario = new Domain.User.User(NomeUsuario, SenhaUsuario, CargoUsuario);
+            var usuario = new Domain.User.User(NameUser, PasswordUser, RoleUser);
 
             Assert.That(usuario, Is.Not.Null);
 
             Assert.Multiple(() =>
             {
-                Assert.That(usuario.Name, Is.EqualTo(NomeUsuario));
-                Assert.That(usuario.Password.Secret, Is.EqualTo(SenhaUsuario));
-                Assert.That(usuario.Role.ToString(), Is.EqualTo(CargoUsuario));
+                Assert.That(usuario.Name, Is.EqualTo(NameUser));
+                Assert.That(usuario.Password.Secret, Is.EqualTo(PasswordUser));
+                Assert.That(usuario.Role.ToString(), Is.EqualTo(RoleUser));
             });
         }
 
         [Test]
-        public void MustNotCreateUsuarioIfNomeIsEmpty()
+        public void MustNotCreateUserIfNomeIsEmpty()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.User.User("", SenhaUsuario, CargoUsuario));
-            Assert.Throws<ArgumentException>(() => new Domain.User.User(" ", SenhaUsuario, CargoUsuario));
+            Assert.Throws<ArgumentException>(() => new Domain.User.User("", PasswordUser, RoleUser));
+            Assert.Throws<ArgumentException>(() => new Domain.User.User(" ", PasswordUser, RoleUser));
         }
 
         [Test]
-        public void MustNotCreateUsuarioIfSenhaIsEmpty()
+        public void MustNotCreateUserIfSenhaIsEmpty()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.User.User(NomeUsuario, "", CargoUsuario));
-            Assert.Throws<ArgumentException>(() => new Domain.User.User(NomeUsuario, " ", CargoUsuario));
+            Assert.Throws<ArgumentException>(() => new Domain.User.User(NameUser, "", RoleUser));
+            Assert.Throws<ArgumentException>(() => new Domain.User.User(NameUser, " ", RoleUser));
         }
 
         [Test]
-        public void MustNotCreateUsuarioIfCargoIsEmpty()
+        public void MustNotCreateUserIfCargoIsEmpty()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.User.User(NomeUsuario, SenhaUsuario, ""));
-            Assert.Throws<ArgumentException>(() => new Domain.User.User(NomeUsuario, SenhaUsuario, " "));
+            Assert.Throws<ArgumentException>(() => new Domain.User.User(NameUser, PasswordUser, ""));
+            Assert.Throws<ArgumentException>(() => new Domain.User.User(NameUser, PasswordUser, " "));
         }
 
         [Test]
-        public void MustNotCreateUsuarioIfSenhaIsEqualToNome()
+        public void MustNotCreateUserIfSenhaIsEqualToNome()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.User.User(NomeUsuario, NomeUsuario, CargoUsuario));
+            Assert.Throws<ArgumentException>(() => new Domain.User.User(NameUser, NameUser, RoleUser));
         }
 
         [Test]
-        public void MustNotCreateUsuarioIfSenhaIsEqualToCargo()
+        public void MustNotCreateUserIfSenhaIsEqualToCargo()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.User.User(NomeUsuario, CargoUsuario, CargoUsuario));
+            Assert.Throws<ArgumentException>(() => new Domain.User.User(NameUser, RoleUser, RoleUser));
         }
 
         [Test]
-        public void MustNotCreateUsuarioIfCargoIsInvalid()
+        public void MustNotCreateUserIfCargoIsInvalid()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.User.User(NomeUsuario, SenhaUsuario, "Cliente"));
+            Assert.Throws<ArgumentException>(() => new Domain.User.User(NameUser, PasswordUser, "Customer"));
         }
     }
 }

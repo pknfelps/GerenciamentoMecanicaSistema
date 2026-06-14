@@ -32,20 +32,11 @@ namespace DomainTests.Costumer
         [Test]
         public void MustCreateCnpj()
         {
-            Document cnpj = DocumentWrapper.CreateDocument("12.345.678/0001-01");
+            Cnpj cnpj = new("12.345.678/0001-01");
 
             Assert.That(cnpj, Is.Not.Null);
             Assert.That(cnpj.Id, Is.Not.Null);
             Assert.That(cnpj.Id, Is.Not.Empty);
-        }
-
-        [Test]
-        public void MustCreateCnpjByWrapper()
-        {
-            Document cnpj = DocumentWrapper.CreateDocument("12.345.678/0001-01");
-
-            Assert.That(cnpj, Is.Not.Null);
-            Assert.That(cnpj, Is.TypeOf<Cnpj>());
         }
 
         [Test]

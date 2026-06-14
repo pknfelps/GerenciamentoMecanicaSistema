@@ -22,7 +22,7 @@ namespace RepositoryTests
         protected override async Task InternalSetup()
         {
             await Connection.ExecuteAsync("""
-                CREATE TABLE IF NOT EXISTS costumers (
+                CREATE TABLE IF NOT EXISTS customers (
                 id UUID PRIMARY KEY NOT NULL,
                 name TEXT NOT NULL,
                 document TEXT NOT NULL,

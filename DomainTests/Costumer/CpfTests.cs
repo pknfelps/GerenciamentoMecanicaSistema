@@ -33,20 +33,11 @@ namespace DomainTests.Costumer
         [Test]
         public void MustCreateCpf()
         {
-            Document cpf = DocumentWrapper.CreateDocument("123.456.789-12");
+            Cpf cpf = new("123.456.789-12");
 
             Assert.That(cpf, Is.Not.Null);
             Assert.That(cpf.Id, Is.Not.Null);
             Assert.That(cpf.Id, Is.Not.Empty);
-        }
-
-        [Test]
-        public void MustCreateCpfByWrapper()
-        {
-            Document cpf = DocumentWrapper.CreateDocument("123.456.789-12");
-
-            Assert.That(cpf, Is.Not.Null);
-            Assert.That(cpf, Is.TypeOf<Cpf>());
         }
 
         [Test]

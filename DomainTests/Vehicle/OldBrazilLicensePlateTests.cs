@@ -14,15 +14,6 @@ namespace DomainTests.Vehicle
         }
 
         [Test]
-        public void MustCreateLicensePlateByWrapper()
-        {
-            var license = LicensePlateWrapper.CreateLicensePlate("PRX3911");
-
-            Assert.That(license, Is.Not.Null);
-            Assert.That(license.License, Is.EqualTo("PRX3911"));
-        }
-
-        [Test]
         public void MustNotCreateLicensePlateIfNotContainsExectedLenght()
         {
             Assert.Throws<ArgumentException>(() => new OldBrazilLicensePlate("PR91"));

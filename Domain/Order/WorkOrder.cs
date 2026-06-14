@@ -16,13 +16,13 @@ namespace Domain.Order
         public List<IMechanicalService> Services { get; private set; }
         public List<IPart> Parts { get; private set; }
         public double Budget { get; private set; } = 0.0;
-        public ServiceOrderStatus Status { get; private set; }
+        public WorkOrderStatus Status { get; private set; }
         public DateTime DateCreated { get; private set; }
         public DateTime DateFinished { get; private set; }
 
-        public WorkOrder(string customerDocument, string vehicleLicensePlate) : this(Guid.NewGuid(), customerDocument, vehicleLicensePlate, [], [], 0.0, ServiceOrderStatus.Received, DateTime.Now, DateTime.MinValue) { }
+        public WorkOrder(string customerDocument, string vehicleLicensePlate) : this(Guid.NewGuid(), customerDocument, vehicleLicensePlate, [], [], 0.0, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue) { }
 
-        public WorkOrder(Guid id, string customerDocument, string vehicleLicensePlate, List<IMechanicalService> services, List<IPart> partsAndSupplies, double budget, ServiceOrderStatus status, DateTime dateCreated, DateTime dateFinished)
+        public WorkOrder(Guid id, string customerDocument, string vehicleLicensePlate, List<IMechanicalService> services, List<IPart> partsAndSupplies, double budget, WorkOrderStatus status, DateTime dateCreated, DateTime dateFinished)
         {
             if (id == Guid.Empty)
                 throw new ArgumentException("Id não pode ser vazio");
@@ -46,75 +46,99 @@ namespace Domain.Order
 
         public void StartDiagnosis()
         {
-            if (Status is not ServiceOrderStatus.Received)
+            if (Status is not WorkOrderStatus.Received)
                 throw new InvalidOperationException("Só é possível iniciar o diagnóstico após o recebimento da ordem");
 
-            Status = ServiceOrderStatus.InDiagnosis;
+            Status = WorkOrderStatus.InDiagnosis;
         }
 
-        public void AddService(IMechanicalService serviceToAdd)
+        public IMechanicalService AddService(IMechanicalService serviceToAdd)
         {
-            if (Status is ServiceOrderStatus.Received)
+            if (Status is WorkOrderStatus.Received)
                 throw new InvalidOperationException("Não é possível adicionar serviços antes de iniciar o diagnóstico");
 
-            if (Status is ServiceOrderStatus.InExecution or ServiceOrderStatus.Finished or ServiceOrderStatus.Delivered)
+            if (Status is WorkOrderStatus.InExecution or WorkOrderStatus.Finished or WorkOrderStatus.Delivered)
                 throw new InvalidOperationException("Não é possível adicionar serviços após o inicio do serviço");
 
-            Services.Add(serviceToAdd);
+            var service = Services.FirstOrDefault(s => s.Id == serviceToAdd.Id);
+
+            if (service == null)
+            {
+                Services.Add(serviceToAdd);
+
+                return serviceToAdd;
+            }
+            else
+            {
+                service.AddServiceAmount(serviceToAdd.Amount);
+
+                return service;
+            }
         }
 
-        public void RemoveService(IMechanicalService serviceToRemove)
+        public IMechanicalService RemoveService(IMechanicalService serviceToRemove)
         {
-            if (Status is ServiceOrderStatus.Received)
+            if (Status is WorkOrderStatus.Received)
                 throw new InvalidOperationException("Não é possível adicionar serviços antes de iniciar o diagnóstico");
 
-            if (Status is ServiceOrderStatus.InExecution or ServiceOrderStatus.Finished or ServiceOrderStatus.Delivered)
+            if (Status is WorkOrderStatus.InExecution or WorkOrderStatus.Finished or WorkOrderStatus.Delivered)
                 throw new InvalidOperationException("Não é possível adicionar serviços após o inicio do serviço");
 
-            _ = Services.FirstOrDefault(x => x.Id == serviceToRemove.Id) ?? throw new InvalidOperationException("Serviço não encontrado na ordem");
+            var service = Services.First(x => x.Id == serviceToRemove.Id);
 
-            Services.Remove(serviceToRemove);
+            service.RemoveServiceAmount(serviceToRemove.Amount);
+
+            if (service.Amount == 0)
+                Services.Remove(serviceToRemove);
+
+            return service;
         }
 
         public IPart AddPartOrSupplie(IPart itemToAdd)
         {
-            if (Status is ServiceOrderStatus.Received or ServiceOrderStatus.InExecution or ServiceOrderStatus.Finished or ServiceOrderStatus.Delivered)
+            if (Status is WorkOrderStatus.Received)
+                throw new InvalidOperationException("Não é possível adicionar peças ou insumos antes de iniciar o diagnóstico");
+
+            if (Status is WorkOrderStatus.InExecution or WorkOrderStatus.Finished or WorkOrderStatus.Delivered)
                 throw new InvalidOperationException("Não é possível adicionar peças ou insumos após o inicio do serviço");
 
-            var item = Parts.FirstOrDefault(x => x.Name == itemToAdd.Name && x.Brand == itemToAdd.Brand);
+            var item = Parts.FirstOrDefault(x => x.Id == itemToAdd.Id);
 
             if (item == null)
             {
                 Parts.Add(itemToAdd);
 
-                item = itemToAdd;
+                return itemToAdd;
             }
             else
+            {
                 item.AddAmount(itemToAdd.Amount);
 
-            return item;
+                return item;
+            }
         }
 
         public IPart RemovePartOrSupplie(IPart itemToRemove)
         {
-            if (Status is ServiceOrderStatus.Received or ServiceOrderStatus.InExecution or ServiceOrderStatus.Finished or ServiceOrderStatus.Delivered)
-                throw new InvalidOperationException("Não é possível adicionar peças ou insumos após o inicio do serviço");
+            if (Status is WorkOrderStatus.Received)
+                throw new InvalidOperationException("Não é possível remover peças ou insumos antes de iniciar o diagnóstico");
 
-            var item = Parts.FirstOrDefault(x => x.Name == itemToRemove.Name && x.Brand == itemToRemove.Brand) ?? throw new InvalidOperationException("Item não encontrtado na ordem");
+            if (Status is WorkOrderStatus.InExecution or WorkOrderStatus.Finished or WorkOrderStatus.Delivered)
+                throw new InvalidOperationException("Não é possível remover peças ou insumos após o inicio do serviço");
+
+            var item = Parts.First(x => x.Id == itemToRemove.Id);
 
             item.RemoveAmount(itemToRemove.Amount);
 
             if (item.Amount == 0)
-            {
                 Parts.Remove(item);
-            }
 
             return item;
         }
 
         public void FinalizeDiagnosis()
         {
-            if (Status is not ServiceOrderStatus.InDiagnosis)
+            if (Status is not WorkOrderStatus.InDiagnosis)
                 throw new InvalidOperationException("Só é possível finalizar o diagnóstico enquanto a ordem Em Diagnósotico");
 
             if (Services.Count <= 0)
@@ -122,41 +146,41 @@ namespace Domain.Order
 
             CalculateBudget();
             // TODO: Envia para o cliente
-            Status = ServiceOrderStatus.WaitingForApproval;
+            Status = WorkOrderStatus.WaitingForApproval;
         }
 
         public void ApproveService(bool approved)
         {
-            if (Status is not ServiceOrderStatus.WaitingForApproval)
+            if (Status is not WorkOrderStatus.WaitingForApproval)
                 throw new InvalidOperationException("Não é possível aprovar ou recusar o serviço enquanto não estiver em estado de aprovação");
 
-            Status = approved ? ServiceOrderStatus.WaitingForExecution : ServiceOrderStatus.Finished;
+            Status = approved ? WorkOrderStatus.WaitingForExecution : WorkOrderStatus.Finished;
         }
 
         public void StartService()
         {
-            if (Status is not ServiceOrderStatus.WaitingForExecution)
+            if (Status is not WorkOrderStatus.WaitingForExecution)
                 throw new InvalidOperationException("Não é possível iniciar o serviço enquanto não estiver aguardando execução");
 
-            Status = ServiceOrderStatus.InExecution;
+            Status = WorkOrderStatus.InExecution;
         }
 
         public void CompleteService()
         {
-            if (Status is not ServiceOrderStatus.InExecution)
+            if (Status is not WorkOrderStatus.InExecution)
                 throw new InvalidOperationException("Não é possível finalizar o serviço enquanto não estiver em execução");
 
             // TODO: Atualiza estoque ("consome" itens que estavam reservados)
             DateFinished = DateTime.Now;
-            Status = ServiceOrderStatus.Finished;
+            Status = WorkOrderStatus.Finished;
         }
 
         public void VehicleDelivered()
         {
-            if (Status is not ServiceOrderStatus.Finished)
+            if (Status is not WorkOrderStatus.Finished)
                 throw new InvalidOperationException("Não é possível entregar o veículo enquanto não estiver finalizado");
 
-            Status = ServiceOrderStatus.Delivered;
+            Status = WorkOrderStatus.Delivered;
         }
 
         private void CalculateBudget()
@@ -164,7 +188,7 @@ namespace Domain.Order
             double value = 0.0;
 
             foreach (var service in Services)
-                value += service.Price;
+                value += service.Price * service.Amount;
 
             foreach (var item in Parts)
                 value += item.Price * item.Amount;
