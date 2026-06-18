@@ -9,13 +9,13 @@ using Service.Interface.Dto.Stock;
 
 namespace Service
 {
-    public class WorkOrderService(IWorkOrderRepository repository, ICustomerService clientService, IVehicleService vehicleService, IStockService stockService, IMechanicalServiceService catalogService) : IWorkOrderService
+    public class WorkOrderService(IWorkOrderRepository repository, ICustomerService customerService, IVehicleService vehicleService, IStockService stockService, IMechanicalServiceService mechanicalServiceService) : IWorkOrderService
     {
         private IWorkOrderRepository Repository { get; set; } = repository;
-        private ICustomerService CustomerService { get; set; } = clientService;
+        private ICustomerService CustomerService { get; set; } = customerService;
         private IVehicleService VehicleService { get; set; } = vehicleService;
         private IStockService StockService { get; set; } = stockService;
-        private IMechanicalServiceService CatalogService { get; set; } = catalogService;
+        private IMechanicalServiceService CatalogService { get; set; } = mechanicalServiceService;
 
         public async Task CreateServiceOrder(CreateOrderDto orderToCreate)
         {
@@ -53,6 +53,8 @@ namespace Service
         public async Task<IEnumerable<DetailedWorkOrderDto?>> GetCustomerOrders(string customerDocument)
         {
             var document = DocumentWrapper.CreateDocument(customerDocument);
+
+            _ = await CustomerService.GetCustomer(document.Id) ?? throw new InvalidOperationException("Cliente não enconotrado");
 
             var order = await Repository.GetCustomerOrders(document.Id);
 
@@ -147,18 +149,14 @@ namespace Service
                 {
                     var stockItem = await StockService.GetPart(orderItem.ItemId) ?? throw new InvalidOperationException("Item não encontrado no estoque");
 
-                    var item = new Part(stockItem.Id, stockItem.Name, stockItem.Brand, stockItem.Price, orderItem.Amount);
-
-                    var itemAdded = order.AddPartOrSupplie(item);
+                    var itemAdded = order.AddPartOrSupplie(stockItem.ToDomain());
 
                     registry = await Repository.AddPartToOrder(orderItem.OrderId, itemAdded);
                 }
                 else
                 {
-                    Console.WriteLine("Add");
                     part.AddAmount(orderItem.Amount);
 
-                    Console.WriteLine("Update");
                     registry = await Repository.UpdatePartFromOrder(orderItem.OrderId, part);
                 }
 
@@ -177,21 +175,19 @@ namespace Service
         {
             var order = await Repository.GetOrder(orderItem.OrderId) ?? throw new InvalidOperationException("Ordem não encontrada");
 
-            var stockItem = await StockService.GetPart(orderItem.ItemId) ?? throw new InvalidOperationException("Item não encontrado no estoque");
-
             await StockService.RestorePartAmount(new(orderItem.ItemId, orderItem.Amount));
 
             try
             {
-                var item = new Part(stockItem.Id, stockItem.Name, stockItem.Brand, stockItem.Price, orderItem.Amount);
+                var part = order.Parts.First(x => x.Id == orderItem.ItemId);
 
-                var itemRemoved = order.RemovePartOrSupplie(item);
+                part.RemoveAmount(orderItem.Amount);
                 int registry;
 
-                if (itemRemoved.Amount == 0)
-                    registry = await Repository.RemovePartFromOrder(orderItem.OrderId, item.Id);
+                if (part.Amount == 0)
+                    registry = await Repository.RemovePartFromOrder(orderItem.OrderId, part.Id);
                 else
-                    registry = await Repository.UpdatePartFromOrder(orderItem.OrderId, itemRemoved);
+                    registry = await Repository.UpdatePartFromOrder(orderItem.OrderId, part);
 
                 if (registry == 0)
                     throw new InvalidOperationException("Erro ao salvar serviço");
@@ -225,6 +221,8 @@ namespace Service
             catch
             {
                 await Repository.UpdateOrderStatus(orderId, WorkOrderStatus.InDiagnosis);
+
+                throw;
             }
 
         }

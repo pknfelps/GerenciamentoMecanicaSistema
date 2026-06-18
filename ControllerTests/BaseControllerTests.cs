@@ -17,7 +17,7 @@ namespace ControllerTests
         {
             TestWebAppFactory = new TestWebApplicationFactory();
             TestClient = TestWebAppFactory.CreateClient();
-            TestClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GerarTokenTeste());
+            TestClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GenerateTestToken());
 
             MockService();
         }
@@ -31,7 +31,7 @@ namespace ControllerTests
             TestWebAppFactory.Dispose();
         }
 
-        private static string GerarTokenTeste()
+        private static string GenerateTestToken()
         {
             var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
 

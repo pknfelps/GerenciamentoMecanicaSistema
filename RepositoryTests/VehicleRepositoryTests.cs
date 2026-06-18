@@ -1,10 +1,8 @@
 ﻿using Dapper;
 using Domain.Interface.Vehicle;
-using Domain.Vehicle;
 using Repository;
 using Repository.Interface;
-using Repository.Dto;
-using Domain.Customer;
+using NSubstitute;
 
 namespace RepositoryTests
 {
@@ -12,19 +10,53 @@ namespace RepositoryTests
     {
         private IVehicleRepository VehicleRepository { get; set; }
 
-        private static CustomerDb ExistingCostumer = new() { Id = Guid.NewGuid(), Name = "Teste", Document = "123.456.789-12", Phone = "(11) 91234-5678", Email = "teste@gmail.com" };
+        private static readonly string ExistingCustomerDocument = "123.456.789-12";
 
-        private static Guid ExistingVehicleId = Guid.NewGuid();
+        private IVehicle VehicleToRegister
+        {
+            get
+            {
+                var vehicle = Substitute.For<IVehicle>();
+                vehicle.Id.Returns(Guid.NewGuid());
+                vehicle.CustomerDocument.Id.Returns(ExistingCustomerDocument);
+                vehicle.Brand.Returns("Mitsubishi");
+                vehicle.Model.Returns("Lancer Evolution X");
+                vehicle.Year.Returns(2016);
+                vehicle.LicensePlate.License.Returns("LNC1234");
+                return vehicle;
+            }
+        }
 
-        private List<IVehicle> ExistingVehicles =
-        [
-            new Vehicle(ExistingCostumer.Document, "Porsche", "911", 1990, "PRX3911"),
-            new Vehicle(ExistingCostumer.Document, "Dodge", "Challenger", 1980, "DOG3E80")
-        ];
+        private static readonly Guid ExistingVehicleId = Guid.NewGuid();
+        private static IVehicle ExistingVehicle
+        {
+            get
+            {
+                var vehicle = Substitute.For<IVehicle>();
+                vehicle.Id.Returns(ExistingVehicleId);
+                vehicle.CustomerDocument.Id.Returns(ExistingCustomerDocument);
+                vehicle.Brand.Returns("Porsche");
+                vehicle.Model.Returns("911");
+                vehicle.Year.Returns(1990);
+                vehicle.LicensePlate.License.Returns("PRX3911");
+                return vehicle;
+            }
+        }
 
-        private IVehicle VehicleToRegister = new Vehicle(ExistingCostumer.Document, "Mitsubishi", "Lancer Evolution X", 2016, "LNC1234");
-
-        private IVehicle VehicleToUpdate = new Vehicle(ExistingCostumer.Document, "Porsche", "911 Carrera", 2002, "PRX3911");
+        private IVehicle VehicleToUpdate
+        {
+            get
+            {
+                var vehicle = Substitute.For<IVehicle>();
+                vehicle.Id.Returns(ExistingVehicleId);
+                vehicle.CustomerDocument.Id.Returns(ExistingCustomerDocument);
+                vehicle.Brand.Returns("Porsche");
+                vehicle.Model.Returns("911 Carrera");
+                vehicle.Year.Returns(2002);
+                vehicle.LicensePlate.License.Returns("PRX3911");
+                return vehicle;
+            }
+        }
 
         protected override async Task InternalSetup()
         {
@@ -39,8 +71,8 @@ namespace RepositoryTests
 
             await Connection.ExecuteAsync($"""
                 INSERT INTO customers(id, name, document, phone, email)
-                VALUES (@Id, @Name, @Document, @Phone, @Email);
-                """, ExistingCostumer);
+                VALUES ('{Guid.NewGuid()}', 'Teste', '{ExistingCustomerDocument}', '(11) 91234-5678', 'teste@gmail.com');
+                """);
 
             await Connection.ExecuteAsync("""
                 CREATE TABLE IF NOT EXISTS vehicles (
@@ -54,8 +86,7 @@ namespace RepositoryTests
 
             VehicleRepository = new VehicleRepository(Connection);
 
-            foreach (var vehicle in ExistingVehicles)
-                await VehicleRepository.RegisterVehicle(vehicle);
+            await VehicleRepository.RegisterVehicle(ExistingVehicle);
         }
 
         [Test]
@@ -71,38 +102,30 @@ namespace RepositoryTests
         {
             var vehicles = (await VehicleRepository.GetVehicles()).ToList();
 
-            Assert.That(vehicles, Has.Count.EqualTo(2));
+            Assert.That(vehicles, Has.Count.EqualTo(1));
 
             Assert.Multiple(() =>
             {
-                Assert.That(vehicles[0].Brand, Is.EqualTo(ExistingVehicles[0].Brand));
-                Assert.That(vehicles[0].Model, Is.EqualTo(ExistingVehicles[0].Model));
-                Assert.That(vehicles[0].Year, Is.EqualTo(ExistingVehicles[0].Year));
-                Assert.That(vehicles[0].LicensePlate.License, Is.EqualTo(ExistingVehicles[0].LicensePlate.License));
-            });
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(vehicles[1].Brand, Is.EqualTo(ExistingVehicles[1].Brand));
-                Assert.That(vehicles[1].Model, Is.EqualTo(ExistingVehicles[1].Model));
-                Assert.That(vehicles[1].Year, Is.EqualTo(ExistingVehicles[1].Year));
-                Assert.That(vehicles[1].LicensePlate.License, Is.EqualTo(ExistingVehicles[1].LicensePlate.License));
+                Assert.That(vehicles[0].Brand, Is.EqualTo(ExistingVehicle.Brand));
+                Assert.That(vehicles[0].Model, Is.EqualTo(ExistingVehicle.Model));
+                Assert.That(vehicles[0].Year, Is.EqualTo(ExistingVehicle.Year));
+                Assert.That(vehicles[0].LicensePlate.License, Is.EqualTo(ExistingVehicle.LicensePlate.License));
             });
         }
 
         [Test]
         public async Task MustGetVehicle()
         {
-            var vehicle = await VehicleRepository.GetVehicle(ExistingVehicles[0].LicensePlate.License);
+            var vehicle = await VehicleRepository.GetVehicle(ExistingVehicle.LicensePlate.License);
 
             Assert.That(vehicle, Is.Not.Null);
 
             Assert.Multiple(() =>
             {
-                Assert.That(vehicle.Brand, Is.EqualTo(ExistingVehicles[0].Brand));
-                Assert.That(vehicle.Model, Is.EqualTo(ExistingVehicles[0].Model));
-                Assert.That(vehicle.Year, Is.EqualTo(ExistingVehicles[0].Year));
-                Assert.That(vehicle.LicensePlate.License, Is.EqualTo(ExistingVehicles[0].LicensePlate.License));
+                Assert.That(vehicle.Brand, Is.EqualTo(ExistingVehicle.Brand));
+                Assert.That(vehicle.Model, Is.EqualTo(ExistingVehicle.Model));
+                Assert.That(vehicle.Year, Is.EqualTo(ExistingVehicle.Year));
+                Assert.That(vehicle.LicensePlate.License, Is.EqualTo(ExistingVehicle.LicensePlate.License));
             });
         }
 
@@ -125,7 +148,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustDeleteVehicle()
         {
-            var registry = await VehicleRepository.DeleteVehicle(ExistingVehicles[0].Id);
+            var registry = await VehicleRepository.DeleteVehicle(ExistingVehicle.Id);
 
             Assert.That(registry, Is.Not.EqualTo(0));
         }

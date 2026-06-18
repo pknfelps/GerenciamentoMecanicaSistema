@@ -32,9 +32,9 @@ namespace ControllerTests
         {
             StockService = TestWebAppFactory.StockServiceMock;
 
-            StockService.RegisterNewPart(Arg.Any<PartDto>()).Returns(callInfo =>
+            StockService.RegisterNewPart(Arg.Any<CreatePartDto>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<PartDto>(0);
+                var item = callInfo.ArgAt<CreatePartDto>(0);
 
                 if (item.Equals(ItemToRegister))
                     return Task.CompletedTask;
@@ -145,9 +145,9 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustGetItens()
+        public async Task MustGetItems()
         {
-            var response = await TestClient.GetAsync("/Stock/GetItens");
+            var response = await TestClient.GetAsync("/Stock/GetItems");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
@@ -256,66 +256,6 @@ namespace ControllerTests
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
             await StockService.Received(0).RemovePartAmount(Arg.Any<PartUpdateDto<int>>());
-        }
-
-        [Test]
-        public async Task MustReserveItemAmount()
-        {
-            var response = await TestClient.PatchAsJsonAsync($"/Stock/ReserveItemAmount", IntItemUpdate);
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-
-            await StockService.Received(1).ReservePartAmount(Arg.Any<PartUpdateDto<int>>());
-        }
-
-        [Test]
-        public async Task MustReturnInternalServerErrorIfTryReserveItemAmountWithNotExistingItem()
-        {
-            var response = await TestClient.PatchAsJsonAsync($"/Stock/ReserveItemAmount", ItemToFailIntOperations);
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
-
-            await StockService.Received(1).ReservePartAmount(Arg.Any<PartUpdateDto<int>>());
-        }
-
-        [Test]
-        public async Task MustReturnBadRequestIfTryReserveItemAmountWithInvalidModel()
-        {
-            var response = await TestClient.PatchAsJsonAsync($"/Stock/ReserveItemAmount", InvalidIntItemUpdate);
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
-
-            await StockService.Received(0).ReservePartAmount(Arg.Any<PartUpdateDto<int>>());
-        }
-
-        [Test]
-        public async Task MustRestoreItemAmount()
-        {
-            var response = await TestClient.PatchAsJsonAsync($"/Stock/RestoreItemAmount", IntItemUpdate);
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-
-            await StockService.Received(1).RestorePartAmount(Arg.Any<PartUpdateDto<int>>());
-        }
-
-        [Test]
-        public async Task MustReturnInternalServerErrorIfTryRestoreItemAmountWithNotExistingItem()
-        {
-            var response = await TestClient.PatchAsJsonAsync($"/Stock/RestoreItemAmount", ItemToFailIntOperations);
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
-
-            await StockService.Received(1).RestorePartAmount(Arg.Any<PartUpdateDto<int>>());
-        }
-
-        [Test]
-        public async Task MustReturnBadRequestIfTryRestoreItemAmountWithInvalidModel()
-        {
-            var response = await TestClient.PatchAsJsonAsync($"/Stock/RestoreItemAmount", InvalidIntItemUpdate);
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
-
-            await StockService.Received(0).RestorePartAmount(Arg.Any<PartUpdateDto<int>>());
         }
 
         [Test]

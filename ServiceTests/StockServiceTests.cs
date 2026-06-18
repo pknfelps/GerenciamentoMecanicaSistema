@@ -1,5 +1,4 @@
 ﻿using Domain.Interface.Stock;
-using Domain.Stock;
 using NSubstitute;
 using Repository.Interface;
 using Service;
@@ -13,37 +12,53 @@ namespace ServiceTests
         private IStockService Service { get; set; }
         private IStockRepository Repository { get; set; }
 
-        private static readonly CreatePartDto PartToRegister = new("Óleo de motor", "Lubrax", 41.90, 5);
-        private static readonly CreatePartDto PartToFailRegister = new("Teste", "Testando", 15, 1);
-        private static readonly PartUpdateDto<int> PartToFailIntOperations = new(Guid.NewGuid(), 5);
-        private static readonly PartUpdateDto<double> PartToFailDoubleOperations = new(Guid.NewGuid(), 10.00);
-        private static List<IPart> StockParts;
-        private static List<PartDto> StockPartsDtos;
-        private static PartUpdateDto<int> PartToAddAmount;
-        private static PartUpdateDto<int> PartToFailAddAmount;
-        private static PartUpdateDto<double> PartToUpdatePrice;
-        private static PartUpdateDto<double> PartToFailUpdatePrice;
+        private static CreatePartDto PartToRegister { get; } = new("Óleo de motor", "Lubrax", 41.90, 5);
+        private static CreatePartDto PartToFailRegister { get; } = new("Teste", "Testando", 15, 1);
+
+        private static readonly Guid ExistingPartId = Guid.NewGuid();
+        private static IPart ExistingPart
+        {
+            get
+            {
+                var part = Substitute.For<IPart>();
+                part.Id.Returns(ExistingPartId);
+                part.Name.Returns("Vela de ignição");
+                part.Brand.Returns("Bosch");
+                part.Price.Returns(6.00);
+                part.Amount.Returns(20);
+                part.ReservedAmount.Returns(5);
+                return part;
+            }
+        }
+
+        private static readonly Guid ExistingPart2Id = Guid.NewGuid();
+        private static IPart ExistingPart2
+        {
+            get
+            {
+                var part = Substitute.For<IPart>();
+                part.Id.Returns(ExistingPart2Id);
+                part.Name.Returns("Flúido para radiador");
+                part.Brand.Returns("Gitanes");
+                part.Price.Returns(30.00);
+                part.Amount.Returns(5);
+                part.ReservedAmount.Returns(0);
+                return part;
+            }
+        }
+
+        private static PartDto ExistingPartDto { get; } = new(ExistingPartId, "Vela de ignição", "Bosch", 6.00, 20, 5);
+        private static PartDto ExistingPart2Dto { get; } = new(ExistingPart2Id, "Flúido para radiador", "Gitanes", 30.00, 5, 0);
+        private static PartUpdateDto<int> PartToFailIntOperations { get; } = new(Guid.NewGuid(), 5);
+        private static PartUpdateDto<double> PartToFailDoubleOperations { get; } = new(Guid.NewGuid(), 10.00);
+        private static PartUpdateDto<int> PartToAddAmount { get; } = new(ExistingPartId, 5);
+        private static PartUpdateDto<int> PartToFailAddAmount { get; } = new(ExistingPart2Id, 5);
+        private static PartUpdateDto<double> PartToUpdatePrice { get; } = new(ExistingPartId, 10.00);
+        private static PartUpdateDto<double> PartToFailUpdatePrice { get; } = new(ExistingPart2Id, 35.00);
 
         [SetUp]
         public void SetUp()
         {
-            StockParts = 
-            [ 
-                new Part(Guid.NewGuid(), "Vela de ignição", "Bosch", 6.00, 20, 5),
-                new Part(Guid.NewGuid(), "Flúido para radiador", "Gitanes", 30.00, 5, 0)
-            ];
-
-            StockPartsDtos =
-            [
-                new PartDto(Guid.NewGuid(), "Vela de ignição", "Bosch", 6.00, 20, 5),
-                new PartDto(Guid.NewGuid(), "Flúido para radiador", "Gitanes", 30.00, 5, 0)
-            ];
-
-            PartToAddAmount = new(StockParts[0].Id, 5);
-            PartToFailAddAmount = new(StockParts[1].Id, 5);
-            PartToUpdatePrice = new(StockParts[0].Id, 10.00);
-            PartToFailUpdatePrice = new(StockParts[1].Id, 35.00);
-
             Repository = Substitute.For<IStockRepository>();
 
             Repository.RegisterNewPart(Arg.Any<IPart>()).Returns(callInfo =>
@@ -56,21 +71,29 @@ namespace ServiceTests
                 return 0;
             });
 
-            Repository.GetParts().Returns(StockParts);
+            List<IPart> parts = new List<IPart>() { ExistingPart, ExistingPart2 };
+            Repository.GetParts().Returns(parts);
 
             Repository.GetPart(Arg.Any<string>(), Arg.Any<string>()).Returns(callInfo =>
             {
                 var name = callInfo.ArgAt<string>(0);
                 var brand = callInfo.ArgAt<string>(1);
 
-                return StockParts.FirstOrDefault(x => x.Name == name && x.Brand == brand);
+                return parts.FirstOrDefault(x => x.Name == name && x.Brand == brand);
+            });
+
+            Repository.GetPart(Arg.Any<Guid>()).Returns(callInfo =>
+            {
+                var id = callInfo.ArgAt<Guid>(0);
+
+                return parts.FirstOrDefault(x => x.Id == id);
             });
 
             Repository.UpdatePartAmount(Arg.Any<IPart>()).Returns(callInfo =>
             {
                 var item = callInfo.ArgAt<IPart>(0);
 
-                if (item.Name == StockParts[0].Name && item.Brand == StockParts[0].Brand)
+                if (item.Name == ExistingPart.Name && item.Brand == ExistingPart.Brand)
                     return 1;
 
                 return 0;
@@ -80,7 +103,7 @@ namespace ServiceTests
             {
                 var item = callInfo.ArgAt<IPart>(0);
 
-                if (item.Name == StockParts[0].Name && item.Brand == StockParts[0].Brand)
+                if (item.Name == ExistingPart.Name && item.Brand == ExistingPart.Brand)
                     return 1;
 
                 return 0;
@@ -90,7 +113,7 @@ namespace ServiceTests
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
-                if (id == StockParts[0].Id)
+                if (id == ExistingPart.Id)
                     return 1;
 
                 return 0;
@@ -111,9 +134,9 @@ namespace ServiceTests
         [Test]
         public async Task MustNotRegisterNewPartIfAlreadyExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RegisterNewPart(StockPartsDtos[0]));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RegisterNewPart(ExistingPartDto));
 
-            await Repository.Received(1).GetPart(StockPartsDtos[0].Name, StockPartsDtos[0].Brand);
+            await Repository.Received(1).GetPart(ExistingPartDto.Name, ExistingPartDto.Brand);
         }
 
         [Test]
@@ -130,7 +153,7 @@ namespace ServiceTests
         {
             await Service.AddPartAmount(PartToAddAmount);
 
-            await Repository.Received(1).GetPart(StockParts[0].Name, StockParts[0].Brand);
+            await Repository.Received(1).GetPart(ExistingPartId);
             await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
         }
 
@@ -139,7 +162,7 @@ namespace ServiceTests
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddPartAmount(PartToFailIntOperations));
 
-            await Repository.Received(1).GetPart(PartToRegister.Name, PartToRegister.Brand);
+            await Repository.Received(1).GetPart(PartToFailIntOperations.Id);
             await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
         }
 
@@ -148,7 +171,7 @@ namespace ServiceTests
         {
             await Service.RemovePartAmount(PartToAddAmount);
 
-            await Repository.Received(1).GetPart(StockParts[0].Name, StockParts[0].Brand);
+            await Repository.Received(1).GetPart(PartToAddAmount.Id);
             await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
         }
 
@@ -157,7 +180,7 @@ namespace ServiceTests
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemovePartAmount(PartToFailIntOperations));
 
-            await Repository.Received(1).GetPart(PartToRegister.Name, PartToRegister.Brand);
+            await Repository.Received(1).GetPart(PartToFailIntOperations.Id);
             await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
         }
 
@@ -166,7 +189,7 @@ namespace ServiceTests
         {
             await Service.ReservePartAmount(PartToAddAmount);
 
-            await Repository.Received(1).GetPart(StockParts[0].Name, StockParts[0].Brand);
+            await Repository.Received(1).GetPart(PartToAddAmount.Id);
             await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
         }
 
@@ -175,7 +198,7 @@ namespace ServiceTests
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ReservePartAmount(PartToFailIntOperations));
 
-            await Repository.Received(1).GetPart(PartToRegister.Name, PartToRegister.Brand);
+            await Repository.Received(1).GetPart(PartToFailIntOperations.Id);
             await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
         }
 
@@ -184,7 +207,7 @@ namespace ServiceTests
         {
             await Service.RestorePartAmount(PartToAddAmount);
 
-            await Repository.Received(1).GetPart(StockParts[0].Name, StockParts[0].Brand);
+            await Repository.Received(1).GetPart(PartToAddAmount.Id);
             await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
         }
 
@@ -193,7 +216,25 @@ namespace ServiceTests
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RestorePartAmount(PartToFailIntOperations));
 
-            await Repository.Received(1).GetPart(PartToRegister.Name, PartToRegister.Brand);
+            await Repository.Received(1).GetPart(PartToFailIntOperations.Id);
+            await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
+        }
+
+        [Test]
+        public async Task MustConsumePartAmount()
+        {
+            await Service.ConsumeReservedAmount(PartToAddAmount);
+
+            await Repository.Received(1).GetPart(PartToAddAmount.Id);
+            await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
+        }
+
+        [Test]
+        public async Task MustNotConsumePartAmountIfNotExists()
+        {
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ConsumeReservedAmount(PartToFailIntOperations));
+
+            await Repository.Received(1).GetPart(PartToFailIntOperations.Id);
             await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
         }
 
@@ -202,7 +243,7 @@ namespace ServiceTests
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddPartAmount(PartToFailAddAmount));
 
-            await Repository.Received(1).GetPart(StockParts[1].Name, StockParts[1].Brand);
+            await Repository.Received(1).GetPart(ExistingPart2Id);
             await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
         }
 
@@ -216,24 +257,24 @@ namespace ServiceTests
             Assert.That(itens, Has.Count.EqualTo(2));
             Assert.Multiple(() =>
             {
-                Assert.That(itens[0].Equals(StockPartsDtos[0]), Is.True);
-                Assert.That(itens[1].Equals(StockPartsDtos[1]), Is.True);
+                Assert.That(itens[0].Equals(ExistingPartDto), Is.True);
+                Assert.That(itens[1].Equals(ExistingPart2Dto), Is.True);
             });
         }
 
         [Test]
-        public async Task MustGetPart()
+        public async Task MustGetPartByNameAndBrand()
         {
-            var item = await Service.GetPart(StockParts[0].Name, StockParts[0].Brand);
+            var item = await Service.GetPart(ExistingPart.Name, ExistingPart.Brand);
 
-            await Repository.Received(1).GetPart(StockParts[0].Name, StockParts[0].Brand);
+            await Repository.Received(1).GetPart(ExistingPart.Name, ExistingPart.Brand);
 
             Assert.That(item, Is.Not.Null);
-            Assert.That(item.Equals(StockPartsDtos[0]), Is.True);
+            Assert.That(item.Equals(ExistingPartDto), Is.True);
         }
 
         [Test]
-        public async Task MustNotGetPartIfNotExists()
+        public async Task MustNotGetPartByNameAndBrandIfNotExists()
         {
             var item = await Service.GetPart(PartToRegister.Name, PartToRegister.Brand);
 
@@ -243,11 +284,32 @@ namespace ServiceTests
         }
 
         [Test]
+        public async Task MustGetPartById()
+        {
+            var item = await Service.GetPart(ExistingPart.Id);
+
+            await Repository.Received(1).GetPart(ExistingPart.Id);
+
+            Assert.That(item, Is.Not.Null);
+            Assert.That(item.Equals(ExistingPartDto), Is.True);
+        }
+
+        [Test]
+        public async Task MustNotGetPartByIdIfNotExists()
+        {
+            var item = await Service.GetPart(Guid.NewGuid());
+
+            await Repository.Received(1).GetPart(Arg.Any<Guid>());
+
+            Assert.That(item, Is.Null);
+        }
+
+        [Test]
         public async Task MustUpdatePartPrice()
         {
             await Service.UpdatePartPrice(PartToUpdatePrice);
 
-            await Repository.Received(1).GetPart(StockParts[0].Name, StockParts[0].Brand);
+            await Repository.Received(1).GetPart(ExistingPartId);
             await Repository.Received(1).UpdatePartPrice(Arg.Any<IPart>());
         }
 
@@ -256,7 +318,7 @@ namespace ServiceTests
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdatePartPrice(PartToFailDoubleOperations));
 
-            await Repository.Received(1).GetPart(PartToRegister.Name, PartToRegister.Brand);
+            await Repository.Received(1).GetPart(PartToFailDoubleOperations.Id);
             await Repository.Received(0).UpdatePartPrice(Arg.Any<IPart>());
         }
 
@@ -265,17 +327,17 @@ namespace ServiceTests
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdatePartPrice(PartToFailUpdatePrice));
 
-            await Repository.Received(1).GetPart(StockParts[1].Name, StockParts[1].Brand);
+            await Repository.Received(1).GetPart(ExistingPart2Id);
             await Repository.Received(1).UpdatePartPrice(Arg.Any<IPart>());
         }
 
         [Test]
         public async Task MustDeletePart()
         {
-            await Service.DeletePart(StockParts[0].Name, StockParts[0].Brand);
+            await Service.DeletePart(ExistingPart.Name, ExistingPart.Brand);
 
-            await Repository.Received(1).GetPart(StockParts[0].Name, StockParts[0].Brand);
-            await Repository.Received(1).DeletePart(StockParts[0].Id);
+            await Repository.Received(1).GetPart(ExistingPart.Name, ExistingPart.Brand);
+            await Repository.Received(1).DeletePart(ExistingPart.Id);
         }
 
         [Test]
@@ -290,10 +352,10 @@ namespace ServiceTests
         [Test]
         public async Task MustThrowExceptionIfFailToDeletePart()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeletePart(StockParts[1].Name, StockParts[1].Brand));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeletePart(ExistingPart2.Name, ExistingPart2.Brand));
 
-            await Repository.Received(1).GetPart(StockParts[1].Name, StockParts[1].Brand);
-            await Repository.Received(1).DeletePart(StockParts[1].Id);
+            await Repository.Received(1).GetPart(ExistingPart2.Name, ExistingPart2.Brand);
+            await Repository.Received(1).DeletePart(ExistingPart2.Id);
         }
     }
 }

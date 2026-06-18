@@ -22,5 +22,15 @@ namespace Service.Interface.Dto.Order
         public DateTime DateFinished { get; private set; } = dateFinished;
 
         public static WorkOrderDto Create(IWorkOrder order) => new(order.Id, order.CustomerDocument.Id, order.VehicleLicensePlate.License, order.Budget, order.Status.ToString(), order.DateCreated, order.DateFinished);
+
+        public override bool Equals(object? obj)
+        {
+            if (obj == null)
+                return false;
+
+            var order = (WorkOrderDto)obj;
+
+            return Id == order.Id && CustomerDocument == order.CustomerDocument && VehicleLicensePlate == order.VehicleLicensePlate && Budget == order.Budget && Status == order.Status && DateCreated == order.DateCreated && DateFinished == order.DateFinished;
+        }
     }
 }

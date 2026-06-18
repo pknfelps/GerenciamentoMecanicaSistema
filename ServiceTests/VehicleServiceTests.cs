@@ -2,6 +2,7 @@
 using Domain.Interface.Vehicle;
 using Domain.Vehicle;
 using NSubstitute;
+using NSubstitute.Routing.Handlers;
 using Repository.Interface;
 using Service;
 using Service.Interface;
@@ -14,18 +15,42 @@ namespace ServiceTests
         private IVehicleService VehicleService { get; set; }
         private IVehicleRepository Repository { get; set; }
 
-        private static readonly CreateVehicleDto VehicleToRegister = new("12345678912", "Fiat", "Mobi", 2025, "FIT4M08");
-        private static readonly CreateVehicleDto VehicleToFailRegister = new("12345678912", "Test", "Test", 0000, "TST1234");
+        private static CreateVehicleDto VehicleToRegister { get; } = new("12345678912", "Fiat", "Mobi", 2025, "FIT4M08");
+        private static CreateVehicleDto VehicleToFailRegister { get; } = new("12345678912", "Test", "Test", 0000, "TST1234");
 
-        private static readonly List<Vehicle> Vehicles = 
-        [
-            Substitute.For<Vehicle>(Substitute.For<IDocument>(), "Honda", "Civic", 2024, "CVC2024"),
-            Substitute.For<Vehicle>(Substitute.For<IDocument>(), "Ford", "Ka", 2020, "FKA0F20")
-        ];
+        private static readonly Guid ExistingVehicleId = Guid.NewGuid();
+        private static IVehicle ExistingVehicle
+        {
+            get
+            {
+                var vehicle = Substitute.For<IVehicle>();
+                vehicle.Id.Returns(ExistingVehicleId);
+                vehicle.Brand.Returns("Honda");
+                vehicle.Model.Returns("Civic");
+                vehicle.Year.Returns(2024);
+                vehicle.LicensePlate.License.Returns("CVC2024");
+                return vehicle;
+            }
+        }
 
-        private static readonly VehicleDto ExistingVehicleDto = new(Guid.NewGuid(), "12345678912", "Honda", "Civic", 2024, "CVC2024");
-        private static readonly VehicleDto ExistingVehicleToUpdate = new(Guid.NewGuid(), "12345678912", "Honda", "City", 2020, "CVC2024");
-        private static readonly VehicleDto ExistingVehicleToFailUpdateOrDelete = new(Guid.NewGuid(), "12345678912", "Test", "Test", 2020, "FKA0F20");
+        private static readonly Guid ExistingVehicle2Id = Guid.NewGuid();
+        private static IVehicle ExistingVehicle2
+        {
+            get
+            {
+                var vehicle = Substitute.For<IVehicle>();
+                vehicle.Id.Returns(ExistingVehicle2Id);
+                vehicle.Brand.Returns("Ford");
+                vehicle.Model.Returns("Ka");
+                vehicle.Year.Returns(2020);
+                vehicle.LicensePlate.License.Returns("FKA0F20");
+                return vehicle;
+            }
+        }
+
+        private static VehicleDto ExistingVehicleDto { get; } = new(Guid.NewGuid(), "12345678912", "Honda", "Civic", 2024, "CVC2024");
+        private static VehicleDto ExistingVehicleToUpdate { get; } = new(Guid.NewGuid(), "12345678912", "Honda", "City", 2020, "CVC2024");
+        private static VehicleDto ExistingVehicleToFailUpdateOrDelete { get; } = new(Guid.NewGuid(), "12345678912", "Test", "Test", 2020, "FKA0F20");
 
         [SetUp]
         public void SetUp()
@@ -42,13 +67,14 @@ namespace ServiceTests
                 return 0;
             });
 
-            Repository.GetVehicles().Returns(Vehicles);
+            List<IVehicle> vehicles = new List<IVehicle>() { ExistingVehicle, ExistingVehicle2 };
+            Repository.GetVehicles().Returns(vehicles);
 
             Repository.GetVehicle(Arg.Any<string>()).Returns(callInfo =>
             {
                 var license = callInfo.ArgAt<string>(0);
 
-                return Vehicles.FirstOrDefault(x => x.LicensePlate.License.Equals(license));
+                return vehicles.FirstOrDefault(x => x.LicensePlate.License.Equals(license));
             });
 
             Repository.UpdateVehicle(Arg.Any<IVehicle>()).Returns(callInfo =>
@@ -58,7 +84,7 @@ namespace ServiceTests
                 if (vehicle.Brand == VehicleToFailRegister.Brand && vehicle.Model == VehicleToFailRegister.Model)
                     return 0;
 
-                if (Vehicles.FirstOrDefault(x => x.LicensePlate.License.Equals(vehicle.LicensePlate.License)) != default)
+                if (vehicles.FirstOrDefault(x => x.LicensePlate.License.Equals(vehicle.LicensePlate.License)) != default)
                     return 1;
 
                 return 0;
@@ -68,7 +94,7 @@ namespace ServiceTests
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
-                if (Vehicles[0].Id.Equals(id))
+                if (vehicles[0].Id.Equals(id))
                     return 1;
 
                 return 0;
@@ -114,35 +140,35 @@ namespace ServiceTests
 
             Assert.Multiple(() =>
             {
-                Assert.That(vehicles[0].Brand, Is.EqualTo(Vehicles[0].Brand));
-                Assert.That(vehicles[0].Model, Is.EqualTo(Vehicles[0].Model));
-                Assert.That(vehicles[0].Year, Is.EqualTo(Vehicles[0].Year));
-                Assert.That(vehicles[0].LicensePlate, Is.EqualTo(Vehicles[0].LicensePlate.License));
+                Assert.That(vehicles[0].Brand, Is.EqualTo(ExistingVehicle.Brand));
+                Assert.That(vehicles[0].Model, Is.EqualTo(ExistingVehicle.Model));
+                Assert.That(vehicles[0].Year, Is.EqualTo(ExistingVehicle.Year));
+                Assert.That(vehicles[0].LicensePlate, Is.EqualTo(ExistingVehicle.LicensePlate.License));
             });
 
             Assert.Multiple(() =>
             {
-                Assert.That(vehicles[1].Brand, Is.EqualTo(Vehicles[1].Brand));
-                Assert.That(vehicles[1].Model, Is.EqualTo(Vehicles[1].Model));
-                Assert.That(vehicles[1].Year, Is.EqualTo(Vehicles[1].Year));
-                Assert.That(vehicles[1].LicensePlate, Is.EqualTo(Vehicles[1].LicensePlate.License));
+                Assert.That(vehicles[1].Brand, Is.EqualTo(ExistingVehicle2.Brand));
+                Assert.That(vehicles[1].Model, Is.EqualTo(ExistingVehicle2.Model));
+                Assert.That(vehicles[1].Year, Is.EqualTo(ExistingVehicle2.Year));
+                Assert.That(vehicles[1].LicensePlate, Is.EqualTo(ExistingVehicle2.LicensePlate.License));
             });
         }
 
         [Test]
         public async Task MustGetVehicle()
         {
-            var vehicle = await VehicleService.GetVehicle(Vehicles[0].LicensePlate.License);
+            var vehicle = await VehicleService.GetVehicle(ExistingVehicle.LicensePlate.License);
 
-            await Repository.Received(1).GetVehicle(Vehicles[0].LicensePlate.License);
+            await Repository.Received(1).GetVehicle(ExistingVehicle.LicensePlate.License);
             Assert.That(vehicle, Is.Not.Null);
 
             Assert.Multiple(() =>
             {
-                Assert.That(vehicle.Brand, Is.EqualTo(Vehicles[0].Brand));
-                Assert.That(vehicle.Model, Is.EqualTo(Vehicles[0].Model));
-                Assert.That(vehicle.Year, Is.EqualTo(Vehicles[0].Year));
-                Assert.That(vehicle.LicensePlate, Is.EqualTo(Vehicles[0].LicensePlate.License));
+                Assert.That(vehicle.Brand, Is.EqualTo(ExistingVehicle.Brand));
+                Assert.That(vehicle.Model, Is.EqualTo(ExistingVehicle.Model));
+                Assert.That(vehicle.Year, Is.EqualTo(ExistingVehicle.Year));
+                Assert.That(vehicle.LicensePlate, Is.EqualTo(ExistingVehicle.LicensePlate.License));
             });
         }
 
@@ -167,7 +193,9 @@ namespace ServiceTests
         [Test]
         public async Task MustNotUpdateVehicleIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.UpdateVehicle(Arg.Any<VehicleDto>()));
+            var vehicle = new VehicleDto(Guid.NewGuid(), VehicleToRegister.CustomerDocument, VehicleToRegister.Brand, VehicleToRegister.Model, VehicleToRegister.Year, VehicleToRegister.LicensePlate);
+
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.UpdateVehicle(vehicle));
 
             await Repository.Received(1).GetVehicle(VehicleToRegister.LicensePlate);
             await Repository.ReceivedWithAnyArgs(0).UpdateVehicle(Arg.Any<IVehicle>());
@@ -185,10 +213,10 @@ namespace ServiceTests
         [Test]
         public async Task MustDeleteVehicle()
         {
-            await VehicleService.DeleteVehicle(Vehicles[0].LicensePlate.License);
+            await VehicleService.DeleteVehicle(ExistingVehicle.LicensePlate.License);
 
-            await Repository.Received(1).GetVehicle(Vehicles[0].LicensePlate.License);
-            await Repository.ReceivedWithAnyArgs(1).DeleteVehicle(Vehicles[0].Id);
+            await Repository.Received(1).GetVehicle(ExistingVehicle.LicensePlate.License);
+            await Repository.ReceivedWithAnyArgs(1).DeleteVehicle(ExistingVehicle.Id);
         }
 
         [Test]
@@ -206,7 +234,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.DeleteVehicle(ExistingVehicleToFailUpdateOrDelete.LicensePlate));
 
             await Repository.Received(1).GetVehicle(ExistingVehicleToFailUpdateOrDelete.LicensePlate);
-            await Repository.ReceivedWithAnyArgs(1).DeleteVehicle(Vehicles[1].Id);
+            await Repository.ReceivedWithAnyArgs(1).DeleteVehicle(ExistingVehicle2.Id);
         }
     }
 }

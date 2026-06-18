@@ -1,5 +1,4 @@
 ﻿using NSubstitute;
-using Service;
 using Service.Interface;
 using Service.Interface.Dto.User;
 using System.Net;
@@ -11,9 +10,9 @@ namespace ControllerTests
     {
         private IAuthenticationService AuthenticationService { get; set; }
 
-        private readonly UserDto UsuarioExistente = new(Guid.NewGuid(), "Ciclano", "Ciclano@123", "Admin");
-        private readonly UserDto UsuarioExistenteComSenhaErrada = new(Guid.NewGuid(), "Ciclano", "Ciclano@321", "Admin");
-        private readonly UserDto UsuarioInexistente = new(Guid.NewGuid(), "Fulano", "Fulano@123", "Usuario");
+        private readonly CreateUserDto UsuarioExistente = new("Ciclano", "Ciclano@123", "Admin");
+        private readonly CreateUserDto UsuarioExistenteComSenhaErrada = new("Ciclano", "Ciclano@321", "Admin");
+        private readonly CreateUserDto UsuarioInexistente = new("Fulano", "Fulano@123", "Usuario");
         private readonly string TokenValido = "TokenvalidoCriadocomsUcessoaPartirDetestedeController";
         private readonly string UnauthorizedMessage = "Usuário ou senha inválidos";
 
@@ -29,9 +28,9 @@ namespace ControllerTests
         {
             AuthenticationService = TestWebAppFactory.AuthenticationServiceMock;
 
-            AuthenticationService.Authenticate(Arg.Any<UserDto>()).Returns(callInfo =>
+            AuthenticationService.Authenticate(Arg.Any<CreateUserDto>()).Returns(callInfo =>
             {
-                var usuario = callInfo.Arg<UserDto>();
+                var usuario = callInfo.Arg<CreateUserDto>();
 
                 if (usuario.Equals(UsuarioExistente))
                     return TokenValido;
@@ -47,8 +46,6 @@ namespace ControllerTests
 
             var token = await response.Content.ReadAsStringAsync();
 
-            await AuthenticationService.Received(1).Authenticate(UsuarioExistente);
-
             Assert.Multiple(() =>
             {
                 Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
@@ -56,6 +53,8 @@ namespace ControllerTests
                 Assert.That(token, Is.Not.Empty);
                 Assert.That(token, Is.EqualTo(TokenValido));
             });
+
+            await AuthenticationService.Received(1).Authenticate(UsuarioExistente);
         }
 
         [Test]

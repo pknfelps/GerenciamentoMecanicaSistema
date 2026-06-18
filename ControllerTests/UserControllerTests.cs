@@ -1,5 +1,4 @@
 ﻿using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Service.Interface;
 using Service.Interface.Dto.User;
 using System.Net;
@@ -14,18 +13,36 @@ namespace ControllerTests
         private readonly CreateUserDto UserToRegister = new("Fulano", "Fulano@123", "User");
         private static Guid ExistingUserId = Guid.NewGuid();
         private readonly UserDto ExistingUser = new(ExistingUserId, "Ciclano", "Ciclano@123", "Admin");
-        private readonly UserDto ExistingUserWithNoPassword = new(ExistingUserId, "Ciclano", "", "Admin");
+        private readonly CreateUserDto ExistingUserWithNoPassword = new("Ciclano", "", "Admin");
 
         protected override void MockService()
         {
             UserService = TestWebAppFactory.UserServiceMock;
+
+            UserService.RegisterUser(Arg.Any<CreateUserDto>()).Returns(callInfo =>
+            {
+                var user = callInfo.ArgAt<CreateUserDto>(0);
+
+                if (user.Equals(UserToRegister))
+                    return Task.CompletedTask;
+
+                throw new InvalidOperationException();
+            });
+
+            UserService.GetUser(Arg.Any<CreateUserDto>()).Returns(callInfo =>
+            {
+                var user = callInfo.ArgAt<CreateUserDto>(0);
+
+                if (user.Name == ExistingUser.Name && user.Role == ExistingUser.Role)
+                    return ExistingUser;
+
+                return null;
+            });
         }
 
         [Test]
         public async Task MustRegisterUser()
         {
-            UserService.RegisterUser(UserToRegister).Returns(Task.CompletedTask);
-
             var response = await TestClient.PostAsJsonAsync("/User/RegisterUser", UserToRegister);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
@@ -46,44 +63,40 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnInternalServerErrorIfTryRegisterAUserThatAlreadyExists()
         {
-            UserService.RegisterUser(ExistingUser).Throws<InvalidOperationException>();
+            var user = new CreateUserDto(ExistingUser.Name, ExistingUser.Password, ExistingUser.Role);
 
-            var response = await TestClient.PostAsJsonAsync("/User/RegisterUser", ExistingUser);
+            var response = await TestClient.PostAsJsonAsync("/User/RegisterUser", user);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await UserService.Received(1).RegisterUser(ExistingUser);
+            await UserService.Received(1).RegisterUser(user);
         }
 
         [Test]
         public async Task MustGetUserByNomeAndCargo()
         {
-            UserService.GetUser(ExistingUserWithNoPassword).Returns(ExistingUser);
-
             var response = await TestClient.GetAsync($"/User/GetUser/{ExistingUserWithNoPassword.Name}/{ExistingUserWithNoPassword.Role}");
 
             var content = await response.Content.ReadAsStringAsync();
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            var User = await response.Content.ReadFromJsonAsync<UserDto>();
+            var user = await response.Content.ReadFromJsonAsync<CreateUserDto>();
 
             await UserService.Received(1).GetUser(ExistingUserWithNoPassword);
 
-            Assert.That(User, Is.Not.Null);
-            Assert.That(User.Equals(ExistingUser), Is.True);
+            Assert.That(user, Is.Not.Null);
+            Assert.That(user.Equals(ExistingUser), Is.True);
         }
 
         [Test]
         public async Task MustReturnNotFoundIfTryGetClienteClienteThatNotExists()
         {
-            UserService.GetUser(UserToRegister).Returns((UserDto?)null);
-
             var response = await TestClient.GetAsync($"/User/GetUser/{UserToRegister.Name}/{UserToRegister.Role}");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
 
-            await UserService.ReceivedWithAnyArgs(1).GetUser(Arg.Any<UserDto>());
+            await UserService.Received(1).GetUser(new CreateUserDto(UserToRegister.Name, "", UserToRegister.Role));
         }
 
         [Test]

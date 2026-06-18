@@ -1,5 +1,4 @@
 ﻿using Domain.MechanicalService;
-using NSubstitute.ExceptionExtensions;
 
 namespace DomainTests.Service
 {

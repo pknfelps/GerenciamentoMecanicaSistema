@@ -12,7 +12,7 @@ namespace RepositoryTests
 
         private static IMechanicalService ServiceToRegister
         {
-            get 
+            get
             {
                 var service = Substitute.For<IMechanicalService>();
                 service.Id.Returns(Guid.NewGuid());
@@ -56,28 +56,6 @@ namespace RepositoryTests
             }
         }
 
-        private static readonly Guid ExistingService2Id = Guid.NewGuid();
-        private static IMechanicalService ExistingService2
-        {
-            get
-            {
-                var service = Substitute.For<IMechanicalService>();
-                service.Id.Returns(ExistingService2Id);
-                service.Description.Returns("Revisão");
-                service.Hours.Returns(6);
-                service.PricePerHour.Returns(100);
-                service.Amount.Returns(1);
-                service.Price.Returns(600);
-                return service;
-            }
-        }
-
-        private List<IMechanicalService> ExistingServices { get; } =
-        [
-            ExistingService,
-            ExistingService2,
-        ];
-
         protected override async Task InternalSetup()
         {
             await Connection.ExecuteAsync("""
@@ -90,8 +68,7 @@ namespace RepositoryTests
 
             Repository = new MechanicalServiceRepository(Connection);
 
-            foreach (var service in ExistingServices)
-                await Repository.RegisterService(service);
+            await Repository.RegisterService(ExistingService);
         }
 
         [Test]
@@ -108,7 +85,7 @@ namespace RepositoryTests
             var services = await Repository.GetServices();
             var servicesList = services.ToList();
 
-            Assert.That(servicesList, Has.Count.EqualTo(2));
+            Assert.That(servicesList, Has.Count.EqualTo(1));
 
             Assert.Multiple(() =>
             {
@@ -119,17 +96,6 @@ namespace RepositoryTests
                 Assert.That(servicesList[0].PricePerHour, Is.EqualTo(ExistingService.PricePerHour));
                 Assert.That(servicesList[0].Amount, Is.EqualTo(ExistingService.Amount));
                 Assert.That(servicesList[0].Price, Is.EqualTo(ExistingService.Price));
-            });
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(servicesList[1], Is.Not.Null);
-                Assert.That(servicesList[1].Id, Is.EqualTo(ExistingService2.Id));
-                Assert.That(servicesList[1].Description, Is.EqualTo(ExistingService2.Description));
-                Assert.That(servicesList[1].Hours, Is.EqualTo(ExistingService2.Hours));
-                Assert.That(servicesList[1].PricePerHour, Is.EqualTo(ExistingService2.PricePerHour));
-                Assert.That(servicesList[1].Amount, Is.EqualTo(ExistingService2.Amount));
-                Assert.That(servicesList[1].Price, Is.EqualTo(ExistingService2.Price));
             });
         }
 

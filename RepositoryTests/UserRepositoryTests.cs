@@ -1,6 +1,6 @@
 ﻿using Dapper;
 using Domain.Interface.User;
-using Domain.User;
+using NSubstitute;
 using Repository;
 using Repository.Interface;
 
@@ -10,11 +10,31 @@ namespace RepositoryTests
     {
         private IUserRepository Repository { get; set; }
 
-        private static readonly IUser UserToRegister = new User("Fulano", "Senha@123", "Manager");
-        private static readonly List<IUser> ExistingUsers =
-        [
-            new User("Admin", "Admin@123", "Admin")
-        ];
+        private static IUser UserToRegister
+        {
+            get
+            {
+                var user = Substitute.For<IUser>();
+                user.Id.Returns(Guid.NewGuid());
+                user.Name.Returns("Fulano");
+                user.Password.Secret.Returns("Senha@123");
+                user.Role.Returns(Roles.Manager);
+                return user;
+            }
+        }
+
+        private static IUser ExistingUser
+        {
+            get
+            {
+                var user = Substitute.For<IUser>();
+                user.Id.Returns(Guid.NewGuid());
+                user.Name.Returns("Admin");
+                user.Password.Secret.Returns("Admin@123");
+                user.Role.Returns(Roles.Admin);
+                return user;
+            }
+        }
 
         protected override async Task InternalSetup()
         {
@@ -28,8 +48,7 @@ namespace RepositoryTests
 
             Repository = new UserRepository(Connection);
 
-            foreach (IUser User in ExistingUsers)
-                await Repository.RegisterUser(User);
+            await Repository.RegisterUser(ExistingUser);
         }
 
         [Test]
@@ -43,14 +62,14 @@ namespace RepositoryTests
         [Test]
         public async Task MustGetUserByNomeAndCargo()
         {
-            var User = await Repository.GetUser(ExistingUsers[0].Name, ExistingUsers[0].Role.ToString());
+            var User = await Repository.GetUser(ExistingUser.Name, ExistingUser.Role.ToString());
 
             Assert.That(User, Is.Not.Null);
 
             Assert.Multiple(() =>
             {
-                Assert.That(User.Name, Is.EqualTo(ExistingUsers[0].Name));
-                Assert.That(User.Role, Is.EqualTo(ExistingUsers[0].Role));
+                Assert.That(User.Name, Is.EqualTo(ExistingUser.Name));
+                Assert.That(User.Role, Is.EqualTo(ExistingUser.Role));
             });
         }
 

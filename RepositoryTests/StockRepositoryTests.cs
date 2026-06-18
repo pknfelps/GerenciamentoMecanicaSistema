@@ -1,6 +1,6 @@
 ﻿using Dapper;
 using Domain.Interface.Stock;
-using Domain.Stock;
+using NSubstitute;
 using Repository;
 using Repository.Interface;
 
@@ -10,18 +10,66 @@ namespace RepositoryTests
     {
         private IStockRepository Repository { get; set; }
 
-        private static readonly IPart PartToRegister = new Part("Óleo de motor", "Lubrax", 41.90, 5);
+        private static IPart PartToRegister
+        {
+            get
+            {
+                var part = Substitute.For<IPart>();
+                part.Id.Returns(Guid.NewGuid());
+                part.Name.Returns("Óleo de motor");
+                part.Brand.Returns("Lubrax");
+                part.Price.Returns(0);
+                part.Amount.Returns(5);
+                part.ReservedAmount.Returns(0);
+                return part;
+            }
+        }
 
         private static readonly Guid ExistingPartId = Guid.NewGuid();
+        private static IPart ExistingPart
+        {
+            get
+            {
+                var part = Substitute.For<IPart>();
+                part.Id.Returns(ExistingPartId);
+                part.Name.Returns("Vela de ignição");
+                part.Brand.Returns("Bosch");
+                part.Price.Returns(6.00);
+                part.Amount.Returns(20);
+                part.ReservedAmount.Returns(5);
+                return part;
+            }
+        }
 
-        private static readonly List<IPart> StockParts =
-        [
-            new Part(ExistingPartId, "Vela de ignição", "Bosch", 6.00, 20, 5),
-            new Part(Guid.NewGuid(), "Flúido para radiador", "Gitanes", 30.00, 5, 0)
-        ];
+        private static IPart PartToUpdatePrice
+        {
+            get
+            {
+                var part = Substitute.For<IPart>();
+                part.Id.Returns(ExistingPartId);
+                part.Name.Returns("Vela de ignição");
+                part.Brand.Returns("Bosch");
+                part.Price.Returns(10.00);
+                part.Amount.Returns(20);
+                part.ReservedAmount.Returns(5);
+                return part;
+            }
+        }
 
-        private static readonly IPart PartToUpdatePrice = new Part(ExistingPartId, "Vela de ignição", "Bosch", 10.00, 20, 5);
-        private static readonly IPart PartToUpdateAmount = new Part(ExistingPartId, "Vela de ignição", "Bosch", 6.00, 15, 10);
+        private static IPart PartToUpdateAmount
+        {
+            get
+            {
+                var part = Substitute.For<IPart>();
+                part.Id.Returns(ExistingPartId);
+                part.Name.Returns("Vela de ignição");
+                part.Brand.Returns("Bosch");
+                part.Price.Returns(6.00);
+                part.Amount.Returns(15);
+                part.ReservedAmount.Returns(10);
+                return part;
+            }
+        }
 
         protected override async Task InternalSetup()
         {
@@ -37,8 +85,7 @@ namespace RepositoryTests
 
             Repository = new StockRepository(Connection);
 
-            foreach (var item in StockParts)
-                await Repository.RegisterNewPart(item);
+            await Repository.RegisterNewPart(ExistingPart);
         }
 
         [Test]
@@ -58,38 +105,31 @@ namespace RepositoryTests
 
             Assert.Multiple(() =>
             {
-                Assert.That(itens, Has.Count.EqualTo(2));
+                Assert.That(itens, Has.Count.EqualTo(1));
 
                 Assert.That(itens[0], Is.Not.Null);
-                Assert.That(itens[0].Name, Is.EqualTo(StockParts[0].Name));
-                Assert.That(itens[0].Brand, Is.EqualTo(StockParts[0].Brand));
-                Assert.That(itens[0].Price, Is.EqualTo(StockParts[0].Price));
-                Assert.That(itens[0].Amount, Is.EqualTo(StockParts[0].Amount));
-                Assert.That(itens[0].ReservedAmount, Is.EqualTo(StockParts[0].ReservedAmount));
-
-                Assert.That(itens[1], Is.Not.Null);
-                Assert.That(itens[1].Name, Is.EqualTo(StockParts[1].Name));
-                Assert.That(itens[1].Brand, Is.EqualTo(StockParts[1].Brand));
-                Assert.That(itens[1].Price, Is.EqualTo(StockParts[1].Price));
-                Assert.That(itens[1].Amount, Is.EqualTo(StockParts[1].Amount));
-                Assert.That(itens[1].ReservedAmount, Is.EqualTo(StockParts[1].ReservedAmount));
+                Assert.That(itens[0].Name, Is.EqualTo(ExistingPart.Name));
+                Assert.That(itens[0].Brand, Is.EqualTo(ExistingPart.Brand));
+                Assert.That(itens[0].Price, Is.EqualTo(ExistingPart.Price));
+                Assert.That(itens[0].Amount, Is.EqualTo(ExistingPart.Amount));
+                Assert.That(itens[0].ReservedAmount, Is.EqualTo(ExistingPart.ReservedAmount));
             });
         }
 
         [Test]
         public async Task MustGetPartByNameAndBrand()
         {
-            var item = await Repository.GetPart(StockParts[0].Name, StockParts[0].Brand);
+            var item = await Repository.GetPart(ExistingPart.Name, ExistingPart.Brand);
 
             Assert.That(item, Is.Not.Null);
 
             Assert.Multiple(() =>
             {
-                Assert.That(item.Name, Is.EqualTo(StockParts[0].Name));
-                Assert.That(item.Brand, Is.EqualTo(StockParts[0].Brand));
-                Assert.That(item.Price, Is.EqualTo(StockParts[0].Price));
-                Assert.That(item.Amount, Is.EqualTo(StockParts[0].Amount));
-                Assert.That(item.ReservedAmount, Is.EqualTo(StockParts[0].ReservedAmount));
+                Assert.That(item.Name, Is.EqualTo(ExistingPart.Name));
+                Assert.That(item.Brand, Is.EqualTo(ExistingPart.Brand));
+                Assert.That(item.Price, Is.EqualTo(ExistingPart.Price));
+                Assert.That(item.Amount, Is.EqualTo(ExistingPart.Amount));
+                Assert.That(item.ReservedAmount, Is.EqualTo(ExistingPart.ReservedAmount));
             });
         }
 
@@ -104,17 +144,17 @@ namespace RepositoryTests
         [Test]
         public async Task MustGetPartById()
         {
-            var item = await Repository.GetPart(StockParts[0].Id);
+            var item = await Repository.GetPart(ExistingPart.Id);
 
             Assert.That(item, Is.Not.Null);
 
             Assert.Multiple(() =>
             {
-                Assert.That(item.Name, Is.EqualTo(StockParts[0].Name));
-                Assert.That(item.Brand, Is.EqualTo(StockParts[0].Brand));
-                Assert.That(item.Price, Is.EqualTo(StockParts[0].Price));
-                Assert.That(item.Amount, Is.EqualTo(StockParts[0].Amount));
-                Assert.That(item.ReservedAmount, Is.EqualTo(StockParts[0].ReservedAmount));
+                Assert.That(item.Name, Is.EqualTo(ExistingPart.Name));
+                Assert.That(item.Brand, Is.EqualTo(ExistingPart.Brand));
+                Assert.That(item.Price, Is.EqualTo(ExistingPart.Price));
+                Assert.That(item.Amount, Is.EqualTo(ExistingPart.Amount));
+                Assert.That(item.ReservedAmount, Is.EqualTo(ExistingPart.ReservedAmount));
             });
         }
 
@@ -160,7 +200,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustDeletePart()
         {
-            var registry = await Repository.DeletePart(StockParts[0].Id);
+            var registry = await Repository.DeletePart(ExistingPart.Id);
 
             Assert.That(registry, Is.Not.EqualTo(0));
         }

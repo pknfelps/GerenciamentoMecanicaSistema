@@ -14,5 +14,20 @@ namespace Service.Interface.Dto.Service
         public double PricePerHour { get; private set; } = pricePerHour;
 
         public virtual IMechanicalService ToDomain() => new MechanicalService(Description, Hours, PricePerHour);
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is null)
+                return false;
+
+            var service = (CreateServiceDto)obj;
+
+            return Description == service.Description && Hours == service.Hours && PricePerHour == service.PricePerHour;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Description, Hours, PricePerHour);
+        }
     }
 }

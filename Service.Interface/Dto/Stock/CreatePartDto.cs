@@ -16,5 +16,20 @@ namespace Service.Interface.Dto.Stock
         public int Amount { get; private set; } = amount;
 
         public virtual IPart ToDomain() => new Part(Name, Brand, Price, Amount);
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is null)
+                return false;
+
+            var part = (CreatePartDto)obj;
+
+            return Name == part.Name && Brand == part.Brand && Price == part.Price && Amount == part.Amount;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Name, Brand, Price, Amount);
+        }
     }
 }

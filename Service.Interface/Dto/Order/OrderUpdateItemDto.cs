@@ -14,5 +14,15 @@ namespace Service.Interface.Dto.Order
         public int Amount { get; private set; } = amount;
 
         public static OrderUpdateItemDto Create(Guid orderId, IPart item) => new(orderId, item.Id, item.Amount);
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is null)
+                return false;
+
+            var update = (OrderUpdateItemDto)obj;
+
+            return OrderId == update.OrderId && ItemId == update.ItemId && Amount == update.Amount;
+        }
     }
 }

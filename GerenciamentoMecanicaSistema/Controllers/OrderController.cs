@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interface;
+using Service.Interface.Dto.CustomAttributes;
 using Service.Interface.Dto.Order;
-using Service.Interface.Dto.Service;
 
 namespace GerenciamentoMecanicaSistema.Controllers
 {
@@ -42,7 +42,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
 
         [AllowAnonymous]
         [HttpGet("GetCustomerOrders/{document}")]
-        public async Task<IActionResult> GetOrder([FromRoute] string document)
+        public async Task<IActionResult> GetCustomerOrders([FromRoute, RegularDocumentExpression] string document)
         {
             var order = await OrderService.GetCustomerOrders(document);
 
@@ -72,14 +72,6 @@ namespace GerenciamentoMecanicaSistema.Controllers
         public async Task<IActionResult> RemoveServiceOfOrder([FromBody] OrderUpdateItemDto service)
         {
             await OrderService.RemoveServiceOfOrder(service);
-
-            return Ok();
-        }
-
-        [HttpDelete("DeleteServiceFromOrder")]
-        public async Task<IActionResult> DeleteServiceFromOrder([FromBody] OrderUpdateItemDto serviceId)
-        {
-            await OrderService.DeleteServiceFromOrder(serviceId);
 
             return Ok();
         }

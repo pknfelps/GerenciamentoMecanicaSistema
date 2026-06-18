@@ -21,7 +21,7 @@ namespace Service.Interface.Dto.Customer
         {
             ArgumentNullException.ThrowIfNull(obj);
 
-            var costumer = (CustomerDto)obj;
+            var costumer = (CreateCustomerDto)obj;
 
             return Name == costumer.Name && Document == costumer.Document && Phone == costumer.Phone && Email == costumer.Email;
         }

@@ -16,6 +16,9 @@ namespace Service
                 throw new InvalidOperationException("Serivço já cadastrado");
 
             var registry = await Repository.RegisterService(serviceDto.ToDomain());
+
+            if (registry == 0)
+                throw new InvalidOperationException("Falha ao registrar o serviço");
         }
 
         public async Task<IEnumerable<ServiceDto?>> GetServices()
@@ -47,6 +50,8 @@ namespace Service
 
         public async Task UpdateService(ServiceDto serviceDto)
         {
+            _ = await Repository.GetService(serviceDto.Id) ?? throw new InvalidOperationException("Serviço não encontrado");
+
             var registry = await Repository.UpdateService(serviceDto.ToDomain());
 
             if (registry == 0)
@@ -55,6 +60,8 @@ namespace Service
 
         public async Task DeleteService(Guid serviceId)
         {
+            _ = await Repository.GetService(serviceId) ?? throw new InvalidOperationException("Serviço não encontrado");
+
             var registry = await Repository.DeleteService(serviceId);
 
             if (registry == 0)

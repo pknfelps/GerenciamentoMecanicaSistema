@@ -33,6 +33,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         {
             var service = await CatalogService.GetService(serviceId);
 
+            if (service == null)
+                return NotFound();
+
             return Ok(service);
         }
 

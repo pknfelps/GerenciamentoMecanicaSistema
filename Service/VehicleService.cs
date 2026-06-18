@@ -1,6 +1,4 @@
-﻿using Domain.Customer;
-using Domain.Interface.Vehicle;
-using Domain.Vehicle;
+﻿using Domain.Vehicle;
 using Repository.Interface;
 using Service.Interface;
 using Service.Interface.Dto.Vehicle;
@@ -22,23 +20,6 @@ namespace Service
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao registrar veículo");
-        }
-
-        public async Task<IVehicle> RegisterVehicleIfNotExists(VehicleDto vehicleDto)
-        {
-            var licensePlate = LicensePlateWrapper.CreateLicensePlate(vehicleDto.LicensePlate);
-
-            var vehicle = await Repository.GetVehicle(licensePlate.License);
-
-            if (vehicle != null)
-                return vehicle;
-
-            var registry = await Repository.RegisterVehicle(vehicleDto.ToDomain());
-
-            if (registry == 0)
-                throw new InvalidOperationException("Falha ao registrar veículo");
-
-            return await Repository.GetVehicle(licensePlate.License);
         }
 
         public async Task<IEnumerable<VehicleDto>> GetVehicles()

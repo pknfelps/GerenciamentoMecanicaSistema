@@ -19,7 +19,7 @@ namespace Service.Interface.Dto.User
         {
             ArgumentNullException.ThrowIfNull(obj);
 
-            var user = (UserDto)obj;
+            var user = (CreateUserDto)obj;
 
             return Name == user.Name && Password == user.Password && Role == user.Role;
         }

@@ -20,7 +20,7 @@ namespace Service
             var registry = await Repository.RegisterNewPart(part);
 
             if (registry == 0)
-                throw new InvalidOperationException("Falha ao cadastrar o part");
+                throw new InvalidOperationException("Falha ao cadastrar o item");
         }
 
         public async Task AddPartAmount(PartUpdateDto<int> partDto)
@@ -104,7 +104,7 @@ namespace Service
             var result = await Repository.UpdatePartPrice(partDb);
 
             if (result == 0)
-                throw new InvalidOperationException("Falha ao atualizar o part");
+                throw new InvalidOperationException("Falha ao atualizar o item");
         }
 
         public async Task DeletePart(string name, string brand)
@@ -114,7 +114,7 @@ namespace Service
             var result = await Repository.DeletePart(part.Id);
 
             if (result == 0)
-                throw new InvalidOperationException("Falha ao deletar o part");
+                throw new InvalidOperationException("Falha ao deletar o item");
         }
 
         private async Task<bool> CheckIfItemExists(string name, string brand)
@@ -127,7 +127,7 @@ namespace Service
             var result = await Repository.UpdatePartAmount(part);
 
             if (result == 0)
-                throw new InvalidOperationException("Falha ao atualizar o part");
+                throw new InvalidOperationException("Falha ao atualizar o item");
         }
     }
 }

@@ -2,7 +2,6 @@
 using Domain.Interface.Order;
 using Domain.Interface.Service;
 using Domain.Interface.Stock;
-using Domain.Stock;
 using NSubstitute;
 using Repository;
 using Repository.Interface;

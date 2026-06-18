@@ -1,5 +1,4 @@
 ﻿using Domain.Interface.User;
-using Domain.User;
 using NSubstitute;
 using Repository.Interface;
 using Service;
@@ -13,13 +12,24 @@ namespace ServiceTests
         private IUserService UserService { get; set; }
         private IUserRepository UserRepository { get; set; }
 
-        private static readonly CreateUserDto UserToRegister = new("Fulano", "Senha@123", "Manager");
-        private static readonly CreateUserDto UserToFail = new("Teste", "Teste@123", "User");
-        private static readonly List<IUser> ExistingUsers =
-        [
-            new User("Admin", "Admin@123", "Admin")
-        ];
-        private static readonly UserDto ExistingUserDto = new(Guid.NewGuid(), "Admin", "Admin@123", "Admin");
+        private static CreateUserDto UserToRegister { get; } = new("Fulano", "Senha@123", "Manager");
+        private static CreateUserDto UserToFail { get; } = new("Teste", "Teste@123", "User");
+
+        private static readonly Guid ExistingUserId = Guid.NewGuid();
+        private static IUser ExistingUser
+        {
+            get
+            {
+                var user = Substitute.For<IUser>();
+                user.Id.Returns(ExistingUserId);
+                user.Name.Returns("Admin");
+                user.Password.Secret.Returns("Admin@123");
+                user.Role.Returns(Roles.Admin);
+                return user;
+            }
+        }
+
+        private static UserDto ExistingUserDto { get; } = new(Guid.NewGuid(), "Admin", "Admin@123", "Admin");
 
         [SetUp]
         public void SetUp()
@@ -28,23 +38,23 @@ namespace ServiceTests
 
             UserRepository.RegisterUser(Arg.Any<IUser>()).Returns(callInfo =>
             {
-                var User = callInfo.ArgAt<IUser>(0);
+                var user = callInfo.ArgAt<IUser>(0);
 
-                if (User.Name == UserToRegister.Name && User.Password.Secret == UserToRegister.Password && User.Role.ToString() == UserToRegister.Role)
+                if (user.Name == UserToRegister.Name && user.Password.Secret == UserToRegister.Password && user.Role.ToString() == UserToRegister.Role)
                     return 1;
-
-                if (User.Name == UserToFail.Name && User.Password.Secret == UserToFail.Password && User.Role.ToString() == UserToFail.Role)
-                    throw new InvalidOperationException();
 
                 return 0;
             });
 
             UserRepository.GetUser(Arg.Any<string>(), Arg.Any<string>()).Returns(callInfo =>
             {
-                var nome = callInfo.ArgAt<string>(0);
-                var cargo = callInfo.ArgAt<string>(1);
+                var name = callInfo.ArgAt<string>(0);
+                var role = callInfo.ArgAt<string>(1);
 
-                return ExistingUsers.FirstOrDefault(x => x.Name == nome && x.Role.ToString() == cargo);
+                if (name == ExistingUser.Name && role == ExistingUser.Role.ToString())
+                    return ExistingUser;
+
+                return null;
             });
 
             UserService = new UserService(UserRepository);

@@ -137,6 +137,16 @@ namespace ControllerTests
         }
 
         [Test]
+        public async Task MustReturnNotFoundIfTryGetVehicleThatNotExists()
+        {
+            var response = await TestClient.GetAsync($"/Vehicle/GetVehicle/TST1234");
+
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+
+            await VehicleService.Received(1).GetVehicle("TST1234");
+        }
+
+        [Test]
         public async Task MustReturnBadRequestIfTryGetVehicleWithInvalidModel()
         {
             var response = await TestClient.GetAsync("/Vehicle/GetVehicle/ÇÁG1234");
@@ -169,11 +179,13 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnInternalServerErrorIfFailUpdateVehicle()
         {
-            var response = await TestClient.PatchAsJsonAsync("/Vehicle/UpdateVehicle", VehicleToRegister);
+            var vehicle = new VehicleDto(Guid.NewGuid(), VehicleToRegister.CustomerDocument, VehicleToRegister.Brand, VehicleToRegister.Model, VehicleToRegister.Year, VehicleToRegister.LicensePlate);
+
+            var response = await TestClient.PatchAsJsonAsync("/Vehicle/UpdateVehicle", vehicle);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await VehicleService.Received(1).UpdateVehicle(Arg.Any<VehicleDto>());
+            await VehicleService.Received(1).UpdateVehicle(vehicle);
         }
 
         [Test]
