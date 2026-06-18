@@ -19,6 +19,7 @@ namespace Domain.Order
         public WorkOrderStatus Status { get; private set; }
         public DateTime DateCreated { get; private set; }
         public DateTime DateFinished { get; private set; }
+        public TimeSpan Duration => DateFinished != DateTime.MinValue ? DateFinished.Subtract(DateCreated) : TimeSpan.Zero;
 
         public WorkOrder(string customerDocument, string vehicleLicensePlate) : this(Guid.NewGuid(), customerDocument, vehicleLicensePlate, [], [], 0.0, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue) { }
 
@@ -170,7 +171,6 @@ namespace Domain.Order
             if (Status is not WorkOrderStatus.InExecution)
                 throw new InvalidOperationException("Não é possível finalizar o serviço enquanto não estiver em execução");
 
-            // TODO: Atualiza estoque ("consome" itens que estavam reservados)
             DateFinished = DateTime.Now;
             Status = WorkOrderStatus.Finished;
         }

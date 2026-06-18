@@ -266,10 +266,11 @@ namespace Service
             foreach (var item in order.Parts)
                 await StockService.ConsumeReservedAmount(new(item.Id, item.Amount));
 
-            var registry = await Repository.UpdateOrderStatus(orderId, order.Status);
+            var updateStatus = await Repository.UpdateOrderStatus(orderId, order.Status);
+            var updateDuration = await Repository.UpdateOrderDuration(orderId, order.Duration);
 
-            if (registry == 0)
-                throw new InvalidOperationException("Falha ao inicar execução");
+            if (updateStatus == 0 || updateDuration == 0)
+                throw new InvalidOperationException("Falha ao completar execução");
         }
 
         public async Task VehicleDelivered(Guid orderId)

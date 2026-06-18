@@ -27,9 +27,13 @@ namespace Repository.Dto
         public DateTime Date_Created { get; private set; }
         [JsonPropertyName("date_finished")]
         public DateTime Date_Finished { get; private set; }
+        [JsonPropertyName("duration")]
+        public TimeSpan Duration { get; private set; }
 
-        public WorkOrderDb(Guid id, string customer_document, string vehicle_license_plate, double budget, string status, DateTime date_created, DateTime date_finished) : this(id, customer_document, vehicle_license_plate, [], [], budget, status, date_created, date_finished) { }
+        // Used by GetOrders that gets only basic order info
+        public WorkOrderDb(Guid id, string customer_document, string vehicle_license_plate, double budget, string status, DateTime date_created, DateTime date_finished) : this(id, customer_document, vehicle_license_plate, [], [], budget, status, date_created, date_finished, TimeSpan.Zero) { }
 
+        // Used by GetOrders or GetCustomerOrders that returns the detailed order
         public WorkOrderDb(Guid id, string customer_document, string vehicle_license_plate, string services, string parts, double budget, string status, DateTime date_created, DateTime date_finished)
         {
             Id = id;
@@ -43,7 +47,7 @@ namespace Repository.Dto
             Date_Finished = date_finished;
         }
 
-        public WorkOrderDb(Guid id, string customer_document, string vehicle_license_plate, List<MechanicalServiceDb> services, List<PartDb> parts, double budget, string status, DateTime date_created, DateTime date_finished)
+        public WorkOrderDb(Guid id, string customer_document, string vehicle_license_plate, List<MechanicalServiceDb> services, List<PartDb> parts, double budget, string status, DateTime date_created, DateTime date_finished, TimeSpan duration)
         {
             Id = id;
             Customer_Document = customer_document;
@@ -54,9 +58,10 @@ namespace Repository.Dto
             Status = status;
             Date_Created = date_created;
             Date_Finished = date_finished;
+            Duration = duration;
         }
 
-        public static WorkOrderDb Create(IWorkOrder order) => new(order.Id, order.CustomerDocument.Id, order.VehicleLicensePlate.License, [.. order.Services.Select(MechanicalServiceDb.Create)], [.. order.Parts.Select(PartDb.Create)], order.Budget, order.Status.ToString(), order.DateCreated, order.DateFinished);
+        public static WorkOrderDb Create(IWorkOrder order) => new(order.Id, order.CustomerDocument.Id, order.VehicleLicensePlate.License, [.. order.Services.Select(MechanicalServiceDb.Create)], [.. order.Parts.Select(PartDb.Create)], order.Budget, order.Status.ToString(), order.DateCreated, order.DateFinished, order.Duration);
 
         public IWorkOrder ToDomain()
         {

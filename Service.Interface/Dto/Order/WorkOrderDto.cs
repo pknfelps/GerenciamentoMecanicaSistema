@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Service.Interface.Dto.Order
 {
-    public class WorkOrderDto(Guid id, string customerDocument, string vehicleLicensePlate, double budget, string status, DateTime dateCreated, DateTime dateFinished)
+    public class WorkOrderDto(Guid id, string customerDocument, string vehicleLicensePlate, double budget, string status, DateTime dateCreated, DateTime dateFinished, TimeSpan duration)
     {
         [GuidValidation]
         public Guid Id { get; private set; } = id;
@@ -20,8 +20,10 @@ namespace Service.Interface.Dto.Order
         public DateTime DateCreated { get; private set; } = dateCreated;
         [Required]
         public DateTime DateFinished { get; private set; } = dateFinished;
+        [Required]
+        public TimeSpan Duration { get; private set; } = duration;
 
-        public static WorkOrderDto Create(IWorkOrder order) => new(order.Id, order.CustomerDocument.Id, order.VehicleLicensePlate.License, order.Budget, order.Status.ToString(), order.DateCreated, order.DateFinished);
+        public static WorkOrderDto Create(IWorkOrder order) => new(order.Id, order.CustomerDocument.Id, order.VehicleLicensePlate.License, order.Budget, order.Status.ToString(), order.DateCreated, order.DateFinished, order.Duration);
 
         public override bool Equals(object? obj)
         {
@@ -30,7 +32,7 @@ namespace Service.Interface.Dto.Order
 
             var order = (WorkOrderDto)obj;
 
-            return Id == order.Id && CustomerDocument == order.CustomerDocument && VehicleLicensePlate == order.VehicleLicensePlate && Budget == order.Budget && Status == order.Status && DateCreated == order.DateCreated && DateFinished == order.DateFinished;
+            return Id == order.Id && CustomerDocument == order.CustomerDocument && VehicleLicensePlate == order.VehicleLicensePlate && Budget == order.Budget && Status == order.Status && DateCreated == order.DateCreated && DateFinished == order.DateFinished && Duration == order.Duration;
         }
     }
 }

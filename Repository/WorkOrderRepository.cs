@@ -11,8 +11,8 @@ namespace Repository
     public class WorkOrderRepository(IDbConnection connection) : BaseRepository(connection), IWorkOrderRepository
     {
         public static string CreateServiceSql { get; private set; } = """
-            INSERT INTO orders(id, customer_document, vehicle_license_plate, budget, status, date_created, date_finished)
-            VALUES (@Id, @Customer_Document, @Vehicle_License_Plate, @Budget, @Status, @Date_Created, @Date_Finished);
+            INSERT INTO orders(id, customer_document, vehicle_license_plate, budget, status, date_created, date_finished, duration)
+            VALUES (@Id, @Customer_Document, @Vehicle_License_Plate, @Budget, @Status, @Date_Created, @Date_Finished, @Duration);
             """;
 
         public static string GetOrdersSql { get; private set; } = """
@@ -165,6 +165,12 @@ namespace Repository
             WHERE id = @id;
             """;
 
+        public static string UpdateOrderDurationSql { get; private set; } = """
+            UPDATE orders
+            SET duration = @duration
+            WHERE id = @id;
+            """;
+
         public static string DeleteServicesFromOrderSql { get; private set; } = """
             DELETE FROM order_services
             WHERE order_id = @orderId;
@@ -251,6 +257,11 @@ namespace Repository
         public async Task<int> UpdateOrderBudget(Guid id, double budget)
         {
             return await Connection.ExecuteAsync(UpdateOrderBudgetSql, new { id, budget });
+        }
+
+        public async Task<int> UpdateOrderDuration(Guid id, TimeSpan duration)
+        {
+            return await Connection.ExecuteAsync(UpdateOrderDurationSql, new { id, duration });
         }
 
         public async Task<int> DeleteOrder(Guid orderId)

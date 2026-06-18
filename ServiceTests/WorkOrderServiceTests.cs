@@ -175,6 +175,17 @@ namespace ServiceTests
                 return 0;
             });
 
+            Repository.UpdateOrderDuration(Arg.Any<Guid>(), Arg.Any<TimeSpan>()).Returns(callInfo =>
+            {
+                var id = callInfo.ArgAt<Guid>(0);
+                var value = callInfo.ArgAt<TimeSpan>(1);
+
+                if (id == ExistingOrderInDiagnosisId && value > TimeSpan.Zero)
+                    return 1;
+
+                return 0;
+            });
+
             Repository.DeleteOrder(Arg.Any<Guid>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
@@ -1088,7 +1099,11 @@ namespace ServiceTests
 
             order.When(x => x.StartService()).Do(_ => order.Status.Returns(WorkOrderStatus.InExecution));
 
-            order.When(x => x.CompleteService()).Do(_ => order.Status.Returns(WorkOrderStatus.Finished));
+            order.When(x => x.CompleteService()).Do(_ =>
+            {
+                order.Status.Returns(WorkOrderStatus.Finished);
+                order.Duration.Returns(TimeSpan.FromHours(6));
+            });
 
             order.When(x => x.VehicleDelivered()).Do(_ => order.Status.Returns(WorkOrderStatus.Delivered));
 

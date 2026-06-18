@@ -12,8 +12,8 @@ namespace ControllerTests
         private IWorkOrderService OrderService { get; set; }
 
         private static readonly CreateOrderDto OrderToCreate = new("123.456.789-12", "TST1234");
-        private static readonly WorkOrderDto ExistingOrder = new(Guid.NewGuid(), "123.456.789-12", "TST1234", 0.0, "Received", DateTime.Now, DateTime.MinValue);
-        private static readonly DetailedWorkOrderDto ExistingDetailedOrder = new(ExistingOrder.Id, "123.456.789-12", "TST1234", 0.0, "Received", DateTime.Now, DateTime.MinValue, [], []);
+        private static readonly WorkOrderDto ExistingOrder = new(Guid.NewGuid(), "123.456.789-12", "TST1234", 0.0, "Received", DateTime.Now, DateTime.MinValue, TimeSpan.Zero);
+        private static readonly DetailedWorkOrderDto ExistingDetailedOrder = new(ExistingOrder.Id, "123.456.789-12", "TST1234", 0.0, "Received", DateTime.Now, DateTime.MinValue, [], [], TimeSpan.Zero);
         private static readonly OrderUpdateItemDto OrderUpdate = new(ExistingOrder.Id, Guid.NewGuid(), 1);
 
         protected override void MockService()

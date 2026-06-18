@@ -18,6 +18,7 @@ namespace Repository.Interface
         Task<int> UpdatePartFromOrder(Guid orderId, IPart part);
         Task<int> RemovePartFromOrder(Guid orderId, Guid partId);
         Task<int> UpdateOrderBudget(Guid id, double budget);
+        Task<int> UpdateOrderDuration(Guid id, TimeSpan duration);
         Task<int> DeleteOrder(Guid orderId);
     }
 }

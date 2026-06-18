@@ -110,7 +110,8 @@ namespace RepositoryTests
                 budget DOUBLE PRECISION NOT NULL,
                 status VARCHAR(50) NOT NULL,
                 date_created TIMESTAMP NOT NULL DEFAULT NOW(),
-                date_finished TIMESTAMP NOT NULL);
+                date_finished TIMESTAMP NOT NULL,
+                duration INTERVAL NOT NULL);
                 """);
 
             await Connection.ExecuteAsync("""
@@ -384,6 +385,14 @@ namespace RepositoryTests
         public async Task MustUpdateOrderBudget()
         {
             var registry = await Repository.UpdateOrderBudget(ExistingOrderId, 200);
+
+            Assert.That(registry, Is.Not.EqualTo(0));
+        }
+
+        [Test]
+        public async Task MustUpdateOrderDuration()
+        {
+            var registry = await Repository.UpdateOrderDuration(ExistingOrderId, TimeSpan.FromHours(6));
 
             Assert.That(registry, Is.Not.EqualTo(0));
         }

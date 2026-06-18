@@ -15,6 +15,7 @@ namespace Domain.Interface.Order
         WorkOrderStatus Status { get; }
         DateTime DateCreated { get; }
         DateTime DateFinished { get; }
+        TimeSpan Duration { get; }
 
         void StartDiagnosis();
         IMechanicalService AddService(IMechanicalService serviceToAdd);

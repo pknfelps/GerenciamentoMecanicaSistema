@@ -32,7 +32,8 @@ CREATE TABLE orders (
     budget DOUBLE PRECISION NOT NULL,
     status VARCHAR(50) NOT NULL,
     date_created TIMESTAMP NOT NULL DEFAULT NOW(),
-    date_finished TIMESTAMP NOT NULL
+    date_finished TIMESTAMP NOT NULL,
+    duration INTERVAL NOT NULL
 );
 
 CREATE TABLE stock (

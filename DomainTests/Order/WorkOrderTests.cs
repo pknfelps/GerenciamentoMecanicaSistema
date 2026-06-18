@@ -34,6 +34,9 @@ namespace DomainTests.Order
                 Assert.That(ReceivedOrder.Parts, Is.Empty);
                 Assert.That(ReceivedOrder.Budget, Is.EqualTo(0.0));
                 Assert.That(ReceivedOrder.Status, Is.EqualTo(WorkOrderStatus.Received));
+                Assert.That(ReceivedOrder.DateCreated, Is.Not.EqualTo(DateTime.MinValue));
+                Assert.That(ReceivedOrder.DateFinished, Is.EqualTo(DateTime.MinValue));
+                Assert.That(ReceivedOrder.Duration, Is.EqualTo(TimeSpan.Zero));
             });
         }
 
@@ -375,6 +378,7 @@ namespace DomainTests.Order
             ReceivedOrder.CompleteService();
 
             Assert.That(ReceivedOrder.Status, Is.EqualTo(WorkOrderStatus.Finished));
+            Assert.That(ReceivedOrder.Duration, Is.Not.EqualTo(TimeSpan.Zero));
         }
 
         [Test]

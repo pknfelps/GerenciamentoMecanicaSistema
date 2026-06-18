@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Service.Interface.Dto.Order
 {
-    public class DetailedWorkOrderDto(Guid id, string customerDocument, string vehicleLicensePlate, double budget, string status, DateTime dateCreated, DateTime dateFinished, List<ServiceDto> services, List<PartDto> parts) : WorkOrderDto(id, customerDocument, vehicleLicensePlate, budget, status, dateCreated, dateFinished)
+    public class DetailedWorkOrderDto(Guid id, string customerDocument, string vehicleLicensePlate, double budget, string status, DateTime dateCreated, DateTime dateFinished, List<ServiceDto> services, List<PartDto> parts, TimeSpan duration) : WorkOrderDto(id, customerDocument, vehicleLicensePlate, budget, status, dateCreated, dateFinished, duration)
     {
         [Required]
         public List<ServiceDto> Services { get; private set; } = services;
@@ -17,7 +17,7 @@ namespace Service.Interface.Dto.Order
             var services = order.Services.Select(ServiceDto.Create);
             var partsAndSupplies = order.Parts.Select(PartDto.Create);
 
-            return new(order.Id, order.CustomerDocument.Id, order.VehicleLicensePlate.License, order.Budget, order.Status.ToString(), order.DateCreated, order.DateFinished, [.. services], [.. partsAndSupplies]);
+            return new(order.Id, order.CustomerDocument.Id, order.VehicleLicensePlate.License, order.Budget, order.Status.ToString(), order.DateCreated, order.DateFinished, [.. services], [.. partsAndSupplies], order.Duration);
         }
 
         public override bool Equals(object? obj)
@@ -40,7 +40,7 @@ namespace Service.Interface.Dto.Order
             if ((differentParts.ToList()).Count != 0)
                 return false;
 
-            return Id == order.Id && CustomerDocument == order.CustomerDocument && VehicleLicensePlate == order.VehicleLicensePlate && Budget == order.Budget && Status == order.Status && DateCreated == order.DateCreated && DateFinished == order.DateFinished;
+            return Id == order.Id && CustomerDocument == order.CustomerDocument && VehicleLicensePlate == order.VehicleLicensePlate && Budget == order.Budget && Status == order.Status && DateCreated == order.DateCreated && DateFinished == order.DateFinished && Duration == order.Duration;
         }
     }
 }
