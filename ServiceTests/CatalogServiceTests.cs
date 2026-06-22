@@ -7,14 +7,14 @@ using Service.Interface.Dto.Service;
 
 namespace ServiceTests
 {
-    public class MechanicalServiceServiceTests
+    public class CatalogServiceTests
     {
-        private IMechanicalServiceService Service { get; set; }
-        private IMechanicalServiceRepository Repository { get; set; }
+        private ICatalogService Service { get; set; }
+        private ICatalogRepository Repository { get; set; }
 
-        private static CreateServiceDto ServiceToCreate { get; } = new("Troca de Óleo", 2, 50);
-        private static CreateServiceDto ServiceToFailCreation { get; } = new("Teste", 1, 10);
-        private static CreateServiceDto ExistingServiceToCreateDto { get; } = new("Revisão", 6, 100);
+        private static CreateServiceDto ServiceToCreate { get; } = new("Troca de Óleo", 2, 50, 1);
+        private static CreateServiceDto ServiceToFailCreation { get; } = new("Teste", 1, 10, 1);
+        private static CreateServiceDto ExistingServiceToCreateDto { get; } = new("Revisão", 6, 100, 1);
 
         private static readonly Guid ExistingServiceId = Guid.NewGuid();
         private static IMechanicalService ExistingService
@@ -53,7 +53,7 @@ namespace ServiceTests
         [SetUp]
         public async Task SetUp()
         {
-            Repository = Substitute.For<IMechanicalServiceRepository>();
+            Repository = Substitute.For<ICatalogRepository>();
 
             Repository.RegisterService(Arg.Any<IMechanicalService>()).Returns(callInfo =>
             {
@@ -68,14 +68,22 @@ namespace ServiceTests
             List<IMechanicalService> services = new List<IMechanicalService>() { ExistingService, ExistingService2 };
             Repository.GetServices().Returns(services);
 
-            Repository.GetService(Arg.Any<string>()).Returns(callInfo =>
-                {
-                    var description = callInfo.ArgAt<string>(0);
+            Repository.GetService(Arg.Any<Guid>(), Arg.Any<string>()).Returns(callInfo =>
+            {
+                var id = callInfo.ArgAt<Guid>(0);
+                var description = callInfo.ArgAt<string>(1);
 
-                    return services.FirstOrDefault(x => x.Description == description);
-                });
+                return services.FirstOrDefault(x => x.Id == id && x.Description == description);
+            });
 
-            Repository.GetService(Arg.Any<Guid>()).Returns(callInfo =>
+            Repository.GetService(description: Arg.Any<string>()).Returns(callInfo =>
+            {
+                var description = callInfo.ArgAt<string>(1);
+
+                return services.FirstOrDefault(x => x.Description == description);
+            });
+
+            Repository.GetService(id: Arg.Any<Guid>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
@@ -102,7 +110,7 @@ namespace ServiceTests
                 return 0;
             });
 
-            Service = new MechanicalServiceService(Repository);
+            Service = new CatalogService(Repository);
         }
 
         [Test]
@@ -110,7 +118,7 @@ namespace ServiceTests
         {
             await Service.RegisterService(ServiceToCreate);
 
-            await Repository.Received(1).GetService(ServiceToCreate.Description);
+            await Repository.Received(1).GetService(description: ServiceToCreate.Description);
             await Repository.Received(1).RegisterService(Arg.Any<IMechanicalService>());
         }
 
@@ -119,7 +127,7 @@ namespace ServiceTests
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RegisterService(ExistingServiceToCreateDto));
 
-            await Repository.Received(1).GetService(ExistingServiceToCreateDto.Description);
+            await Repository.Received(1).GetService(description: ExistingServiceToCreateDto.Description);
             await Repository.Received(0).RegisterService(Arg.Any<IMechanicalService>());
         }
 
@@ -128,7 +136,7 @@ namespace ServiceTests
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RegisterService(ServiceToFailCreation));
 
-            await Repository.Received(1).GetService(ServiceToFailCreation.Description);
+            await Repository.Received(1).GetService(description: ServiceToFailCreation.Description);
             await Repository.Received(1).RegisterService(Arg.Any<IMechanicalService>());
         }
 
@@ -192,7 +200,7 @@ namespace ServiceTests
         [Test]
         public async Task MustGetServiceByDescription()
         {
-            var service = await Service.GetService(ExistingService.Description);
+            var service = await Service.GetService(description: ExistingService.Description);
 
             Assert.That(service, Is.Not.Null);
 
@@ -209,15 +217,21 @@ namespace ServiceTests
         [Test]
         public async Task MustNotGetServiceByDescriptionIfNotExists()
         {
-            var service = await Service.GetService("");
+            var service = await Service.GetService(description: "a");
 
             Assert.That(service, Is.Null);
         }
 
         [Test]
+        public async Task MustNotGetServiceIfNoParameterWasGiven()
+        {
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.GetService());
+        }
+
+        [Test]
         public async Task MustUpdateService()
         {
-            await Service.UpdateService(ServiceToUpdate);
+            await Service.UpdateService(ServiceToUpdate.Id, ServiceToUpdate);
 
             await Repository.Received(1).GetService(ServiceToUpdate.Id);
             await Repository.Received(1).UpdateService(Arg.Any<IMechanicalService>());
@@ -226,11 +240,11 @@ namespace ServiceTests
         [Test]
         public async Task MustNotUpdateServiceIfNotExists()
         {
-            var service = new ServiceDto(Guid.NewGuid(), "Revisão Automotiva", 4, 150, 1);
+            var service = new CreateServiceDto("Revisão Automotiva", 4, 150, 1);
 
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdateService(service));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdateService(Guid.NewGuid(), service));
 
-            await Repository.Received(1).GetService(service.Id);
+            await Repository.Received(1).GetService(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).UpdateService(Arg.Any<IMechanicalService>());
         }
 
@@ -239,7 +253,7 @@ namespace ServiceTests
         {
             var service = new ServiceDto(ExistingServiceId, "Revisão Automotiva", 4, 150, 1);
 
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdateService(service));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdateService(ExistingServiceId, service));
 
             await Repository.Received(1).GetService(service.Id);
             await Repository.Received(1).UpdateService(Arg.Any<IMechanicalService>());

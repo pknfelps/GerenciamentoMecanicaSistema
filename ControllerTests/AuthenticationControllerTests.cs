@@ -42,7 +42,7 @@ namespace ControllerTests
         [Test]
         public async Task MustLoginAndGetToken()
         {
-            var response = await TestClient.PostAsJsonAsync("/Authentication/Login", UsuarioExistente);
+            var response = await TestClient.PostAsJsonAsync("authentication", UsuarioExistente);
 
             var token = await response.Content.ReadAsStringAsync();
 
@@ -60,7 +60,7 @@ namespace ControllerTests
         [Test]
         public async Task MustNotLoginAndNotGetTokenIfUsuarioNotExists()
         {
-            var response = await TestClient.PostAsJsonAsync("/Authentication/Login", UsuarioInexistente);
+            var response = await TestClient.PostAsJsonAsync("authentication", UsuarioInexistente);
 
             var token = await response.Content.ReadAsStringAsync();
 
@@ -76,7 +76,7 @@ namespace ControllerTests
         [Test]
         public async Task MustNotLoginAndNotGetTokenIfPasswordIsWrong()
         {
-            var response = await TestClient.PostAsJsonAsync("/Authentication/Login", UsuarioExistenteComSenhaErrada);
+            var response = await TestClient.PostAsJsonAsync("authentication", UsuarioExistenteComSenhaErrada);
 
             var token = await response.Content.ReadAsStringAsync();
 
@@ -92,7 +92,7 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnBadRequestIfModelIsInvalid()
         {
-            var response = await TestClient.PostAsJsonAsync("/Authentication/Login", new { Nome = "Teste", Cargo = "Inválido" });
+            var response = await TestClient.PostAsJsonAsync("authentication", new { Nome = "Teste", Cargo = "Inválido" });
 
             await AuthenticationService.ReceivedWithAnyArgs(0).Authenticate(Arg.Any<UserDto>());
 

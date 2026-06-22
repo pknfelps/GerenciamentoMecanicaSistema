@@ -10,7 +10,11 @@ namespace GerenciamentoMecanicaSistema.Controllers
     {
         private IAuthenticationService AuthenticationService { get; set; } = authenticationService;
 
-        [HttpPost("Login")]
+        [HttpPost()]
+        [EndpointDescription("Endpoint de authenticação do usuário")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK, Description = "Retorna o token de autenticação")]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Usuário ou senha inválidos")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         public async Task<IActionResult> Login([FromBody] CreateUserDto userDto)
         {
             var token = await AuthenticationService.Authenticate(userDto);

@@ -8,9 +8,9 @@ using Repository.Interface;
 
 namespace RepositoryTests
 {
-    public class WorkOrderRepositoryTests : BaseRepositoryTests
+    public class OrdersRepositoryTests : BaseRepositoryTests
     {
-        private IWorkOrderRepository Repository { get; set; }
+        private IOrdersRepository Repository { get; set; }
 
         private static readonly Guid ServiceId = Guid.NewGuid();
         private static IMechanicalService Service
@@ -44,11 +44,11 @@ namespace RepositoryTests
             }
         }
 
-        private static IWorkOrder OrderToCreate
+        private static IOrder OrderToCreate
         {
             get
             {
-                var order = Substitute.For<IWorkOrder>();
+                var order = Substitute.For<IOrder>();
                 order.CustomerDocument.Id.Returns("123.456.789-12");
                 order.VehicleLicensePlate.License.Returns("CVC2026");
                 order.Services.Returns([]);
@@ -63,11 +63,11 @@ namespace RepositoryTests
 
         private static readonly Guid ExistingOrderId = Guid.NewGuid();
         private static readonly DateTime ExistingOrderDateCreated = DateTime.Now;
-        private static IWorkOrder ExistingOrder
+        private static IOrder ExistingOrder
         {
             get
             {
-                var order = Substitute.For<IWorkOrder>();
+                var order = Substitute.For<IOrder>();
                 order.Id.Returns(ExistingOrderId);
                 order.CustomerDocument.Id.Returns("123.456.789-12");
                 order.VehicleLicensePlate.License.Returns("CVC2026");
@@ -172,7 +172,7 @@ namespace RepositoryTests
                 VALUES ('{Service.Id}', '{Service.Description}', {Service.Hours}, {Service.PricePerHour});
                 """);
 
-            Repository = new WorkOrderRepository(Connection);
+            Repository = new OrdersRepository(Connection);
 
             await Repository.CreateOrder(ExistingOrder);
             await Repository.AddServiceToOrder(ExistingOrderId, Service);
@@ -218,9 +218,9 @@ namespace RepositoryTests
         }
 
         [Test]
-        public async Task MustGetDetailedOrder()
+        public async Task MustGetDetailedOrderById()
         {
-            var order = await Repository.GetOrder(ExistingOrderId);
+            var order = await Repository.GetOrder(id: ExistingOrderId);
 
             Assert.That(order, Is.Not.Null);
 
@@ -264,7 +264,7 @@ namespace RepositoryTests
         }
 
         [Test]
-        public async Task MustNotGetOrderIfNotExists()
+        public async Task MustNotGetOrderByIdIfNotExists()
         {
             var order = await Repository.GetOrder(Guid.NewGuid());
 
@@ -272,9 +272,9 @@ namespace RepositoryTests
         }
 
         [Test]
-        public async Task MustGetDetailedCustomerGetOrders()
+        public async Task MustGetDetailedCustomerOrders()
         {
-            var orders = await Repository.GetCustomerOrders(ExistingOrder.CustomerDocument.Id);
+            var orders = await Repository.GetOrders(customer_document: ExistingOrder.CustomerDocument.Id);
             var ordersList = orders.ToList();
 
             Assert.That(ordersList, Has.Count.EqualTo(1));
@@ -320,6 +320,72 @@ namespace RepositoryTests
         }
 
         [Test]
+        public async Task MustNotGetDetailedCustomerOrdersIfNotExists()
+        {
+            var orders = await Repository.GetOrders(customer_document: "000.000.000-00");
+            var ordersList = orders.ToList();
+
+            Assert.That(ordersList, Has.Count.EqualTo(0));
+        }
+
+        [Test]
+        public async Task MustGetDetailedVehicleOrders()
+        {
+            var orders = await Repository.GetOrders(vehicle_license_plate: ExistingOrder.VehicleLicensePlate.License);
+            var ordersList = orders.ToList();
+
+            Assert.That(ordersList, Has.Count.EqualTo(1));
+            Assert.That(ordersList[0], Is.Not.Null);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(ordersList[0].Id, Is.EqualTo(ExistingOrder.Id));
+                Assert.That(ordersList[0].CustomerDocument.Id, Is.EqualTo(ExistingOrder.CustomerDocument.Id));
+                Assert.That(ordersList[0].VehicleLicensePlate.License, Is.EqualTo(ExistingOrder.VehicleLicensePlate.License));
+                Assert.That(ordersList[0].Status, Is.EqualTo(ExistingOrder.Status));
+                Assert.That(ordersList[0].DateCreated.Date, Is.EqualTo(ExistingOrder.DateCreated.Date));
+                Assert.That(ordersList[0].DateCreated.Hour, Is.EqualTo(ExistingOrder.DateCreated.Hour));
+                Assert.That(ordersList[0].DateCreated.Minute, Is.EqualTo(ExistingOrder.DateCreated.Minute));
+                Assert.That(ordersList[0].DateCreated.Second, Is.EqualTo(ExistingOrder.DateCreated.Second));
+                Assert.That(ordersList[0].DateFinished.Date, Is.EqualTo(ExistingOrder.DateFinished.Date));
+                Assert.That(ordersList[0].DateFinished.Hour, Is.EqualTo(ExistingOrder.DateFinished.Hour));
+                Assert.That(ordersList[0].DateFinished.Minute, Is.EqualTo(ExistingOrder.DateFinished.Minute));
+                Assert.That(ordersList[0].DateFinished.Second, Is.EqualTo(ExistingOrder.DateFinished.Second));
+            });
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(ordersList[0].Services, Has.Count.EqualTo(1));
+                Assert.That(ordersList[0].Services[0].Id, Is.EqualTo(Service.Id));
+                Assert.That(ordersList[0].Services[0].Description, Is.EqualTo(Service.Description));
+                Assert.That(ordersList[0].Services[0].Hours, Is.EqualTo(Service.Hours));
+                Assert.That(ordersList[0].Services[0].PricePerHour, Is.EqualTo(Service.PricePerHour));
+                Assert.That(ordersList[0].Services[0].Price, Is.EqualTo(Service.Price));
+                Assert.That(ordersList[0].Services[0].Amount, Is.EqualTo(Service.Amount));
+            });
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(ordersList[0].Parts, Has.Count.EqualTo(1));
+                Assert.That(ordersList[0].Parts[0].Id, Is.EqualTo(Part.Id));
+                Assert.That(ordersList[0].Parts[0].Name, Is.EqualTo(Part.Name));
+                Assert.That(ordersList[0].Parts[0].Brand, Is.EqualTo(Part.Brand));
+                Assert.That(ordersList[0].Parts[0].Price, Is.EqualTo(Part.Price));
+                Assert.That(ordersList[0].Parts[0].Amount, Is.EqualTo(1));
+                Assert.That(ordersList[0].Parts[0].ReservedAmount, Is.EqualTo(0));
+            });
+        }
+
+        [Test]
+        public async Task MustNotGetDetailedVehicleOrdersIfNotExists()
+        {
+            var orders = await Repository.GetOrders(vehicle_license_plate: "TTT0000");
+            var ordersList = orders.ToList();
+
+            Assert.That(ordersList, Has.Count.EqualTo(0));
+        }
+
+        [Test]
         public async Task MustUpdateOrderStatus()
         {
             var registry = await Repository.UpdateOrderStatus(ExistingOrderId, WorkOrderStatus.WaitingForExecution);
@@ -349,7 +415,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustDeleteServiceFromOrder()
         {
-            var registry = await Repository.DeleteServiceFromOrder(ExistingOrderId, Service.Id);
+            var registry = await Repository.RemoveServiceFromOrder(ExistingOrderId, Service.Id);
 
             Assert.That(registry, Is.Not.EqualTo(0));
         }

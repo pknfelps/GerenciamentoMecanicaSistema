@@ -1,5 +1,4 @@
 ﻿using Domain.Interface.Stock;
-using Domain.Stock;
 using Repository.Interface;
 using Service.Interface;
 using Service.Interface.Dto.Stock;
@@ -12,72 +11,28 @@ namespace Service
 
         public async Task RegisterNewPart(CreatePartDto partDto)
         {
-            var part = partDto.ToDomain();
-
-            if (await CheckIfItemExists(part.Name, part.Brand))
+            if (await Repository.GetPart(name: partDto.Name, brand: partDto.Brand) != null)
                 throw new InvalidOperationException("Item já cadastrado");
 
-            var registry = await Repository.RegisterNewPart(part);
+            var registry = await Repository.RegisterNewPart(partDto.ToDomain());
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao cadastrar o item");
         }
 
-        public async Task AddPartAmount(PartUpdateDto<int> partDto)
+        public async Task<IEnumerable<PartDto>> GetParts(Guid? id = null, string name = "", string brand = "")
         {
-            var partDb = await Repository.GetPart(partDto.Id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
-
-            partDb.AddAmount(partDto.Value);
-
-            await UpdateItemAmount(partDb);
-        }
-
-        public async Task RemovePartAmount(PartUpdateDto<int> partDto)
-        {
-            var partDb = await Repository.GetPart(partDto.Id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
-
-            partDb.RemoveAmount(partDto.Value);
-
-            await UpdateItemAmount(partDb);
-        }
-
-        public async Task ReservePartAmount(PartUpdateDto<int> partDto)
-        {
-            var partDb = await Repository.GetPart(partDto.Id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
-
-            partDb.ReserveAmount(partDto.Value);
-
-            await UpdateItemAmount(partDb);
-        }
-
-        public async Task RestorePartAmount(PartUpdateDto<int> partDto)
-        {
-            var partDb = await Repository.GetPart(partDto.Id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
-
-            partDb.RestoreAmount(partDto.Value);
-
-            await UpdateItemAmount(partDb);
-        }
-
-        public async Task ConsumeReservedAmount(PartUpdateDto<int> partDto)
-        {
-            var partDb = await Repository.GetPart(partDto.Id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
-
-            partDb.ConsumeReservedAmount(partDto.Value);
-
-            await UpdateItemAmount(partDb);
-        }
-
-        public async Task<IEnumerable<PartDto?>> GetParts()
-        {
-            var itens = await Repository.GetParts();
+            var itens = await Repository.GetParts(id, name, brand);
 
             return itens.Select(PartDto.Create);
         }
 
-        public async Task<PartDto?> GetPart(string name, string brand)
+        public async Task<PartDto?> GetPart(Guid? id = null, string name = "", string brand = "")
         {
-            var part = await Repository.GetPart(name, brand);
+            if (id == null && string.IsNullOrEmpty(name) && string.IsNullOrEmpty(brand))
+                throw new InvalidOperationException("Falha ao procurar item. Nenhum argumento fornecido");
+
+            var part = await Repository.GetPart(id, name, brand);
 
             if (part == null)
                 return null;
@@ -85,21 +40,56 @@ namespace Service
             return PartDto.Create(part);
         }
 
-        public async Task<PartDto?> GetPart(Guid partId)
+        public async Task AddPartAmount(Guid id, int value)
         {
-            var part = await Repository.GetPart(partId);
+            var partDb = await Repository.GetPart(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
 
-            if (part == null)
-                return null;
+            partDb.AddAmount(value);
 
-            return PartDto.Create(part);
+            await UpdateItemAmount(partDb);
         }
 
-        public async Task UpdatePartPrice(PartUpdateDto<double> partDto)
+        public async Task RemovePartAmount(Guid id, int value)
         {
-            var partDb = await Repository.GetPart(partDto.Id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
+            var partDb = await Repository.GetPart(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
 
-            partDb.UpdatePrice(partDto.Value);
+            partDb.RemoveAmount(value);
+
+            await UpdateItemAmount(partDb);
+        }
+
+        public async Task ReservePartAmount(Guid id, int value)
+        {
+            var partDb = await Repository.GetPart(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
+
+            partDb.ReserveAmount(value);
+
+            await UpdateItemAmount(partDb);
+        }
+
+        public async Task RestorePartAmount(Guid id, int value)
+        {
+            var partDb = await Repository.GetPart(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
+
+            partDb.RestoreAmount(value);
+
+            await UpdateItemAmount(partDb);
+        }
+
+        public async Task ConsumeReservedAmount(Guid id, int value)
+        {
+            var partDb = await Repository.GetPart(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
+
+            partDb.ConsumeReservedAmount(value);
+
+            await UpdateItemAmount(partDb);
+        }
+
+        public async Task UpdatePartPrice(Guid id, double value)
+        {
+            var partDb = await Repository.GetPart(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
+
+            partDb.UpdatePrice(value);
 
             var result = await Repository.UpdatePartPrice(partDb);
 
@@ -107,19 +97,14 @@ namespace Service
                 throw new InvalidOperationException("Falha ao atualizar o item");
         }
 
-        public async Task DeletePart(string name, string brand)
+        public async Task DeletePart(Guid id)
         {
-            var part = await Repository.GetPart(name, brand) ?? throw new InvalidOperationException("Item não encontrado no estoque");
+            var part = await Repository.GetPart(id: id) ?? throw new InvalidOperationException("Item não encontrado no estoque");
 
             var result = await Repository.DeletePart(part.Id);
 
             if (result == 0)
                 throw new InvalidOperationException("Falha ao deletar o item");
-        }
-
-        private async Task<bool> CheckIfItemExists(string name, string brand)
-        {
-            return await Repository.GetPart(name, brand) != null;
         }
 
         private async Task UpdateItemAmount(IPart part)

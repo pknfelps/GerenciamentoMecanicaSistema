@@ -1,5 +1,4 @@
 ﻿using NSubstitute;
-using NUnit.Framework.Constraints;
 using Service.Interface;
 using Service.Interface.Dto.Service;
 using System.Net;
@@ -7,20 +6,20 @@ using System.Net.Http.Json;
 
 namespace ControllerTests
 {
-    public class ServiceControllerTests : BaseControllerTests
+    public class CatalogControllerTests : BaseControllerTests
     {
-        private IMechanicalServiceService MechanicalService { get; set; }
+        private ICatalogService CatalogService { get; set; }
 
-        private static readonly CreateServiceDto ServiceToRegister = new("Troca de Óleo", 2, 100);
+        private static readonly CreateServiceDto ServiceToRegister = new("Troca de Óleo", 2, 100, 1);
         private static Guid ExistingServiceId = Guid.NewGuid();
         private static readonly ServiceDto ExistingService = new(ExistingServiceId, "Revisão", 6, 150, 1);
-        private static readonly ServiceDto ServiceToUpdate = new(ExistingServiceId, "Revisão Veicular", 4, 220, 1);
+        private static readonly CreateServiceDto ServiceToUpdate = new("Revisão Veicular", 4, 220, 1);
 
         protected override void MockService()
         {
-            MechanicalService = TestWebAppFactory.MechanicalServiceMock;
+            CatalogService = TestWebAppFactory.MechanicalServiceMock;
 
-            MechanicalService.RegisterService(Arg.Any<CreateServiceDto>()).Returns(callInfo =>
+            CatalogService.RegisterService(Arg.Any<CreateServiceDto>()).Returns(callInfo =>
             {
                 var service = callInfo.ArgAt<CreateServiceDto>(0);
 
@@ -30,29 +29,27 @@ namespace ControllerTests
                 throw new InvalidOperationException();
             });
 
-            MechanicalService.GetServices().Returns([ExistingService]);
+            CatalogService.GetServices(id: Arg.Any<Guid?>()).Returns(callInfo =>
+            {
+                var id = callInfo.ArgAt<Guid?>(0);
 
-            MechanicalService.GetService(Arg.Any<Guid>()).Returns(callInfo =>
+                if (id != null)
+                    return[ExistingService];
+
+                return [ExistingService];
+            });
+
+            CatalogService.UpdateService(Arg.Any<Guid>(), Arg.Any<CreateServiceDto>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
-                if (id == ExistingService.Id)
-                    return ExistingService;
-
-                return null;
-            });
-
-            MechanicalService.UpdateService(Arg.Any<ServiceDto>()).Returns(callInfo =>
-            {
-                var service = callInfo.ArgAt<ServiceDto>(0);
-
-                if (service.Id == ExistingService.Id)
+                if (id == ExistingServiceId)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
             });
 
-            MechanicalService.DeleteService(Arg.Any<Guid>()).Returns(callInfo =>
+            CatalogService.DeleteService(Arg.Any<Guid>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
@@ -66,38 +63,38 @@ namespace ControllerTests
         [Test]
         public async Task MustRegisterService()
         {
-            var response = await TestClient.PostAsJsonAsync("Service/RegisterService", ServiceToRegister);
+            var response = await TestClient.PostAsJsonAsync("catalog", ServiceToRegister);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
 
-            await MechanicalService.Received(1).RegisterService(ServiceToRegister);
+            await CatalogService.Received(1).RegisterService(ServiceToRegister);
         }
 
         [Test]
         public async Task MustReturnInternalServerErrorIfFailToRegisterService()
         {
-            var service = new CreateServiceDto("Teste", 1, 10);
-            var response = await TestClient.PostAsJsonAsync("Service/RegisterService", service);
+            var service = new CreateServiceDto("Teste", 1, 10, 1);
+            var response = await TestClient.PostAsJsonAsync("catalog", service);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await MechanicalService.Received(1).RegisterService(service);
+            await CatalogService.Received(1).RegisterService(service);
         }
 
         [Test]
         public async Task MustReturnBadRequestIfTryRegisterServiceWithInvalidModel()
         {
-            var response = await TestClient.PostAsJsonAsync("Service/RegisterService", new { Description = "T", Hours = -1 });
+            var response = await TestClient.PostAsJsonAsync("catalog", new { Description = "T", Hours = -1 });
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await MechanicalService.ReceivedWithAnyArgs(0).RegisterService(Arg.Any<CreateServiceDto>());
+            await CatalogService.ReceivedWithAnyArgs(0).RegisterService(Arg.Any<CreateServiceDto>());
         }
 
         [Test]
         public async Task MustGetServices()
         {
-            var response = await TestClient.GetAsync("Service/GetServices");
+            var response = await TestClient.GetAsync("catalog");
             var content = await response.Content.ReadFromJsonAsync<List<ServiceDto>>();
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
@@ -113,16 +110,19 @@ namespace ControllerTests
                 Assert.That(content[0].Amount, Is.EqualTo(ExistingService.Amount));
             });
 
-            await MechanicalService.Received(1).GetServices();
+            await CatalogService.Received(1).GetServices();
         }
 
         [Test]
         public async Task MustGetService()
         {
-            var response = await TestClient.GetAsync($"Service/GetService/{ExistingService.Id}");
-            var content = await response.Content.ReadFromJsonAsync<ServiceDto>();
+            var response = await TestClient.GetAsync($"catalog?id={ExistingService.Id}");
+            var contents = await response.Content.ReadFromJsonAsync<List<ServiceDto>>();
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(contents, Has.Count.EqualTo(1));
+
+            var content = contents[0];
             Assert.That(content, Is.Not.Null);
 
             Assert.Multiple(() =>
@@ -134,89 +134,79 @@ namespace ControllerTests
                 Assert.That(content.Amount, Is.EqualTo(ExistingService.Amount));
             });
             
-            await MechanicalService.Received(1).GetService(ExistingService.Id);
-        }
-
-        [Test]
-        public async Task MustReturnNotFoundIfTryGetServiceWithUnexistingId()
-        {
-            var response = await TestClient.GetAsync($"Service/GetService/{Guid.NewGuid()}");
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
-
-            await MechanicalService.ReceivedWithAnyArgs(1).GetService(Arg.Any<Guid>());
+            await CatalogService.Received(1).GetServices(ExistingService.Id);
         }
 
         [Test]
         public async Task MustReturnBadRequestIfGuidIsInvalidGetService()
         {
-            var response = await TestClient.GetAsync($"Service/GetService/0000");
+            var response = await TestClient.GetAsync($"catalog?id=0000");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await MechanicalService.ReceivedWithAnyArgs(0).GetService(Arg.Any<Guid>());
+            await CatalogService.ReceivedWithAnyArgs(0).GetService(Arg.Any<Guid>());
         }
 
         [Test]
         public async Task MustUpdateService()
         {
-            var response = await TestClient.PatchAsJsonAsync($"Service/UpdateService", ServiceToUpdate);
+            var response = await TestClient.PatchAsJsonAsync($"catalog/{ExistingServiceId}", ServiceToUpdate);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
 
-            await MechanicalService.Received(1).UpdateService(ServiceToUpdate);
+            await CatalogService.Received(1).UpdateService(ExistingServiceId, ServiceToUpdate);
         }
 
         [Test]
         public async Task MustReturnInternalServerErrorIfTryUpdateServiceThatNotExists()
         {
-            var service = new ServiceDto(Guid.NewGuid(), ExistingService.Description, ExistingService.Hours, ExistingService.PricePerHour, 1);
+            var service = new CreateServiceDto(ExistingService.Description, ExistingService.Hours, ExistingService.PricePerHour, 1);
 
-            var response = await TestClient.PatchAsJsonAsync($"Service/UpdateService", service);
+            var response = await TestClient.PatchAsJsonAsync($"catalog/{Guid.NewGuid()}", service);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await MechanicalService.Received(1).UpdateService(service);
+            await CatalogService.Received(1).UpdateService(Arg.Any<Guid>(), service);
         }
 
         [Test]
         public async Task MustReturnBadRequestIfTryUpdateServiceWithInvalidModel()
         {
-            var response = await TestClient.PatchAsJsonAsync($"Service/UpdateService", new {Description = "T"});
+            var response = await TestClient.PatchAsJsonAsync($"catalog/{Guid.NewGuid()}", new {Description = "T"});
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await MechanicalService.ReceivedWithAnyArgs(0).UpdateService(Arg.Any<ServiceDto>());
+            await CatalogService.ReceivedWithAnyArgs(0).UpdateService(Arg.Any<Guid>(), Arg.Any<ServiceDto>());
         }
 
         [Test]
         public async Task MustDeleteService()
         {
-            var response = await TestClient.DeleteAsync($"Service/DeleteService/{ExistingServiceId}");
+            var response = await TestClient.DeleteAsync($"catalog/{ExistingServiceId}");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            await MechanicalService.Received(1).DeleteService(ExistingServiceId);
+            await CatalogService.Received(1).DeleteService(ExistingServiceId);
         }
 
         [Test]
         public async Task MustReturnInternalServerErrorIfTryDeleteServiceThatNotExists()
         {
-            var response = await TestClient.DeleteAsync($"Service/DeleteService/{Guid.NewGuid()}");
+            var response = await TestClient.DeleteAsync($"catalog/{Guid.NewGuid()}");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await MechanicalService.ReceivedWithAnyArgs(1).DeleteService(Arg.Any<Guid>());
+            await CatalogService.ReceivedWithAnyArgs(1).DeleteService(Arg.Any<Guid>());
         }
 
         [Test]
         public async Task MustReturnBadRequestIfTryDeleteServiceWithInvalidModel()
         {
-            var response = await TestClient.DeleteAsync($"Service/DeleteService/0000");
+            var response = await TestClient.DeleteAsync($"catalog/0000");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await MechanicalService.ReceivedWithAnyArgs(0).DeleteService(Arg.Any<Guid>());
+            await CatalogService.ReceivedWithAnyArgs(0).DeleteService(Arg.Any<Guid>());
         }
     }
 }

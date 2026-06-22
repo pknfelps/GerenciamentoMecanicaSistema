@@ -2,7 +2,8 @@
 
 namespace Service.Interface.Dto.CustomAttributes
 {
-    internal class GuidValidationAttribute : ValidationAttribute
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property)]
+    public class GuidValidationAttribute : ValidationAttribute
     {
         public GuidValidationAttribute() 
         {

@@ -6,9 +6,9 @@ using Domain.Interface.Stock;
 using Domain.Interface.Vehicle;
 using Domain.Vehicle;
 
-namespace Domain.Order
+namespace Domain.WorkOrder
 {
-    public class WorkOrder : IWorkOrder
+    public class Order : IOrder
     {
         public Guid Id { get; private set; }
         public IDocument CustomerDocument { get; private set; }
@@ -21,9 +21,9 @@ namespace Domain.Order
         public DateTime DateFinished { get; private set; }
         public TimeSpan Duration => DateFinished != DateTime.MinValue ? DateFinished.Subtract(DateCreated) : TimeSpan.Zero;
 
-        public WorkOrder(string customerDocument, string vehicleLicensePlate) : this(Guid.NewGuid(), customerDocument, vehicleLicensePlate, [], [], 0.0, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue) { }
+        public Order(string customerDocument, string vehicleLicensePlate) : this(Guid.NewGuid(), customerDocument, vehicleLicensePlate, [], [], 0.0, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue) { }
 
-        public WorkOrder(Guid id, string customerDocument, string vehicleLicensePlate, List<IMechanicalService> services, List<IPart> partsAndSupplies, double budget, WorkOrderStatus status, DateTime dateCreated, DateTime dateFinished)
+        public Order(Guid id, string customerDocument, string vehicleLicensePlate, List<IMechanicalService> services, List<IPart> partsAndSupplies, double budget, WorkOrderStatus status, DateTime dateCreated, DateTime dateFinished)
         {
             if (id == Guid.Empty)
                 throw new ArgumentException("Id não pode ser vazio");
@@ -95,7 +95,7 @@ namespace Domain.Order
             return service;
         }
 
-        public IPart AddPartOrSupplie(IPart itemToAdd)
+        public IPart AddPart(IPart itemToAdd)
         {
             if (Status is WorkOrderStatus.Received)
                 throw new InvalidOperationException("Não é possível adicionar peças ou insumos antes de iniciar o diagnóstico");
@@ -119,7 +119,7 @@ namespace Domain.Order
             }
         }
 
-        public IPart RemovePartOrSupplie(IPart itemToRemove)
+        public IPart RemovePart(IPart itemToRemove)
         {
             if (Status is WorkOrderStatus.Received)
                 throw new InvalidOperationException("Não é possível remover peças ou insumos antes de iniciar o diagnóstico");
@@ -146,7 +146,6 @@ namespace Domain.Order
                 throw new InvalidOperationException("Não é possível finalizar o diagnóstico sem serviços");
 
             CalculateBudget();
-            // TODO: Envia para o cliente
             Status = WorkOrderStatus.WaitingForApproval;
         }
 
@@ -175,7 +174,7 @@ namespace Domain.Order
             Status = WorkOrderStatus.Finished;
         }
 
-        public void VehicleDelivered()
+        public void DeliverVehicle()
         {
             if (Status is not WorkOrderStatus.Finished)
                 throw new InvalidOperationException("Não é possível entregar o veículo enquanto não estiver finalizado");

@@ -1,18 +1,23 @@
 ﻿using Domain.Interface.Custumer;
 using Service.Interface.Dto.CustomAttributes;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace Service.Interface.Dto.Customer
 {
     public class CreateCustomerDto(string name, string document, string phone, string email)
     {
-        [Required, RegularExpression(@"^[a-zA-ZÀ-ÿ\s]{3,}$")]
+        [Description("Nome do cliente")]
+        [Required, RegularNonEmptyStringExpression]
         public string Name { get; set; } = name;
+        [Description("Número do documento do cliente")]
         [Required, RegularDocumentExpression]
         public string Document { get; set; } = document;
-        [Required, RegularExpression(@"(?:\D*\d){11}")]
+        [Description("Número do celular do cliente")]
+        [Required, RegularExpression(@"(?:\D*\d){11}", ErrorMessage = "O campo {0} não é um número válido")]
         public string Phone { get; set; } = phone;
-        [Required, RegularExpression(@"^[^\s]+\@[^\s]+\.[^\s]+$")]
+        [Description("Endereço de email do cliente")]
+        [Required, RegularExpression(@"^[^\s]+\@[^\s]+\.[^\s]+$", ErrorMessage = "O campo {0} não é um email válido")]
         public string Email { get; set; } = email;
 
         public virtual ICustomer ToDomain() => new Domain.Customer.Customer(Name, Document, Phone, Email);

@@ -4,6 +4,7 @@ using Repository.Interface;
 using Service;
 using Service.Interface;
 using Service.Interface.Dto.Customer;
+using System.Dynamic;
 
 namespace ServiceTests
 {
@@ -48,8 +49,8 @@ namespace ServiceTests
 
         private static CustomerDto ExistingCustomerDto { get; } = new(ExistingCustomerId, "Ciclano", "12.123.456/0001-12", "(11) 91234-5678", "ciclano@gmail.com");
         private static CustomerDto ExistingCustomer2Dto { get; } = new(ExistingCustomer2Id, "Beltrano", "12.123.456/0001-15", "(11) 91234-5678", "beltrano@gmail.com");
-        private static CustomerDto CustomerToUpdateDto { get; } = new(ExistingCustomerId, "Ciclano", "12.123.456/0001-12", "(11) 94321-8765", "ciclano.company@gmail.com");
-        private static CustomerDto CustomerToFailtUpdateOrDeleteDto { get; } = new(ExistingCustomerId, "Beltrano", "12.123.456/0001-15", "(11) 91234-5678", "beltrano@gmail.com");
+        private static CreateCustomerDto CustomerToUpdateDto { get; } = new("Ciclano", "12.123.456/0001-12", "(11) 94321-8765", "ciclano.company@gmail.com");
+        private static CreateCustomerDto CustomerToFailtUpdateOrDeleteDto { get; } = new("Beltrano", "12.123.456/0001-15", "(11) 91234-5678", "beltrano@gmail.com");
 
         [SetUp]
         public void SetUp()
@@ -67,11 +68,34 @@ namespace ServiceTests
             });
 
             List<ICustomer> customers = new List<ICustomer>() { ExistingCustomer, ExistingCustomer2 };
-            CustomerRepository.GetCustomers().Returns(customers);
 
-            CustomerRepository.GetCustomer(Arg.Any<string>()).Returns(callInfo =>
+            CustomerRepository.GetCustomers(document: Arg.Any<string>()).Returns(callInfo =>
             {
-                string document = callInfo.ArgAt<string>(0);
+                var document = callInfo.ArgAt<string>(2);
+
+                if (!string.IsNullOrEmpty(document))
+                    return [ExistingCustomer];
+
+                return customers;
+            });
+
+            CustomerRepository.GetCustomer(id: Arg.Any<Guid>()).Returns(callInfo =>
+            {
+                var id = callInfo.ArgAt<Guid>(0);
+
+                return customers.FirstOrDefault(x => x.Id == id);
+            });
+
+            CustomerRepository.GetCustomer(name: Arg.Any<string>()).Returns(callInfo =>
+            {
+                var name = callInfo.ArgAt<string>(1);
+
+                return customers.FirstOrDefault(x => x.Name.Equals(name));
+            });
+
+            CustomerRepository.GetCustomer(document: Arg.Any<string>()).Returns(callInfo =>
+            {
+                var document = callInfo.ArgAt<string>(2);
 
                 return customers.FirstOrDefault(x => x.Document.Id.Equals(document));
             });
@@ -86,11 +110,11 @@ namespace ServiceTests
                 return 0;
             });
 
-            CustomerRepository.DeleteCustomer(Arg.Any<string>()).Returns(callInfo =>
+            CustomerRepository.DeleteCustomer(Arg.Any<Guid>()).Returns(callInfo =>
             {
-                var documento = callInfo.ArgAt<string>(0);
+                var id = callInfo.ArgAt<Guid>(0);
 
-                if (documento.Equals(ExistingCustomer.Document.Id))
+                if (id.Equals(ExistingCustomer.Id))
                     return 1;
 
                 return 0;
@@ -138,29 +162,48 @@ namespace ServiceTests
         }
 
         [Test]
-        public async Task MustGetCustomerByDocumento()
+        public async Task MustGetAllCustomersWithSameDocument()
         {
-            var cliente = await CustomerService.GetCustomer(ExistingCustomer.Document.Id);
+            var clientes = (await CustomerService.GetCustomers(document: ExistingCustomer.Document.Id)).ToList();
 
-            await CustomerRepository.Received(1).GetCustomer(ExistingCustomer.Document.Id);
+            await CustomerRepository.Received(1).GetCustomers(document: ExistingCustomer.Document.Id);
+
+            Assert.That(clientes, Has.Count.EqualTo(1));
+            Assert.That(clientes[0].Equals(ExistingCustomerDto), Is.True);
+        }
+
+        [Test]
+        public async Task MustGetCustomerByDocument()
+        {
+            var cliente = await CustomerService.GetCustomer(document: ExistingCustomer.Document.Id);
+
+            await CustomerRepository.Received(1).GetCustomer(document: ExistingCustomer.Document.Id);
 
             Assert.That(cliente, Is.EqualTo(ExistingCustomerDto));
         }
 
         [Test]
-        public async Task MustGetCustomerByDocumentoWithWrongDocumento()
+        public async Task MustNotGetCustomerByDocumentWithWrongDocument()
         {
-            var cliente = await CustomerService.GetCustomer(CustomerToCreate.Document);
+            var cliente = await CustomerService.GetCustomer(document: CustomerToCreate.Document);
 
-            await CustomerRepository.Received(1).GetCustomer(CustomerToCreateFormated.Document);
+            await CustomerRepository.Received(1).GetCustomer(document: CustomerToCreateFormated.Document);
 
             Assert.That(cliente, Is.Null);
         }
 
         [Test]
+        public async Task MustNotGetCustomerWithNoParameters()
+        {
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.GetCustomer());
+
+            await CustomerRepository.Received(0).GetCustomer();
+        }
+
+        [Test]
         public async Task MustUpdateCustomer()
         {
-            await CustomerService.UpdateCustomer(CustomerToUpdateDto);
+            await CustomerService.UpdateCustomer(ExistingCustomer.Id, CustomerToUpdateDto);
 
             await CustomerRepository.Received(1).UpdateCustomer(Arg.Any<ICustomer>());
         }
@@ -168,15 +211,15 @@ namespace ServiceTests
         [Test]
         public async Task MustNotUpdateCustomerIfNotExists()
         {
-            var customer = new CustomerDto(Guid.NewGuid(), "Teste", "358.410.168-64", "(11) 21245-6458", "teste@gmail.com");
+            var customer = new CreateCustomerDto("Teste", "358.410.168-64", "(11) 21245-6458", "teste@gmail.com");
 
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.UpdateCustomer(customer));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.UpdateCustomer(Arg.Any<Guid>(), customer));
         }
 
         [Test]
         public async Task MustThrowExceptionIfFailedToUpdate()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.UpdateCustomer(CustomerToFailtUpdateOrDeleteDto));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.UpdateCustomer(ExistingCustomerId, CustomerToFailtUpdateOrDeleteDto));
 
             await CustomerRepository.Received(1).UpdateCustomer(Arg.Any<ICustomer>());
         }
@@ -184,23 +227,23 @@ namespace ServiceTests
         [Test]
         public async Task MustDeleteCustomer()
         {
-            await CustomerService.DeleteCustomer(ExistingCustomer.Document.Id);
+            await CustomerService.DeleteCustomer(ExistingCustomer.Id);
 
-            await CustomerRepository.Received(1).DeleteCustomer(ExistingCustomer.Document.Id);
+            await CustomerRepository.Received(1).DeleteCustomer(ExistingCustomer.Id);
         }
 
         [Test]
         public async Task MustNotDeleteCustomerIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.DeleteCustomer(CustomerToCreate.Document));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.DeleteCustomer(Guid.NewGuid()));
         }
 
         [Test]
         public async Task MustThrowExceptionIfFailToDelete()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.DeleteCustomer(ExistingCustomer2.Document.Id));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.DeleteCustomer(ExistingCustomer2.Id));
 
-            await CustomerRepository.Received(1).DeleteCustomer(ExistingCustomer2.Document.Id);
+            await CustomerRepository.Received(1).DeleteCustomer(ExistingCustomer2.Id);
         }
     }
 }

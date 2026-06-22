@@ -6,7 +6,7 @@ using System.Data;
 
 namespace Repository
 {
-    public class MechanicalServiceRepository(IDbConnection connection) : BaseRepository(connection), IMechanicalServiceRepository
+    public class CatalogRepository(IDbConnection connection) : BaseRepository(connection), ICatalogRepository
     {
         public static string RegisterServiceSql { get; private set; } = """
             INSERT INTO services(id, description, hours, price_per_hour)
@@ -15,19 +15,9 @@ namespace Repository
 
         public static string GetServicesSql { get; private set; } = """
             SELECT id, description, hours, price_per_hour
-            FROM services;
-            """;
-
-        public static string GetServiceByIdSql { get; private set; } = """
-            SELECT id, description, hours, price_per_hour
             FROM services
-            WHERE id = @Id;
-            """;
-
-        public static string GetServiceByDescriptionSql { get; private set; } = """
-            SELECT id, description, hours, price_per_hour
-            FROM services
-            WHERE description = @Description;
+            {0}
+            LIMIT 50;
             """;
 
         public static string UpdateServiceSql { get; private set; } = """
@@ -48,26 +38,16 @@ namespace Repository
             return await Connection.ExecuteAsync(RegisterServiceSql, MechanicalServiceDb.Create(service));
         }
 
-        public async Task<IEnumerable<IMechanicalService?>> GetServices()
+        public async Task<IEnumerable<IMechanicalService>> GetServices(Guid? id = null, string description = "")
         {
-            var services = await Connection.QueryAsync<MechanicalServiceDb>(GetServicesSql);
+            var services = await Connection.QueryAsync<MechanicalServiceDb>(GetServicesSql.BuildQuery(BuildQueryParameters(id, description)));
 
             return services.Select(service => service.ToDomain());
         }
 
-        public async Task<IMechanicalService?> GetService(Guid serviceId)
+        public async Task<IMechanicalService?> GetService(Guid? id = null, string description = "")
         {
-            var service = await Connection.QuerySingleOrDefaultAsync<MechanicalServiceDb>(GetServiceByIdSql, new { Id = serviceId });
-
-            if (service == null)
-                return null;
-
-            return service.ToDomain();
-        }
-
-        public async Task<IMechanicalService?> GetService(string description)
-        {
-            var service = await Connection.QuerySingleOrDefaultAsync<MechanicalServiceDb>(GetServiceByDescriptionSql, new { Description = description });
+            var service = await Connection.QuerySingleOrDefaultAsync<MechanicalServiceDb>(GetServicesSql.BuildQuery(BuildQueryParameters(id, description)));
 
             if (service == null)
                 return null;
@@ -83,6 +63,11 @@ namespace Repository
         public async Task<int> DeleteService(Guid serviceId)
         {
             return await Connection.ExecuteAsync(DeleteServiceSql, new { Id = serviceId });
+        }
+
+        private static Dictionary<string, object?> BuildQueryParameters(Guid? id = null, string description = "")
+        {
+            return new() { { nameof(id), id }, { nameof(description), description } };
         }
     }
 }

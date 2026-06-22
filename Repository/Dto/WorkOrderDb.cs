@@ -1,7 +1,7 @@
 ﻿using Domain.Interface.Order;
 using Domain.Interface.Service;
 using Domain.Interface.Stock;
-using Domain.Order;
+using Domain.WorkOrder;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -29,9 +29,6 @@ namespace Repository.Dto
         public DateTime Date_Finished { get; private set; }
         [JsonPropertyName("duration")]
         public TimeSpan Duration { get; private set; }
-
-        // Used by GetOrders that gets only basic order info
-        public WorkOrderDb(Guid id, string customer_document, string vehicle_license_plate, double budget, string status, DateTime date_created, DateTime date_finished) : this(id, customer_document, vehicle_license_plate, [], [], budget, status, date_created, date_finished, TimeSpan.Zero) { }
 
         // Used by GetOrders or GetCustomerOrders that returns the detailed order
         public WorkOrderDb(Guid id, string customer_document, string vehicle_license_plate, string services, string parts, double budget, string status, DateTime date_created, DateTime date_finished)
@@ -61,14 +58,14 @@ namespace Repository.Dto
             Duration = duration;
         }
 
-        public static WorkOrderDb Create(IWorkOrder order) => new(order.Id, order.CustomerDocument.Id, order.VehicleLicensePlate.License, [.. order.Services.Select(MechanicalServiceDb.Create)], [.. order.Parts.Select(PartDb.Create)], order.Budget, order.Status.ToString(), order.DateCreated, order.DateFinished, order.Duration);
+        public static WorkOrderDb Create(IOrder order) => new(order.Id, order.CustomerDocument.Id, order.VehicleLicensePlate.License, [.. order.Services.Select(MechanicalServiceDb.Create)], [.. order.Parts.Select(PartDb.Create)], order.Budget, order.Status.ToString(), order.DateCreated, order.DateFinished, order.Duration);
 
-        public IWorkOrder ToDomain()
+        public IOrder ToDomain()
         {
             var services = Services == null ? new List<IMechanicalService>() : [.. Services.Select(service => service.ToDomain())];
             var parts = Services == null ? new List<IPart>() : [.. Parts.Select(part => part.ToDomain())];
 
-            return new WorkOrder(Id, Customer_Document, Vehicle_License_Plate, services, parts, Budget, Enum.Parse<WorkOrderStatus>(Status), Date_Created, Date_Finished);
+            return new Order(Id, Customer_Document, Vehicle_License_Plate, services, parts, Budget, Enum.Parse<WorkOrderStatus>(Status), Date_Created, Date_Finished);
         }
     }
 }

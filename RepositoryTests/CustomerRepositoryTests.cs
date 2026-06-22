@@ -93,9 +93,55 @@ namespace RepositoryTests
         }
 
         [Test]
+        public async Task MustGetCustomerById()
+        {
+            var customer = await Repository.GetCustomer(id: ExistingCustomer.Id);
+
+            Assert.That(customer, Is.Not.Null);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(customer.Name, Is.EqualTo(ExistingCustomer.Name));
+                Assert.That(customer.Document.Id, Is.EqualTo(ExistingCustomer.Document.Id));
+                Assert.That(customer.Phone.Number, Is.EqualTo(ExistingCustomer.Phone.Number));
+            });
+        }
+
+        [Test]
+        public async Task MustGetCustomerByIdWithWrongId()
+        {
+            ICustomer? customer = await Repository.GetCustomer(id: Guid.NewGuid());
+
+            Assert.That(customer, Is.Null);
+        }
+
+        [Test]
+        public async Task MustGetCustomerByName()
+        {
+            var customer = await Repository.GetCustomer(name: ExistingCustomer.Name);
+
+            Assert.That(customer, Is.Not.Null);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(customer.Name, Is.EqualTo(ExistingCustomer.Name));
+                Assert.That(customer.Document.Id, Is.EqualTo(ExistingCustomer.Document.Id));
+                Assert.That(customer.Phone.Number, Is.EqualTo(ExistingCustomer.Phone.Number));
+            });
+        }
+
+        [Test]
+        public async Task MustGetCustomerByNameWithWrongName()
+        {
+            ICustomer? customer = await Repository.GetCustomer(name: "a");
+
+            Assert.That(customer, Is.Null);
+        }
+
+        [Test]
         public async Task MustGetCustomerByDocumento()
         {
-            var customer = await Repository.GetCustomer(ExistingCustomer.Document.Id);
+            var customer = await Repository.GetCustomer(document: ExistingCustomer.Document.Id);
 
             Assert.That(customer, Is.Not.Null);
 
@@ -110,7 +156,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustGetCustomerByDocumentoWithWrongDocumento()
         {
-            ICustomer? customer = await Repository.GetCustomer(CustomerToCreate.Document.Id);
+            ICustomer? customer = await Repository.GetCustomer(id: CustomerToCreate.Id);
 
             Assert.That(customer, Is.Null);
         }
@@ -120,7 +166,7 @@ namespace RepositoryTests
         {
             await Repository.UpdateCustomer(CustomerToUpdate);
 
-            var customer = await Repository.GetCustomer(ExistingCustomer.Document.Id);
+            var customer = await Repository.GetCustomer(id: ExistingCustomer.Id);
 
             Assert.That(customer, Is.Not.Null);
 
@@ -146,9 +192,9 @@ namespace RepositoryTests
         [Test]
         public async Task MustDeleteCustomer()
         {
-            await Repository.DeleteCustomer(ExistingCustomer.Document.Id);
+            await Repository.DeleteCustomer(ExistingCustomer.Id);
 
-            ICustomer? customer = await Repository.GetCustomer(ExistingCustomer.Document.Id);
+            ICustomer? customer = await Repository.GetCustomer(id: ExistingCustomer.Id);
 
             Assert.That(customer, Is.Null);
         }

@@ -27,8 +27,8 @@ namespace DependencyInjection
             service.AddScoped<IUserRepository, UserRepository>();
             service.AddScoped<IStockRepository, StockRepository>();
             service.AddScoped<IVehicleRepository, VehicleRepository>();
-            service.AddScoped<IMechanicalServiceRepository, MechanicalServiceRepository>();
-            service.AddScoped<IWorkOrderRepository, WorkOrderRepository>();
+            service.AddScoped<ICatalogRepository, CatalogRepository>();
+            service.AddScoped<IOrdersRepository, OrdersRepository>();
         }
     }
 }

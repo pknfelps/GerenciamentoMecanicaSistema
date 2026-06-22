@@ -11,27 +11,31 @@ namespace Service
 
         public async Task RegisterVehicle(CreateVehicleDto vehicleDto)
         {
-            var vehicle = vehicleDto.ToDomain();
-
-            if (await CheckIfVehicleExists(vehicle.LicensePlate.License))
+            if (await Repository.GetVehicle(license_plate: LicensePlateWrapper.CreateLicensePlate(vehicleDto.LicensePlate).License) != null)
                 throw new InvalidOperationException("Veiculo já registrado no sistema");
 
-            var registry = await Repository.RegisterVehicle(vehicle);
+            var registry = await Repository.RegisterVehicle(vehicleDto.ToDomain());
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao registrar veículo");
         }
 
-        public async Task<IEnumerable<VehicleDto>> GetVehicles()
+        public async Task<IEnumerable<VehicleDto>> GetVehicles(Guid? id = null, string licensePlate = "")
         {
-            var vehicles = await Repository.GetVehicles();
+            if (!string.IsNullOrEmpty(licensePlate))
+                licensePlate = LicensePlateWrapper.CreateLicensePlate(licensePlate).License;
+
+            var vehicles = await Repository.GetVehicles(id, licensePlate);
 
             return vehicles.Select(VehicleDto.Create);
         }
 
-        public async Task<VehicleDto?> GetVehicle(string licensePlate)
+        public async Task<VehicleDto?> GetVehicle(Guid? id = null, string licensePlate = "")
         {
-            var vehicle = await Repository.GetVehicle(licensePlate);
+            if (!string.IsNullOrEmpty(licensePlate))
+                licensePlate = LicensePlateWrapper.CreateLicensePlate(licensePlate).License;
+
+            var vehicle = await Repository.GetVehicle(id, licensePlate);
 
             if (vehicle == null)
                 return null;
@@ -39,36 +43,24 @@ namespace Service
             return VehicleDto.Create(vehicle);
         }
 
-        public async Task UpdateVehicle(VehicleDto vehicleDto)
+        public async Task UpdateVehicle(Guid id, CreateVehicleDto vehicleDto)
         {
-            var vehicle = vehicleDto.ToDomain();
+            _ = await Repository.GetVehicle(id: id) ?? throw new InvalidOperationException("Veiculo não encontrado");
 
-            if (!await CheckIfVehicleExists(vehicle.LicensePlate.License))
-                throw new InvalidOperationException("Veiculo não encontrado");
-
-            var registry = await Repository.UpdateVehicle(vehicle);
+            var registry = await Repository.UpdateVehicle(vehicleDto.ToDomain());
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao atualizar veículo");
         }
 
-        public async Task DeleteVehicle(string licensePlate)
+        public async Task DeleteVehicle(Guid id)
         {
-            LicensePlate license = LicensePlateWrapper.CreateLicensePlate(licensePlate);
+            _ = await Repository.GetVehicle(id: id) ?? throw new InvalidOperationException("Veiculo não encontrado");
 
-            var vehicle = await Repository.GetVehicle(license.License) ?? throw new InvalidOperationException("Veiculo não encontrado");
-
-            var registry = await Repository.DeleteVehicle(vehicle.Id);
+            var registry = await Repository.DeleteVehicle(id);
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao deletar veículo");
-        }
-
-        private async Task<bool> CheckIfVehicleExists(string licensePlate) 
-        {
-            var vehicle = await Repository.GetVehicle(licensePlate);
-
-            return vehicle != null;
         }
     }
 }

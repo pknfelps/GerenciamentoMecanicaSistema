@@ -6,9 +6,9 @@ using Repository.Interface;
 
 namespace RepositoryTests
 {
-    public class MechanicalServiceRepositoryTests : BaseRepositoryTests
+    public class CatalogRepositoryTests : BaseRepositoryTests
     {
-        private IMechanicalServiceRepository Repository { get; set; }
+        private ICatalogRepository Repository { get; set; }
 
         private static IMechanicalService ServiceToRegister
         {
@@ -66,7 +66,7 @@ namespace RepositoryTests
                 price_per_hour DOUBLE PRECISION NOT NULL);
                 """);
 
-            Repository = new MechanicalServiceRepository(Connection);
+            Repository = new CatalogRepository(Connection);
 
             await Repository.RegisterService(ExistingService);
         }
@@ -127,7 +127,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustGetServiceByDescription()
         {
-            var service = await Repository.GetService(ExistingService.Description);
+            var service = await Repository.GetService(description: ExistingService.Description);
 
             Assert.Multiple(() =>
             {
@@ -144,7 +144,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustNotGetServiceByDescriptionIfNotExists()
         {
-            var service = await Repository.GetService("");
+            var service = await Repository.GetService(description: "a");
 
             Assert.That(service, Is.Null);
         }

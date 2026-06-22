@@ -4,15 +4,13 @@ using Service.Interface.Dto.Service;
 
 namespace Service
 {
-    public class MechanicalServiceService(IMechanicalServiceRepository repository) : IMechanicalServiceService
+    public class CatalogService(ICatalogRepository repository) : ICatalogService
     {
-        private IMechanicalServiceRepository Repository { get; set; } = repository;
+        private ICatalogRepository Repository { get; set; } = repository;
 
         public async Task RegisterService(CreateServiceDto serviceDto)
         {
-            var service = await Repository.GetService(serviceDto.Description);
-
-            if (service != null)
+            if (await Repository.GetService(description: serviceDto.Description) != null)
                 throw new InvalidOperationException("Serivço já cadastrado");
 
             var registry = await Repository.RegisterService(serviceDto.ToDomain());
@@ -21,36 +19,29 @@ namespace Service
                 throw new InvalidOperationException("Falha ao registrar o serviço");
         }
 
-        public async Task<IEnumerable<ServiceDto?>> GetServices()
+        public async Task<IEnumerable<ServiceDto>> GetServices(Guid? id = null, string description = "")
         {
-            var services = await Repository.GetServices();
+            var services = await Repository.GetServices(id, description);
 
             return services.Select(ServiceDto.Create);
         }
 
-        public async Task<ServiceDto?> GetService(Guid serviceId)
+        public async Task<ServiceDto?> GetService(Guid? id = null, string description = "")
         {
-            var service = await Repository.GetService(serviceId);
+            if (id == null && string.IsNullOrEmpty(description))
+                throw new InvalidOperationException("Falha ao procurar serviço. Nenhum argumento fornecido");
 
-            if (service == null)
+            var services = await Repository.GetService(id, description);
+
+            if (services == null)
                 return null;
 
-            return ServiceDto.Create(service);
+            return ServiceDto.Create(services);
         }
 
-        public async Task<ServiceDto?> GetService(string description)
+        public async Task UpdateService(Guid serviceId, CreateServiceDto serviceDto)
         {
-            var service = await Repository.GetService(description);
-
-            if (service == null)
-                return null;
-
-            return ServiceDto.Create(service);
-        }
-
-        public async Task UpdateService(ServiceDto serviceDto)
-        {
-            _ = await Repository.GetService(serviceDto.Id) ?? throw new InvalidOperationException("Serviço não encontrado");
+            _ = await Repository.GetService(serviceId) ?? throw new InvalidOperationException("Serviço não encontrado");
 
             var registry = await Repository.UpdateService(serviceDto.ToDomain());
 

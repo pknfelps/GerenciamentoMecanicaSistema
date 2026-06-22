@@ -1,22 +1,18 @@
 using DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Service.Settings;
 using System.Text;
 
 namespace GerenciamentoMecanicaSistema
 {
-#pragma warning disable S1118 // Utility classes should not have public constructors
     public class Program
-#pragma warning restore S1118 // Utility classes should not have public constructors
     {
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-
             builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
             builder.Services.AddAuthentication(x =>
@@ -37,19 +33,22 @@ namespace GerenciamentoMecanicaSistema
                 };
             });
 
+            builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+
             RepositoryDependencyInjection.Register(builder.Services, builder.Configuration);
             ServiceDependencyInjection.Register(builder.Services);
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+                app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "mechanic api" ));
             }
 
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllers();

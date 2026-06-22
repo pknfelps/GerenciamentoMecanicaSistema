@@ -7,17 +7,17 @@ namespace Repository.Dto
     internal class PartDb
     {
         [JsonPropertyName("id")]
-        public Guid Id { get; init; }
+        public Guid Id { get; init; } = Guid.Empty;
         [JsonPropertyName("name")]
-        public string Name { get; init; }
+        public string Name { get; init; } = "";
         [JsonPropertyName("brand")]
-        public string Brand { get; init; }
+        public string Brand { get; init; } = "";
         [JsonPropertyName("price")]
-        public double Price { get; init; }
+        public double Price { get; init; } = 0.0;
         [JsonPropertyName("amount")]
-        public int Amount { get; init; }
+        public int Amount { get; init; } = 0;
         [JsonPropertyName("reserved_amount")]
-        public int Reserved_Amount { get; init; }
+        public int Reserved_Amount { get; init; } = 0;
 
         public static PartDb Create(IPart part) => new() { Id = part.Id, Name = part.Name, Brand = part.Brand, Price = part.Price, Amount = part.Amount, Reserved_Amount = part.ReservedAmount };
 

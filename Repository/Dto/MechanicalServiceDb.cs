@@ -7,15 +7,15 @@ namespace Repository.Dto
     internal class MechanicalServiceDb
     {
         [JsonPropertyName("id")]
-        public Guid Id { get; init; }
+        public Guid Id { get; init; } = Guid.Empty;
         [JsonPropertyName("description")]
-        public string Description { get; init; }
+        public string Description { get; init; } = "";
         [JsonPropertyName("hours")]
-        public float Hours { get; init; }
+        public float Hours { get; init; } = 0f;
         [JsonPropertyName("price_per_hour")]
-        public double Price_Per_Hour { get; init; }
+        public double Price_Per_Hour { get; init; } = 0.0;
         [JsonPropertyName("amount")]
-        public int Amount { get; init; }
+        public int Amount { get; init; } = 0;
 
         public static MechanicalServiceDb Create(IMechanicalService service) => new() { Id = service.Id, Description = service.Description, Hours = service.Hours, Price_Per_Hour = service.PricePerHour, Amount = service.Amount };
 

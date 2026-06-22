@@ -1,16 +1,21 @@
 ﻿using Domain.Interface.User;
 using Domain.User;
+using Service.Interface.Dto.CustomAttributes;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace Service.Interface.Dto.User
 {
     public class CreateUserDto(string name, string password, string role)
     {
-        [Required, RegularExpression(@"^[a-zA-ZÀ-ÿ\s]{3,}$")]
+        [Description("Nome do usuário")]
+        [Required, RegularNonEmptyStringExpression]
         public string Name { get; set; } = name;
+        [Description("Senha do usuário")]
         [Required]
         public string Password { get; set; } = password;
-        [Required, RegularExpression(@"^[a-zA-ZÀ-ÿ\s]{3,}$")]
+        [Description("Cargo do usuário")]
+        [Required, RegularNonEmptyStringExpression]
         public string Role { get; set; } = role;
 
         public virtual IUser ToDomain() => new Domain.User.User(Name, Password, Role);

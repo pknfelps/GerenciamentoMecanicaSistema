@@ -2,3 +2,7 @@
 
 GET http://localhost:32768/openapi/v1.json
 Accept: application/json
+
+###
+
+POST https://localhost:32769/order/ApproveBudget/69eed86d-8377-402b-be1a-c79510a89645/true

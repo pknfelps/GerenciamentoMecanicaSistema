@@ -16,19 +16,8 @@ namespace Repository
         public static string GetItensSql { get; private set; } = """
                 SELECT id, name, brand, price, amount, reserved_amount
                 FROM stock
+                {0}
                 LIMIT 50;
-                """;
-
-        public static string GetPartByNameAndBrandSql { get; private set; } = """
-                SELECT id, name, brand, price, amount, reserved_amount
-                FROM stock
-                WHERE name = @Name AND brand = @Brand;
-                """;
-
-        public static string GetPartByIdSql { get; private set; } = """
-                SELECT id, name, brand, price, amount, reserved_amount
-                FROM stock
-                WHERE id = @partId;
                 """;
 
         public static string UpdatePartPriceSql { get; private set; } = """
@@ -54,26 +43,16 @@ namespace Repository
             return await Connection.ExecuteAsync(RegisterPartSql, PartDb.Create(part));
         }
 
-        public async Task<IEnumerable<IPart?>> GetParts()
+        public async Task<IEnumerable<IPart>> GetParts(Guid? id = null, string name = "", string brand = "")
         {
-            var parts = await Connection.QueryAsync<PartDb>(GetItensSql);
+            var parts = await Connection.QueryAsync<PartDb>(GetItensSql.BuildQuery(BuildQueryParameters(id, name, brand)));
 
             return parts.Select(part => part.ToDomain());
         }
 
-        public async Task<IPart?> GetPart(string name, string brand)
+        public async Task<IPart?> GetPart(Guid? id = null, string name = "", string brand = "")
         {
-            var part = await Connection.QuerySingleOrDefaultAsync<PartDb>(GetPartByNameAndBrandSql, new { Name = name, Brand = brand });
-
-            if (part == null)
-                return null;
-
-            return part.ToDomain();
-        }
-
-        public async Task<IPart?> GetPart(Guid partId)
-        {
-            var part = await Connection.QuerySingleOrDefaultAsync<PartDb>(GetPartByIdSql, new { partId });
+            var part = await Connection.QuerySingleOrDefaultAsync<PartDb>(GetItensSql.BuildQuery(BuildQueryParameters(id, name, brand)));
 
             if (part == null)
                 return null;
@@ -94,6 +73,11 @@ namespace Repository
         public async Task<int> DeletePart(Guid partId)
         {
             return await Connection.ExecuteAsync(DelePartSql, new { Id = partId });
+        }
+
+        private static Dictionary<string, object?> BuildQueryParameters(Guid? id = null, string name = "", string brand = "")
+        {
+            return new() { { nameof(id), id }, { nameof(name), name }, { nameof(brand), brand } };
         }
     }
 }

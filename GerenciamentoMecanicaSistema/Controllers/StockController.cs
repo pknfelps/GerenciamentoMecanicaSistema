@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interface;
+using Service.Interface.Dto.CustomAttributes;
 using Service.Interface.Dto.Stock;
-using System.ComponentModel.DataAnnotations;
 
 namespace GerenciamentoMecanicaSistema.Controllers
 {
@@ -13,7 +13,12 @@ namespace GerenciamentoMecanicaSistema.Controllers
     {
         public IStockService StockService { get; private set; } = stockService;
 
-        [HttpPost("RegisterItem")]
+        [HttpPost()]
+        [EndpointDescription("Endpoint para registrar o item no estoque")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> RegisterItem([FromBody] CreatePartDto itemDto)
         {
             await StockService.RegisterNewPart(itemDto);
@@ -21,55 +26,67 @@ namespace GerenciamentoMecanicaSistema.Controllers
             return Created();
         }
 
-        [HttpGet("GetItems")]
-        public async Task<OkObjectResult> GetItems()
+        [HttpGet()]
+        [EndpointDescription("Endpoint para listar os itens do estoque")]
+        [ProducesResponseType(typeof(IEnumerable<PartDto>), StatusCodes.Status200OK, Description = "Retorna a lista de itens no estoque")]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
+        public async Task<OkObjectResult> GetItems([FromQuery] Guid? id = null, [FromQuery] string name = "", [FromQuery] string brand = "")
         {
-            var itens = await StockService.GetParts();
+            var itens = await StockService.GetParts(id, name, brand);
 
             return Ok(itens);
         }
 
-        [HttpGet("GetItem/{name}/{brand}")]
-        public async Task<IActionResult> GetItem([FromRoute, RegularExpression(@"^[a-zA-ZÀ-ÿ\s]{3,}$")] string name, [FromRoute, RegularExpression(@"^[a-zA-ZÀ-ÿ\s]{3,}$")] string brand)
+        [HttpPost("amount/{id}")]
+        [EndpointDescription("Endpoint para adicionar quantidade a um item")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
+        public async Task<IActionResult> AddItemAmount([FromRoute, GuidValidation] Guid id, [FromBody] int value)
         {
-            var item = await StockService.GetPart(name, brand);
-
-            if (item == null)
-                return NotFound("Item não encontrado");
-
-            return Ok(item);
-        }
-
-        [HttpPatch("AddItemAmount")]
-        public async Task<IActionResult> AddItemAmount([FromBody] PartUpdateDto<int> itemDto)
-        {
-            await StockService.AddPartAmount(itemDto);
+            await StockService.AddPartAmount(id, value);
 
             return Ok();
         }
 
-        [HttpPatch("RemoveItemAmount")]
-        public async Task<IActionResult> RemoveItemAmount([FromBody] PartUpdateDto<int> itemDto)
+        [HttpPatch("amount/{id}")]
+        [EndpointDescription("Endpoint para remover quantidade de um item")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
+        public async Task<IActionResult> RemoveItemAmount([FromRoute, GuidValidation] Guid id, [FromBody] int value)
         {
-            await StockService.RemovePartAmount(itemDto);
+            await StockService.RemovePartAmount(id, value);
 
-            return Ok();
+            return NoContent();
         }
 
-        [HttpPatch("UpdateItemPrice")]
-        public async Task<IActionResult> UpdateItemPrice([FromBody] PartUpdateDto<double> itemDto)
+        [HttpPatch("price/{id}")]
+        [EndpointDescription("Endpoint para atualizar o preço de um item")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
+        public async Task<IActionResult> UpdateItemPrice([FromRoute, GuidValidation] Guid id, [FromBody] double value)
         {
-            await StockService.UpdatePartPrice(itemDto);
+            await StockService.UpdatePartPrice(id, value);
 
-            return Ok();
+            return NoContent();
         }
 
-        [HttpDelete("DeleteItem/{name}/{brand}")]
-        public async Task<IActionResult> DeleteItem([FromRoute, RegularExpression(@"^[a-zA-ZÀ-ÿ\s]{3,}$")] string name, [FromRoute, RegularExpression(@"^[a-zA-ZÀ-ÿ\s]{3,}$")] string brand)
+        [HttpDelete("{id}")]
+        [EndpointDescription("Endpoint para deletar um item")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
+        public async Task<IActionResult> DeleteItem([FromRoute, GuidValidation] Guid id)
         {
-            await StockService.DeletePart(name, brand);
+            await StockService.DeletePart(id);
 
-            return Ok();
+            return NoContent();
         }
     }
 }

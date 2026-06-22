@@ -117,9 +117,34 @@ namespace RepositoryTests
         }
 
         [Test]
+        public async Task MustGetPartByIdAndBrand()
+        {
+            var item = await Repository.GetPart(id: ExistingPart.Id);
+
+            Assert.That(item, Is.Not.Null);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(item.Name, Is.EqualTo(ExistingPart.Name));
+                Assert.That(item.Brand, Is.EqualTo(ExistingPart.Brand));
+                Assert.That(item.Price, Is.EqualTo(ExistingPart.Price));
+                Assert.That(item.Amount, Is.EqualTo(ExistingPart.Amount));
+                Assert.That(item.ReservedAmount, Is.EqualTo(ExistingPart.ReservedAmount));
+            });
+        }
+
+        [Test]
+        public async Task MustNotGetPartByIdAndBrandIfNotExists()
+        {
+            var item = await Repository.GetPart(id: Guid.NewGuid());
+
+            Assert.That(item, Is.Null);
+        }
+
+        [Test]
         public async Task MustGetPartByNameAndBrand()
         {
-            var item = await Repository.GetPart(ExistingPart.Name, ExistingPart.Brand);
+            var item = await Repository.GetPart(name: ExistingPart.Name, brand: ExistingPart.Brand);
 
             Assert.That(item, Is.Not.Null);
 
@@ -136,7 +161,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustNotGetPartByNameAndBrandIfNotExists()
         {
-            var item = await Repository.GetPart(PartToRegister.Name, PartToRegister.Brand);
+            var item = await Repository.GetPart(name: PartToRegister.Name, brand: PartToRegister.Brand);
 
             Assert.That(item, Is.Null);
         }
@@ -173,7 +198,7 @@ namespace RepositoryTests
 
             Assert.That(registry, Is.Not.EqualTo(0));
 
-            var item = await Repository.GetPart(PartToUpdatePrice.Name, PartToUpdatePrice.Brand);
+            var item = await Repository.GetPart(name: PartToUpdatePrice.Name, brand: PartToUpdatePrice.Brand);
 
             Assert.That(item, Is.Not.Null);
             Assert.That(item.Price, Is.EqualTo(PartToUpdatePrice.Price));
@@ -186,7 +211,7 @@ namespace RepositoryTests
 
             Assert.That(registry, Is.Not.EqualTo(0));
 
-            var item = await Repository.GetPart(PartToUpdateAmount.Name, PartToUpdateAmount.Brand);
+            var item = await Repository.GetPart(name: PartToUpdateAmount.Name, brand: PartToUpdateAmount.Brand);
 
             Assert.That(item, Is.Not.Null);
 

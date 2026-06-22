@@ -43,7 +43,7 @@ namespace ControllerTests
         [Test]
         public async Task MustRegisterUser()
         {
-            var response = await TestClient.PostAsJsonAsync("/User/RegisterUser", UserToRegister);
+            var response = await TestClient.PostAsJsonAsync("users", UserToRegister);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
 
@@ -53,7 +53,7 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnBadRequestIfTryRegisterAUserThatIsNotValid()
         {
-            var response = await TestClient.PostAsJsonAsync("/User/RegisterUser", new { Nome = "Teste" });
+            var response = await TestClient.PostAsJsonAsync("users", new { Nome = "Teste" });
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
@@ -65,7 +65,7 @@ namespace ControllerTests
         {
             var user = new CreateUserDto(ExistingUser.Name, ExistingUser.Password, ExistingUser.Role);
 
-            var response = await TestClient.PostAsJsonAsync("/User/RegisterUser", user);
+            var response = await TestClient.PostAsJsonAsync("users", user);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
@@ -75,9 +75,7 @@ namespace ControllerTests
         [Test]
         public async Task MustGetUserByNomeAndCargo()
         {
-            var response = await TestClient.GetAsync($"/User/GetUser/{ExistingUserWithNoPassword.Name}/{ExistingUserWithNoPassword.Role}");
-
-            var content = await response.Content.ReadAsStringAsync();
+            var response = await TestClient.GetAsync($"users?name={ExistingUserWithNoPassword.Name}&role={ExistingUserWithNoPassword.Role}");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
@@ -92,17 +90,17 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnNotFoundIfTryGetClienteClienteThatNotExists()
         {
-            var response = await TestClient.GetAsync($"/User/GetUser/{UserToRegister.Name}/{UserToRegister.Role}");
+            var response = await TestClient.GetAsync($"users?name=teste&role=teste");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
 
-            await UserService.Received(1).GetUser(new CreateUserDto(UserToRegister.Name, "", UserToRegister.Role));
+            await UserService.Received(1).GetUser(new CreateUserDto("teste", "", "teste"));
         }
 
         [Test]
         public async Task MustReturnBadRequestIfTryGetUserWithInvalidModel()
         {
-            var response = await TestClient.GetAsync($"/User/GetUser/a/b");
+            var response = await TestClient.GetAsync($"users?name=a?role=b");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 

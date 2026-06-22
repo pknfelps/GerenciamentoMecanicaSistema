@@ -5,7 +5,7 @@ using Domain.Interface.Vehicle;
 
 namespace Domain.Interface.Order
 {
-    public interface IWorkOrder : IEntity
+    public interface IOrder : IEntity
     {
         IDocument CustomerDocument { get; }
         ILicensePlate VehicleLicensePlate { get; }
@@ -20,12 +20,12 @@ namespace Domain.Interface.Order
         void StartDiagnosis();
         IMechanicalService AddService(IMechanicalService serviceToAdd);
         IMechanicalService RemoveService(IMechanicalService serviceToRemove);
-        IPart AddPartOrSupplie(IPart itemToAdd);
-        IPart RemovePartOrSupplie(IPart itemToRemove);
+        IPart AddPart(IPart itemToAdd);
+        IPart RemovePart(IPart itemToRemove);
         void FinalizeDiagnosis();
         void ApproveService(bool approved);
         void StartService();
         void CompleteService();
-        void VehicleDelivered();
+        void DeliverVehicle();
     }
 }

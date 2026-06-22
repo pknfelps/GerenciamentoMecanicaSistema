@@ -3,6 +3,7 @@ using NSubstitute;
 using Repository.Interface;
 using Service;
 using Service.Interface;
+using Service.Interface.Dto;
 using Service.Interface.Dto.Stock;
 
 namespace ServiceTests
@@ -49,12 +50,12 @@ namespace ServiceTests
 
         private static PartDto ExistingPartDto { get; } = new(ExistingPartId, "Vela de ignição", "Bosch", 6.00, 20, 5);
         private static PartDto ExistingPart2Dto { get; } = new(ExistingPart2Id, "Flúido para radiador", "Gitanes", 30.00, 5, 0);
-        private static PartUpdateDto<int> PartToFailIntOperations { get; } = new(Guid.NewGuid(), 5);
-        private static PartUpdateDto<double> PartToFailDoubleOperations { get; } = new(Guid.NewGuid(), 10.00);
-        private static PartUpdateDto<int> PartToAddAmount { get; } = new(ExistingPartId, 5);
-        private static PartUpdateDto<int> PartToFailAddAmount { get; } = new(ExistingPart2Id, 5);
-        private static PartUpdateDto<double> PartToUpdatePrice { get; } = new(ExistingPartId, 10.00);
-        private static PartUpdateDto<double> PartToFailUpdatePrice { get; } = new(ExistingPart2Id, 35.00);
+        private static UpdateItemDto<int> PartToFailIntOperations { get; } = new(Guid.NewGuid(), 5);
+        private static UpdateItemDto<double> PartToFailDoubleOperations { get; } = new(Guid.NewGuid(), 10.00);
+        private static UpdateItemDto<int> PartToAddAmount { get; } = new(ExistingPartId, 5);
+        private static UpdateItemDto<int> PartToFailAddAmount { get; } = new(ExistingPart2Id, 5);
+        private static UpdateItemDto<double> PartToUpdatePrice { get; } = new(ExistingPartId, 10.00);
+        private static UpdateItemDto<double> PartToFailUpdatePrice { get; } = new(ExistingPart2Id, 35.00);
 
         [SetUp]
         public void SetUp()
@@ -74,10 +75,10 @@ namespace ServiceTests
             List<IPart> parts = new List<IPart>() { ExistingPart, ExistingPart2 };
             Repository.GetParts().Returns(parts);
 
-            Repository.GetPart(Arg.Any<string>(), Arg.Any<string>()).Returns(callInfo =>
+            Repository.GetPart(name: Arg.Any<string>(), brand: Arg.Any<string>()).Returns(callInfo =>
             {
-                var name = callInfo.ArgAt<string>(0);
-                var brand = callInfo.ArgAt<string>(1);
+                var name = callInfo.ArgAt<string>(1);
+                var brand = callInfo.ArgAt<string>(2);
 
                 return parts.FirstOrDefault(x => x.Name == name && x.Brand == brand);
             });
@@ -127,7 +128,7 @@ namespace ServiceTests
         {
             await Service.RegisterNewPart(PartToRegister);
 
-            await Repository.Received(1).GetPart(PartToRegister.Name, PartToRegister.Brand);
+            await Repository.Received(1).GetPart(name: PartToRegister.Name, brand: PartToRegister.Brand);
             await Repository.ReceivedWithAnyArgs(1).RegisterNewPart(Arg.Any<IPart>());
         }
 
@@ -136,7 +137,7 @@ namespace ServiceTests
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RegisterNewPart(ExistingPartDto));
 
-            await Repository.Received(1).GetPart(ExistingPartDto.Name, ExistingPartDto.Brand);
+            await Repository.Received(1).GetPart(name: ExistingPartDto.Name, brand: ExistingPartDto.Brand);
         }
 
         [Test]
@@ -144,107 +145,8 @@ namespace ServiceTests
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RegisterNewPart(PartToFailRegister));
 
-            await Repository.Received(1).GetPart(PartToFailRegister.Name, PartToFailRegister.Brand);
+            await Repository.Received(1).GetPart(name: PartToFailRegister.Name, brand: PartToFailRegister.Brand);
             await Repository.ReceivedWithAnyArgs(1).RegisterNewPart(Arg.Any<IPart>());
-        }
-
-        [Test]
-        public async Task MustAddPartAmount()
-        {
-            await Service.AddPartAmount(PartToAddAmount);
-
-            await Repository.Received(1).GetPart(ExistingPartId);
-            await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
-        }
-
-        [Test]
-        public async Task MustNotAddPartAmountIfPartDoentExist()
-        {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddPartAmount(PartToFailIntOperations));
-
-            await Repository.Received(1).GetPart(PartToFailIntOperations.Id);
-            await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
-        }
-
-        [Test]
-        public async Task MustRemovePartAmount()
-        {
-            await Service.RemovePartAmount(PartToAddAmount);
-
-            await Repository.Received(1).GetPart(PartToAddAmount.Id);
-            await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
-        }
-
-        [Test]
-        public async Task MustNotRemovePartAmountIfPartDoentExist()
-        {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemovePartAmount(PartToFailIntOperations));
-
-            await Repository.Received(1).GetPart(PartToFailIntOperations.Id);
-            await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
-        }
-
-        [Test]
-        public async Task MustReservePartAmount()
-        {
-            await Service.ReservePartAmount(PartToAddAmount);
-
-            await Repository.Received(1).GetPart(PartToAddAmount.Id);
-            await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
-        }
-
-        [Test]
-        public async Task MustNotReservePartAmountIfPartDoentExist()
-        {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ReservePartAmount(PartToFailIntOperations));
-
-            await Repository.Received(1).GetPart(PartToFailIntOperations.Id);
-            await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
-        }
-
-        [Test]
-        public async Task MustRestorePartAmount()
-        {
-            await Service.RestorePartAmount(PartToAddAmount);
-
-            await Repository.Received(1).GetPart(PartToAddAmount.Id);
-            await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
-        }
-
-        [Test]
-        public async Task MustNotRestorePartAmountIfPartDoentExist()
-        {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RestorePartAmount(PartToFailIntOperations));
-
-            await Repository.Received(1).GetPart(PartToFailIntOperations.Id);
-            await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
-        }
-
-        [Test]
-        public async Task MustConsumePartAmount()
-        {
-            await Service.ConsumeReservedAmount(PartToAddAmount);
-
-            await Repository.Received(1).GetPart(PartToAddAmount.Id);
-            await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
-        }
-
-        [Test]
-        public async Task MustNotConsumePartAmountIfNotExists()
-        {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ConsumeReservedAmount(PartToFailIntOperations));
-
-            await Repository.Received(1).GetPart(PartToFailIntOperations.Id);
-            await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
-        }
-
-        [Test]
-        public async Task MustThrowExceptionIfFailUpdatePartAmount()
-        {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddPartAmount(PartToFailAddAmount));
-
-            await Repository.Received(1).GetPart(ExistingPart2Id);
-            await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
         }
 
         [Test]
@@ -265,9 +167,9 @@ namespace ServiceTests
         [Test]
         public async Task MustGetPartByNameAndBrand()
         {
-            var item = await Service.GetPart(ExistingPart.Name, ExistingPart.Brand);
+            var item = await Service.GetPart(name: ExistingPart.Name, brand: ExistingPart.Brand);
 
-            await Repository.Received(1).GetPart(ExistingPart.Name, ExistingPart.Brand);
+            await Repository.Received(1).GetPart(name: ExistingPart.Name, brand: ExistingPart.Brand);
 
             Assert.That(item, Is.Not.Null);
             Assert.That(item.Equals(ExistingPartDto), Is.True);
@@ -276,9 +178,9 @@ namespace ServiceTests
         [Test]
         public async Task MustNotGetPartByNameAndBrandIfNotExists()
         {
-            var item = await Service.GetPart(PartToRegister.Name, PartToRegister.Brand);
+            var item = await Service.GetPart(name: PartToRegister.Name, brand: PartToRegister.Brand);
 
-            await Repository.Received(1).GetPart(PartToRegister.Name, PartToRegister.Brand);
+            await Repository.Received(1).GetPart(name: PartToRegister.Name, brand: PartToRegister.Brand);
 
             Assert.That(item, Is.Null);
         }
@@ -305,9 +207,114 @@ namespace ServiceTests
         }
 
         [Test]
+        public async Task MustNotGetPartIfNoParameterWasGiven()
+        {
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.GetPart());
+        }
+
+        [Test]
+        public async Task MustAddPartAmount()
+        {
+            await Service.AddPartAmount(PartToAddAmount.Id, PartToAddAmount.Value);
+
+            await Repository.Received(1).GetPart(PartToAddAmount.Id);
+            await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
+        }
+
+        [Test]
+        public async Task MustNotAddPartAmountIfPartDoentExist()
+        {
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddPartAmount(PartToFailIntOperations.Id, PartToFailIntOperations.Value));
+
+            await Repository.Received(1).GetPart(PartToFailIntOperations.Id);
+            await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
+        }
+
+        [Test]
+        public async Task MustRemovePartAmount()
+        {
+            await Service.RemovePartAmount(PartToAddAmount.Id, PartToAddAmount.Value);
+
+            await Repository.Received(1).GetPart(PartToAddAmount.Id);
+            await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
+        }
+
+        [Test]
+        public async Task MustNotRemovePartAmountIfPartDoentExist()
+        {
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemovePartAmount(PartToFailIntOperations.Id, PartToFailIntOperations.Value));
+
+            await Repository.Received(1).GetPart(PartToFailIntOperations.Id);
+            await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
+        }
+
+        [Test]
+        public async Task MustReservePartAmount()
+        {
+            await Service.ReservePartAmount(PartToAddAmount.Id, PartToAddAmount.Value);
+
+            await Repository.Received(1).GetPart(PartToAddAmount.Id);
+            await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
+        }
+
+        [Test]
+        public async Task MustNotReservePartAmountIfPartDoentExist()
+        {
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ReservePartAmount(PartToFailIntOperations.Id, PartToFailIntOperations.Value));
+
+            await Repository.Received(1).GetPart(PartToFailIntOperations.Id);
+            await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
+        }
+
+        [Test]
+        public async Task MustRestorePartAmount()
+        {
+            await Service.RestorePartAmount(PartToAddAmount.Id, PartToAddAmount.Value);
+
+            await Repository.Received(1).GetPart(PartToAddAmount.Id);
+            await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
+        }
+
+        [Test]
+        public async Task MustNotRestorePartAmountIfPartDoentExist()
+        {
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RestorePartAmount(PartToFailIntOperations.Id, PartToFailIntOperations.Value));
+
+            await Repository.Received(1).GetPart(PartToFailIntOperations.Id);
+            await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
+        }
+
+        [Test]
+        public async Task MustConsumePartAmount()
+        {
+            await Service.ConsumeReservedAmount(PartToAddAmount.Id, PartToAddAmount.Value);
+
+            await Repository.Received(1).GetPart(PartToAddAmount.Id);
+            await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
+        }
+
+        [Test]
+        public async Task MustNotConsumePartAmountIfNotExists()
+        {
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ConsumeReservedAmount(PartToFailIntOperations.Id, PartToFailIntOperations.Value));
+
+            await Repository.Received(1).GetPart(PartToFailIntOperations.Id);
+            await Repository.Received(0).UpdatePartAmount(Arg.Any<IPart>());
+        }
+
+        [Test]
+        public async Task MustThrowExceptionIfFailUpdatePartAmount()
+        {
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddPartAmount(PartToFailAddAmount.Id, PartToFailAddAmount.Value));
+
+            await Repository.Received(1).GetPart(ExistingPart2Id);
+            await Repository.Received(1).UpdatePartAmount(Arg.Any<IPart>());
+        }
+
+        [Test]
         public async Task MustUpdatePartPrice()
         {
-            await Service.UpdatePartPrice(PartToUpdatePrice);
+            await Service.UpdatePartPrice(PartToUpdatePrice.Id, PartToUpdatePrice.Value);
 
             await Repository.Received(1).GetPart(ExistingPartId);
             await Repository.Received(1).UpdatePartPrice(Arg.Any<IPart>());
@@ -316,7 +323,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotUpdatePartPriceIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdatePartPrice(PartToFailDoubleOperations));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdatePartPrice(PartToFailDoubleOperations.Id, PartToFailDoubleOperations.Value));
 
             await Repository.Received(1).GetPart(PartToFailDoubleOperations.Id);
             await Repository.Received(0).UpdatePartPrice(Arg.Any<IPart>());
@@ -325,7 +332,7 @@ namespace ServiceTests
         [Test]
         public async Task MustThrowExceptionIfFailtToUpdatePartPrice()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdatePartPrice(PartToFailUpdatePrice));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdatePartPrice(PartToFailUpdatePrice.Id, PartToFailUpdatePrice.Value));
 
             await Repository.Received(1).GetPart(ExistingPart2Id);
             await Repository.Received(1).UpdatePartPrice(Arg.Any<IPart>());
@@ -334,27 +341,27 @@ namespace ServiceTests
         [Test]
         public async Task MustDeletePart()
         {
-            await Service.DeletePart(ExistingPart.Name, ExistingPart.Brand);
+            await Service.DeletePart(ExistingPart.Id);
 
-            await Repository.Received(1).GetPart(ExistingPart.Name, ExistingPart.Brand);
+            await Repository.Received(1).GetPart(id: ExistingPart.Id);
             await Repository.Received(1).DeletePart(ExistingPart.Id);
         }
 
         [Test]
         public async Task MustNotDeletePartIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeletePart(PartToRegister.Name, PartToRegister.Brand));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeletePart(Guid.NewGuid()));
 
-            await Repository.Received(1).GetPart(PartToRegister.Name, PartToRegister.Brand);
+            await Repository.Received(1).GetPart(Arg.Any<Guid>());
             await Repository.Received(0).DeletePart(Arg.Any<Guid>());
         }
 
         [Test]
         public async Task MustThrowExceptionIfFailToDeletePart()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeletePart(ExistingPart2.Name, ExistingPart2.Brand));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeletePart(ExistingPart2.Id));
 
-            await Repository.Received(1).GetPart(ExistingPart2.Name, ExistingPart2.Brand);
+            await Repository.Received(1).GetPart(id: ExistingPart2.Id);
             await Repository.Received(1).DeletePart(ExistingPart2.Id);
         }
     }

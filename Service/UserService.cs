@@ -12,12 +12,10 @@ namespace Service
 
         public async Task RegisterUser(CreateUserDto userDto)
         {
-            var user = userDto.ToDomain();
-
-            if (await CheckIfUsuarioExists(user.Name, user.Role.ToString()))
+            if (await Repository.GetUser(userDto.Name, userDto.Role.ToString()) != null)
                 throw new InvalidOperationException("Usuario já cadastrado no sistema");
 
-            var registry = await Repository.RegisterUser(user);
+            var registry = await Repository.RegisterUser(userDto.ToDomain());
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao cadastrar o usuário");
@@ -31,11 +29,6 @@ namespace Service
                 return null;
 
             return UserDto.Create(user);
-        }
-
-        private async Task<bool> CheckIfUsuarioExists(string nome, string cargo)
-        {
-            return await Repository.GetUser(nome, cargo) != null;
         }
     }
 }

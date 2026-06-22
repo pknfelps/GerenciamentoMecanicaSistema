@@ -8,7 +8,7 @@ using System.Data;
 
 namespace Repository
 {
-    public class WorkOrderRepository(IDbConnection connection) : BaseRepository(connection), IWorkOrderRepository
+    public class OrdersRepository(IDbConnection connection) : BaseRepository(connection), IOrdersRepository
     {
         public static string CreateServiceSql { get; private set; } = """
             INSERT INTO orders(id, customer_document, vehicle_license_plate, budget, status, date_created, date_finished, duration)
@@ -16,12 +16,6 @@ namespace Repository
             """;
 
         public static string GetOrdersSql { get; private set; } = """
-            SELECT id, customer_document, vehicle_license_plate, budget, status, date_created, date_finished 
-            FROM orders
-            LIMIT 50;
-            """;
-
-        public static string GetOrderSql { get; private set; } = """
             SELECT 
                 os.id, 
                 os.customer_document, 
@@ -56,54 +50,7 @@ namespace Repository
             LEFT JOIN order_services s ON s.order_id = os.id
             LEFT JOIN order_items i ON i.order_id = os.id
 
-            WHERE os.id = @orderId
-
-            GROUP BY
-                os.id,
-                os.customer_document,
-                os.vehicle_license_plate,
-                os.budget,
-                os.status,
-                os.date_created,
-                os.date_finished;
-            """;
-
-        public static string GetCustomerOrdersSql { get; private set; } = """
-            SELECT 
-                os.id, 
-                os.customer_document, 
-                os.vehicle_license_plate, 
-
-                CASE
-                    WHEN COUNT(s.id) = 0 THEN '[]'::json
-                    ELSE json_agg(jsonb_build_object(
-                        'id', s.id,
-                        'description', s.description,
-                        'hours', s.hours,
-                        'price_per_hour', s.price_per_hour,
-                        'amount', s.amount))
-                END AS services,
-
-                CASE
-                    WHEN COUNT(i.id) = 0 THEN '[]'::json
-                    ELSE json_agg(DISTINCT jsonb_build_object(
-                        'id', i.id,
-                        'name', i.name,
-                        'brand', i.brand,
-                        'price', i.price,
-                        'amount', i.amount))
-                    END AS parts,
-
-                os.budget, 
-                os.status, 
-                os.date_created, 
-                os.date_finished 
-
-            FROM orders os
-            LEFT JOIN order_services s ON s.order_id = os.id
-            LEFT JOIN order_items i ON i.order_id = os.id
-
-            WHERE os.customer_document = @customerDocument
+            {0}
 
             GROUP BY
                 os.id,
@@ -186,33 +133,26 @@ namespace Repository
             WHERE id = @orderId;
             """;
 
-        public async Task<int> CreateOrder(IWorkOrder serviceOrder)
+        public async Task<int> CreateOrder(IOrder serviceOrder)
         {
             return await Connection.ExecuteAsync(CreateServiceSql, WorkOrderDb.Create(serviceOrder));
         }
 
-        public async Task<IEnumerable<IWorkOrder?>> GetOrders()
+        public async Task<IEnumerable<IOrder>> GetOrders(Guid? id = null, string customer_document = "", string vehicle_license_plate = "")
         {
-            var orders = await Connection.QueryAsync<WorkOrderDb>(GetOrdersSql);
+            var orders = await Connection.QueryAsync<WorkOrderDb>(GetOrdersSql.BuildQuery(BuildQueryParameters(id, customer_document, vehicle_license_plate)));
 
             return orders.Select(order => order.ToDomain());
         }
 
-        public async Task<IWorkOrder?> GetOrder(Guid orderId)
+        public async Task<IOrder?> GetOrder(Guid? id = null, string customer_document = "", string vehicle_license_plate = "")
         {
-            var order = await Connection.QuerySingleOrDefaultAsync<WorkOrderDb>(GetOrderSql, new { orderId });
+            var order = await Connection.QuerySingleOrDefaultAsync<WorkOrderDb>(GetOrdersSql.BuildQuery(BuildQueryParameters(id, customer_document, vehicle_license_plate)));
 
             if (order == null)
                 return null;
 
             return order.ToDomain();
-        }
-
-        public async Task<IEnumerable<IWorkOrder?>> GetCustomerOrders(string customerDocument)
-        {
-            var orders = await Connection.QueryAsync<WorkOrderDb>(GetCustomerOrdersSql, new { customerDocument });
-
-            return orders.Select(order => order.ToDomain());
         }
 
         public async Task<int> UpdateOrderStatus(Guid orderId, WorkOrderStatus status)
@@ -230,7 +170,7 @@ namespace Repository
             return await Connection.ExecuteAsync(UpdateServiceAmountOfOrderSql, new { Id = service.Id, orderId = orderId, Amount = service.Amount });
         }
 
-        public async Task<int> DeleteServiceFromOrder(Guid orderId, Guid serviceId)
+        public async Task<int> RemoveServiceFromOrder(Guid orderId, Guid serviceId)
         {
             return await Connection.ExecuteAsync(DeleteServiceFromOrderSql, new { orderId, serviceId });
         }
@@ -271,6 +211,11 @@ namespace Repository
             await Connection.ExecuteAsync(RemovePartsFromOrderSql, new { orderId });
 
             return await Connection.ExecuteAsync(DeleteOrderSql, new { orderId });
+        }
+
+        private static Dictionary<string, object?> BuildQueryParameters(Guid? id = null, string customer_document = "", string vehicle_license_plate = "")
+        {
+            return new() { { "os." + nameof(id), id }, { "os." + nameof(customer_document), customer_document }, { "os." + nameof(vehicle_license_plate), vehicle_license_plate } };
         }
     }
 }

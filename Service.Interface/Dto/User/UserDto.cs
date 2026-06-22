@@ -1,13 +1,15 @@
 ﻿using Domain.Interface.User;
 using Service.Interface.Dto.CustomAttributes;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace Service.Interface.Dto.User
 {
     public class UserDto(Guid userId, string name, string password, string role) : CreateUserDto(name, password, role)
     {
+        [Description("Id único do usuário")]
         [Required, GuidValidation]
-        public Guid Id { get; private set; } = userId;
+        public Guid Id { get; set; } = userId;
 
         public static UserDto Create(IUser user) => new(user.Id, user.Name, user.Password.Secret, user.Role.ToString());
 

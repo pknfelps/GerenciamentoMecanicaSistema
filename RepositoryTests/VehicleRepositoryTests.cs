@@ -114,9 +114,9 @@ namespace RepositoryTests
         }
 
         [Test]
-        public async Task MustGetVehicle()
+        public async Task MustGetVehicleById()
         {
-            var vehicle = await VehicleRepository.GetVehicle(ExistingVehicle.LicensePlate.License);
+            var vehicle = await VehicleRepository.GetVehicle(id: ExistingVehicle.Id);
 
             Assert.That(vehicle, Is.Not.Null);
 
@@ -130,9 +130,33 @@ namespace RepositoryTests
         }
 
         [Test]
-        public async Task MustNotGetVehicleIfNotExists()
+        public async Task MustNotGetVehicleByIdIfNotExists()
         {
-            var vehicle = await VehicleRepository.GetVehicle("AAA1234");
+            var vehicle = await VehicleRepository.GetVehicle(id: Guid.NewGuid());
+
+            Assert.That(vehicle, Is.Null);
+        }
+
+        [Test]
+        public async Task MustGetVehicleByLicensePlate()
+        {
+            var vehicle = await VehicleRepository.GetVehicle(license_plate: ExistingVehicle.LicensePlate.License);
+
+            Assert.That(vehicle, Is.Not.Null);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(vehicle.Brand, Is.EqualTo(ExistingVehicle.Brand));
+                Assert.That(vehicle.Model, Is.EqualTo(ExistingVehicle.Model));
+                Assert.That(vehicle.Year, Is.EqualTo(ExistingVehicle.Year));
+                Assert.That(vehicle.LicensePlate.License, Is.EqualTo(ExistingVehicle.LicensePlate.License));
+            });
+        }
+
+        [Test]
+        public async Task MustNotGetVehicleByLicensePlateIfNotExists()
+        {
+            var vehicle = await VehicleRepository.GetVehicle(license_plate: "AAA1234");
 
             Assert.That(vehicle, Is.Null);
         }

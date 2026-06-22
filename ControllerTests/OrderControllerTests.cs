@@ -1,7 +1,7 @@
 ﻿using NSubstitute;
 using Service.Interface;
+using Service.Interface.Dto;
 using Service.Interface.Dto.Order;
-using System.Dynamic;
 using System.Net;
 using System.Net.Http.Json;
 
@@ -12,9 +12,8 @@ namespace ControllerTests
         private IWorkOrderService OrderService { get; set; }
 
         private static readonly CreateOrderDto OrderToCreate = new("123.456.789-12", "TST1234");
-        private static readonly WorkOrderDto ExistingOrder = new(Guid.NewGuid(), "123.456.789-12", "TST1234", 0.0, "Received", DateTime.Now, DateTime.MinValue, TimeSpan.Zero);
-        private static readonly DetailedWorkOrderDto ExistingDetailedOrder = new(ExistingOrder.Id, "123.456.789-12", "TST1234", 0.0, "Received", DateTime.Now, DateTime.MinValue, [], [], TimeSpan.Zero);
-        private static readonly OrderUpdateItemDto OrderUpdate = new(ExistingOrder.Id, Guid.NewGuid(), 1);
+        private static readonly DetailedWorkOrderDto ExistingOrder = new(Guid.NewGuid(), "123.456.789-12", "TST1234", 0.0, "Received", DateTime.Now, DateTime.MinValue, [], [], TimeSpan.Zero);
+        private static readonly UpdateItemDto<int> OrderUpdate = new(Guid.NewGuid(), 1);
 
         protected override void MockService()
         {
@@ -30,73 +29,79 @@ namespace ControllerTests
                 throw new InvalidOperationException();
             });
 
-            OrderService.GetOrders().Returns([ExistingOrder]);
-
-            OrderService.GetOrder(Arg.Any<Guid>()).Returns(callInfo =>
+            OrderService.GetOrders(id: Arg.Any<Guid?>(), customerDocument: Arg.Any<string>(), vehicleLicensePlate: Arg.Any<string>()).Returns(callInfo =>
             {
-                var id = callInfo.ArgAt<Guid>(0);
+                var id = callInfo.ArgAt<Guid?>(0);
+                var document = callInfo.ArgAt<string>(1);
+                var vehicle = callInfo.ArgAt<string>(2);
 
-                if (id == ExistingDetailedOrder.Id)
-                    return ExistingDetailedOrder;
+                if (id != null)
+                    if (id == ExistingOrder.Id)
+                        return [ExistingOrder];
+                    else
+                        return [];
 
-                return null;
-            });
+                if (!string.IsNullOrEmpty(document))
+                    if (document == ExistingOrder.CustomerDocument)
+                        return [ExistingOrder];
+                    else
+                        return [];
 
-            OrderService.GetCustomerOrders(Arg.Any<string>()).Returns(callInfo =>
-            {
-                var document = callInfo.ArgAt<string>(0);
+                if (!string.IsNullOrEmpty(vehicle))
+                    if (vehicle == ExistingOrder.VehicleLicensePlate)
+                        return [ExistingOrder];
+                    else
+                        return [];
 
-                if (document == ExistingDetailedOrder.CustomerDocument)
-                    return [ExistingDetailedOrder];
-
-                return null;
+                return [ExistingOrder];
             });
 
             OrderService.StartDiagnosis(Arg.Any<Guid>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
-                if (id == OrderUpdate.OrderId)
+                if (id == ExistingOrder.Id)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
             });
 
-            OrderService.AddServiceToOrder(Arg.Any<OrderUpdateItemDto>()).Returns(callInfo =>
+            OrderService.AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<OrderUpdateItemDto>(0);
+                var id = callInfo.ArgAt<Guid>(0);
 
-                if (item.OrderId == OrderUpdate.OrderId)
+                if (id == ExistingOrder.Id)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
             });
 
-            OrderService.RemoveServiceOfOrder(Arg.Any<OrderUpdateItemDto>()).Returns(callInfo =>
+            OrderService.RemoveServiceOfOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<OrderUpdateItemDto>(0);
+                var id = callInfo.ArgAt<Guid>(0);
 
-                if (item.OrderId == OrderUpdate.OrderId)
+                if (id == ExistingOrder.Id)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
             });
 
-            OrderService.AddPartOrSupplieToOrder(Arg.Any<OrderUpdateItemDto>()).Returns(callInfo =>
+            OrderService.AddPartToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<OrderUpdateItemDto>(0);
+                var id = callInfo.ArgAt<Guid>(0);
 
-                if (item.OrderId == OrderUpdate.OrderId)
+                if (id == ExistingOrder.Id)
                     return Task.CompletedTask;
+
 
                 throw new InvalidOperationException();
             });
 
-            OrderService.RemovePartOrSupplieFromOrder(Arg.Any<OrderUpdateItemDto>()).Returns(callInfo =>
+            OrderService.RemovePartFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<OrderUpdateItemDto>(0);
+                var id = callInfo.ArgAt<Guid>(0);
 
-                if (item.OrderId == OrderUpdate.OrderId)
+                if (id == ExistingOrder.Id)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
@@ -112,11 +117,11 @@ namespace ControllerTests
                 throw new InvalidOperationException();
             });
 
-            OrderService.ApproveBudget(Arg.Any<ApproveOrderDto>()).Returns(callInfo =>
+            OrderService.ApproveBudget(Arg.Any<Guid>(), Arg.Any<ApproveOrderDto>()).Returns(callInfo =>
             {
-                var approve = callInfo.ArgAt<ApproveOrderDto>(0);
+                var id = callInfo.ArgAt<Guid>(0);
 
-                if (approve.OrderId == ExistingOrder.Id)
+                if (id == ExistingOrder.Id)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
@@ -142,7 +147,7 @@ namespace ControllerTests
                 throw new InvalidOperationException();
             });
 
-            OrderService.VehicleDelivered(Arg.Any<Guid>()).Returns(callInfo =>
+            OrderService.DeliverVehicle(Arg.Any<Guid>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
@@ -166,7 +171,7 @@ namespace ControllerTests
         [Test]
         public async Task MustCreateOrder()
         {
-            var response = await TestClient.PostAsJsonAsync("Order/CreateOrder", OrderToCreate);
+            var response = await TestClient.PostAsJsonAsync($"orders", OrderToCreate);
 
             await OrderService.Received(1).CreateServiceOrder(OrderToCreate);
 
@@ -176,7 +181,7 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnBadRequestIfTryCreateOrderWithInvalidModel()
         {
-            var response = await TestClient.PostAsJsonAsync("Order/CreateOrder", new { Teste = "Teste" });
+            var response = await TestClient.PostAsJsonAsync($"orders", new { Teste = "Teste" });
 
             await OrderService.ReceivedWithAnyArgs(0).CreateServiceOrder(Arg.Any<CreateOrderDto>());
 
@@ -187,7 +192,7 @@ namespace ControllerTests
         public async Task MustReturnInternalServerErrorIfTryCreateOrderWithInvalidOrder()
         {
             var order = new CreateOrderDto("321.654.987-98", "XXX0000");
-            var response = await TestClient.PostAsJsonAsync("Order/CreateOrder", order);
+            var response = await TestClient.PostAsJsonAsync($"orders", order);
 
             await OrderService.Received(1).CreateServiceOrder(order);
 
@@ -197,9 +202,8 @@ namespace ControllerTests
         [Test]
         public async Task MustGetOrders()
         {
-            var response = await TestClient.GetAsync("Order/GetOrders");
-            var content = response.Content.ReadFromJsonAsAsyncEnumerable<WorkOrderDto>();
-            var orders = await content.ToListAsync();
+            var response = await TestClient.GetAsync($"orders");
+            var orders = await response.Content.ReadFromJsonAsync<List<WorkOrderDto>>();
 
             await OrderService.Received(1).GetOrders();
 
@@ -212,71 +216,57 @@ namespace ControllerTests
         [Test]
         public async Task MustGetOrder()
         {
-            var response = await TestClient.GetAsync($"Order/GetOrder/{ExistingDetailedOrder.Id}");
-            var order = await response.Content.ReadFromJsonAsync<DetailedWorkOrderDto>();
+            var response = await TestClient.GetAsync($"orders?id={ExistingOrder.Id}");
 
-            await OrderService.Received(1).GetOrder(ExistingDetailedOrder.Id);
+            var orders = await response.Content.ReadFromJsonAsync<List<WorkOrderDto>>();
+
+            await OrderService.Received(1).GetOrders(id: ExistingOrder.Id);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(orders, Has.Count.EqualTo(1));
+
+            var order = orders[0];
             Assert.That(order, Is.Not.Null);
-            Assert.That(order.Equals(ExistingDetailedOrder), Is.True);
+            Assert.That(order.Equals(ExistingOrder), Is.True);
         }
 
         [Test]
-        public async Task MustReturnNotFoundIfTryGetOrderThatNotExists()
+        public async Task MustGetDetailedOrder()
         {
-            var id = Guid.NewGuid();
+            var response = await TestClient.GetAsync($"orders/details?id={ExistingOrder.Id}");
+            var orders = await response.Content.ReadFromJsonAsync<List<DetailedWorkOrderDto>>();
 
-            var response = await TestClient.GetAsync($"Order/GetOrder/{id}");
-
-            await OrderService.Received(1).GetOrder(id);
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
-        }
-
-        [Test]
-        public async Task MustReturnBadRequestIfTryGetOrderWithInvalidModel()
-        {
-            var response = await TestClient.GetAsync($"Order/GetOrder/0000");
-
-            await OrderService.ReceivedWithAnyArgs(0).GetOrder(Arg.Any<Guid>());
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
-        }
-
-        [Test]
-        public async Task MustGetCustomerOrders()
-        {
-            var response = await TestClient.GetAsync($"Order/GetCustomerOrders/{ExistingDetailedOrder.CustomerDocument}");
-
-            var orders = response.Content.ReadFromJsonAsAsyncEnumerable<DetailedWorkOrderDto>();
-            var ordersList = await orders.ToListAsync();
-
-            await OrderService.Received(1).GetCustomerOrders(ExistingDetailedOrder.CustomerDocument);
+            await OrderService.Received(1).GetOrders(id: ExistingOrder.Id);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-            Assert.That(ordersList, Has.Count.EqualTo(1));
-            Assert.That(ordersList[0], Is.Not.Null);
-            Assert.That(ordersList[0].Equals(ExistingDetailedOrder), Is.True);
+            Assert.That(orders, Has.Count.EqualTo(1));
+
+            var order = orders[0];
+            Assert.That(order, Is.Not.Null);
+            Assert.That(order.Equals(ExistingOrder), Is.True);
         }
 
         [Test]
-        public async Task MustReturnNotFoundIfTryGetCustomerOrdersThatNotExists()
+        public async Task MustGetVehicleOrders()
         {
-            var id = "951.753.297-10";
-            var response = await TestClient.GetAsync($"Order/GetCustomerOrders/{id}");
+            var response = await TestClient.GetAsync($"orders/vehicles/{ExistingOrder.VehicleLicensePlate}");
 
-            await OrderService.Received(1).GetCustomerOrders(id);
+            var orders = await response.Content.ReadFromJsonAsync<List<DetailedWorkOrderDto>>();
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+            await OrderService.Received(1).GetOrders(vehicleLicensePlate: ExistingOrder.VehicleLicensePlate);
+
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(orders, Has.Count.EqualTo(1));
+            Assert.That(orders[0], Is.Not.Null);
+            Assert.That(orders[0].Equals(ExistingOrder), Is.True);
         }
 
         [Test]
-        public async Task MustReturnBadRequestIfTryGetCustomerOrdersWithInvalidModel()
+        public async Task MustReturnBadRequestIfTryGetVehicleOrdersWithInvalidModel()
         {
-            var response = await TestClient.GetAsync($"Order/GetCustomerOrders/0000");
+            var response = await TestClient.GetAsync($"orders/vehicles/0000");
 
-            await OrderService.ReceivedWithAnyArgs(0).GetOrder(Arg.Any<Guid>());
+            await OrderService.Received(0).GetOrder(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
@@ -284,18 +274,18 @@ namespace ControllerTests
         [Test]
         public async Task MustStartDiagnosis()
         {
-            var response = await TestClient.PostAsync($"Order/StartDiagnosis/{ExistingOrder.Id}", null);
+            var response = await TestClient.PatchAsync($"orders/{ExistingOrder.Id}/diagnosis/start", null);
 
             await OrderService.Received(1).StartDiagnosis(ExistingOrder.Id);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         }
 
         [Test]
         public async Task MustReturnInternalServerErrorItTryStartDiagnosisThatNotExists()
         {
             var id = Guid.NewGuid();
-            var response = await TestClient.PostAsync($"Order/StartDiagnosis/{id}", null);
+            var response = await TestClient.PatchAsync($"orders/{id}/diagnosis/start", null);
 
             await OrderService.Received(1).StartDiagnosis(id);
 
@@ -305,7 +295,7 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnBadRequestItTryStartDiagnosisWithInvalidModel()
         {
-            var response = await TestClient.PostAsync($"Order/StartDiagnosis/0000", null);
+            var response = await TestClient.PatchAsync($"orders/0000/diagnosis/start", null);
 
             await OrderService.ReceivedWithAnyArgs(0).StartDiagnosis(Arg.Any<Guid>());
 
@@ -315,9 +305,9 @@ namespace ControllerTests
         [Test]
         public async Task MustAddServiceToOrder()
         {
-            var response = await TestClient.PostAsJsonAsync($"Order/AddServiceToOrder", OrderUpdate);
+            var response = await TestClient.PostAsJsonAsync($"orders/{ExistingOrder.Id}/services", OrderUpdate);
 
-            await OrderService.Received(1).AddServiceToOrder(OrderUpdate);
+            await OrderService.Received(1).AddServiceToOrder(ExistingOrder.Id, Arg.Any<UpdateItemDto<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         }
@@ -325,10 +315,9 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnInternalServerErrorItTryAddServiceToOrderThatNotExists()
         {
-            var item = new OrderUpdateItemDto(Guid.NewGuid(), Guid.NewGuid(), 1);
-            var response = await TestClient.PostAsJsonAsync($"Order/AddServiceToOrder", item);
+            var response = await TestClient.PostAsJsonAsync($"orders/{Guid.NewGuid()}/services", OrderUpdate);
 
-            await OrderService.Received(1).AddServiceToOrder(item);
+            await OrderService.Received(1).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
         }
@@ -336,9 +325,9 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnBadRequestItTryAddServiceToOrderWithInvalidModel()
         {
-            var response = await TestClient.PostAsJsonAsync($"Order/AddServiceToOrder", new { Teste = "Teste" });
+            var response = await TestClient.PatchAsJsonAsync($"orders/0000/services", new { Teste = "Teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).AddServiceToOrder(Arg.Any<OrderUpdateItemDto>());
+            await OrderService.ReceivedWithAnyArgs(0).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
@@ -346,20 +335,19 @@ namespace ControllerTests
         [Test]
         public async Task MustRemoveServiceOfOrder()
         {
-            var response = await TestClient.PostAsJsonAsync($"Order/RemoveServiceOfOrder", OrderUpdate);
+            var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/services", OrderUpdate);
 
-            await OrderService.Received(1).RemoveServiceOfOrder(OrderUpdate);
+            await OrderService.Received(1).RemoveServiceOfOrder(ExistingOrder.Id, Arg.Any<UpdateItemDto<int>>());
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         }
 
         [Test]
         public async Task MustReturnInternalServerErrorItTryRemoveServiceOfOrderThatNotExists()
         {
-            var item = new OrderUpdateItemDto(Guid.NewGuid(), Guid.NewGuid(), 1);
-            var response = await TestClient.PostAsJsonAsync($"Order/RemoveServiceOfOrder", item);
+            var response = await TestClient.PatchAsJsonAsync($"orders/{Guid.NewGuid()}/services", OrderUpdate);
 
-            await OrderService.Received(1).RemoveServiceOfOrder(item);
+            await OrderService.Received(1).RemoveServiceOfOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
         }
@@ -367,71 +355,69 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnBadRequestItTryRemoveServiceOfOrderWithInvalidModel()
         {
-            var response = await TestClient.PostAsJsonAsync($"Order/RemoveServiceOfOrder", new { Teste = "Teste" });
+            var response = await TestClient.PatchAsJsonAsync($"orders/0000/services", new { Teste = "Teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).RemoveServiceOfOrder(Arg.Any<OrderUpdateItemDto>());
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
-        }
-
-        [Test]
-        public async Task MustAddPartOrSupplieToOrder()
-        {
-            var response = await TestClient.PostAsJsonAsync($"Order/AddPartOrSupplieToOrder", OrderUpdate);
-
-            await OrderService.Received(1).AddPartOrSupplieToOrder(OrderUpdate);
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-        }
-
-        [Test]
-        public async Task MustReturnInternalServerErrorItTryAddPartOrSupplieToOrderThatNotExists()
-        {
-            var item = new OrderUpdateItemDto(Guid.NewGuid(), Guid.NewGuid(), 1);
-            var response = await TestClient.PostAsJsonAsync($"Order/AddPartOrSupplieToOrder", item);
-
-            await OrderService.Received(1).AddPartOrSupplieToOrder(item);
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
-        }
-
-        [Test]
-        public async Task MustReturnBadRequestItTryAddPartOrSupplieToOrderWithInvalidModel()
-        {
-            var response = await TestClient.PostAsJsonAsync($"Order/AddPartOrSupplieToOrder", new { Teste = "Teste" });
-
-            await OrderService.ReceivedWithAnyArgs(0).AddPartOrSupplieToOrder(Arg.Any<OrderUpdateItemDto>());
+            await OrderService.ReceivedWithAnyArgs(0).RemoveServiceOfOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
 
         [Test]
-        public async Task MustRemovePartOrSupplieFromOrder()
+        public async Task MustAddPartToOrder()
         {
-            var response = await TestClient.PostAsJsonAsync($"Order/RemovePartOrSupplieFromOrder", OrderUpdate);
+            var response = await TestClient.PostAsJsonAsync($"orders/{ExistingOrder.Id}/parts", OrderUpdate);
 
-            await OrderService.Received(1).RemovePartOrSupplieFromOrder(OrderUpdate);
+            await OrderService.Received(1).AddPartToOrder(ExistingOrder.Id, Arg.Any<UpdateItemDto<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorItTryRemovePartOrSupplieFromOrderThatNotExists()
+        public async Task MustReturnInternalServerErrorItTryAddPartToOrderThatNotExists()
         {
-            var item = new OrderUpdateItemDto(Guid.NewGuid(), Guid.NewGuid(), 1);
-            var response = await TestClient.PostAsJsonAsync($"Order/RemovePartOrSupplieFromOrder", item);
+            var response = await TestClient.PostAsJsonAsync($"orders/{Guid.NewGuid()}/parts", OrderUpdate);
 
-            await OrderService.Received(1).RemovePartOrSupplieFromOrder(item);
+            await OrderService.Received(1).AddPartToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
         }
 
         [Test]
-        public async Task MustReturnBadRequestItTryRemovePartOrSupplieFromOrderWithInvalidModel()
+        public async Task MustReturnBadRequestItTryAddPartToOrderWithInvalidModel()
         {
-            var response = await TestClient.PostAsJsonAsync($"Order/RemovePartOrSupplieFromOrder", new { Teste = "Teste" });
+            var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/parts", new { Teste = "Teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).RemovePartOrSupplieFromOrder(Arg.Any<OrderUpdateItemDto>());
+            await OrderService.ReceivedWithAnyArgs(0).AddPartToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        }
+
+        [Test]
+        public async Task MustRemovePartFromOrder()
+        {
+            var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/parts", OrderUpdate);
+
+            await OrderService.Received(1).RemovePartFromOrder(ExistingOrder.Id, Arg.Any<UpdateItemDto<int>>());
+
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+        }
+
+        [Test]
+        public async Task MustReturnInternalServerErrorItTryRemovePartFromOrderThatNotExists()
+        {
+            var response = await TestClient.PatchAsJsonAsync($"orders/{Guid.NewGuid()}/parts", OrderUpdate);
+
+            await OrderService.Received(1).RemovePartFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+        }
+
+        [Test]
+        public async Task MustReturnBadRequestItTryRemovePartFromOrderWithInvalidModel()
+        {
+            var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/parts", new { Teste = "Teste" });
+
+            await OrderService.ReceivedWithAnyArgs(0).RemovePartFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
@@ -439,18 +425,18 @@ namespace ControllerTests
         [Test]
         public async Task MustCompleteDiagnosis()
         {
-            var response = await TestClient.PostAsync($"Order/CompleteDiagnosis/{ExistingOrder.Id}", null);
+            var response = await TestClient.PatchAsync($"orders/{ExistingOrder.Id}/diagnosis/complete", null);
 
             await OrderService.Received(1).CompleteDiagnosis(ExistingOrder.Id);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         }
 
         [Test]
         public async Task MustReturnInternalServerErrorItTryCompleteDiagnosisThatNotExists()
         {
             var id = Guid.NewGuid();
-            var response = await TestClient.PostAsync($"Order/CompleteDiagnosis/{id}", null);
+            var response = await TestClient.PatchAsync($"orders/{id}/diagnosis/complete", null);
 
             await OrderService.Received(1).CompleteDiagnosis(id);
 
@@ -460,7 +446,7 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnBadRequestItTryCompleteDiagnosisWithInvalidModel()
         {
-            var response = await TestClient.PostAsync($"Order/CompleteDiagnosis/0000", null);
+            var response = await TestClient.PatchAsync($"orders/0000/diagnosis/complete", null);
 
             await OrderService.ReceivedWithAnyArgs(0).CompleteDiagnosis(Arg.Any<Guid>());
 
@@ -470,21 +456,21 @@ namespace ControllerTests
         [Test]
         public async Task MustApproveBudget()
         {
-            var approve = new ApproveOrderDto(ExistingOrder.Id, true);
-            var response = await TestClient.PostAsJsonAsync("Order/ApproveBudget", approve);
+            var approve = new ApproveOrderDto(ExistingOrder.CustomerDocument, true);
+            var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/budget", approve);
 
-            await OrderService.Received(1).ApproveBudget(approve);
+            await OrderService.Received(1).ApproveBudget(ExistingOrder.Id, approve);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         }
 
         [Test]
         public async Task MustReturnInvalidServerErrorIfTryApproveBudgetThatNotExists()
         {
-            var approve = new ApproveOrderDto(Guid.NewGuid(), true);
-            var response = await TestClient.PostAsJsonAsync("Order/ApproveBudget", approve);
+            var approve = new ApproveOrderDto(ExistingOrder.CustomerDocument, true);
+            var response = await TestClient.PatchAsJsonAsync($"orders/{Guid.NewGuid()}/budget", approve);
 
-            await OrderService.Received(1).ApproveBudget(approve);
+            await OrderService.Received(1).ApproveBudget(Arg.Any<Guid>(), approve);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
         }
@@ -492,9 +478,9 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnBadRequestIfTryApproveBudgetWithInvalidModel()
         {
-            var response = await TestClient.PostAsJsonAsync("Order/ApproveBudget", new { Test = "Teste" });
+            var response = await TestClient.PatchAsJsonAsync($"orders/0000/budget", new { Teste = "teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).ApproveBudget(Arg.Any<ApproveOrderDto>());
+            await OrderService.ReceivedWithAnyArgs(0).ApproveBudget(Arg.Any<Guid>(), Arg.Any<ApproveOrderDto>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
@@ -502,18 +488,18 @@ namespace ControllerTests
         [Test]
         public async Task MustStartExecution()
         {
-            var response = await TestClient.PostAsync($"Order/StartExecution/{ExistingOrder.Id}", null);
+            var response = await TestClient.PatchAsync($"orders/{ExistingOrder.Id}/execution/start", null);
 
             await OrderService.Received(1).StartExecution(ExistingOrder.Id);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         }
 
         [Test]
         public async Task MustReturnInvalidServerErrorIfTryStartExecutionThatNotExists()
         {
             var id = Guid.NewGuid();
-            var response = await TestClient.PostAsync($"Order/StartExecution/{id}", null);
+            var response = await TestClient.PatchAsync($"orders/{id}/execution/start", null);
 
             await OrderService.Received(1).StartExecution(id);
 
@@ -523,7 +509,7 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnBadRequestIfTryStartExecutionWithInvalidModel()
         {
-            var response = await TestClient.PostAsync($"Order/StartExecution/0000", null);
+            var response = await TestClient.PatchAsync($"orders/0000/execution/start", null);
 
             await OrderService.ReceivedWithAnyArgs(0).StartExecution(Arg.Any<Guid>());
 
@@ -533,18 +519,18 @@ namespace ControllerTests
         [Test]
         public async Task MustCompleteExecution()
         {
-            var response = await TestClient.PostAsync($"Order/CompleteExecution/{ExistingOrder.Id}", null);
+            var response = await TestClient.PatchAsync($"orders/{ExistingOrder.Id}/execution/complete", null);
 
             await OrderService.Received(1).CompleteExecution(ExistingOrder.Id);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         }
 
         [Test]
         public async Task MustReturnInvalidServerErrorIfTryCompleteExecutionThatNotExists()
         {
             var id = Guid.NewGuid();
-            var response = await TestClient.PostAsync($"Order/CompleteExecution/{id}", null);
+            var response = await TestClient.PatchAsync($"orders/{id}/execution/complete", null);
 
             await OrderService.Received(1).CompleteExecution(id);
 
@@ -554,7 +540,7 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnBadRequestIfTryCompleteExecutionWithInvalidModel()
         {
-            var response = await TestClient.PostAsync($"Order/CompleteExecution/0000", null);
+            var response = await TestClient.PatchAsync($"orders/0000/execution/complete", null);
 
             await OrderService.ReceivedWithAnyArgs(0).CompleteExecution(Arg.Any<Guid>());
 
@@ -564,20 +550,20 @@ namespace ControllerTests
         [Test]
         public async Task MustDeliverVehicle()
         {
-            var response = await TestClient.PostAsync($"Order/VehicleDelivered/{ExistingOrder.Id}", null);
+            var response = await TestClient.PatchAsync($"orders/{ExistingOrder.Id}/delivery", null);
 
-            await OrderService.Received(1).VehicleDelivered(ExistingOrder.Id);
+            await OrderService.Received(1).DeliverVehicle(ExistingOrder.Id);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         }
 
         [Test]
         public async Task MustReturnInvalidServerErrorIfTryDeliverVehicleThatNotExists()
         {
             var id = Guid.NewGuid();
-            var response = await TestClient.PostAsync($"Order/VehicleDelivered/{id}", null);
+            var response = await TestClient.PatchAsync($"orders/{id}/delivery", null);
 
-            await OrderService.Received(1).VehicleDelivered(id);
+            await OrderService.Received(1).DeliverVehicle(id);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
         }
@@ -585,9 +571,9 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnBadRequestIfTryDeliverVehicleWithInvalidModel()
         {
-            var response = await TestClient.PostAsync($"Order/VehicleDelivered/0000", null);
+            var response = await TestClient.PatchAsync($"orders/0000/delivery", null);
 
-            await OrderService.ReceivedWithAnyArgs(0).VehicleDelivered(Arg.Any<Guid>());
+            await OrderService.ReceivedWithAnyArgs(0).DeliverVehicle(Arg.Any<Guid>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
@@ -595,18 +581,18 @@ namespace ControllerTests
         [Test]
         public async Task MustDeleteOrder()
         {
-            var response = await TestClient.DeleteAsync($"Order/DeleteOrder/{ExistingOrder.Id}");
+            var response = await TestClient.DeleteAsync($"orders/{ExistingOrder.Id}");
 
             await OrderService.Received(1).DeleteOrder(ExistingOrder.Id);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         }
 
         [Test]
         public async Task MustReturnInvalidServerErrorIfTryDeleteOrderThatNotExists()
         {
             var id = Guid.NewGuid();
-            var response = await TestClient.DeleteAsync($"Order/DeleteOrder/{id}");
+            var response = await TestClient.DeleteAsync($"orders/{id}");
 
             await OrderService.Received(1).DeleteOrder(id);
 
@@ -616,7 +602,7 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnBadRequestIfTryDeleteOrderWithInvalidModel()
         {
-            var response = await TestClient.DeleteAsync($"Order/DeleteOrder/0000");
+            var response = await TestClient.DeleteAsync($"orders/00000");
 
             await OrderService.ReceivedWithAnyArgs(0).DeleteOrder(Arg.Any<Guid>());
 

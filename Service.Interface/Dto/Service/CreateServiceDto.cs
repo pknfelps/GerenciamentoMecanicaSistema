@@ -1,17 +1,25 @@
 ﻿using Domain.Interface.Service;
 using Domain.MechanicalService;
+using Service.Interface.Dto.CustomAttributes;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace Service.Interface.Dto.Service
 {
-    public class CreateServiceDto(string description, float hours, double pricePerHour)
+    public class CreateServiceDto(string description, float hours, double pricePerHour, int amount)
     {
-        [Required, RegularExpression(@"^[a-zA-ZÀ-ÿ\s]{3,}$")]
-        public string Description { get; private set; } = description;
-        [Required, Range(0, float.MaxValue, ErrorMessage = "Valor deve ser positivo.")]
-        public float Hours { get; private set; } = hours;
-        [Required, Range(0, double.MaxValue, ErrorMessage = "Valor deve ser positivo.")]
-        public double PricePerHour { get; private set; } = pricePerHour;
+        [Description("Descrição do serviço")]
+        [Required, RegularNonEmptyStringExpression]
+        public string Description { get; set; } = description;
+        [Description("Tempo para conclusão do serviço")]
+        [Required, GenericValueValidation]
+        public float Hours { get; set; } = hours;
+        [Description("Preço por hora do serviço")]
+        [Required, GenericValueValidation]
+        public double PricePerHour { get; set; } = pricePerHour;
+        [Description("Quantidade de serviços")]
+        [Required, GenericValueValidation]
+        public int Amount { get; set; } = amount;
 
         public virtual IMechanicalService ToDomain() => new MechanicalService(Description, Hours, PricePerHour);
 

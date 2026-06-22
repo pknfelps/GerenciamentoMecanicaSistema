@@ -1,23 +1,22 @@
 ﻿using Domain.Interface.Order;
 using Domain.Interface.Service;
 using Domain.Interface.Stock;
-using Domain.Order;
 using NSubstitute;
 
 namespace DomainTests.Order
 {
-    public class WorkOrderTests
+    public class OrderTests
     {
-        private IWorkOrder ReceivedOrder { get; set; }
-        private IWorkOrder OrderInExecution { get; set; }
+        private IOrder ReceivedOrder { get; set; }
+        private IOrder OrderInExecution { get; set; }
         private string Document { get; set; } = "123.456.789-12";
         private string LicensePlate { get; set; } = "CAR1234";
 
         [SetUp]
         public void SetUp()
         {
-            ReceivedOrder = new WorkOrder(Document, LicensePlate);
-            OrderInExecution = new WorkOrder(Guid.NewGuid(), Document, LicensePlate, [], [], 10.0, WorkOrderStatus.InExecution, DateTime.Now, DateTime.MinValue);
+            ReceivedOrder = new Domain.WorkOrder.Order(Document, LicensePlate);
+            OrderInExecution = new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate, [], [], 10.0, WorkOrderStatus.InExecution, DateTime.Now, DateTime.MinValue);
         }
 
         [Test]
@@ -43,25 +42,25 @@ namespace DomainTests.Order
         [Test]
         public void MustNotCreateWorkOrderIfIdIsEmpty()
         {
-            Assert.Throws<ArgumentException>(() => new WorkOrder(Guid.Empty, Document, LicensePlate, [], [], 0.0, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue));
+            Assert.Throws<ArgumentException>(() => new Domain.WorkOrder.Order(Guid.Empty, Document, LicensePlate, [], [], 0.0, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue));
         }
 
         [Test]
         public void MustNotCreateWorkOrderIfClientIsNull()
         {
-            Assert.Throws<ArgumentException>(() => new WorkOrder("", LicensePlate));
+            Assert.Throws<ArgumentException>(() => new Domain.WorkOrder.Order("", LicensePlate));
         }
 
         [Test]
         public void MustNotCreateWorkOrderIfVehicleIsNull()
         {
-            Assert.Throws<ArgumentException>(() => new WorkOrder(Document, ""));
+            Assert.Throws<ArgumentException>(() => new Domain.WorkOrder.Order(Document, ""));
         }
 
         [Test]
         public void MustNotCreateWorkOrderIfBudgetIsLowerThan0()
         {
-            Assert.Throws<ArgumentException>(() => new WorkOrder(Guid.NewGuid(), Document, LicensePlate, [], [], -1.0, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue));
+            Assert.Throws<ArgumentException>(() => new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate, [], [], -1.0, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue));
         }
 
         [Test]
@@ -180,7 +179,7 @@ namespace DomainTests.Order
         {
             ReceivedOrder.StartDiagnosis();
 
-            ReceivedOrder.AddPartOrSupplie(Substitute.For<IPart>());
+            ReceivedOrder.AddPart(Substitute.For<IPart>());
 
             Assert.That(ReceivedOrder.Parts, Has.Count.EqualTo(1));
         }
@@ -196,8 +195,8 @@ namespace DomainTests.Order
             part.Amount.Returns(1);
             part.When(part => part.AddAmount(1)).Do(_ => part.Amount.Returns(2));
 
-            ReceivedOrder.AddPartOrSupplie(part);
-            ReceivedOrder.AddPartOrSupplie(part);
+            ReceivedOrder.AddPart(part);
+            ReceivedOrder.AddPart(part);
 
             Assert.That(ReceivedOrder.Parts, Has.Count.EqualTo(1));
             Assert.That(ReceivedOrder.Parts[0].Amount, Is.EqualTo(2));
@@ -206,13 +205,13 @@ namespace DomainTests.Order
         [Test]
         public void MustNotAddPartOrSupplieIfStatusIsReceived()
         {
-            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.AddPartOrSupplie(Substitute.For<IPart>()));
+            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.AddPart(Substitute.For<IPart>()));
         }
 
         [Test]
         public void MustNotAddPartOrSupplieIfServiceAlreadyStarted()
         {
-            Assert.Throws<InvalidOperationException>(() => OrderInExecution.AddPartOrSupplie(Substitute.For<IPart>()));
+            Assert.Throws<InvalidOperationException>(() => OrderInExecution.AddPart(Substitute.For<IPart>()));
         }
 
         [Test]
@@ -226,9 +225,9 @@ namespace DomainTests.Order
             part.Amount.Returns(1);
             part.When(p => p.RemoveAmount(1)).Do(_ => part.Amount.Returns(0));
 
-            ReceivedOrder.AddPartOrSupplie(part);
+            ReceivedOrder.AddPart(part);
 
-            ReceivedOrder.RemovePartOrSupplie(part);
+            ReceivedOrder.RemovePart(part);
 
             Assert.That(ReceivedOrder.Parts, Is.Empty);
         }
@@ -244,13 +243,13 @@ namespace DomainTests.Order
             partToAdd.Amount.Returns(5);
             partToAdd.When(p => p.RemoveAmount(1)).Do(_ => partToAdd.Amount.Returns(4));
 
-            ReceivedOrder.AddPartOrSupplie(partToAdd);
+            ReceivedOrder.AddPart(partToAdd);
 
             var partToRemove = Substitute.For<IPart>();
             partToRemove.Id.Returns(partId);
             partToRemove.Amount.Returns(1);
 
-            ReceivedOrder.RemovePartOrSupplie(partToRemove);
+            ReceivedOrder.RemovePart(partToRemove);
 
             Assert.That(ReceivedOrder.Parts, Has.Count.EqualTo(1));
             Assert.That(ReceivedOrder.Parts[0].Amount, Is.EqualTo(4));
@@ -259,13 +258,13 @@ namespace DomainTests.Order
         [Test]
         public void MustNotRemovePartOrSupplieIfStatusIsReceived()
         {
-            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.RemovePartOrSupplie(Substitute.For<IPart>()));
+            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.RemovePart(Substitute.For<IPart>()));
         }
 
         [Test]
         public void MustNotRemovePartOrSupplieIfServiceAlreadyStarted()
         {
-            Assert.Throws<InvalidOperationException>(() => OrderInExecution.RemovePartOrSupplie(Substitute.For<IPart>()));
+            Assert.Throws<InvalidOperationException>(() => OrderInExecution.RemovePart(Substitute.For<IPart>()));
         }
 
         [Test]
@@ -281,7 +280,7 @@ namespace DomainTests.Order
             var part = Substitute.For<IPart>();
             part.Price.Returns(10);
             part.Amount.Returns(2);
-            ReceivedOrder.AddPartOrSupplie(part);
+            ReceivedOrder.AddPart(part);
 
             ReceivedOrder.FinalizeDiagnosis();
 
@@ -402,7 +401,7 @@ namespace DomainTests.Order
 
             ReceivedOrder.CompleteService();
 
-            ReceivedOrder.VehicleDelivered();
+            ReceivedOrder.DeliverVehicle();
 
             Assert.That(ReceivedOrder.Status, Is.EqualTo(WorkOrderStatus.Delivered));
         }
@@ -410,7 +409,7 @@ namespace DomainTests.Order
         [Test]
         public void MustNotFinalizeServiceByDeliveringCarIfNotInAValidState()
         {
-            Assert.Throws<InvalidOperationException>(ReceivedOrder.VehicleDelivered);
+            Assert.Throws<InvalidOperationException>(ReceivedOrder.DeliverVehicle);
         }
     }
 }

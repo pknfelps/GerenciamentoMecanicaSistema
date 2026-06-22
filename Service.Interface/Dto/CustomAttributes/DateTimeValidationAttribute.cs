@@ -2,6 +2,7 @@
 
 namespace Service.Interface.Dto.CustomAttributes
 {
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property)]
     internal class DateTimeValidationAttribute : ValidationAttribute
     {
         public DateTimeValidationAttribute() 

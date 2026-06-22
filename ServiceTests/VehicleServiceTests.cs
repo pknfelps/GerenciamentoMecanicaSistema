@@ -1,8 +1,5 @@
-﻿using Domain.Interface.Custumer;
-using Domain.Interface.Vehicle;
-using Domain.Vehicle;
+﻿using Domain.Interface.Vehicle;
 using NSubstitute;
-using NSubstitute.Routing.Handlers;
 using Repository.Interface;
 using Service;
 using Service.Interface;
@@ -49,8 +46,8 @@ namespace ServiceTests
         }
 
         private static VehicleDto ExistingVehicleDto { get; } = new(Guid.NewGuid(), "12345678912", "Honda", "Civic", 2024, "CVC2024");
-        private static VehicleDto ExistingVehicleToUpdate { get; } = new(Guid.NewGuid(), "12345678912", "Honda", "City", 2020, "CVC2024");
-        private static VehicleDto ExistingVehicleToFailUpdateOrDelete { get; } = new(Guid.NewGuid(), "12345678912", "Test", "Test", 2020, "FKA0F20");
+        private static CreateVehicleDto ExistingVehicleToUpdate { get; } = new("12345678912", "Honda", "City", 2020, "CVC2024");
+        private static CreateVehicleDto ExistingVehicleToFailUpdateOrDelete { get; } = new("12345678912", "Test", "Test", 2020, "FKA0F20");
 
         [SetUp]
         public void SetUp()
@@ -68,13 +65,29 @@ namespace ServiceTests
             });
 
             List<IVehicle> vehicles = new List<IVehicle>() { ExistingVehicle, ExistingVehicle2 };
-            Repository.GetVehicles().Returns(vehicles);
 
-            Repository.GetVehicle(Arg.Any<string>()).Returns(callInfo =>
+            Repository.GetVehicles(license_plate: Arg.Any<string>()).Returns(callInfo =>
             {
-                var license = callInfo.ArgAt<string>(0);
+                var license = callInfo.ArgAt<string>(1);
+
+                if (license.Equals(ExistingVehicle.LicensePlate.License))
+                    return [ExistingVehicle];
+
+                return vehicles;
+            });
+
+            Repository.GetVehicle(license_plate: Arg.Any<string>()).Returns(callInfo =>
+            {
+                var license = callInfo.ArgAt<string>(1);
 
                 return vehicles.FirstOrDefault(x => x.LicensePlate.License.Equals(license));
+            });
+
+            Repository.GetVehicle(Arg.Any<Guid>()).Returns(callInfo =>
+            {
+                var id = callInfo.ArgAt<Guid>(0);
+
+                return vehicles.FirstOrDefault(x => x.Id == id);
             });
 
             Repository.UpdateVehicle(Arg.Any<IVehicle>()).Returns(callInfo =>
@@ -108,7 +121,7 @@ namespace ServiceTests
         {
             await VehicleService.RegisterVehicle(VehicleToRegister);
 
-            await Repository.ReceivedWithAnyArgs(1).GetVehicle(VehicleToRegister.LicensePlate);
+            await Repository.ReceivedWithAnyArgs(1).GetVehicle(license_plate: VehicleToRegister.LicensePlate);
             await Repository.ReceivedWithAnyArgs(1).RegisterVehicle(Arg.Any<IVehicle>());
         }
 
@@ -117,7 +130,7 @@ namespace ServiceTests
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.RegisterVehicle(ExistingVehicleDto));
 
-            await Repository.ReceivedWithAnyArgs(1).GetVehicle(ExistingVehicleDto.LicensePlate);
+            await Repository.ReceivedWithAnyArgs(1).GetVehicle(license_plate: ExistingVehicleDto.LicensePlate);
             await Repository.ReceivedWithAnyArgs(0).RegisterVehicle(Arg.Any<IVehicle>());
         }
 
@@ -126,7 +139,7 @@ namespace ServiceTests
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.RegisterVehicle(VehicleToFailRegister));
 
-            await Repository.ReceivedWithAnyArgs(1).GetVehicle(VehicleToFailRegister.LicensePlate);
+            await Repository.ReceivedWithAnyArgs(1).GetVehicle(license_plate: VehicleToFailRegister.LicensePlate);
             await Repository.ReceivedWithAnyArgs(1).RegisterVehicle(Arg.Any<IVehicle>());
         }
 
@@ -156,11 +169,28 @@ namespace ServiceTests
         }
 
         [Test]
+        public async Task MustGetVehiclesWithSameLicensePlate()
+        {
+            var vehicles = (await VehicleService.GetVehicles(licensePlate: ExistingVehicle.LicensePlate.License)).ToList();
+
+            await Repository.Received(1).GetVehicles(license_plate: ExistingVehicle.LicensePlate.License);
+            Assert.That(vehicles, Has.Count.EqualTo(1));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(vehicles[0].Brand, Is.EqualTo(ExistingVehicle.Brand));
+                Assert.That(vehicles[0].Model, Is.EqualTo(ExistingVehicle.Model));
+                Assert.That(vehicles[0].Year, Is.EqualTo(ExistingVehicle.Year));
+                Assert.That(vehicles[0].LicensePlate, Is.EqualTo(ExistingVehicle.LicensePlate.License));
+            });
+        }
+
+        [Test]
         public async Task MustGetVehicle()
         {
-            var vehicle = await VehicleService.GetVehicle(ExistingVehicle.LicensePlate.License);
+            var vehicle = await VehicleService.GetVehicle(licensePlate: ExistingVehicle.LicensePlate.License);
 
-            await Repository.Received(1).GetVehicle(ExistingVehicle.LicensePlate.License);
+            await Repository.Received(1).GetVehicle(license_plate: ExistingVehicle.LicensePlate.License);
             Assert.That(vehicle, Is.Not.Null);
 
             Assert.Multiple(() =>
@@ -175,65 +205,63 @@ namespace ServiceTests
         [Test]
         public async Task MustNotGetVehicleIfNotExists()
         {
-            var vehicle = await VehicleService.GetVehicle(VehicleToRegister.LicensePlate);
+            var vehicle = await VehicleService.GetVehicle(licensePlate: VehicleToRegister.LicensePlate);
 
-            await Repository.Received(1).GetVehicle(VehicleToRegister.LicensePlate);
+            await Repository.Received(1).GetVehicle(license_plate: VehicleToRegister.LicensePlate);
             Assert.That(vehicle, Is.Null);
         }
 
         [Test]
         public async Task MustUpdateVehicle()
         {
-            await VehicleService.UpdateVehicle(ExistingVehicleToUpdate);
+            await VehicleService.UpdateVehicle(ExistingVehicleId, ExistingVehicleToUpdate);
 
-            await Repository.Received(1).GetVehicle(ExistingVehicleToUpdate.LicensePlate);
+            await Repository.Received(1).GetVehicle(id: ExistingVehicleId);
             await Repository.ReceivedWithAnyArgs(1).UpdateVehicle(Arg.Any<IVehicle>());
         }
 
         [Test]
         public async Task MustNotUpdateVehicleIfNotExists()
         {
-            var vehicle = new VehicleDto(Guid.NewGuid(), VehicleToRegister.CustomerDocument, VehicleToRegister.Brand, VehicleToRegister.Model, VehicleToRegister.Year, VehicleToRegister.LicensePlate);
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.UpdateVehicle(Guid.NewGuid(), VehicleToRegister));
 
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.UpdateVehicle(vehicle));
-
-            await Repository.Received(1).GetVehicle(VehicleToRegister.LicensePlate);
+            await Repository.Received(1).GetVehicle(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).UpdateVehicle(Arg.Any<IVehicle>());
         }
 
         [Test]
         public async Task MustThrowExceptionIfFailtToUpdateVehicle()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.UpdateVehicle(ExistingVehicleToFailUpdateOrDelete));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.UpdateVehicle(ExistingVehicleId, ExistingVehicleToFailUpdateOrDelete));
 
-            await Repository.Received(1).GetVehicle(ExistingVehicleToFailUpdateOrDelete.LicensePlate);
+            await Repository.Received(1).GetVehicle(ExistingVehicleId);
             await Repository.ReceivedWithAnyArgs(1).UpdateVehicle(Arg.Any<IVehicle>());
         }
 
         [Test]
         public async Task MustDeleteVehicle()
         {
-            await VehicleService.DeleteVehicle(ExistingVehicle.LicensePlate.License);
+            await VehicleService.DeleteVehicle(ExistingVehicle.Id);
 
-            await Repository.Received(1).GetVehicle(ExistingVehicle.LicensePlate.License);
+            await Repository.Received(1).GetVehicle(ExistingVehicle.Id);
             await Repository.ReceivedWithAnyArgs(1).DeleteVehicle(ExistingVehicle.Id);
         }
 
         [Test]
         public async Task MustNotDeleteVehicleIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.DeleteVehicle(VehicleToRegister.LicensePlate));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.DeleteVehicle(Guid.NewGuid()));
 
-            await Repository.Received(1).GetVehicle(VehicleToRegister.LicensePlate);
+            await Repository.Received(1).GetVehicle(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).DeleteVehicle(Arg.Any<Guid>());
         }
 
         [Test]
         public async Task MustThrowExceptionIfFailtToDeleteVehicle()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.DeleteVehicle(ExistingVehicleToFailUpdateOrDelete.LicensePlate));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.DeleteVehicle(ExistingVehicle2Id));
 
-            await Repository.Received(1).GetVehicle(ExistingVehicleToFailUpdateOrDelete.LicensePlate);
+            await Repository.Received(1).GetVehicle(ExistingVehicle2Id);
             await Repository.ReceivedWithAnyArgs(1).DeleteVehicle(ExistingVehicle2.Id);
         }
     }

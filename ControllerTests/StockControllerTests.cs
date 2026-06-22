@@ -1,5 +1,6 @@
 ﻿using NSubstitute;
 using Service.Interface;
+using Service.Interface.Dto;
 using Service.Interface.Dto.Stock;
 using System.Net;
 using System.Net.Http.Json;
@@ -13,10 +14,10 @@ namespace ControllerTests
         private static readonly CreatePartDto ItemToRegister = new("Óleo de motor", "Lubrax", 41.90, 5);
         private static readonly CreatePartDto InvalidItemToRegister = new("", "", 0.00, 0);
         private static readonly CreatePartDto ItemToFailRegister = new("Teste", "Testando", 15, 1);
-        private static readonly PartUpdateDto<int> ItemToFailIntOperations = new(Guid.NewGuid(), 5);
-        private static readonly PartUpdateDto<double> ItemToFailDoubleOperations = new(Guid.NewGuid(), 10.00);
-        private static readonly PartUpdateDto<int> InvalidIntItemUpdate = new(Guid.NewGuid(), 0);
-        private static readonly PartUpdateDto<double> InvalidDoubleItemUpdate = new(Guid.NewGuid(), 0);
+        private static readonly UpdateItemDto<int> ItemToFailIntOperations = new(Guid.NewGuid(), 5);
+        private static readonly UpdateItemDto<double> ItemToFailDoubleOperations = new(Guid.NewGuid(), 10.00);
+        private static readonly UpdateItemDto<int> InvalidIntItemUpdate = new(Guid.NewGuid(), 0);
+        private static readonly UpdateItemDto<double> InvalidDoubleItemUpdate = new(Guid.NewGuid(), 0);
 
         private static readonly List<PartDto> StockItems =
         [
@@ -24,9 +25,9 @@ namespace ControllerTests
             new (Guid.NewGuid(), "Flúido para radiador", "Gitanes", 30.00, 5, 0)
         ];
 
-        private static readonly PartUpdateDto<int> IntItemUpdate = new(StockItems[0].Id, 5);
+        private static readonly UpdateItemDto<int> IntItemUpdate = new(StockItems[0].Id, 5);
 
-        private static readonly PartUpdateDto<double> DoubleItemToUpdate = new(StockItems[0].Id, 8.45);
+        private static readonly UpdateItemDto<double> DoubleItemToUpdate = new(StockItems[0].Id, 8.45);
 
         protected override void MockService()
         {
@@ -42,72 +43,72 @@ namespace ControllerTests
                 throw new InvalidOperationException();
             });
 
-            StockService.GetParts().Returns(StockItems);
-
-            StockService.GetPart(Arg.Any<string>(), Arg.Any<string>()).Returns(callInfo =>
+            StockService.GetParts(name: Arg.Any<string>(), brand: Arg.Any<string>()).Returns(callInfo =>
             {
-                var name = callInfo.ArgAt<string>(0);
-                var brand = callInfo.ArgAt<string>(1);
+                var name = callInfo.ArgAt<string>(1);
+                var brand = callInfo.ArgAt<string>(2);
 
-                return StockItems.FirstOrDefault(x => x.Name == name && x.Brand == brand);
+                if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(brand))
+                    return StockItems.Where(x => x.Name == name && x.Brand == brand);
+
+                return StockItems;
             });
 
-            StockService.AddPartAmount(Arg.Any<PartUpdateDto<int>>()).Returns(callInfo =>
+            StockService.AddPartAmount(Arg.Any<Guid>(), Arg.Any<int>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<PartUpdateDto<int>>(0);
+                var id = callInfo.ArgAt<Guid>(0);
 
-                if (StockItems.FirstOrDefault(x => x.Id == item.Id) != default)
+                if (StockItems.FirstOrDefault(x => x.Id == id) != default)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
             });
 
-            StockService.RemovePartAmount(Arg.Any<PartUpdateDto<int>>()).Returns(callInfo =>
+            StockService.RemovePartAmount(Arg.Any<Guid>(), Arg.Any<int>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<PartUpdateDto<int>>(0);
+                var id = callInfo.ArgAt<Guid>(0);
 
-                if (StockItems.FirstOrDefault(x => x.Id == item.Id) != default)
+                if (StockItems.FirstOrDefault(x => x.Id == id) != default)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
             });
 
-            StockService.ReservePartAmount(Arg.Any<PartUpdateDto<int>>()).Returns(callInfo =>
+            StockService.ReservePartAmount(Arg.Any<Guid>(), Arg.Any<int>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<PartUpdateDto<int>>(0);
+                var id = callInfo.ArgAt<Guid>(0);
 
-                if (StockItems.FirstOrDefault(x => x.Id == item.Id) != default)
+                if (StockItems.FirstOrDefault(x => x.Id == id) != default)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
             });
 
-            StockService.RestorePartAmount(Arg.Any<PartUpdateDto<int>>()).Returns(callInfo =>
+            StockService.RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<PartUpdateDto<int>>(0);
+                var id = callInfo.ArgAt<Guid>(0);
 
-                if (StockItems.FirstOrDefault(x => x.Id == item.Id) != default)
+                if (StockItems.FirstOrDefault(x => x.Id == id) != default)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
             });
 
-            StockService.UpdatePartPrice(Arg.Any<PartUpdateDto<double>>()).Returns(callInfo =>
+            StockService.UpdatePartPrice(Arg.Any<Guid>(), Arg.Any<double>()).Returns(callInfo =>
             {
-                var item = callInfo.ArgAt<PartUpdateDto<double>>(0);
+                var id = callInfo.ArgAt<Guid>(0);
 
-                if (StockItems.FirstOrDefault(x => x.Id == item.Id) != default)
+                if (StockItems.FirstOrDefault(x => x.Id == id) != default)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
             });
 
-            StockService.DeletePart(Arg.Any<string>(), Arg.Any<string>()).Returns(callInfo =>
+            StockService.DeletePart(Arg.Any<Guid>()).Returns(callInfo =>
             {
-                var name = callInfo.ArgAt<string>(0);
-                var brand = callInfo.ArgAt<string>(1);
+                var id = callInfo.ArgAt<Guid>(0);
 
-                if (StockItems.FirstOrDefault(x => x.Name == name && x.Brand == brand) != default)
+                if (StockItems.FirstOrDefault(x => x.Id == id) != default)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
@@ -117,7 +118,7 @@ namespace ControllerTests
         [Test]
         public async Task MustRegisterItem()
         {
-            var response = await TestClient.PostAsJsonAsync("/Stock/RegisterItem", ItemToRegister);
+            var response = await TestClient.PostAsJsonAsync("stock", ItemToRegister);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
 
@@ -127,7 +128,7 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnBadRequestWhenTryRegisterItemWithInvalidModel()
         {
-            var response = await TestClient.PostAsJsonAsync("/Stock/RegisterItem", InvalidItemToRegister);
+            var response = await TestClient.PostAsJsonAsync("stock", InvalidItemToRegister);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
@@ -137,7 +138,7 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnInternalServerErrorIfFailRegisterItem()
         {
-            var response = await TestClient.PostAsJsonAsync("/Stock/RegisterItem", ItemToFailRegister);
+            var response = await TestClient.PostAsJsonAsync("stock", ItemToFailRegister);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
@@ -147,175 +148,159 @@ namespace ControllerTests
         [Test]
         public async Task MustGetItems()
         {
-            var response = await TestClient.GetAsync("/Stock/GetItems");
+            var response = await TestClient.GetAsync("stock");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
             var result = await response.Content.ReadFromJsonAsync<IEnumerable<PartDto>>();
-            var intens = result.ToList();
+            var intems = result.ToList();
 
             await StockService.Received(1).GetParts();
 
+            Assert.That(intems, Has.Count.EqualTo(2));
+
             Assert.Multiple(() =>
             {
-                Assert.That(intens[0].Equals(StockItems[0]), Is.True);
-                Assert.That(intens[1].Equals(StockItems[1]), Is.True);
+                Assert.That(intems[0].Equals(StockItems[0]), Is.True);
+                Assert.That(intems[1].Equals(StockItems[1]), Is.True);
             });
         }
 
         [Test]
         public async Task MustGetItem()
         {
-            var response = await TestClient.GetAsync($"/Stock/GetItem/{StockItems[0].Name}/{StockItems[0].Brand}");
+            var response = await TestClient.GetAsync($"stock?name={StockItems[0].Name}&brand={StockItems[0].Brand}");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            var result = await response.Content.ReadFromJsonAsync<PartDto>();
+            var items = await response.Content.ReadFromJsonAsync<List<PartDto>>();
 
-            await StockService.Received(1).GetPart(StockItems[0].Name, StockItems[0].Brand);
+            await StockService.Received(1).GetParts(name: StockItems[0].Name, brand: StockItems[0].Brand);
+            Assert.That(items, Has.Count.EqualTo(1));
 
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Equals(StockItems[0]), Is.True);
-        }
-
-        [Test]
-        public async Task MustReturnNotFoundIfGetItemWithNotExistingItem()
-        {
-            var response = await TestClient.GetAsync($"/Stock/GetItem/{ItemToRegister.Name}/{ItemToRegister.Brand}");
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
-
-            await StockService.Received(1).GetPart(ItemToRegister.Name, ItemToRegister.Brand);
-        }
-
-        [Test]
-        public async Task MustReturnBadRequestIfTryGetItemWithInvalidModel()
-        {
-            var response = await TestClient.GetAsync($"/Stock/GetItem/Teste123/Teste2");
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
-
-            await StockService.Received(0).GetPart(Arg.Any<string>(), Arg.Any<string>());
+            var item = items[0];
+            Assert.That(item, Is.Not.Null);
+            Assert.That(item.Equals(StockItems[0]), Is.True);
         }
 
         [Test]
         public async Task MustAddItemAmount()
         {
-            var response = await TestClient.PatchAsJsonAsync($"/Stock/AddItemAmount", IntItemUpdate);
+            var response = await TestClient.PostAsJsonAsync($"stock/amount/{StockItems[0].Id}", IntItemUpdate.Value);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            await StockService.Received(1).AddPartAmount(Arg.Any<PartUpdateDto<int>>());
+            await StockService.Received(1).AddPartAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustReturnInternalServerErrorIfTryAddItemAmountWithNotExistingItem()
         {
-            var response = await TestClient.PatchAsJsonAsync($"/Stock/AddItemAmount", ItemToFailIntOperations);
+            var response = await TestClient.PostAsJsonAsync($"stock/amount/{Guid.NewGuid()}", ItemToFailIntOperations.Value);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await StockService.Received(1).AddPartAmount(Arg.Any<PartUpdateDto<int>>());
+            await StockService.Received(1).AddPartAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustReturnBadRequestIfTryAddItemAmountWithInvalidModel()
         {
-            var response = await TestClient.PatchAsJsonAsync($"/Stock/AddItemAmount", InvalidIntItemUpdate);
+            var response = await TestClient.PatchAsJsonAsync($"stock/amount/0000", InvalidIntItemUpdate);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await StockService.Received(0).AddPartAmount(Arg.Any<PartUpdateDto<int>>());
+            await StockService.Received(0).AddPartAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustRemoveItemAmount()
         {
-            var response = await TestClient.PatchAsJsonAsync($"/Stock/RemoveItemAmount", IntItemUpdate);
+            var response = await TestClient.PatchAsJsonAsync($"stock/amount/{StockItems[0].Id}", IntItemUpdate.Value);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
 
-            await StockService.Received(1).RemovePartAmount(Arg.Any<PartUpdateDto<int>>());
+            await StockService.Received(1).RemovePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustReturnInternalServerErrorIfTryRemoveItemAmountWithNotExistingItem()
         {
-            var response = await TestClient.PatchAsJsonAsync($"/Stock/RemoveItemAmount", ItemToFailIntOperations);
+            var response = await TestClient.PatchAsJsonAsync($"stock/amount/{Guid.NewGuid()}", ItemToFailIntOperations.Value);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await StockService.Received(1).RemovePartAmount(Arg.Any<PartUpdateDto<int>>());
+            await StockService.Received(1).RemovePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustReturnBadRequestIfTryRemoveItemAmountWithInvalidModel()
         {
-            var response = await TestClient.PatchAsJsonAsync($"/Stock/RemoveItemAmount", InvalidIntItemUpdate);
+            var response = await TestClient.PatchAsJsonAsync($"stock/amount/0000", InvalidIntItemUpdate);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await StockService.Received(0).RemovePartAmount(Arg.Any<PartUpdateDto<int>>());
+            await StockService.Received(0).RemovePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustUpdateItemPrice()
         {
-            var response = await TestClient.PatchAsJsonAsync($"/Stock/UpdateItemPrice", DoubleItemToUpdate);
+            var response = await TestClient.PatchAsJsonAsync($"stock/price/{StockItems[0].Id}", DoubleItemToUpdate.Value);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
 
-            await StockService.Received(1).UpdatePartPrice(Arg.Any<PartUpdateDto<double>>());
+            await StockService.Received(1).UpdatePartPrice(Arg.Any<Guid>(), Arg.Any<double>());
         }
 
         [Test]
         public async Task MustReturnInternalServerErrorIfTryUpdatePriceWithNoExistingItem()
         {
-            var response = await TestClient.PatchAsJsonAsync($"/Stock/UpdateItemPrice", ItemToFailDoubleOperations);
+            var response = await TestClient.PatchAsJsonAsync($"stock/price/{Guid.NewGuid()}", ItemToFailDoubleOperations.Value);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await StockService.Received(1).UpdatePartPrice(Arg.Any<PartUpdateDto<double>>());
+            await StockService.Received(1).UpdatePartPrice(Arg.Any<Guid>(), Arg.Any<double>());
         }
 
         [Test]
         public async Task MustReturnBadRequestIfTryUpdateItemPriceWithInvalidModel()
         {
-            var response = await TestClient.PatchAsJsonAsync($"/Stock/UpdateItemPrice", InvalidDoubleItemUpdate);
+            var response = await TestClient.PatchAsJsonAsync($"stock/price/0000", InvalidDoubleItemUpdate.Value);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await StockService.Received(0).UpdatePartPrice(Arg.Any<PartUpdateDto<double>>());
+            await StockService.Received(0).UpdatePartPrice(Arg.Any<Guid>(), Arg.Any<double>());
         }
 
         [Test]
         public async Task MustDeleteItem()
         {
-            var response = await TestClient.DeleteAsync($"/Stock/DeleteItem/{StockItems[0].Name}/{StockItems[0].Brand}");
+            var response = await TestClient.DeleteAsync($"stock/{StockItems[0].Id}");
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
 
-            await StockService.Received(1).DeletePart(StockItems[0].Name, StockItems[0].Brand);
+            await StockService.Received(1).DeletePart(StockItems[0].Id);
         }
 
         [Test]
         public async Task MustReturnInternalServerErrorIfTryDeleteItemWithNoExistingItem()
         {
-            var response = await TestClient.DeleteAsync($"/Stock/DeleteItem/{ItemToRegister.Name}/{ItemToRegister.Brand}");
+            var response = await TestClient.DeleteAsync($"stock/{Guid.NewGuid()}");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await StockService.Received(1).DeletePart(ItemToRegister.Name, ItemToRegister.Brand);
+            await StockService.Received(1).DeletePart(Arg.Any<Guid>());
         }
 
         [Test]
         public async Task MustReturnBadRequestIfTryDeleteItemPriceWithInvalidModel()
         {
-            var response = await TestClient.DeleteAsync($"/Stock/DeleteItem/a/a");
+            var response = await TestClient.DeleteAsync($"stock/aa");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await StockService.Received(0).DeletePart(Arg.Any<string>(), Arg.Any<string>());
+            await StockService.Received(0).DeletePart(Arg.Any<Guid>());
         }
     }
 }

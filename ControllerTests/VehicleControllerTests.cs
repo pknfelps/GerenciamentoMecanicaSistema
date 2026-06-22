@@ -19,7 +19,7 @@ namespace ControllerTests
             new(ExistingVehicleId, "123.456.789-12", "Honda", "Civic", 2024, "CVC2024"),
             new(Guid.NewGuid(), "123.456.789-12", "Ford", "Ka", 2020, "FKA0F20")
         ];
-        private static readonly VehicleDto VehicleToUpdate = new(ExistingVehicleId, "123.456.789-12", "Honda", "City", 2020, "CVC2024");
+        private static readonly CreateVehicleDto VehicleToUpdate = new("123.456.789-12", "Honda", "City", 2020, "CVC2024");
 
         protected override void MockService()
         {
@@ -35,30 +35,31 @@ namespace ControllerTests
                 throw new InvalidOperationException();
             });
 
-            VehicleService.GetVehicles().Returns(Vehicles);
-
-            VehicleService.GetVehicle(Arg.Any<string>()).Returns(callInfo =>
+            VehicleService.GetVehicles(licensePlate: Arg.Any<string>()).Returns(callInfo =>
             {
-                var license = callInfo.ArgAt<string>(0);
+                var license = callInfo.ArgAt<string>(1);
 
-                return Vehicles.FirstOrDefault(x => x.LicensePlate.Equals(license));
+                if (!string.IsNullOrEmpty(license))
+                    return Vehicles.Where(x => x.LicensePlate == license);
+
+                return Vehicles;
             });
 
-            VehicleService.UpdateVehicle(Arg.Any<VehicleDto>()).Returns(callInfo =>
+            VehicleService.UpdateVehicle(Arg.Any<Guid>(), Arg.Any<CreateVehicleDto>()).Returns(callInfo =>
             {
-                var vehicle = callInfo.ArgAt<VehicleDto>(0);
+                var id = callInfo.ArgAt<Guid>(0);
 
-                if (Vehicles.FirstOrDefault(x => x.LicensePlate.Equals(vehicle.LicensePlate)) != default)
+                if (Vehicles.FirstOrDefault(x => x.Id == id) != default)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
             });
 
-            VehicleService.DeleteVehicle(Arg.Any<string>()).Returns(callInfo =>
+            VehicleService.DeleteVehicle(Arg.Any<Guid>()).Returns(callInfo =>
             {
-                var license = callInfo.ArgAt<string>(0);
+                var id = callInfo.ArgAt<Guid>(0);
 
-                if (Vehicles.FirstOrDefault(x => x.LicensePlate.Equals(license)) != default)
+                if (Vehicles.FirstOrDefault(x => x.Id == id) != default)
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
@@ -68,7 +69,7 @@ namespace ControllerTests
         [Test]
         public async Task MustRegisterVehicle()
         {
-            var response = await TestClient.PostAsJsonAsync("/Vehicle/RegisterVehicle", VehicleToRegister);
+            var response = await TestClient.PostAsJsonAsync("vehicles", VehicleToRegister);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
 
@@ -78,7 +79,7 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnBadRequestIfTryRegisterVehicleWithInvalidModel()
         {
-            var response = await TestClient.PostAsJsonAsync("/Vehicle/RegisterVehicle", new { Nome = "Honda" });
+            var response = await TestClient.PostAsJsonAsync("vehicles", new { Nome = "Honda" });
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
@@ -88,7 +89,7 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnInternalServerErrorIfFailRegisterVehicle()
         {
-            var response = await TestClient.PostAsJsonAsync("/Vehicle/RegisterVehicle", Vehicles[0]);
+            var response = await TestClient.PostAsJsonAsync("vehicles", Vehicles[0]);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
@@ -98,7 +99,7 @@ namespace ControllerTests
         [Test]
         public async Task MustGetVehicles()
         {
-            var response = await TestClient.GetAsync("/Vehicle/GetVehicles");
+            var response = await TestClient.GetAsync("vehicles");
             var result = await response.Content.ReadFromJsonAsync<IEnumerable<CreateVehicleDto>>();
             var vehicles = result?.ToList();
 
@@ -122,100 +123,82 @@ namespace ControllerTests
         [Test]
         public async Task MustGetVehicle()
         {
-            var response = await TestClient.GetAsync($"/Vehicle/GetVehicle/{Vehicles[0].LicensePlate}");
-            var vehicle = await response.Content.ReadFromJsonAsync<CreateVehicleDto>();
+            var response = await TestClient.GetAsync($"vehicles?licensePlate={Vehicles[0].LicensePlate}");
+            var vehicles = await response.Content.ReadFromJsonAsync<List<VehicleDto>>();
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(vehicles, Has.Count.EqualTo(1));
 
+            var vehicle = vehicles[0];
             Assert.Multiple(() =>
             {
                 Assert.That(vehicle, Is.Not.Null);
                 Assert.That(vehicle.Equals(Vehicles[0]), Is.True);
             });
 
-            await VehicleService.Received(1).GetVehicle(Vehicles[0].LicensePlate);
-        }
-
-        [Test]
-        public async Task MustReturnNotFoundIfTryGetVehicleThatNotExists()
-        {
-            var response = await TestClient.GetAsync($"/Vehicle/GetVehicle/TST1234");
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
-
-            await VehicleService.Received(1).GetVehicle("TST1234");
-        }
-
-        [Test]
-        public async Task MustReturnBadRequestIfTryGetVehicleWithInvalidModel()
-        {
-            var response = await TestClient.GetAsync("/Vehicle/GetVehicle/ÇÁG1234");
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
-
-            await VehicleService.Received(0).GetVehicle(Arg.Any<string>());
+            await VehicleService.Received(1).GetVehicles(licensePlate: Vehicles[0].LicensePlate);
         }
 
         [Test]
         public async Task MustUpdateVehicle()
         {
-            var response = await TestClient.PatchAsJsonAsync("/Vehicle/UpdateVehicle", VehicleToUpdate);
+            var response = await TestClient.PatchAsJsonAsync($"vehicles/{ExistingVehicleId}", VehicleToUpdate);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
 
-            await VehicleService.Received(1).UpdateVehicle(VehicleToUpdate);
+            await VehicleService.Received(1).UpdateVehicle(ExistingVehicleId, VehicleToUpdate);
         }
 
         [Test]
         public async Task MustReturnBadRequestIfTryUpdateVehicleWithInvalidModel()
         {
-            var response = await TestClient.PatchAsJsonAsync("/Vehicle/UpdateVehicle", new { Nome = "Honda" });
+            var response = await TestClient.PatchAsJsonAsync("vehicles/0000", new { Nome = "Honda" });
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await VehicleService.Received(0).UpdateVehicle(Arg.Any<VehicleDto>());
+            await VehicleService.Received(0).UpdateVehicle(Arg.Any<Guid>(), Arg.Any<VehicleDto>());
         }
 
         [Test]
         public async Task MustReturnInternalServerErrorIfFailUpdateVehicle()
         {
-            var vehicle = new VehicleDto(Guid.NewGuid(), VehicleToRegister.CustomerDocument, VehicleToRegister.Brand, VehicleToRegister.Model, VehicleToRegister.Year, VehicleToRegister.LicensePlate);
+            var vehicle = new CreateVehicleDto(VehicleToRegister.CustomerDocument, VehicleToRegister.Brand, VehicleToRegister.Model, VehicleToRegister.Year, VehicleToRegister.LicensePlate);
 
-            var response = await TestClient.PatchAsJsonAsync("/Vehicle/UpdateVehicle", vehicle);
+            var response = await TestClient.PatchAsJsonAsync($"vehicles/{Guid.NewGuid()}", vehicle);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await VehicleService.Received(1).UpdateVehicle(vehicle);
+            await VehicleService.Received(1).UpdateVehicle(Arg.Any<Guid>(), vehicle);
         }
 
         [Test]
         public async Task MustDeleteVehicle()
         {
-            var response = await TestClient.DeleteAsync($"/Vehicle/DeleteVehicle/{Vehicles[0].LicensePlate}");
+            var response = await TestClient.DeleteAsync($"vehicles/{Vehicles[0].Id}");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            await VehicleService.Received(1).DeleteVehicle(Vehicles[0].LicensePlate);
+            await VehicleService.Received(1).DeleteVehicle(Vehicles[0].Id);
         }
 
         [Test]
         public async Task MustReturnBadRequestIfTryDeleteVehicleWithInvalidModel()
         {
-            var response = await TestClient.DeleteAsync("/Vehicle/DeleteVehicle/ÇÁG1234");
+            var response = await TestClient.DeleteAsync("vehicles/ÇÁG1234");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await VehicleService.Received(0).DeleteVehicle(Arg.Any<string>());
+            await VehicleService.Received(0).DeleteVehicle(Arg.Any<Guid>());
         }
 
         [Test]
         public async Task MustReturnInternalServerErrorIfFailDeleteVehicle()
         {
-            var response = await TestClient.DeleteAsync($"/Vehicle/DeleteVehicle/{VehicleToRegister.LicensePlate}");
+            var response = await TestClient.DeleteAsync($"vehicles/{Guid.NewGuid()}");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await VehicleService.Received(1).DeleteVehicle(VehicleToRegister.LicensePlate);
+            await VehicleService.Received(1).DeleteVehicle(Arg.Any<Guid>());
         }
     }
 }

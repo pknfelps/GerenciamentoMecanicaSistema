@@ -1,5 +1,4 @@
 ﻿using Dapper;
-using Domain.Customer;
 using Domain.Interface.Custumer;
 using Repository.Dto;
 using Repository.Interface;
@@ -17,13 +16,8 @@ namespace Repository
         public static string GetCustomersSql { get; private set; } = """
                 SELECT id, name, document, phone, email
                 FROM customers
+                {0}
                 LIMIT 50;
-                """;
-
-        public static string GetCustomersByDocumentoSql { get; private set; } = """
-                SELECT id, name, document, phone, email
-                FROM customers
-                WHERE document = @document;
                 """;
 
         public static string UpdateCustomersql { get; private set; } = $"""
@@ -31,12 +25,12 @@ namespace Repository
                 SET name = @Name,
                     phone = @Phone,
                     email = @Email
-                WHERE document = @Document;
+                WHERE id = @id;
                 """;
 
         public static string DeleteCustomersql { get; private set; } = """
                 DELETE FROM customers
-                WHERE document = @document;
+                WHERE id = @id;
                 """;
 
         public async Task<int> RegisterCustomer(ICustomer customer)
@@ -44,16 +38,16 @@ namespace Repository
             return await Connection.ExecuteAsync(RegisterCustomerSql, CustomerDb.Create(customer));
         }
 
-        public async Task<IEnumerable<ICustomer>> GetCustomers()
+        public async Task<IEnumerable<ICustomer>> GetCustomers(Guid? id = null, string name = "", string document = "")
         {
-            var customers = await Connection.QueryAsync<CustomerDb>(GetCustomersSql);
+            var customers = await Connection.QueryAsync<CustomerDb>(GetCustomersSql.BuildQuery(BuildQueryParameters(id, name, document)));
 
             return customers.Select(customer => customer.ToDomain());
         }
 
-        public async Task<ICustomer?> GetCustomer(string document)
+        public async Task<ICustomer?> GetCustomer(Guid? id = null, string name = "", string document = "")
         {
-            var customer = await Connection.QuerySingleOrDefaultAsync<CustomerDb?>(GetCustomersByDocumentoSql, new { document });
+            var customer = await Connection.QuerySingleOrDefaultAsync<CustomerDb>(GetCustomersSql.BuildQuery(BuildQueryParameters(id, name, document)));
 
             if (customer == null)
                 return null;
@@ -66,9 +60,14 @@ namespace Repository
             return await Connection.ExecuteAsync(UpdateCustomersql, CustomerDb.Create(customer));
         }
 
-        public async Task<int> DeleteCustomer(string document)
+        public async Task<int> DeleteCustomer(Guid id)
         {
-            return await Connection.ExecuteAsync(DeleteCustomersql, new { document });
+            return await Connection.ExecuteAsync(DeleteCustomersql, new { id });
+        }
+
+        private static Dictionary<string, object?> BuildQueryParameters(Guid? id = null, string name = "", string document = "")
+        {
+            return new() { { nameof(id), id }, { nameof(name), name }, { nameof(document), document } };
         }
     }
 }
