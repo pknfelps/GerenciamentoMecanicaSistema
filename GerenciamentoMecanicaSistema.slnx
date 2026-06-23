@@ -1,8 +1,6 @@
 <Solution>
   <Folder Name="/src/">
     <File Path="docker-compose.yaml" />
-    <File Path="GerenciamentoMecanicaSistema/appsettings.Development.json" />
-    <File Path="GerenciamentoMecanicaSistema/appsettings.json" />
     <Project Path="Bootstrapper/DependencyInjection.csproj" />
     <Project Path="Domain.Interface/Domain.Interface.csproj" />
     <Project Path="Domain/Domain.csproj" />

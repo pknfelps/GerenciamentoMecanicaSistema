@@ -11,6 +11,12 @@ services:
     volumes:
       - ./InitDb:/docker-entrypoint-initdb.d
       - db_data:/var/lib/postgresql/data
+
+  smtp:
+    image: rnwood/smtp4dev:latest
+    ports:
+      - "3000:80"
+      - "2525:25"
     
 volumes:
   db_data:
