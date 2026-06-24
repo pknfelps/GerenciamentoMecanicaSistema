@@ -9,107 +9,107 @@ namespace Service
     {
         private IStockRepository Repository { get; set; } = repository;
 
-        public async Task RegisterNewPart(CreatePartDto partDto)
+        public async Task RegisterNewMaterial(CreateMaterialDto materialDto)
         {
-            if (await Repository.GetPart(name: partDto.Name, brand: partDto.Brand) != null)
+            if (await Repository.GetMaterial(name: materialDto.Name, brand: materialDto.Brand) != null)
                 throw new InvalidOperationException("Item já cadastrado");
 
-            var registry = await Repository.RegisterNewPart(partDto.ToDomain());
+            var registry = await Repository.RegisterNewMaterial(materialDto.ToDomain());
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao cadastrar o item");
         }
 
-        public async Task<IEnumerable<PartDto>> GetParts(Guid? id = null, string name = "", string brand = "")
+        public async Task<IEnumerable<MaterialDto>> GetMaterials(Guid? id = null, string name = "", string brand = "")
         {
-            var itens = await Repository.GetParts(id, name, brand);
+            var itens = await Repository.GetMaterials(id, name, brand);
 
-            return itens.Select(PartDto.Create);
+            return itens.Select(MaterialDto.Create);
         }
 
-        public async Task<PartDto?> GetPart(Guid? id = null, string name = "", string brand = "")
+        public async Task<MaterialDto?> GetMaterial(Guid? id = null, string name = "", string brand = "")
         {
             if (id == null && string.IsNullOrEmpty(name) && string.IsNullOrEmpty(brand))
                 throw new InvalidOperationException("Falha ao procurar item. Nenhum argumento fornecido");
 
-            var part = await Repository.GetPart(id, name, brand);
+            var material = await Repository.GetMaterial(id, name, brand);
 
-            if (part == null)
+            if (material == null)
                 return null;
 
-            return PartDto.Create(part);
+            return MaterialDto.Create(material);
         }
 
-        public async Task AddPartAmount(Guid id, int value)
+        public async Task AddMaterialAmount(Guid id, int value)
         {
-            var partDb = await Repository.GetPart(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
+            var materialDb = await Repository.GetMaterial(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
 
-            partDb.AddAmount(value);
+            materialDb.AddAmount(value);
 
-            await UpdateItemAmount(partDb);
+            await UpdateItemAmount(materialDb);
         }
 
-        public async Task RemovePartAmount(Guid id, int value)
+        public async Task RemoveMaterialAmount(Guid id, int value)
         {
-            var partDb = await Repository.GetPart(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
+            var materialDb = await Repository.GetMaterial(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
 
-            partDb.RemoveAmount(value);
+            materialDb.RemoveAmount(value);
 
-            await UpdateItemAmount(partDb);
+            await UpdateItemAmount(materialDb);
         }
 
-        public async Task ReservePartAmount(Guid id, int value)
+        public async Task ReserveMaterialAmount(Guid id, int value)
         {
-            var partDb = await Repository.GetPart(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
+            var materialDb = await Repository.GetMaterial(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
 
-            partDb.ReserveAmount(value);
+            materialDb.ReserveAmount(value);
 
-            await UpdateItemAmount(partDb);
+            await UpdateItemAmount(materialDb);
         }
 
-        public async Task RestorePartAmount(Guid id, int value)
+        public async Task RestoreMaterialAmount(Guid id, int value)
         {
-            var partDb = await Repository.GetPart(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
+            var materialDb = await Repository.GetMaterial(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
 
-            partDb.RestoreAmount(value);
+            materialDb.RestoreAmount(value);
 
-            await UpdateItemAmount(partDb);
+            await UpdateItemAmount(materialDb);
         }
 
         public async Task ConsumeReservedAmount(Guid id, int value)
         {
-            var partDb = await Repository.GetPart(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
+            var materialDb = await Repository.GetMaterial(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
 
-            partDb.ConsumeReservedAmount(value);
+            materialDb.ConsumeReservedAmount(value);
 
-            await UpdateItemAmount(partDb);
+            await UpdateItemAmount(materialDb);
         }
 
-        public async Task UpdatePartPrice(Guid id, double value)
+        public async Task UpdateMaterialPrice(Guid id, double value)
         {
-            var partDb = await Repository.GetPart(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
+            var materialDb = await Repository.GetMaterial(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
 
-            partDb.UpdatePrice(value);
+            materialDb.UpdatePrice(value);
 
-            var result = await Repository.UpdatePartPrice(partDb);
+            var result = await Repository.UpdateMaterialPrice(materialDb);
 
             if (result == 0)
                 throw new InvalidOperationException("Falha ao atualizar o item");
         }
 
-        public async Task DeletePart(Guid id)
+        public async Task DeleteMaterial(Guid id)
         {
-            var part = await Repository.GetPart(id: id) ?? throw new InvalidOperationException("Item não encontrado no estoque");
+            var material = await Repository.GetMaterial(id: id) ?? throw new InvalidOperationException("Item não encontrado no estoque");
 
-            var result = await Repository.DeletePart(part.Id);
+            var result = await Repository.DeleteMaterial(material.Id);
 
             if (result == 0)
                 throw new InvalidOperationException("Falha ao deletar o item");
         }
 
-        private async Task UpdateItemAmount(IPart part)
+        private async Task UpdateItemAmount(IMaterial material)
         {
-            var result = await Repository.UpdatePartAmount(part);
+            var result = await Repository.UpdateMaterialAmount(material);
 
             if (result == 0)
                 throw new InvalidOperationException("Falha ao atualizar o item");

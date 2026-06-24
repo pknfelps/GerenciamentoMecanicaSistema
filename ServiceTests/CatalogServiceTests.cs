@@ -28,6 +28,14 @@ namespace ServiceTests
                 service.PricePerHour.Returns(100);
                 service.Price.Returns(600);
                 service.Amount.Returns(1);
+
+                service.When(x => x.UpdateDescriptrion(Arg.Any<string>())).Do(callInfo =>
+                {
+                    var newDescription = callInfo.ArgAt<string>(0);
+
+                    service.Description.Returns(newDescription);
+                });
+
                 return service;
             }
         }

@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Service.Interface.Dto.Stock
 {
-    public class PartDto(Guid id, string name, string brand, double price, int amount, int reservedAmount) : CreatePartDto(name, brand, price, amount)
+    public class MaterialDto(Guid id, string name, string brand, double price, int amount, int reservedAmount) : CreateMaterialDto(name, brand, price, amount)
     {
         [Description("Id único do item")]
         [Required, GuidValidation]
@@ -15,15 +15,15 @@ namespace Service.Interface.Dto.Stock
         [Required, Range(0, int.MaxValue, ErrorMessage = "O campo {0} não pode ser inferior a 0")]
         public int ReservedAmount { get; set; } = reservedAmount;
 
-        public static PartDto Create(IPart part) => new(part.Id, part.Name, part.Brand, part.Price, part.Amount, part.ReservedAmount);
+        public static MaterialDto Create(IMaterial part) => new(part.Id, part.Name, part.Brand, part.Price, part.Amount, part.ReservedAmount);
 
-        public override IPart ToDomain() => new Part(Id, Name, Brand, Price, Amount, ReservedAmount);
+        public override IMaterial ToDomain() => new Material(Id, Name, Brand, Price, Amount, ReservedAmount);
 
         public override bool Equals(object? obj)
         {
             ArgumentNullException.ThrowIfNull(obj);
 
-            var item = (PartDto)obj;
+            var item = (MaterialDto)obj;
 
             return item.Name == Name && item.Brand == Brand && item.Price == Price && item.Amount == Amount && item.ReservedAmount == ReservedAmount;
         }

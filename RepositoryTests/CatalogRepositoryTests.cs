@@ -59,7 +59,7 @@ namespace RepositoryTests
         protected override async Task InternalSetup()
         {
             await Connection.ExecuteAsync("""
-                CREATE TABLE IF NOT EXISTS services (
+                CREATE TABLE IF NOT EXISTS catalog (
                 id UUID PRIMARY KEY,
                 description VARCHAR(255) NOT NULL,
                 hours FLOAT NOT NULL,

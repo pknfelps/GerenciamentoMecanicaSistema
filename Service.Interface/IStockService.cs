@@ -4,15 +4,15 @@ namespace Service.Interface
 {
     public interface IStockService
     {
-        Task RegisterNewPart(CreatePartDto partDto);
-        Task<IEnumerable<PartDto>> GetParts(Guid? id = null, string name = "", string brand = "");
-        Task<PartDto?> GetPart(Guid? id = null, string name = "", string brand = "");
-        Task AddPartAmount(Guid id, int value);
-        Task RemovePartAmount(Guid id, int value);
-        Task ReservePartAmount(Guid id, int value);
-        Task RestorePartAmount(Guid id, int value);
+        Task RegisterNewMaterial(CreateMaterialDto partDto);
+        Task<IEnumerable<MaterialDto>> GetMaterials(Guid? id = null, string name = "", string brand = "");
+        Task<MaterialDto?> GetMaterial(Guid? id = null, string name = "", string brand = "");
+        Task AddMaterialAmount(Guid id, int value);
+        Task RemoveMaterialAmount(Guid id, int value);
+        Task ReserveMaterialAmount(Guid id, int value);
+        Task RestoreMaterialAmount(Guid id, int value);
         Task ConsumeReservedAmount(Guid id, int value);
-        Task UpdatePartPrice(Guid id, double value);
-        Task DeletePart(Guid id);
+        Task UpdateMaterialPrice(Guid id, double value);
+        Task DeleteMaterial(Guid id);
     }
 }

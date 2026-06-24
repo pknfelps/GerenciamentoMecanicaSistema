@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Repository.Dto
 {
-    internal class PartDb
+    internal class MaterialDb
     {
         [JsonPropertyName("id")]
         public Guid Id { get; init; } = Guid.Empty;
@@ -19,8 +19,8 @@ namespace Repository.Dto
         [JsonPropertyName("reserved_amount")]
         public int Reserved_Amount { get; init; } = 0;
 
-        public static PartDb Create(IPart part) => new() { Id = part.Id, Name = part.Name, Brand = part.Brand, Price = part.Price, Amount = part.Amount, Reserved_Amount = part.ReservedAmount };
+        public static MaterialDb Create(IMaterial material) => new() { Id = material.Id, Name = material.Name, Brand = material.Brand, Price = material.Price, Amount = material.Amount, Reserved_Amount = material.ReservedAmount };
 
-        public IPart ToDomain() => new Part(Id, Name, Brand, Price, Amount, Reserved_Amount);
+        public IMaterial ToDomain() => new Material(Id, Name, Brand, Price, Amount, Reserved_Amount);
     }
 }

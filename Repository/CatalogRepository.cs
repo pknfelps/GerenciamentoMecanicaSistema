@@ -9,19 +9,19 @@ namespace Repository
     public class CatalogRepository(IDbConnection connection) : BaseRepository(connection), ICatalogRepository
     {
         public static string RegisterServiceSql { get; private set; } = """
-            INSERT INTO services(id, description, hours, price_per_hour)
+            INSERT INTO catalog(id, description, hours, price_per_hour)
             VALUES (@Id, @Description, @Hours, @Price_Per_Hour);
             """;
 
         public static string GetServicesSql { get; private set; } = """
             SELECT id, description, hours, price_per_hour
-            FROM services
+            FROM catalog
             {0}
             LIMIT 50;
             """;
 
         public static string UpdateServiceSql { get; private set; } = """
-            UPDATE services
+            UPDATE catalog
             SET description = @Description,
                 hours = @Hours,
                 price_per_hour = @Price_Per_Hour
@@ -29,7 +29,7 @@ namespace Repository
             """;
 
         public static string DeleteServiceSql { get; private set; } = """
-            DELETE FROM services
+            DELETE FROM catalog
             Where id = @Id;
             """;
 
@@ -40,9 +40,9 @@ namespace Repository
 
         public async Task<IEnumerable<IMechanicalService>> GetServices(Guid? id = null, string description = "")
         {
-            var services = await Connection.QueryAsync<MechanicalServiceDb>(GetServicesSql.BuildQuery(BuildQueryParameters(id, description)));
+            var catalog = await Connection.QueryAsync<MechanicalServiceDb>(GetServicesSql.BuildQuery(BuildQueryParameters(id, description)));
 
-            return services.Select(service => service.ToDomain());
+            return catalog.Select(service => service.ToDomain());
         }
 
         public async Task<IMechanicalService?> GetService(Guid? id = null, string description = "")

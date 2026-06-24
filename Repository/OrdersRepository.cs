@@ -32,14 +32,14 @@ namespace Repository
                 END AS services,
 
                 CASE
-                    WHEN COUNT(i.id) = 0 THEN '[]'::json
+                    WHEN COUNT(m.id) = 0 THEN '[]'::json
                     ELSE json_agg(DISTINCT jsonb_build_object(
-                        'id', i.id,
-                        'name', i.name,
-                        'brand', i.brand,
-                        'price', i.price,
-                        'amount', i.amount))
-                    END AS parts,
+                        'id', m.id,
+                        'name', m.name,
+                        'brand', m.brand,
+                        'price', m.price,
+                        'amount', m.amount))
+                    END AS materials,
 
                 os.budget, 
                 os.status, 
@@ -48,7 +48,7 @@ namespace Repository
 
             FROM orders os
             LEFT JOIN order_services s ON s.order_id = os.id
-            LEFT JOIN order_items i ON i.order_id = os.id
+            LEFT JOIN order_materials m ON m.order_id = os.id
 
             {0}
 
@@ -60,12 +60,6 @@ namespace Repository
                 os.status,
                 os.date_created,
                 os.date_finished;
-            """;
-
-        public static string GetServiceFromOrderSql { get; private set; } = """
-            SELECT id, order_id, description, hours, price_per_hour, amount
-            FROM order_services
-            WHERE id = @service_Id AND order_id = @order_Id;
             """;
 
         public static string UpdateOrderStatusSql { get; private set; } = """
@@ -85,13 +79,13 @@ namespace Repository
             WHERE id = @Id AND order_id = @orderId;
             """;
 
-        public static string AddPartToOrderSql { get; private set; } = """
-            INSERT INTO order_items(id, order_id, name, brand, price, amount)
+        public static string AddMaterialToOrderSql { get; private set; } = """
+            INSERT INTO order_materials(id, order_id, name, brand, price, amount)
             VALUES (@Id, @orderId, @Name, @Brand, @Price, @Amount);
             """;
 
-        public static string UpdatePartFromOrderSql { get; private set; } = """
-            UPDATE order_items
+        public static string UpdateMaterialFromOrderSql { get; private set; } = """
+            UPDATE order_materials
             SET amount = @Amount
             WHERE id = @Id AND order_id = @order_id;
             """;
@@ -101,9 +95,9 @@ namespace Repository
             WHERE id = @serviceId AND order_id = @orderId;
             """;
 
-        public static string RemovePartFromOrderSql { get; private set; } = """
-            DELETE FROM order_items
-            WHERE id = @partId AND order_id = @orderId;
+        public static string RemoveMaterialFromOrderSql { get; private set; } = """
+            DELETE FROM order_materials
+            WHERE id = @materialId AND order_id = @orderId;
             """;
 
         public static string UpdateOrderBudgetSql { get; private set; } = """
@@ -123,8 +117,8 @@ namespace Repository
             WHERE order_id = @orderId;
             """;
 
-        public static string RemovePartsFromOrderSql { get; private set; } = """
-            DELETE FROM order_items
+        public static string RemoveMaterialsFromOrderSql { get; private set; } = """
+            DELETE FROM order_materials
             WHERE order_id = @orderId;
             """;
 
@@ -135,19 +129,19 @@ namespace Repository
 
         public async Task<int> CreateOrder(IOrder serviceOrder)
         {
-            return await Connection.ExecuteAsync(CreateServiceSql, WorkOrderDb.Create(serviceOrder));
+            return await Connection.ExecuteAsync(CreateServiceSql, OrderDb.Create(serviceOrder));
         }
 
         public async Task<IEnumerable<IOrder>> GetOrders(Guid? id = null, string customer_document = "", string vehicle_license_plate = "")
         {
-            var orders = await Connection.QueryAsync<WorkOrderDb>(GetOrdersSql.BuildQuery(BuildQueryParameters(id, customer_document, vehicle_license_plate)));
+            var orders = await Connection.QueryAsync<OrderDb>(GetOrdersSql.BuildQuery(BuildQueryParameters(id, customer_document, vehicle_license_plate)));
 
             return orders.Select(order => order.ToDomain());
         }
 
         public async Task<IOrder?> GetOrder(Guid? id = null, string customer_document = "", string vehicle_license_plate = "")
         {
-            var order = await Connection.QuerySingleOrDefaultAsync<WorkOrderDb>(GetOrdersSql.BuildQuery(BuildQueryParameters(id, customer_document, vehicle_license_plate)));
+            var order = await Connection.QuerySingleOrDefaultAsync<OrderDb>(GetOrdersSql.BuildQuery(BuildQueryParameters(id, customer_document, vehicle_license_plate)));
 
             if (order == null)
                 return null;
@@ -175,23 +169,23 @@ namespace Repository
             return await Connection.ExecuteAsync(DeleteServiceFromOrderSql, new { orderId, serviceId });
         }
 
-        public async Task<int> AddPartToOrder(Guid orderId, IPart part)
+        public async Task<int> AddMaterialToOrder(Guid orderId, IMaterial material)
         {
-            var partDb = PartDb.Create(part);
+            var materialDb = MaterialDb.Create(material);
 
-            return await Connection.ExecuteAsync(AddPartToOrderSql, new { Id = partDb.Id, orderId = orderId, Name = partDb.Name, Brand = partDb.Brand, Price = partDb.Price, Amount = partDb.Amount });
+            return await Connection.ExecuteAsync(AddMaterialToOrderSql, new { Id = materialDb.Id, orderId = orderId, Name = materialDb.Name, Brand = materialDb.Brand, Price = materialDb.Price, Amount = materialDb.Amount });
         }
 
-        public async Task<int> RemovePartFromOrder(Guid orderId, Guid partId)
+        public async Task<int> RemoveMaterialFromOrder(Guid orderId, Guid materialId)
         {
-            return await Connection.ExecuteAsync(RemovePartFromOrderSql, new { orderId, partId });
+            return await Connection.ExecuteAsync(RemoveMaterialFromOrderSql, new { orderId, materialId });
         }
 
-        public async Task<int> UpdatePartFromOrder(Guid orderId, IPart part)
+        public async Task<int> UpdateMaterialFromOrder(Guid orderId, IMaterial material)
         {
-            var partDb = PartDb.Create(part);
+            var materialDb = MaterialDb.Create(material);
 
-            return await Connection.ExecuteAsync(UpdatePartFromOrderSql, new { order_id = orderId, Id = partDb.Id, Amount = partDb.Amount });
+            return await Connection.ExecuteAsync(UpdateMaterialFromOrderSql, new { order_id = orderId, Id = materialDb.Id, Amount = materialDb.Amount });
         }
 
         public async Task<int> UpdateOrderBudget(Guid id, double budget)
@@ -208,7 +202,7 @@ namespace Repository
         {
             await Connection.ExecuteAsync(DeleteServicesFromOrderSql, new { orderId });
 
-            await Connection.ExecuteAsync(RemovePartsFromOrderSql, new { orderId });
+            await Connection.ExecuteAsync(RemoveMaterialsFromOrderSql, new { orderId });
 
             return await Connection.ExecuteAsync(DeleteOrderSql, new { orderId });
         }

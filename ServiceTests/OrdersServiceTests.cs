@@ -18,7 +18,7 @@ namespace ServiceTests
 {
     public class OrdersServiceTests
     {
-        private IWorkOrderService Service { get; set; }
+        private IOrdersService Service { get; set; }
         private IOrdersRepository Repository { get; set; }
         private ICustomerService CustomerService { get; set; }
         private IVehicleService VehicleService { get; set; }
@@ -38,10 +38,10 @@ namespace ServiceTests
         private static ServiceDto ExistingServiceDto { get; } = new(ExistingService.Id, "Revisão", 6, 100, 1);
         private static IMechanicalService ExistingService2 { get; } = CreateSubstituteService(Guid.NewGuid(), "Troca de Pneu", 2, 150, 1);
         private static ServiceDto ExistingService2Dto { get; } = new(ExistingService2.Id, "Troca de Pneu", 2, 150, 1);
-        private static IPart ExistingPart { get; } = CreateSubstitutePart(Guid.NewGuid(), "Pneu", "Michelin", 600, 10, 4);
-        private static PartDto ExistingPartDto { get; } = new(ExistingPart.Id, ExistingPart.Name, ExistingPart.Brand, ExistingPart.Price, ExistingPart.Amount, ExistingPart.ReservedAmount);
-        private static IPart ExistingPart2 { get; } = CreateSubstitutePart(Guid.NewGuid(), "Óleo de Motor", "Lubrax", 35, 20, 0);
-        private static PartDto ExistingPart2Dto { get; } = new(ExistingPart2.Id, ExistingPart2.Name, ExistingPart2.Brand, ExistingPart2.Price, ExistingPart2.Amount, ExistingPart2.ReservedAmount);
+        private static IMaterial ExistingPart { get; } = CreateSubstitutePart(Guid.NewGuid(), "Pneu", "Michelin", 600, 10, 4);
+        private static MaterialDto ExistingPartDto { get; } = new(ExistingPart.Id, ExistingPart.Name, ExistingPart.Brand, ExistingPart.Price, ExistingPart.Amount, ExistingPart.ReservedAmount);
+        private static IMaterial ExistingPart2 { get; } = CreateSubstitutePart(Guid.NewGuid(), "Óleo de Motor", "Lubrax", 35, 20, 0);
+        private static MaterialDto ExistingPart2Dto { get; } = new(ExistingPart2.Id, ExistingPart2.Name, ExistingPart2.Brand, ExistingPart2.Price, ExistingPart2.Amount, ExistingPart2.ReservedAmount);
         private static IOrder ExistingReceivedOrder { get; } = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0, WorkOrderStatus.Received);
         private static IOrder ExistingTestOrder { get; set; } = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0, WorkOrderStatus.Received);
         private static readonly Guid ExistingOrderInDiagnosisId = Guid.NewGuid();
@@ -167,10 +167,10 @@ namespace ServiceTests
                 return 0;
             });
 
-            Repository.AddPartToOrder(Arg.Any<Guid>(), Arg.Any<IPart>()).Returns(callInfo =>
+            Repository.AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
-                var part = callInfo.ArgAt<IPart>(1);
+                var part = callInfo.ArgAt<IMaterial>(1);
 
                 if (id == ExistingReceivedOrder.Id && part.Id == ExistingPart.Id)
                     return 1;
@@ -178,10 +178,10 @@ namespace ServiceTests
                 return 0;
             });
 
-            Repository.UpdatePartFromOrder(Arg.Any<Guid>(), Arg.Any<IPart>()).Returns(callInfo =>
+            Repository.UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
-                var part = callInfo.ArgAt<IPart>(1);
+                var part = callInfo.ArgAt<IMaterial>(1);
 
                 if (id == ExistingOrderInDiagnosis.Id && part.Id == ExistingPart.Id)
                     return 1;
@@ -189,7 +189,7 @@ namespace ServiceTests
                 return 0;
             });
 
-            Repository.RemovePartFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>()).Returns(callInfo =>
+            Repository.RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
                 var partId = callInfo.ArgAt<Guid>(1);
@@ -257,7 +257,7 @@ namespace ServiceTests
 
             StockService = Substitute.For<IStockService>();
 
-            StockService.GetPart(Arg.Any<Guid>()).Returns(callInfo =>
+            StockService.GetMaterial(Arg.Any<Guid>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
@@ -270,8 +270,8 @@ namespace ServiceTests
                 return null;
             });
 
-            StockService.ReservePartAmount(Arg.Any<Guid>(), Arg.Any<int>()).Returns(Task.CompletedTask);
-            StockService.RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>()).Returns(Task.CompletedTask);
+            StockService.ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>()).Returns(Task.CompletedTask);
+            StockService.RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>()).Returns(Task.CompletedTask);
 
             MechanicalService = Substitute.For<ICatalogService>();
 
@@ -423,7 +423,7 @@ namespace ServiceTests
                 Assert.That(order.CustomerDocument, Is.EqualTo(ExistingReceivedOrder.CustomerDocument.Id));
                 Assert.That(order.VehicleLicensePlate, Is.EqualTo(ExistingReceivedOrder.VehicleLicensePlate.License));
                 Assert.That(order.Services, Is.Empty);
-                Assert.That(order.Parts, Is.Empty);
+                Assert.That(order.Materials, Is.Empty);
                 Assert.That(order.Budget, Is.EqualTo(ExistingReceivedOrder.Budget));
                 Assert.That(order.Status, Is.EqualTo(ExistingReceivedOrder.Status.ToString()));
                 Assert.That(order.DateCreated.Date, Is.EqualTo(ExistingReceivedOrder.DateCreated.Date));
@@ -462,7 +462,7 @@ namespace ServiceTests
                 Assert.That(order.CustomerDocument, Is.EqualTo(ExistingReceivedOrder.CustomerDocument.Id));
                 Assert.That(order.VehicleLicensePlate, Is.EqualTo(ExistingReceivedOrder.VehicleLicensePlate.License));
                 Assert.That(order.Services, Is.Empty);
-                Assert.That(order.Parts, Is.Empty);
+                Assert.That(order.Materials, Is.Empty);
                 Assert.That(order.Budget, Is.EqualTo(ExistingReceivedOrder.Budget));
                 Assert.That(order.Status, Is.EqualTo(ExistingReceivedOrder.Status.ToString()));
                 Assert.That(order.DateCreated.Date, Is.EqualTo(ExistingReceivedOrder.DateCreated.Date));
@@ -499,7 +499,7 @@ namespace ServiceTests
                 Assert.That(ordersList[0].CustomerDocument, Is.EqualTo(ExistingReceivedOrder.CustomerDocument.Id));
                 Assert.That(ordersList[0].VehicleLicensePlate, Is.EqualTo(ExistingReceivedOrder.VehicleLicensePlate.License));
                 Assert.That(ordersList[0].Services, Is.Empty);
-                Assert.That(ordersList[0].Parts, Is.Empty);
+                Assert.That(ordersList[0].Materials, Is.Empty);
                 Assert.That(ordersList[0].Budget, Is.EqualTo(ExistingReceivedOrder.Budget));
                 Assert.That(ordersList[0].Status, Is.EqualTo(ExistingReceivedOrder.Status.ToString()));
                 Assert.That(ordersList[0].DateCreated.Date, Is.EqualTo(ExistingReceivedOrder.DateCreated.Date));
@@ -577,7 +577,7 @@ namespace ServiceTests
                 Assert.That(ordersList[0].CustomerDocument, Is.EqualTo(ExistingReceivedOrder.CustomerDocument.Id));
                 Assert.That(ordersList[0].VehicleLicensePlate, Is.EqualTo(ExistingReceivedOrder.VehicleLicensePlate.License));
                 Assert.That(ordersList[0].Services, Is.Empty);
-                Assert.That(ordersList[0].Parts, Is.Empty);
+                Assert.That(ordersList[0].Materials, Is.Empty);
                 Assert.That(ordersList[0].Budget, Is.EqualTo(ExistingReceivedOrder.Budget));
                 Assert.That(ordersList[0].Status, Is.EqualTo(ExistingReceivedOrder.Status.ToString()));
                 Assert.That(ordersList[0].DateCreated.Date, Is.EqualTo(ExistingReceivedOrder.DateCreated.Date));
@@ -784,145 +784,145 @@ namespace ServiceTests
         [Test]
         public async Task MustAddPartToOrder()
         {
-            await Service.AddPartToOrder(ExistingReceivedOrder.Id, new(ExistingPart.Id, 1));
+            await Service.AddMaterialToOrder(ExistingReceivedOrder.Id, new(ExistingPart.Id, 1));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
-            await StockService.ReceivedWithAnyArgs(1).ReservePartAmount(ExistingPart.Id, 1);
-            await Repository.ReceivedWithAnyArgs(1).AddPartToOrder(Arg.Any<Guid>(), Arg.Any<IPart>());
-            await Repository.ReceivedWithAnyArgs(0).UpdatePartFromOrder(Arg.Any<Guid>(), Arg.Any<IPart>());
-            await StockService.ReceivedWithAnyArgs(0).RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(ExistingPart.Id, 1);
+            await Repository.ReceivedWithAnyArgs(1).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
+            await Repository.ReceivedWithAnyArgs(0).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustAddPartAmountToOrder()
         {
-            await Service.AddPartToOrder(ExistingOrderInDiagnosis.Id, new(ExistingPart.Id, 1));
+            await Service.AddMaterialToOrder(ExistingOrderInDiagnosis.Id, new(ExistingPart.Id, 1));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
-            await StockService.ReceivedWithAnyArgs(1).ReservePartAmount(ExistingPart.Id, 1);
-            await Repository.ReceivedWithAnyArgs(0).AddPartToOrder(Arg.Any<Guid>(), Arg.Any<IPart>());
-            await Repository.ReceivedWithAnyArgs(1).UpdatePartFromOrder(Arg.Any<Guid>(), Arg.Any<IPart>());
-            await StockService.ReceivedWithAnyArgs(0).RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(ExistingPart.Id, 1);
+            await Repository.ReceivedWithAnyArgs(0).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
+            await Repository.ReceivedWithAnyArgs(1).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustNotAddPartToOrderIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddPartToOrder(Guid.NewGuid(), new(ExistingPart.Id, 1)));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddMaterialToOrder(Guid.NewGuid(), new(ExistingPart.Id, 1)));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
-            await StockService.ReceivedWithAnyArgs(0).ReservePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
-            await Repository.ReceivedWithAnyArgs(0).AddPartToOrder(Arg.Any<Guid>(), Arg.Any<IPart>());
-            await Repository.ReceivedWithAnyArgs(0).UpdatePartFromOrder(Arg.Any<Guid>(), Arg.Any<IPart>());
-            await StockService.ReceivedWithAnyArgs(0).RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await Repository.ReceivedWithAnyArgs(0).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
+            await Repository.ReceivedWithAnyArgs(0).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustNotAddPartToOrderIfPartNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddPartToOrder(ExistingReceivedOrder.Id, new(Guid.NewGuid(), 1)));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddMaterialToOrder(ExistingReceivedOrder.Id, new(Guid.NewGuid(), 1)));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
-            await StockService.ReceivedWithAnyArgs(1).ReservePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
-            await Repository.ReceivedWithAnyArgs(0).AddPartToOrder(Arg.Any<Guid>(), Arg.Any<IPart>());
-            await Repository.ReceivedWithAnyArgs(0).UpdatePartFromOrder(Arg.Any<Guid>(), Arg.Any<IPart>());
-            await StockService.ReceivedWithAnyArgs(1).RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await Repository.ReceivedWithAnyArgs(0).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
+            await Repository.ReceivedWithAnyArgs(0).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
+            await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustFailToAddPartToOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddPartToOrder(ExistingReceivedOrder.Id, new(ExistingPart2.Id, 1)));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddMaterialToOrder(ExistingReceivedOrder.Id, new(ExistingPart2.Id, 1)));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
-            await StockService.ReceivedWithAnyArgs(1).ReservePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
-            await Repository.ReceivedWithAnyArgs(1).AddPartToOrder(Arg.Any<Guid>(), Arg.Any<IPart>());
-            await Repository.ReceivedWithAnyArgs(0).UpdatePartFromOrder(Arg.Any<Guid>(), Arg.Any<IPart>());
-            await StockService.ReceivedWithAnyArgs(1).RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await Repository.ReceivedWithAnyArgs(1).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
+            await Repository.ReceivedWithAnyArgs(0).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
+            await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustFailToAddPartAmountToOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddPartToOrder(ExistingOrderInDiagnosis.Id, new(ExistingPart2.Id, 1)));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddMaterialToOrder(ExistingOrderInDiagnosis.Id, new(ExistingPart2.Id, 1)));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosis.Id);
-            await StockService.ReceivedWithAnyArgs(1).ReservePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
-            await Repository.ReceivedWithAnyArgs(0).AddPartToOrder(Arg.Any<Guid>(), Arg.Any<IPart>());
-            await Repository.ReceivedWithAnyArgs(1).UpdatePartFromOrder(Arg.Any<Guid>(), Arg.Any<IPart>());
-            await StockService.ReceivedWithAnyArgs(1).RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await Repository.ReceivedWithAnyArgs(0).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
+            await Repository.ReceivedWithAnyArgs(1).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
+            await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustRemovePartFromOrder()
         {
-            await Service.RemovePartFromOrder(ExistingOrderInDiagnosisId, new(ExistingPart2.Id, 1));
+            await Service.RemoveMaterialFromOrder(ExistingOrderInDiagnosisId, new(ExistingPart2.Id, 1));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
-            await StockService.ReceivedWithAnyArgs(1).RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
-            await Repository.Received(1).RemovePartFromOrder(ExistingOrderInDiagnosisId, ExistingPart2.Id);
-            await Repository.ReceivedWithAnyArgs(0).UpdatePartFromOrder(Arg.Any<Guid>(), Arg.Any<IPart>());
-            await StockService.ReceivedWithAnyArgs(0).ReservePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await Repository.Received(1).RemoveMaterialFromOrder(ExistingOrderInDiagnosisId, ExistingPart2.Id);
+            await Repository.ReceivedWithAnyArgs(0).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
+            await StockService.ReceivedWithAnyArgs(0).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustRemovePartAmountFromOrder()
         {
-            await Service.RemovePartFromOrder(ExistingOrderInDiagnosisId, new(ExistingPart.Id, 2));
+            await Service.RemoveMaterialFromOrder(ExistingOrderInDiagnosisId, new(ExistingPart.Id, 2));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
-            await StockService.ReceivedWithAnyArgs(1).RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
-            await Repository.ReceivedWithAnyArgs(0).RemovePartFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>());
-            await Repository.ReceivedWithAnyArgs(1).UpdatePartFromOrder(Arg.Any<Guid>(), Arg.Any<IPart>());
-            await StockService.ReceivedWithAnyArgs(0).ReservePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await Repository.ReceivedWithAnyArgs(0).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>());
+            await Repository.ReceivedWithAnyArgs(1).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
+            await StockService.ReceivedWithAnyArgs(0).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustNotRemovePartFromOrderIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemovePartFromOrder(Guid.NewGuid(), new(ExistingPart.Id, 1)));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveMaterialFromOrder(Guid.NewGuid(), new(ExistingPart.Id, 1)));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
-            await StockService.ReceivedWithAnyArgs(0).ReservePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
-            await Repository.ReceivedWithAnyArgs(0).RemovePartFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>());
-            await Repository.ReceivedWithAnyArgs(0).UpdatePartFromOrder(Arg.Any<Guid>(), Arg.Any<IPart>());
-            await StockService.ReceivedWithAnyArgs(0).RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await Repository.ReceivedWithAnyArgs(0).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>());
+            await Repository.ReceivedWithAnyArgs(0).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustNotRemovePartFromOrderIfPartNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemovePartFromOrder(ExistingReceivedOrder.Id, new(Guid.NewGuid(), 1)));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveMaterialFromOrder(ExistingReceivedOrder.Id, new(Guid.NewGuid(), 1)));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
-            await StockService.ReceivedWithAnyArgs(1).ReservePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
-            await Repository.ReceivedWithAnyArgs(0).RemovePartFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>());
-            await Repository.ReceivedWithAnyArgs(0).UpdatePartFromOrder(Arg.Any<Guid>(), Arg.Any<IPart>());
-            await StockService.ReceivedWithAnyArgs(1).RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await Repository.ReceivedWithAnyArgs(0).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>());
+            await Repository.ReceivedWithAnyArgs(0).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
+            await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustFailToRemovePartFromOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemovePartFromOrder(ExistingOrderInDiagnosisId, new(ExistingPart.Id, 4)));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveMaterialFromOrder(ExistingOrderInDiagnosisId, new(ExistingPart.Id, 4)));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
-            await StockService.ReceivedWithAnyArgs(1).ReservePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
-            await Repository.ReceivedWithAnyArgs(1).RemovePartFromOrder(ExistingOrderInDiagnosisId, ExistingPart.Id);
-            await Repository.ReceivedWithAnyArgs(0).UpdatePartFromOrder(Arg.Any<Guid>(), Arg.Any<IPart>());
-            await StockService.ReceivedWithAnyArgs(1).RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await Repository.ReceivedWithAnyArgs(1).RemoveMaterialFromOrder(ExistingOrderInDiagnosisId, ExistingPart.Id);
+            await Repository.ReceivedWithAnyArgs(0).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
+            await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustFailToRemovePartAmountFromOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddPartToOrder(ExistingOrderInDiagnosis.Id, new(ExistingPart2.Id, 0)));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddMaterialToOrder(ExistingOrderInDiagnosis.Id, new(ExistingPart2.Id, 0)));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosis.Id);
-            await StockService.ReceivedWithAnyArgs(1).ReservePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
-            await Repository.ReceivedWithAnyArgs(0).RemovePartFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>());
-            await Repository.ReceivedWithAnyArgs(1).UpdatePartFromOrder(Arg.Any<Guid>(), Arg.Any<IPart>());
-            await StockService.ReceivedWithAnyArgs(1).RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await Repository.ReceivedWithAnyArgs(0).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>());
+            await Repository.ReceivedWithAnyArgs(1).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
+            await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
@@ -979,7 +979,7 @@ namespace ServiceTests
             await Service.ApproveBudget(ExistingReceivedOrder.Id, new(ExistingReceivedOrder.CustomerDocument.Id, true));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
-            await StockService.ReceivedWithAnyArgs(0).RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.Received(1).UpdateOrderStatus(ExistingReceivedOrder.Id, WorkOrderStatus.WaitingForExecution);
         }
 
@@ -989,7 +989,7 @@ namespace ServiceTests
             await Service.ApproveBudget(ExistingReceivedOrder.Id, new(ExistingReceivedOrder.CustomerDocument.Id, false));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
-            await StockService.ReceivedWithAnyArgs(0).RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.Received(1).UpdateOrderStatus(ExistingReceivedOrder.Id, WorkOrderStatus.Finished);
         }
 
@@ -999,7 +999,7 @@ namespace ServiceTests
             await Service.ApproveBudget(ExistingOrderInDiagnosisId, new(ExistingOrderInDiagnosis.CustomerDocument.Id, false));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
-            await StockService.ReceivedWithAnyArgs(2).RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(2).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.Received(1).UpdateOrderStatus(ExistingOrderInDiagnosisId, WorkOrderStatus.Finished);
         }
 
@@ -1009,7 +1009,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ApproveBudget(Guid.NewGuid(), new("681.487.685-11", false)));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
-            await StockService.ReceivedWithAnyArgs(0).RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(0).UpdateOrderStatus(Arg.Any<Guid>(), Arg.Any<WorkOrderStatus>());
         }
 
@@ -1019,7 +1019,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ApproveBudget(ExistingOrderInDiagnosisId, new("000.000.000-00", false)));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
-            await StockService.ReceivedWithAnyArgs(0).RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(0).UpdateOrderStatus(Arg.Any<Guid>(), Arg.Any<WorkOrderStatus>());
         }
 
@@ -1029,7 +1029,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ApproveBudget(ExistingTestOrder.Id, new(ExistingTestOrder.CustomerDocument.Id, false)));
 
             await Repository.Received(1).GetOrder(ExistingTestOrder.Id);
-            await StockService.ReceivedWithAnyArgs(0).RestorePartAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(1).UpdateOrderStatus(ExistingTestOrder.Id, WorkOrderStatus.Finished);
         }
 
@@ -1168,9 +1168,9 @@ namespace ServiceTests
             return service;
         }
 
-        private static IPart CreateSubstitutePart(Guid id, string name, string brand, double price, int amount, int reservedAmount)
+        private static IMaterial CreateSubstitutePart(Guid id, string name, string brand, double price, int amount, int reservedAmount)
         {
-            var part = Substitute.For<IPart>();
+            var part = Substitute.For<IMaterial>();
             part.Id.Returns(id);
             part.Name.Returns(name);
             part.Brand.Returns(brand);
@@ -1195,22 +1195,22 @@ namespace ServiceTests
             return part;
         }
 
-        private static IOrder CreateSubstituteOrder(Guid id, List<IMechanicalService> services, List<IPart> parts, double budget, WorkOrderStatus status)
+        private static IOrder CreateSubstituteOrder(Guid id, List<IMechanicalService> services, List<IMaterial> parts, double budget, WorkOrderStatus status)
         {
             var order = Substitute.For<IOrder>();
             order.Id.Returns(id);
             order.CustomerDocument.Id.Returns(ExistingCustomer.Document);
             order.VehicleLicensePlate.License.Returns(ExistingVehicle.LicensePlate);
             order.Services.Returns(services);
-            order.Parts.Returns(parts);
+            order.Materials.Returns(parts);
             order.Budget.Returns(budget);
             order.Status.Returns(status);
             order.DateCreated.Returns(DateTime.Now);
             order.DateFinished.Returns(DateTime.MinValue);
 
-            order.AddPart(Arg.Any<IPart>()).Returns(callInfo =>
+            order.AddMaterial(Arg.Any<IMaterial>()).Returns(callInfo =>
             {
-                return callInfo.ArgAt<IPart>(0);
+                return callInfo.ArgAt<IMaterial>(0);
             });
 
             order.When(x => x.FinalizeDiagnosis()).Do(_ =>

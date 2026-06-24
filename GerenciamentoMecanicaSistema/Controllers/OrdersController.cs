@@ -10,9 +10,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
     [ApiController]
     [Route("[controller]")]
     [Authorize(Roles = "Admin")]
-    public class OrdersController(IWorkOrderService orderService) : ControllerBase
+    public class OrdersController(IOrdersService orderService) : ControllerBase
     {
-        private IWorkOrderService OrderService { get; set; } = orderService;
+        private IOrdersService OrderService { get; set; } = orderService;
 
         [HttpPost()]
         [EndpointDescription("Endpoint para registrar uma ordem de serviço")]
@@ -102,28 +102,28 @@ namespace GerenciamentoMecanicaSistema.Controllers
             return NoContent();
         }
 
-        [HttpPost("{id}/parts")]
+        [HttpPost("{id}/materials")]
         [EndpointDescription("Endpoint para adicionar itens a uma ordem")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> AddPartToOrder([FromRoute, GuidValidation] Guid id, [FromBody] UpdateItemDto<int> orderItem)
+        public async Task<IActionResult> AddMaterialToOrder([FromRoute, GuidValidation] Guid id, [FromBody] UpdateItemDto<int> orderItem)
         {
-            await OrderService.AddPartToOrder(id, orderItem);
+            await OrderService.AddMaterialToOrder(id, orderItem);
 
             return Ok();
         }
 
-        [HttpPatch("{id}/parts")]
+        [HttpPatch("{id}/materials")]
         [EndpointDescription("Endpoint para remover itens de uma ordem")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> RemovePartOrSupplieFromOrder([FromRoute, GuidValidation] Guid id, [FromBody] UpdateItemDto<int> orderItem)
+        public async Task<IActionResult> RemoveMaterialOrSupplieFromOrder([FromRoute, GuidValidation] Guid id, [FromBody] UpdateItemDto<int> orderItem)
         {
-            await OrderService.RemovePartFromOrder(id, orderItem);
+            await OrderService.RemoveMaterialFromOrder(id, orderItem);
 
             return NoContent();
         }

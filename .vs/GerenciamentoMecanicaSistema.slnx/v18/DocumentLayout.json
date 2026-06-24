@@ -3,56 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\gerenciamentomecanicasistema\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|solutionrelative:gerenciamentomecanicasistema\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+      "AbsoluteMoniker": "D:0:0:{5836563F-AA04-4AD3-8859-8F85ADE92148}|RepositoryTests\\RepositoryTests.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\repositorytests\\catalogrepositorytests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5836563F-AA04-4AD3-8859-8F85ADE92148}|RepositoryTests\\RepositoryTests.csproj|solutionrelative:repositorytests\\catalogrepositorytests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{827E0CD3-B72D-47B6-A68D-7590B98EB39B}|src{827E0CD3-B72D-47B6-A68D-7590B98EB39B}|C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\docker-compose.yaml||{06C066C6-04A2-4E5D-8202-439FD4234EF1}",
-      "RelativeMoniker": "D:0:0:{827E0CD3-B72D-47B6-A68D-7590B98EB39B}|src{827E0CD3-B72D-47B6-A68D-7590B98EB39B}|solutionrelative:docker-compose.yaml||{06C066C6-04A2-4E5D-8202-439FD4234EF1}"
+      "AbsoluteMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\repository\\ordersrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|solutionrelative:repository\\ordersrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\gerenciamentomecanicasistema\\dockerfile||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|solutionrelative:gerenciamentomecanicasistema\\dockerfile||{8B382828-6202-11D1-8870-0000F87579D2}"
+      "AbsoluteMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\repository\\catalogrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|solutionrelative:repository\\catalogrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{02B79BC5-153E-2FD9-CAE3-8149E0D9044F}|Service\\Service.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\service\\smtpconnection.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{02B79BC5-153E-2FD9-CAE3-8149E0D9044F}|Service\\Service.csproj|solutionrelative:service\\smtpconnection.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\gerenciamentomecanicasistema\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|solutionrelative:gerenciamentomecanicasistema\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\gerenciamentomecanicasistema\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|solutionrelative:gerenciamentomecanicasistema\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\gerenciamentomecanicasistema\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|solutionrelative:gerenciamentomecanicasistema\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{02B79BC5-153E-2FD9-CAE3-8149E0D9044F}|Service\\Service.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\service\\emailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{02B79BC5-153E-2FD9-CAE3-8149E0D9044F}|Service\\Service.csproj|solutionrelative:service\\emailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\gerenciamentomecanicasistema\\controllers\\orderscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|solutionrelative:gerenciamentomecanicasistema\\controllers\\orderscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{02B79BC5-153E-2FD9-CAE3-8149E0D9044F}|Service\\Service.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\service\\stockservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{02B79BC5-153E-2FD9-CAE3-8149E0D9044F}|Service\\Service.csproj|solutionrelative:service\\stockservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AA89DA64-BC2F-73FB-764E-70326ABD64CD}|Service.Interface\\Service.Interface.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\service.interface\\dto\\customattributes\\regularlicenseplateexpressionattribute.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AA89DA64-BC2F-73FB-764E-70326ABD64CD}|Service.Interface\\Service.Interface.csproj|solutionrelative:service.interface\\dto\\customattributes\\regularlicenseplateexpressionattribute.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D9E83580-8BEE-4957-A1C8-EC04071A5762}|ControllerTests\\ControllerTests.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\controllertests\\ordercontrollertests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D9E83580-8BEE-4957-A1C8-EC04071A5762}|ControllerTests\\ControllerTests.csproj|solutionrelative:controllertests\\ordercontrollertests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{02B79BC5-153E-2FD9-CAE3-8149E0D9044F}|Service\\Service.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\service\\ordersservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{02B79BC5-153E-2FD9-CAE3-8149E0D9044F}|Service\\Service.csproj|solutionrelative:service\\ordersservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\gerenciamentomecanicasistema\\controllers\\customerscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|solutionrelative:gerenciamentomecanicasistema\\controllers\\customerscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -62,179 +26,62 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 7,
+          "SelectedChildIndex": 0,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "CatalogRepositoryTests.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests\\CatalogRepositoryTests.cs",
+              "RelativeDocumentMoniker": "RepositoryTests\\CatalogRepositoryTests.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests\\CatalogRepositoryTests.cs",
+              "RelativeToolTip": "RepositoryTests\\CatalogRepositoryTests.cs",
+              "ViewState": "AgIAADIAAAAAAAAAAAAAAD0AAAAyAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-23T22:35:17.03Z",
+              "EditorCaption": ""
+            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{e1b7d1f8-9b3c-49b1-8f4f-bfc63a88835d}"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Program.cs",
-              "RelativeDocumentMoniker": "GerenciamentoMecanicaSistema\\Program.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Program.cs",
-              "RelativeToolTip": "GerenciamentoMecanicaSistema\\Program.cs",
-              "ViewState": "AgIAAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-23T10:55:01.815Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "SmtpConnection.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\SmtpConnection.cs",
-              "RelativeDocumentMoniker": "Service\\SmtpConnection.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\SmtpConnection.cs",
-              "RelativeToolTip": "Service\\SmtpConnection.cs",
-              "ViewState": "AgIAAA4AAAAAAAAAAAAcwAgAAABUAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-23T10:40:54.327Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "docker-compose.yaml",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\docker-compose.yaml",
-              "RelativeDocumentMoniker": "docker-compose.yaml",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\docker-compose.yaml",
-              "RelativeToolTip": "docker-compose.yaml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAEAAAAJAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003775|",
-              "WhenOpened": "2026-06-23T10:34:55.113Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "appsettings.json",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\appsettings.json",
-              "RelativeDocumentMoniker": "GerenciamentoMecanicaSistema\\appsettings.json",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\appsettings.json",
-              "RelativeToolTip": "GerenciamentoMecanicaSistema\\appsettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAEAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-06-23T10:34:40.103Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "appsettings.Development.json",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\appsettings.Development.json",
-              "RelativeDocumentMoniker": "GerenciamentoMecanicaSistema\\appsettings.Development.json",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\appsettings.Development.json",
-              "RelativeToolTip": "GerenciamentoMecanicaSistema\\appsettings.Development.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-06-23T10:34:38.742Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "EmailService.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\EmailService.cs",
-              "RelativeDocumentMoniker": "Service\\EmailService.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\EmailService.cs",
-              "RelativeToolTip": "Service\\EmailService.cs",
-              "ViewState": "AgIAABkAAAAAAAAAAAAswAAAAAAAAAAAAAAAAA==",
+              "Title": "OrdersRepository.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\OrdersRepository.cs",
+              "RelativeDocumentMoniker": "Repository\\OrdersRepository.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\OrdersRepository.cs",
+              "RelativeToolTip": "Repository\\OrdersRepository.cs",
+              "ViewState": "AgIAAHEAAAAAAAAAAAAiwD4AAAAQAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-23T10:34:31.373Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "launchSettings.json",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Properties\\launchSettings.json",
-              "RelativeDocumentMoniker": "GerenciamentoMecanicaSistema\\Properties\\launchSettings.json",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Properties\\launchSettings.json",
-              "RelativeToolTip": "GerenciamentoMecanicaSistema\\Properties\\launchSettings.json",
-              "ViewState": "AgIAAA8AAAAAAAAAAAAAABkAAAAXAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-06-23T10:27:39.892Z",
+              "WhenOpened": "2026-06-23T22:26:18.257Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 2,
-              "Title": "Dockerfile",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Dockerfile",
-              "RelativeDocumentMoniker": "GerenciamentoMecanicaSistema\\Dockerfile",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Dockerfile",
-              "RelativeToolTip": "GerenciamentoMecanicaSistema\\Dockerfile",
-              "ViewState": "AgIAAAgAAAAAAAAAAAAAABIAAAATAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-06-23T10:08:29.866Z",
+              "Title": "CatalogRepository.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\CatalogRepository.cs",
+              "RelativeDocumentMoniker": "Repository\\CatalogRepository.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\CatalogRepository.cs",
+              "RelativeToolTip": "Repository\\CatalogRepository.cs",
+              "ViewState": "AgIAABMAAAAAAAAAAAA7wAoAAAAlAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-23T22:25:11.933Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "StockService.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\StockService.cs",
-              "RelativeDocumentMoniker": "Service\\StockService.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\StockService.cs",
-              "RelativeToolTip": "Service\\StockService.cs",
-              "ViewState": "AgIAADMAAAAAAAAAAABBwDkAAAAXAAAAAAAAAA==",
+              "DocumentIndex": 3,
+              "Title": "CustomersController.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\CustomersController.cs",
+              "RelativeDocumentMoniker": "GerenciamentoMecanicaSistema\\Controllers\\CustomersController.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\CustomersController.cs",
+              "RelativeToolTip": "GerenciamentoMecanicaSistema\\Controllers\\CustomersController.cs",
+              "ViewState": "AgIAABYAAAAAAAAAAAA7wAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-22T20:19:24.626Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "RegularLicensePlateExpressionAttribute.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\CustomAttributes\\RegularLicensePlateExpressionAttribute.cs",
-              "RelativeDocumentMoniker": "Service.Interface\\Dto\\CustomAttributes\\RegularLicensePlateExpressionAttribute.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\CustomAttributes\\RegularLicensePlateExpressionAttribute.cs",
-              "RelativeToolTip": "Service.Interface\\Dto\\CustomAttributes\\RegularLicensePlateExpressionAttribute.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAABRAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-22T14:07:21.46Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "OrdersController.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\OrdersController.cs",
-              "RelativeDocumentMoniker": "GerenciamentoMecanicaSistema\\Controllers\\OrdersController.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\OrdersController.cs",
-              "RelativeToolTip": "GerenciamentoMecanicaSistema\\Controllers\\OrdersController.cs",
-              "ViewState": "AgIAADcAAAAAAAAAAAAmwEAAAAAoAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-22T10:45:11.252Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "OrderControllerTests.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\OrderControllerTests.cs",
-              "RelativeDocumentMoniker": "ControllerTests\\OrderControllerTests.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\OrderControllerTests.cs",
-              "RelativeToolTip": "ControllerTests\\OrderControllerTests.cs",
-              "ViewState": "AgIAAP0AAAAAAAAAAAAywAwBAABpAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-22T10:42:06.088Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 12,
-              "Title": "OrdersService.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\OrdersService.cs",
-              "RelativeDocumentMoniker": "Service\\OrdersService.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\OrdersService.cs",
-              "RelativeToolTip": "Service\\OrdersService.cs",
-              "ViewState": "AgIAABMAAAAAAAAAAAAmwCoAAAAMAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-21T21:39:15.338Z",
+              "WhenOpened": "2026-06-23T21:51:32.19Z",
               "EditorCaption": ""
             }
           ]

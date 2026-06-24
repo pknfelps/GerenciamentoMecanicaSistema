@@ -16,6 +16,9 @@ CREATE TABLE customers (
     email VARCHAR(100) NOT NULL
 );
 
+INSERT INTO customers(id, name, document, phone, email)
+VALUES ('445b6ba5-523b-426f-9aaa-164754c203ca', 'Fulano', '123.456.789-12', '(11) 91234-5678', 'fulano@gmail.com');
+
 CREATE TABLE vehicles (
     id UUID PRIMARY KEY,
     customer_document VARCHAR(100) NOT NULL REFERENCES customers(document),
@@ -24,6 +27,9 @@ CREATE TABLE vehicles (
     year INT NOT NULL,
     license_plate VARCHAR(7) NOT NULL UNIQUE
 );
+
+INSERT INTO vehicles(id, customer_document, brand, model, year, license_plate)
+VALUES ('60ec3776-ac80-47b4-a3a3-dd21e3e15361', '123.456.789-12', 'Honda', 'Civic', 2025, "CVC2025");
 
 CREATE TABLE orders (
     id UUID PRIMARY KEY,
@@ -45,14 +51,20 @@ CREATE TABLE stock (
     reserved_amount INT NOT NULL DEFAULT 0
 );
 
-CREATE TABLE services (
+INSERT INTO stock(id, name, brand, price, amount, reserved_amount)
+VALUES ('b03ae302-a3dc-40ba-a7ce-2430a7f0ee5d', 'Óleo de motor', 'Lubrax', 10.99, 10, 0);
+
+CREATE TABLE catalog (
     id UUID PRIMARY KEY,
     description VARCHAR(255) NOT NULL,
     hours FLOAT NOT NULL,
     price_per_hour DOUBLE PRECISION NOT NULL
 );
 
-CREATE TABLE order_items (
+INSERT INTO catalog(id, description, hours, price_per_hour)
+VALUES ('8dcc551f-5c3a-4746-8f51-a18be6107a2f', 'Troca de Óleo', 1, 20, 1);
+
+CREATE TABLE order_materials (
     id UUID NOT NULL REFERENCES stock(id),
     order_id UUID NOT NULL REFERENCES orders(id),
     name VARCHAR(255) NOT NULL,
@@ -62,7 +74,7 @@ CREATE TABLE order_items (
 );
 
 CREATE TABLE order_services (
-    id UUID NOT NULL REFERENCES services(id),
+    id UUID NOT NULL REFERENCES catalog(id),
     order_id UUID NOT NULL REFERENCES orders(id),
     description VARCHAR(255) NOT NULL,
     hours FLOAT NOT NULL,

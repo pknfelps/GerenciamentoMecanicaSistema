@@ -9,7 +9,7 @@ namespace ControllerTests
 {
     public class OrderControllerTests : BaseControllerTests
     {
-        private IWorkOrderService OrderService { get; set; }
+        private IOrdersService OrderService { get; set; }
 
         private static readonly CreateOrderDto OrderToCreate = new("123.456.789-12", "TST1234");
         private static readonly DetailedWorkOrderDto ExistingOrder = new(Guid.NewGuid(), "123.456.789-12", "TST1234", 0.0, "Received", DateTime.Now, DateTime.MinValue, [], [], TimeSpan.Zero);
@@ -86,7 +86,7 @@ namespace ControllerTests
                 throw new InvalidOperationException();
             });
 
-            OrderService.AddPartToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>()).Returns(callInfo =>
+            OrderService.AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
@@ -97,7 +97,7 @@ namespace ControllerTests
                 throw new InvalidOperationException();
             });
 
-            OrderService.RemovePartFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>()).Returns(callInfo =>
+            OrderService.RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
@@ -363,61 +363,61 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustAddPartToOrder()
+        public async Task MustAddMaterialToOrder()
         {
-            var response = await TestClient.PostAsJsonAsync($"orders/{ExistingOrder.Id}/parts", OrderUpdate);
+            var response = await TestClient.PostAsJsonAsync($"orders/{ExistingOrder.Id}/materials", OrderUpdate);
 
-            await OrderService.Received(1).AddPartToOrder(ExistingOrder.Id, Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).AddMaterialToOrder(ExistingOrder.Id, Arg.Any<UpdateItemDto<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorItTryAddPartToOrderThatNotExists()
+        public async Task MustReturnInternalServerErrorItTryAddMaterialToOrderThatNotExists()
         {
-            var response = await TestClient.PostAsJsonAsync($"orders/{Guid.NewGuid()}/parts", OrderUpdate);
+            var response = await TestClient.PostAsJsonAsync($"orders/{Guid.NewGuid()}/materials", OrderUpdate);
 
-            await OrderService.Received(1).AddPartToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
         }
 
         [Test]
-        public async Task MustReturnBadRequestItTryAddPartToOrderWithInvalidModel()
+        public async Task MustReturnBadRequestItTryAddMaterialToOrderWithInvalidModel()
         {
-            var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/parts", new { Teste = "Teste" });
+            var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/materials", new { Teste = "Teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).AddPartToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.ReceivedWithAnyArgs(0).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
 
         [Test]
-        public async Task MustRemovePartFromOrder()
+        public async Task MustRemoveMaterialFromOrder()
         {
-            var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/parts", OrderUpdate);
+            var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/materials", OrderUpdate);
 
-            await OrderService.Received(1).RemovePartFromOrder(ExistingOrder.Id, Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).RemoveMaterialFromOrder(ExistingOrder.Id, Arg.Any<UpdateItemDto<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorItTryRemovePartFromOrderThatNotExists()
+        public async Task MustReturnInternalServerErrorItTryRemoveMaterialFromOrderThatNotExists()
         {
-            var response = await TestClient.PatchAsJsonAsync($"orders/{Guid.NewGuid()}/parts", OrderUpdate);
+            var response = await TestClient.PatchAsJsonAsync($"orders/{Guid.NewGuid()}/materials", OrderUpdate);
 
-            await OrderService.Received(1).RemovePartFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
         }
 
         [Test]
-        public async Task MustReturnBadRequestItTryRemovePartFromOrderWithInvalidModel()
+        public async Task MustReturnBadRequestItTryRemoveMaterialFromOrderWithInvalidModel()
         {
-            var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/parts", new { Teste = "Teste" });
+            var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/materials", new { Teste = "Teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).RemovePartFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.ReceivedWithAnyArgs(0).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }

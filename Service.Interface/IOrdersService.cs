@@ -3,7 +3,7 @@ using Service.Interface.Dto.Order;
 
 namespace Service.Interface
 {
-    public interface IWorkOrderService
+    public interface IOrdersService
     {
         Task CreateServiceOrder(CreateOrderDto orderToCreate);
         Task<IEnumerable<DetailedWorkOrderDto>> GetOrders(Guid? id = null, string customerDocument = "", string vehicleLicensePlate = "");
@@ -11,8 +11,8 @@ namespace Service.Interface
         Task StartDiagnosis(Guid orderId);
         Task AddServiceToOrder(Guid orderId, UpdateItemDto<int> serviceDto);
         Task RemoveServiceOfOrder(Guid orderId, UpdateItemDto<int> serviceDto);
-        Task AddPartToOrder(Guid orderId, UpdateItemDto<int> orderItem);
-        Task RemovePartFromOrder(Guid orderId, UpdateItemDto<int> orderItem);
+        Task AddMaterialToOrder(Guid orderId, UpdateItemDto<int> orderItem);
+        Task RemoveMaterialFromOrder(Guid orderId, UpdateItemDto<int> orderItem);
         Task CompleteDiagnosis(Guid orderId);
         Task ApproveBudget(Guid orderId, ApproveOrderDto approve);
         Task StartExecution(Guid orderId);

@@ -30,7 +30,7 @@ namespace DomainTests.Order
                 Assert.That(ReceivedOrder.CustomerDocument, Is.Not.Null);
                 Assert.That(ReceivedOrder.VehicleLicensePlate, Is.Not.Null);
                 Assert.That(ReceivedOrder.Services, Is.Empty);
-                Assert.That(ReceivedOrder.Parts, Is.Empty);
+                Assert.That(ReceivedOrder.Materials, Is.Empty);
                 Assert.That(ReceivedOrder.Budget, Is.EqualTo(0.0));
                 Assert.That(ReceivedOrder.Status, Is.EqualTo(WorkOrderStatus.Received));
                 Assert.That(ReceivedOrder.DateCreated, Is.Not.EqualTo(DateTime.MinValue));
@@ -179,9 +179,9 @@ namespace DomainTests.Order
         {
             ReceivedOrder.StartDiagnosis();
 
-            ReceivedOrder.AddPart(Substitute.For<IPart>());
+            ReceivedOrder.AddMaterial(Substitute.For<IMaterial>());
 
-            Assert.That(ReceivedOrder.Parts, Has.Count.EqualTo(1));
+            Assert.That(ReceivedOrder.Materials, Has.Count.EqualTo(1));
         }
 
         [Test]
@@ -190,28 +190,28 @@ namespace DomainTests.Order
             ReceivedOrder.StartDiagnosis();
 
             var partId = Guid.NewGuid();
-            var part = Substitute.For<IPart>();
+            var part = Substitute.For<IMaterial>();
             part.Id.Returns(partId);
             part.Amount.Returns(1);
             part.When(part => part.AddAmount(1)).Do(_ => part.Amount.Returns(2));
 
-            ReceivedOrder.AddPart(part);
-            ReceivedOrder.AddPart(part);
+            ReceivedOrder.AddMaterial(part);
+            ReceivedOrder.AddMaterial(part);
 
-            Assert.That(ReceivedOrder.Parts, Has.Count.EqualTo(1));
-            Assert.That(ReceivedOrder.Parts[0].Amount, Is.EqualTo(2));
+            Assert.That(ReceivedOrder.Materials, Has.Count.EqualTo(1));
+            Assert.That(ReceivedOrder.Materials[0].Amount, Is.EqualTo(2));
         }
 
         [Test]
         public void MustNotAddPartOrSupplieIfStatusIsReceived()
         {
-            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.AddPart(Substitute.For<IPart>()));
+            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.AddMaterial(Substitute.For<IMaterial>()));
         }
 
         [Test]
         public void MustNotAddPartOrSupplieIfServiceAlreadyStarted()
         {
-            Assert.Throws<InvalidOperationException>(() => OrderInExecution.AddPart(Substitute.For<IPart>()));
+            Assert.Throws<InvalidOperationException>(() => OrderInExecution.AddMaterial(Substitute.For<IMaterial>()));
         }
 
         [Test]
@@ -220,16 +220,16 @@ namespace DomainTests.Order
             ReceivedOrder.StartDiagnosis();
 
             var partId = Guid.NewGuid();
-            var part = Substitute.For<IPart>();
+            var part = Substitute.For<IMaterial>();
             part.Id.Returns(partId);
             part.Amount.Returns(1);
             part.When(p => p.RemoveAmount(1)).Do(_ => part.Amount.Returns(0));
 
-            ReceivedOrder.AddPart(part);
+            ReceivedOrder.AddMaterial(part);
 
-            ReceivedOrder.RemovePart(part);
+            ReceivedOrder.RemoveMaterial(part);
 
-            Assert.That(ReceivedOrder.Parts, Is.Empty);
+            Assert.That(ReceivedOrder.Materials, Is.Empty);
         }
 
         [Test]
@@ -238,33 +238,33 @@ namespace DomainTests.Order
             ReceivedOrder.StartDiagnosis();
 
             var partId = Guid.NewGuid();
-            var partToAdd = Substitute.For<IPart>();
+            var partToAdd = Substitute.For<IMaterial>();
             partToAdd.Id.Returns(partId);
             partToAdd.Amount.Returns(5);
             partToAdd.When(p => p.RemoveAmount(1)).Do(_ => partToAdd.Amount.Returns(4));
 
-            ReceivedOrder.AddPart(partToAdd);
+            ReceivedOrder.AddMaterial(partToAdd);
 
-            var partToRemove = Substitute.For<IPart>();
+            var partToRemove = Substitute.For<IMaterial>();
             partToRemove.Id.Returns(partId);
             partToRemove.Amount.Returns(1);
 
-            ReceivedOrder.RemovePart(partToRemove);
+            ReceivedOrder.RemoveMaterial(partToRemove);
 
-            Assert.That(ReceivedOrder.Parts, Has.Count.EqualTo(1));
-            Assert.That(ReceivedOrder.Parts[0].Amount, Is.EqualTo(4));
+            Assert.That(ReceivedOrder.Materials, Has.Count.EqualTo(1));
+            Assert.That(ReceivedOrder.Materials[0].Amount, Is.EqualTo(4));
         }
 
         [Test]
         public void MustNotRemovePartOrSupplieIfStatusIsReceived()
         {
-            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.RemovePart(Substitute.For<IPart>()));
+            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.RemoveMaterial(Substitute.For<IMaterial>()));
         }
 
         [Test]
         public void MustNotRemovePartOrSupplieIfServiceAlreadyStarted()
         {
-            Assert.Throws<InvalidOperationException>(() => OrderInExecution.RemovePart(Substitute.For<IPart>()));
+            Assert.Throws<InvalidOperationException>(() => OrderInExecution.RemoveMaterial(Substitute.For<IMaterial>()));
         }
 
         [Test]
@@ -277,10 +277,10 @@ namespace DomainTests.Order
             service.Amount.Returns(2);
             ReceivedOrder.AddService(service);
 
-            var part = Substitute.For<IPart>();
+            var part = Substitute.For<IMaterial>();
             part.Price.Returns(10);
             part.Amount.Returns(2);
-            ReceivedOrder.AddPart(part);
+            ReceivedOrder.AddMaterial(part);
 
             ReceivedOrder.FinalizeDiagnosis();
 

@@ -9,7 +9,7 @@ using Service.Interface.Dto.Order;
 
 namespace Service
 {
-    public class OrdersService(IOrdersRepository repository, ICustomerService customerService, IVehicleService vehicleService, IStockService stockService, ICatalogService mechanicalServiceService, IEmailService emailService) : IWorkOrderService
+    public class OrdersService(IOrdersRepository repository, ICustomerService customerService, IVehicleService vehicleService, IStockService stockService, ICatalogService mechanicalServiceService, IEmailService emailService) : IOrdersService
     {
         private IOrdersRepository Repository { get; set; } = repository;
         private ICustomerService CustomerService { get; set; } = customerService;
@@ -122,31 +122,31 @@ namespace Service
                 throw new InvalidOperationException("Erro ao salvar serviço");
         }
 
-        public async Task AddPartToOrder(Guid orderId, UpdateItemDto<int> orderItem)
+        public async Task AddMaterialToOrder(Guid orderId, UpdateItemDto<int> orderItem)
         {
             var order = await Repository.GetOrder(orderId) ?? throw new InvalidOperationException("Ordem não encontrada");
 
-            await StockService.ReservePartAmount(orderItem.Id, orderItem.Value);
+            await StockService.ReserveMaterialAmount(orderItem.Id, orderItem.Value);
 
-            var part = order.Parts.FirstOrDefault(x => x.Id == orderItem.Id);
+            var material = order.Materials.FirstOrDefault(x => x.Id == orderItem.Id);
 
             try
             {
                 int registry;
 
-                if (part == null)
+                if (material == null)
                 {
-                    var stockItem = await StockService.GetPart(orderItem.Id) ?? throw new InvalidOperationException("Item não encontrado no estoque");
+                    var stockItem = await StockService.GetMaterial(orderItem.Id) ?? throw new InvalidOperationException("Item não encontrado no estoque");
 
-                    var itemAdded = order.AddPart(stockItem.ToDomain());
+                    var itemAdded = order.AddMaterial(stockItem.ToDomain());
 
-                    registry = await Repository.AddPartToOrder(orderId, itemAdded);
+                    registry = await Repository.AddMaterialToOrder(orderId, itemAdded);
                 }
                 else
                 {
-                    part.AddAmount(orderItem.Value);
+                    material.AddAmount(orderItem.Value);
 
-                    registry = await Repository.UpdatePartFromOrder(orderId, part);
+                    registry = await Repository.UpdateMaterialFromOrder(orderId, material);
                 }
 
                 if (registry == 0)
@@ -154,36 +154,36 @@ namespace Service
             }
             catch
             {
-                await StockService.RestorePartAmount(orderItem.Id, orderItem.Value);
+                await StockService.RestoreMaterialAmount(orderItem.Id, orderItem.Value);
 
                 throw;
             }
         }
 
-        public async Task RemovePartFromOrder(Guid orderId, UpdateItemDto<int> orderItem)
+        public async Task RemoveMaterialFromOrder(Guid orderId, UpdateItemDto<int> orderItem)
         {
             var order = await Repository.GetOrder(orderId) ?? throw new InvalidOperationException("Ordem não encontrada");
 
-            await StockService.RestorePartAmount(orderItem.Id, orderItem.Value);
+            await StockService.RestoreMaterialAmount(orderItem.Id, orderItem.Value);
 
             try
             {
-                var part = order.Parts.First(x => x.Id == orderItem.Id);
+                var material = order.Materials.First(x => x.Id == orderItem.Id);
 
-                part.RemoveAmount(orderItem.Value);
+                material.RemoveAmount(orderItem.Value);
                 int registry;
 
-                if (part.Amount == 0)
-                    registry = await Repository.RemovePartFromOrder(orderId, part.Id);
+                if (material.Amount == 0)
+                    registry = await Repository.RemoveMaterialFromOrder(orderId, material.Id);
                 else
-                    registry = await Repository.UpdatePartFromOrder(orderId, part);
+                    registry = await Repository.UpdateMaterialFromOrder(orderId, material);
 
                 if (registry == 0)
                     throw new InvalidOperationException("Erro ao salvar serviço");
             }
             catch
             {
-                await StockService.ReservePartAmount(orderItem.Id, orderItem.Value);
+                await StockService.ReserveMaterialAmount(orderItem.Id, orderItem.Value);
 
                 throw;
             }
@@ -235,8 +235,8 @@ namespace Service
 
             if (!approve.Approved)
             {
-                foreach (var item in order.Parts)
-                    await StockService.RestorePartAmount(item.Id, item.Amount);
+                foreach (var item in order.Materials)
+                    await StockService.RestoreMaterialAmount(item.Id, item.Amount);
             }
 
             var registry = await Repository.UpdateOrderStatus(orderId, order.Status);
@@ -263,7 +263,7 @@ namespace Service
 
             order.CompleteService();
 
-            foreach (var item in order.Parts)
+            foreach (var item in order.Materials)
                 await StockService.ConsumeReservedAmount(item.Id, item.Amount);
 
             var updateStatus = await Repository.UpdateOrderStatus(orderId, order.Status);
@@ -291,8 +291,8 @@ namespace Service
 
             if (order.Status is not WorkOrderStatus.Finished and not WorkOrderStatus.Delivered)
             {
-                foreach (var item in order.Parts)
-                    await StockService.RestorePartAmount(item.Id, item.Amount);
+                foreach (var item in order.Materials)
+                    await StockService.RestoreMaterialAmount(item.Id, item.Amount);
             }
 
             var registry = await Repository.DeleteOrder(orderId);

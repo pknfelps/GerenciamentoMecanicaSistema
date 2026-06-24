@@ -10,7 +10,7 @@ namespace Domain.Interface.Order
         IDocument CustomerDocument { get; }
         ILicensePlate VehicleLicensePlate { get; }
         List<IMechanicalService> Services { get; }
-        List<IPart> Parts { get; }
+        List<IMaterial> Materials { get; }
         double Budget { get; }
         WorkOrderStatus Status { get; }
         DateTime DateCreated { get; }
@@ -20,8 +20,8 @@ namespace Domain.Interface.Order
         void StartDiagnosis();
         IMechanicalService AddService(IMechanicalService serviceToAdd);
         IMechanicalService RemoveService(IMechanicalService serviceToRemove);
-        IPart AddPart(IPart itemToAdd);
-        IPart RemovePart(IPart itemToRemove);
+        IMaterial AddMaterial(IMaterial materialToAdd);
+        IMaterial RemoveMaterial(IMaterial materialToRemove);
         void FinalizeDiagnosis();
         void ApproveService(bool approved);
         void StartService();

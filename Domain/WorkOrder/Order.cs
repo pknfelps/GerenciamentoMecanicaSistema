@@ -14,7 +14,7 @@ namespace Domain.WorkOrder
         public IDocument CustomerDocument { get; private set; }
         public ILicensePlate VehicleLicensePlate { get; private set; }
         public List<IMechanicalService> Services { get; private set; }
-        public List<IPart> Parts { get; private set; }
+        public List<IMaterial> Materials { get; private set; }
         public double Budget { get; private set; } = 0.0;
         public WorkOrderStatus Status { get; private set; }
         public DateTime DateCreated { get; private set; }
@@ -23,7 +23,7 @@ namespace Domain.WorkOrder
 
         public Order(string customerDocument, string vehicleLicensePlate) : this(Guid.NewGuid(), customerDocument, vehicleLicensePlate, [], [], 0.0, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue) { }
 
-        public Order(Guid id, string customerDocument, string vehicleLicensePlate, List<IMechanicalService> services, List<IPart> partsAndSupplies, double budget, WorkOrderStatus status, DateTime dateCreated, DateTime dateFinished)
+        public Order(Guid id, string customerDocument, string vehicleLicensePlate, List<IMechanicalService> services, List<IMaterial> materialsAndSupplies, double budget, WorkOrderStatus status, DateTime dateCreated, DateTime dateFinished)
         {
             if (id == Guid.Empty)
                 throw new ArgumentException("Id não pode ser vazio");
@@ -38,7 +38,7 @@ namespace Domain.WorkOrder
             CustomerDocument = DocumentWrapper.CreateDocument(customerDocument);
             VehicleLicensePlate = LicensePlateWrapper.CreateLicensePlate(vehicleLicensePlate);
             Services = services;
-            Parts = partsAndSupplies;
+            Materials = materialsAndSupplies;
             Budget = budget;
             Status = status;
             DateCreated = dateCreated;
@@ -95,7 +95,7 @@ namespace Domain.WorkOrder
             return service;
         }
 
-        public IPart AddPart(IPart itemToAdd)
+        public IMaterial AddMaterial(IMaterial materialToAdd)
         {
             if (Status is WorkOrderStatus.Received)
                 throw new InvalidOperationException("Não é possível adicionar peças ou insumos antes de iniciar o diagnóstico");
@@ -103,23 +103,23 @@ namespace Domain.WorkOrder
             if (Status is WorkOrderStatus.InExecution or WorkOrderStatus.Finished or WorkOrderStatus.Delivered)
                 throw new InvalidOperationException("Não é possível adicionar peças ou insumos após o inicio do serviço");
 
-            var item = Parts.FirstOrDefault(x => x.Id == itemToAdd.Id);
+            var material = Materials.FirstOrDefault(x => x.Id == materialToAdd.Id);
 
-            if (item == null)
+            if (material == null)
             {
-                Parts.Add(itemToAdd);
+                Materials.Add(materialToAdd);
 
-                return itemToAdd;
+                return materialToAdd;
             }
             else
             {
-                item.AddAmount(itemToAdd.Amount);
+                material.AddAmount(materialToAdd.Amount);
 
-                return item;
+                return material;
             }
         }
 
-        public IPart RemovePart(IPart itemToRemove)
+        public IMaterial RemoveMaterial(IMaterial materialToRemove)
         {
             if (Status is WorkOrderStatus.Received)
                 throw new InvalidOperationException("Não é possível remover peças ou insumos antes de iniciar o diagnóstico");
@@ -127,14 +127,14 @@ namespace Domain.WorkOrder
             if (Status is WorkOrderStatus.InExecution or WorkOrderStatus.Finished or WorkOrderStatus.Delivered)
                 throw new InvalidOperationException("Não é possível remover peças ou insumos após o inicio do serviço");
 
-            var item = Parts.First(x => x.Id == itemToRemove.Id);
+            var material = Materials.First(x => x.Id == materialToRemove.Id);
 
-            item.RemoveAmount(itemToRemove.Amount);
+            material.RemoveAmount(materialToRemove.Amount);
 
-            if (item.Amount == 0)
-                Parts.Remove(item);
+            if (material.Amount == 0)
+                Materials.Remove(material);
 
-            return item;
+            return material;
         }
 
         public void FinalizeDiagnosis()
@@ -189,8 +189,8 @@ namespace Domain.WorkOrder
             foreach (var service in Services)
                 value += service.Price * service.Amount;
 
-            foreach (var item in Parts)
-                value += item.Price * item.Amount;
+            foreach (var material in Materials)
+                value += material.Price * material.Amount;
 
             Budget = value;
         }

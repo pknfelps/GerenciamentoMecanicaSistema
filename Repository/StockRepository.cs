@@ -8,7 +8,7 @@ namespace Repository
 {
     public class StockRepository(IDbConnection connection) : BaseRepository(connection), IStockRepository
     {
-        public static string RegisterPartSql { get; private set; } = """
+        public static string RegisterMaterialSql { get; private set; } = """
                 INSERT INTO stock(id, name, brand, price, amount, reserved_amount)
                 VALUES (@Id, @Name, @Brand, @Price, @Amount, @Reserved_Amount);
                 """;
@@ -20,59 +20,59 @@ namespace Repository
                 LIMIT 50;
                 """;
 
-        public static string UpdatePartPriceSql { get; private set; } = """
+        public static string UpdateMaterialPriceSql { get; private set; } = """
                 UPDATE stock
                 SET price = @Price
                 WHERE id = @Id;
                 """;
 
-        public static string UpdatePartAmountSql { get; private set; } = """
+        public static string UpdateMaterialAmountSql { get; private set; } = """
                 UPDATE stock
                 SET amount = @Amount,
                     reserved_amount = @Reserved_Amount
                 WHERE id = @Id;
                 """;
 
-        public static string DelePartSql { get; private set; } = """
+        public static string DeleMaterialSql { get; private set; } = """
                 DELETE FROM stock
                 WHERE id = @Id;
                 """;
 
-        public async Task<int> RegisterNewPart(IPart part)
+        public async Task<int> RegisterNewMaterial(IMaterial material)
         {
-            return await Connection.ExecuteAsync(RegisterPartSql, PartDb.Create(part));
+            return await Connection.ExecuteAsync(RegisterMaterialSql, MaterialDb.Create(material));
         }
 
-        public async Task<IEnumerable<IPart>> GetParts(Guid? id = null, string name = "", string brand = "")
+        public async Task<IEnumerable<IMaterial>> GetMaterials(Guid? id = null, string name = "", string brand = "")
         {
-            var parts = await Connection.QueryAsync<PartDb>(GetItensSql.BuildQuery(BuildQueryParameters(id, name, brand)));
+            var materials = await Connection.QueryAsync<MaterialDb>(GetItensSql.BuildQuery(BuildQueryParameters(id, name, brand)));
 
-            return parts.Select(part => part.ToDomain());
+            return materials.Select(material => material.ToDomain());
         }
 
-        public async Task<IPart?> GetPart(Guid? id = null, string name = "", string brand = "")
+        public async Task<IMaterial?> GetMaterial(Guid? id = null, string name = "", string brand = "")
         {
-            var part = await Connection.QuerySingleOrDefaultAsync<PartDb>(GetItensSql.BuildQuery(BuildQueryParameters(id, name, brand)));
+            var material = await Connection.QuerySingleOrDefaultAsync<MaterialDb>(GetItensSql.BuildQuery(BuildQueryParameters(id, name, brand)));
 
-            if (part == null)
+            if (material == null)
                 return null;
 
-            return part.ToDomain();
+            return material.ToDomain();
         }
 
-        public async Task<int> UpdatePartPrice(IPart part)
+        public async Task<int> UpdateMaterialPrice(IMaterial material)
         {
-            return await Connection.ExecuteAsync(UpdatePartPriceSql, PartDb.Create(part));
+            return await Connection.ExecuteAsync(UpdateMaterialPriceSql, MaterialDb.Create(material));
         }
 
-        public async Task<int> UpdatePartAmount(IPart part)
+        public async Task<int> UpdateMaterialAmount(IMaterial material)
         {
-            return await Connection.ExecuteAsync(UpdatePartAmountSql, PartDb.Create(part));
+            return await Connection.ExecuteAsync(UpdateMaterialAmountSql, MaterialDb.Create(material));
         }
 
-        public async Task<int> DeletePart(Guid partId)
+        public async Task<int> DeleteMaterial(Guid materialId)
         {
-            return await Connection.ExecuteAsync(DelePartSql, new { Id = partId });
+            return await Connection.ExecuteAsync(DeleMaterialSql, new { Id = materialId });
         }
 
         private static Dictionary<string, object?> BuildQueryParameters(Guid? id = null, string name = "", string brand = "")

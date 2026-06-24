@@ -41,9 +41,13 @@ namespace Service
 
         public async Task UpdateService(Guid serviceId, CreateServiceDto serviceDto)
         {
-            _ = await Repository.GetService(serviceId) ?? throw new InvalidOperationException("Serviço não encontrado");
+            var service = await Repository.GetService(serviceId) ?? throw new InvalidOperationException("Serviço não encontrado");
 
-            var registry = await Repository.UpdateService(serviceDto.ToDomain());
+            service.UpdateDescriptrion(serviceDto.Description);
+            service.UpdateHours(serviceDto.Hours);
+            service.UpdatePricePerHour(serviceDto.PricePerHour);
+
+            var registry = await Repository.UpdateService(service);
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao atualizar o serviço");

@@ -29,11 +29,11 @@ namespace RepositoryTests
         }
 
         private static readonly Guid PartId = Guid.NewGuid();
-        private static IPart Part
+        private static IMaterial Part
         {
             get
             {
-                var part = Substitute.For<IPart>();
+                var part = Substitute.For<IMaterial>();
                 part.Id.Returns(PartId);
                 part.Name.Returns("Óleo de Motor");
                 part.Brand.Returns("Lubrax");
@@ -52,7 +52,7 @@ namespace RepositoryTests
                 order.CustomerDocument.Id.Returns("123.456.789-12");
                 order.VehicleLicensePlate.License.Returns("CVC2026");
                 order.Services.Returns([]);
-                order.Parts.Returns([]);
+                order.Materials.Returns([]);
                 order.Budget.Returns(0);
                 order.Status.Returns(WorkOrderStatus.Received);
                 order.DateCreated.Returns(DateTime.Now);
@@ -72,7 +72,7 @@ namespace RepositoryTests
                 order.CustomerDocument.Id.Returns("123.456.789-12");
                 order.VehicleLicensePlate.License.Returns("CVC2026");
                 order.Services.Returns([]);
-                order.Parts.Returns([]);
+                order.Materials.Returns([]);
                 order.Budget.Returns(100);
                 order.Status.Returns(WorkOrderStatus.WaitingForApproval);
                 order.DateCreated.Returns(ExistingOrderDateCreated);
@@ -133,7 +133,7 @@ namespace RepositoryTests
                 """);
 
             await Connection.ExecuteAsync("""
-                CREATE TABLE IF NOT EXISTS order_items (
+                CREATE TABLE IF NOT EXISTS order_materials (
                 id UUID NOT NULL REFERENCES stock(id),
                 order_id UUID NOT NULL REFERENCES orders(id),
                 name VARCHAR(255) NOT NULL,
@@ -180,7 +180,7 @@ namespace RepositoryTests
             var part = Part;
             part.Amount.Returns(1);
             part.ReservedAmount.Returns(0);
-            await Repository.AddPartToOrder(ExistingOrderId, part);
+            await Repository.AddMaterialToOrder(ExistingOrderId, part);
         }
 
         [Test]
@@ -253,13 +253,13 @@ namespace RepositoryTests
 
             Assert.Multiple(() =>
             {
-                Assert.That(order.Parts, Has.Count.EqualTo(1));
-                Assert.That(order.Parts[0].Id, Is.EqualTo(Part.Id));
-                Assert.That(order.Parts[0].Name, Is.EqualTo(Part.Name));
-                Assert.That(order.Parts[0].Brand, Is.EqualTo(Part.Brand));
-                Assert.That(order.Parts[0].Price, Is.EqualTo(Part.Price));
-                Assert.That(order.Parts[0].Amount, Is.EqualTo(1));
-                Assert.That(order.Parts[0].ReservedAmount, Is.EqualTo(0));
+                Assert.That(order.Materials, Has.Count.EqualTo(1));
+                Assert.That(order.Materials[0].Id, Is.EqualTo(Part.Id));
+                Assert.That(order.Materials[0].Name, Is.EqualTo(Part.Name));
+                Assert.That(order.Materials[0].Brand, Is.EqualTo(Part.Brand));
+                Assert.That(order.Materials[0].Price, Is.EqualTo(Part.Price));
+                Assert.That(order.Materials[0].Amount, Is.EqualTo(1));
+                Assert.That(order.Materials[0].ReservedAmount, Is.EqualTo(0));
             });
         }
 
@@ -309,13 +309,13 @@ namespace RepositoryTests
 
             Assert.Multiple(() =>
             {
-                Assert.That(ordersList[0].Parts, Has.Count.EqualTo(1));
-                Assert.That(ordersList[0].Parts[0].Id, Is.EqualTo(Part.Id));
-                Assert.That(ordersList[0].Parts[0].Name, Is.EqualTo(Part.Name));
-                Assert.That(ordersList[0].Parts[0].Brand, Is.EqualTo(Part.Brand));
-                Assert.That(ordersList[0].Parts[0].Price, Is.EqualTo(Part.Price));
-                Assert.That(ordersList[0].Parts[0].Amount, Is.EqualTo(1));
-                Assert.That(ordersList[0].Parts[0].ReservedAmount, Is.EqualTo(0));
+                Assert.That(ordersList[0].Materials, Has.Count.EqualTo(1));
+                Assert.That(ordersList[0].Materials[0].Id, Is.EqualTo(Part.Id));
+                Assert.That(ordersList[0].Materials[0].Name, Is.EqualTo(Part.Name));
+                Assert.That(ordersList[0].Materials[0].Brand, Is.EqualTo(Part.Brand));
+                Assert.That(ordersList[0].Materials[0].Price, Is.EqualTo(Part.Price));
+                Assert.That(ordersList[0].Materials[0].Amount, Is.EqualTo(1));
+                Assert.That(ordersList[0].Materials[0].ReservedAmount, Is.EqualTo(0));
             });
         }
 
@@ -366,13 +366,13 @@ namespace RepositoryTests
 
             Assert.Multiple(() =>
             {
-                Assert.That(ordersList[0].Parts, Has.Count.EqualTo(1));
-                Assert.That(ordersList[0].Parts[0].Id, Is.EqualTo(Part.Id));
-                Assert.That(ordersList[0].Parts[0].Name, Is.EqualTo(Part.Name));
-                Assert.That(ordersList[0].Parts[0].Brand, Is.EqualTo(Part.Brand));
-                Assert.That(ordersList[0].Parts[0].Price, Is.EqualTo(Part.Price));
-                Assert.That(ordersList[0].Parts[0].Amount, Is.EqualTo(1));
-                Assert.That(ordersList[0].Parts[0].ReservedAmount, Is.EqualTo(0));
+                Assert.That(ordersList[0].Materials, Has.Count.EqualTo(1));
+                Assert.That(ordersList[0].Materials[0].Id, Is.EqualTo(Part.Id));
+                Assert.That(ordersList[0].Materials[0].Name, Is.EqualTo(Part.Name));
+                Assert.That(ordersList[0].Materials[0].Brand, Is.EqualTo(Part.Brand));
+                Assert.That(ordersList[0].Materials[0].Price, Is.EqualTo(Part.Price));
+                Assert.That(ordersList[0].Materials[0].Amount, Is.EqualTo(1));
+                Assert.That(ordersList[0].Materials[0].ReservedAmount, Is.EqualTo(0));
             });
         }
 
@@ -423,7 +423,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustAddPartToOrder()
         {
-            var registry = await Repository.AddPartToOrder(ExistingOrderId, Part);
+            var registry = await Repository.AddMaterialToOrder(ExistingOrderId, Part);
 
             Assert.That(registry, Is.Not.EqualTo(0));
         }
@@ -431,7 +431,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustRemovePartFromOrder()
         {
-            var registry = await Repository.RemovePartFromOrder(ExistingOrderId, Part.Id);
+            var registry = await Repository.RemoveMaterialFromOrder(ExistingOrderId, Part.Id);
 
             Assert.That(registry, Is.Not.EqualTo(0));
         }
@@ -442,7 +442,7 @@ namespace RepositoryTests
             var part = Part;
             part.Amount.Returns(5);
 
-            var registry = await Repository.UpdatePartFromOrder(ExistingOrderId, part);
+            var registry = await Repository.UpdateMaterialFromOrder(ExistingOrderId, part);
 
             Assert.That(registry, Is.Not.EqualTo(0));
         }

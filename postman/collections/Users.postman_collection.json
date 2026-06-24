@@ -1,0 +1,105 @@
+{
+  "info": {
+    "_postman_id": "73b6735e-0447-4ccb-9760-fc6323ce7cd1",
+    "name": "Users",
+    "description": "API para gerenciamento dos usuários do sistema.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "55039339",
+    "_collection_link": "https://go.postman.co/collection/55039339-73b6735e-0447-4ccb-9760-fc6323ce7cd1?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "RegisterUser",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"Name\": \"Teste\",\r\n    \"Password\": \"P@ss123\",\r\n    \"Role\": \"Manager\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/{{api}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GetUser",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/{{api}}?name=Teste&role=Manager",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}"
+          ],
+          "query": [
+            {
+              "key": "name",
+              "value": "Teste"
+            },
+            {
+              "key": "role",
+              "value": "Manager"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "api",
+      "value": "users"
+    }
+  ]
+}

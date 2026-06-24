@@ -1,0 +1,500 @@
+{
+  "info": {
+    "_postman_id": "a258ba93-a4b7-413a-9043-22acbba230bf",
+    "name": "Orders",
+    "description": "API para cadastro e gerenciamento das ordens de serviço.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "55039339",
+    "_collection_link": "https://go.postman.co/collection/55039339-a258ba93-a4b7-413a-9043-22acbba230bf?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "CreateOrder",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"CustomerDocument\": \"123.456.789-12\",\r\n    \"VehicleLicensePlate\": \"CVC2025\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/{{api}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GetOrders",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/{{api}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}"
+          ],
+          "query": [
+            {
+              "key": "id",
+              "value": "",
+              "disabled": true
+            },
+            {
+              "key": "customerDocument",
+              "value": "",
+              "disabled": true
+            },
+            {
+              "key": "vehicleLicensePlate",
+              "value": "",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GetDetailedOrders",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/{{api}}/{{get_detailed}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}",
+            "{{get_detailed}}"
+          ],
+          "query": [
+            {
+              "key": "id",
+              "value": "{{order_id}}",
+              "disabled": true
+            },
+            {
+              "key": "customerDocument",
+              "value": "",
+              "disabled": true
+            },
+            {
+              "key": "vehicleLicensePlate",
+              "value": "",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GetVehicleOrders",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/{{api}}/{{get_vehicle_orders}}/:licensePlate",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}",
+            "{{get_vehicle_orders}}",
+            ":licensePlate"
+          ],
+          "variable": [
+            {
+              "key": "licensePlate",
+              "value": "CVC2025"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "StartDiagnosis",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/{{api}}/{{order_id}}/{{start_diagnosis}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}",
+            "{{order_id}}",
+            "{{start_diagnosis}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "AddServiceToOrder",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"Id\": \"8dcc551f-5c3a-4746-8f51-a18be6107a2f\",\r\n    \"Value\": 1\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/{{api}}/{{order_id}}/{{services}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}",
+            "{{order_id}}",
+            "{{services}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "RemoveServiceOfOrder",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"Id\": \"8dcc551f-5c3a-4746-8f51-a18be6107a2f\",\r\n    \"Value\": 1\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/{{api}}/{{order_id}}/{{services}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}",
+            "{{order_id}}",
+            "{{services}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "AddMaterialToOrder",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"Id\": \"b03ae302-a3dc-40ba-a7ce-2430a7f0ee5d\",\r\n    \"Value\": 5\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/{{api}}/{{order_id}}/{{materials}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}",
+            "{{order_id}}",
+            "{{materials}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "RemoveMaterialFromOrder",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"Id\": \"b03ae302-a3dc-40ba-a7ce-2430a7f0ee5d\",\r\n    \"Value\": 3\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/{{api}}/{{order_id}}/{{materials}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}",
+            "{{order_id}}",
+            "{{materials}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "CompleteDiagnosis",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"OrderId\": \"{{order_id}}\",\r\n    \"Item\": {\r\n        \"Name\": \"Óleo de motor\",\r\n        \"Brand\": \"Lubrax\",\r\n        \"Value\": 1\r\n    }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/{{api}}/{{order_id}}/{{complete_diagnosis}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}",
+            "{{order_id}}",
+            "{{complete_diagnosis}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "ApproveBudget",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"CustomerDocument\": \"987.654.321-12\",\r\n    \"Approved\": true\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/{{api}}/{{order_id}}/{{approve_budget}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}",
+            "{{order_id}}",
+            "{{approve_budget}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "StartExecution",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/{{api}}/{{order_id}}/{{start_execution}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}",
+            "{{order_id}}",
+            "{{start_execution}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "CompleteExecution",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/{{api}}/{{order_id}}/{{complete_execution}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}",
+            "{{order_id}}",
+            "{{complete_execution}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "VehicleDelivered",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/{{api}}/{{order_id}}/{{vehicle_delivered}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}",
+            "{{order_id}}",
+            "{{vehicle_delivered}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "DeleteOrder",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"OrderId\": \"\",\r\n    \"Item\": {\r\n        \"Name\": \"Óleo de motor\",\r\n        \"Brand\": \"Lubrax\",\r\n        \"Value\": 1\r\n    }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/{{api}}/{{order_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}",
+            "{{order_id}}"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "api",
+      "value": "orders"
+    },
+    {
+      "key": "services",
+      "value": "services"
+    },
+    {
+      "key": "materials",
+      "value": "materials"
+    },
+    {
+      "key": "complete_diagnosis",
+      "value": "diagnosis/complete"
+    },
+    {
+      "key": "order_id",
+      "value": ""
+    },
+    {
+      "key": "approve_budget",
+      "value": "budget"
+    },
+    {
+      "key": "start_execution",
+      "value": "execution/start"
+    },
+    {
+      "key": "complete_execution",
+      "value": "execution/complete"
+    },
+    {
+      "key": "vehicle_delivered",
+      "value": "delivery"
+    },
+    {
+      "key": "start_diagnosis",
+      "value": "diagnosis/start"
+    },
+    {
+      "key": "get_detailed",
+      "value": "details"
+    },
+    {
+      "key": "get_vehicle_orders",
+      "value": "vehicles"
+    }
+  ]
+}

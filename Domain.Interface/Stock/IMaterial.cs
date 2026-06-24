@@ -1,6 +1,6 @@
 ﻿namespace Domain.Interface.Stock
 {
-    public interface IPart : IEntity
+    public interface IMaterial : IEntity
     {
         string Name { get; }
         string Brand { get; }

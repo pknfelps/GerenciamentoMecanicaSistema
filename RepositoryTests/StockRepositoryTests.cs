@@ -10,11 +10,11 @@ namespace RepositoryTests
     {
         private IStockRepository Repository { get; set; }
 
-        private static IPart PartToRegister
+        private static IMaterial PartToRegister
         {
             get
             {
-                var part = Substitute.For<IPart>();
+                var part = Substitute.For<IMaterial>();
                 part.Id.Returns(Guid.NewGuid());
                 part.Name.Returns("Óleo de motor");
                 part.Brand.Returns("Lubrax");
@@ -26,11 +26,11 @@ namespace RepositoryTests
         }
 
         private static readonly Guid ExistingPartId = Guid.NewGuid();
-        private static IPart ExistingPart
+        private static IMaterial ExistingPart
         {
             get
             {
-                var part = Substitute.For<IPart>();
+                var part = Substitute.For<IMaterial>();
                 part.Id.Returns(ExistingPartId);
                 part.Name.Returns("Vela de ignição");
                 part.Brand.Returns("Bosch");
@@ -41,11 +41,11 @@ namespace RepositoryTests
             }
         }
 
-        private static IPart PartToUpdatePrice
+        private static IMaterial PartToUpdatePrice
         {
             get
             {
-                var part = Substitute.For<IPart>();
+                var part = Substitute.For<IMaterial>();
                 part.Id.Returns(ExistingPartId);
                 part.Name.Returns("Vela de ignição");
                 part.Brand.Returns("Bosch");
@@ -56,11 +56,11 @@ namespace RepositoryTests
             }
         }
 
-        private static IPart PartToUpdateAmount
+        private static IMaterial PartToUpdateAmount
         {
             get
             {
-                var part = Substitute.For<IPart>();
+                var part = Substitute.For<IMaterial>();
                 part.Id.Returns(ExistingPartId);
                 part.Name.Returns("Vela de ignição");
                 part.Brand.Returns("Bosch");
@@ -85,13 +85,13 @@ namespace RepositoryTests
 
             Repository = new StockRepository(Connection);
 
-            await Repository.RegisterNewPart(ExistingPart);
+            await Repository.RegisterNewMaterial(ExistingPart);
         }
 
         [Test]
         public async Task MustRegisterNewPart()
         {
-            var registry = await Repository.RegisterNewPart(PartToRegister);
+            var registry = await Repository.RegisterNewMaterial(PartToRegister);
 
             Assert.That(registry, Is.Not.EqualTo(0));
         }
@@ -99,7 +99,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustGetParts()
         {
-            var itens = (await Repository.GetParts()).ToList();
+            var itens = (await Repository.GetMaterials()).ToList();
 
             Assert.That(itens, Is.Not.Null);
 
@@ -119,7 +119,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustGetPartByIdAndBrand()
         {
-            var item = await Repository.GetPart(id: ExistingPart.Id);
+            var item = await Repository.GetMaterial(id: ExistingPart.Id);
 
             Assert.That(item, Is.Not.Null);
 
@@ -136,7 +136,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustNotGetPartByIdAndBrandIfNotExists()
         {
-            var item = await Repository.GetPart(id: Guid.NewGuid());
+            var item = await Repository.GetMaterial(id: Guid.NewGuid());
 
             Assert.That(item, Is.Null);
         }
@@ -144,7 +144,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustGetPartByNameAndBrand()
         {
-            var item = await Repository.GetPart(name: ExistingPart.Name, brand: ExistingPart.Brand);
+            var item = await Repository.GetMaterial(name: ExistingPart.Name, brand: ExistingPart.Brand);
 
             Assert.That(item, Is.Not.Null);
 
@@ -161,7 +161,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustNotGetPartByNameAndBrandIfNotExists()
         {
-            var item = await Repository.GetPart(name: PartToRegister.Name, brand: PartToRegister.Brand);
+            var item = await Repository.GetMaterial(name: PartToRegister.Name, brand: PartToRegister.Brand);
 
             Assert.That(item, Is.Null);
         }
@@ -169,7 +169,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustGetPartById()
         {
-            var item = await Repository.GetPart(ExistingPart.Id);
+            var item = await Repository.GetMaterial(ExistingPart.Id);
 
             Assert.That(item, Is.Not.Null);
 
@@ -186,7 +186,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustNotGetPartByIdIfNotExists()
         {
-            var item = await Repository.GetPart(PartToRegister.Id);
+            var item = await Repository.GetMaterial(PartToRegister.Id);
 
             Assert.That(item, Is.Null);
         }
@@ -194,11 +194,11 @@ namespace RepositoryTests
         [Test]
         public async Task MustUpdatePartPrice()
         {
-            var registry = await Repository.UpdatePartPrice(PartToUpdatePrice);
+            var registry = await Repository.UpdateMaterialPrice(PartToUpdatePrice);
 
             Assert.That(registry, Is.Not.EqualTo(0));
 
-            var item = await Repository.GetPart(name: PartToUpdatePrice.Name, brand: PartToUpdatePrice.Brand);
+            var item = await Repository.GetMaterial(name: PartToUpdatePrice.Name, brand: PartToUpdatePrice.Brand);
 
             Assert.That(item, Is.Not.Null);
             Assert.That(item.Price, Is.EqualTo(PartToUpdatePrice.Price));
@@ -207,11 +207,11 @@ namespace RepositoryTests
         [Test]
         public async Task MustUpdatePartAmount()
         {
-            var registry = await Repository.UpdatePartAmount(PartToUpdateAmount);
+            var registry = await Repository.UpdateMaterialAmount(PartToUpdateAmount);
 
             Assert.That(registry, Is.Not.EqualTo(0));
 
-            var item = await Repository.GetPart(name: PartToUpdateAmount.Name, brand: PartToUpdateAmount.Brand);
+            var item = await Repository.GetMaterial(name: PartToUpdateAmount.Name, brand: PartToUpdateAmount.Brand);
 
             Assert.That(item, Is.Not.Null);
 
@@ -225,7 +225,7 @@ namespace RepositoryTests
         [Test]
         public async Task MustDeletePart()
         {
-            var registry = await Repository.DeletePart(ExistingPart.Id);
+            var registry = await Repository.DeleteMaterial(ExistingPart.Id);
 
             Assert.That(registry, Is.Not.EqualTo(0));
         }

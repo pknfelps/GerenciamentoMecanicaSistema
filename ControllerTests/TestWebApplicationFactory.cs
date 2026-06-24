@@ -15,7 +15,7 @@ namespace ControllerTests
         public IStockService StockServiceMock { get; private set; } = Substitute.For<IStockService>();
         public IVehicleService VehicleServiceMock { get; private set; } = Substitute.For<IVehicleService>();
         public ICatalogService MechanicalServiceMock { get; private set; } = Substitute.For<ICatalogService>();
-        public IWorkOrderService OrderServiceMock { get; private set; } = Substitute.For<IWorkOrderService>();
+        public IOrdersService OrderServiceMock { get; private set; } = Substitute.For<IOrdersService>();
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
@@ -29,7 +29,7 @@ namespace ControllerTests
                     services.SingleOrDefault(d => d.ServiceType == typeof(IStockService)),
                     services.SingleOrDefault(d => d.ServiceType == typeof(IVehicleService)),
                     services.SingleOrDefault(d => d.ServiceType == typeof(ICatalogService)),
-                    services.SingleOrDefault(d => d.ServiceType == typeof(IWorkOrderService)),
+                    services.SingleOrDefault(d => d.ServiceType == typeof(IOrdersService)),
                 ];
 
                 foreach (ServiceDescriptor? serviceDescriptor in servicesToMock)

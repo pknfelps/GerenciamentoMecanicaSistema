@@ -17,7 +17,7 @@ namespace DependencyInjection
             service.AddTransient<IStockService, StockService>();
             service.AddTransient<IVehicleService, VehicleService>();
             service.AddTransient<ICatalogService, CatalogService>();
-            service.AddTransient<IWorkOrderService, OrdersService>();
+            service.AddTransient<IOrdersService, OrdersService>();
 
             service.AddTransient<ISmtpClient, SmtpClient>();
             service.AddTransient<ISmtpConnection, SmtpConnection>();

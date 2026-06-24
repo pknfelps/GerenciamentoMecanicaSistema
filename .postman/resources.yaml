@@ -1,7 +1,0 @@
-# Use this workspace to collaborate
-workspace:
-  id: 354d1d96-55ec-4aab-81a5-21ba8651bb8b
-
-localResources:
-  specs:
-    - ..\GerenciamentoMecanicaSistema\obj\Debug\net10.0\EndpointInfo\GerenciamentoMecanicaSistema.json

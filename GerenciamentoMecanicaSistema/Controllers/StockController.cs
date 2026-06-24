@@ -19,20 +19,20 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> RegisterItem([FromBody] CreatePartDto itemDto)
+        public async Task<IActionResult> RegisterMaterial([FromBody] CreateMaterialDto itemDto)
         {
-            await StockService.RegisterNewPart(itemDto);
+            await StockService.RegisterNewMaterial(itemDto);
 
             return Created();
         }
 
         [HttpGet()]
         [EndpointDescription("Endpoint para listar os itens do estoque")]
-        [ProducesResponseType(typeof(IEnumerable<PartDto>), StatusCodes.Status200OK, Description = "Retorna a lista de itens no estoque")]
+        [ProducesResponseType(typeof(IEnumerable<MaterialDto>), StatusCodes.Status200OK, Description = "Retorna a lista de itens no estoque")]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        public async Task<OkObjectResult> GetItems([FromQuery] Guid? id = null, [FromQuery] string name = "", [FromQuery] string brand = "")
+        public async Task<OkObjectResult> GetMaterials([FromQuery] Guid? id = null, [FromQuery] string name = "", [FromQuery] string brand = "")
         {
-            var itens = await StockService.GetParts(id, name, brand);
+            var itens = await StockService.GetMaterials(id, name, brand);
 
             return Ok(itens);
         }
@@ -43,9 +43,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> AddItemAmount([FromRoute, GuidValidation] Guid id, [FromBody] int value)
+        public async Task<IActionResult> AddMaterialAmount([FromRoute, GuidValidation] Guid id, [FromBody] ValueUpdateDto<int> value)
         {
-            await StockService.AddPartAmount(id, value);
+            await StockService.AddMaterialAmount(id, value.Value);
 
             return Ok();
         }
@@ -56,9 +56,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> RemoveItemAmount([FromRoute, GuidValidation] Guid id, [FromBody] int value)
+        public async Task<IActionResult> RemoveMaterialAmount([FromRoute, GuidValidation] Guid id, ValueUpdateDto<int> value)
         {
-            await StockService.RemovePartAmount(id, value);
+            await StockService.RemoveMaterialAmount(id, value.Value);
 
             return NoContent();
         }
@@ -69,9 +69,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> UpdateItemPrice([FromRoute, GuidValidation] Guid id, [FromBody] double value)
+        public async Task<IActionResult> UpdateMaterialPrice([FromRoute, GuidValidation] Guid id, ValueUpdateDto<double> value)
         {
-            await StockService.UpdatePartPrice(id, value);
+            await StockService.UpdateMaterialPrice(id, value.Value);
 
             return NoContent();
         }
@@ -82,9 +82,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> DeleteItem([FromRoute, GuidValidation] Guid id)
+        public async Task<IActionResult> DeleteMaterial([FromRoute, GuidValidation] Guid id)
         {
-            await StockService.DeletePart(id);
+            await StockService.DeleteMaterial(id);
 
             return NoContent();
         }

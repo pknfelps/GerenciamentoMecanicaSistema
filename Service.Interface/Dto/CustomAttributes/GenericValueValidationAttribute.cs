@@ -3,7 +3,7 @@
 namespace Service.Interface.Dto.CustomAttributes
 {
     [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property)]
-    internal class GenericValueValidationAttribute : ValidationAttribute
+    public class GenericValueValidationAttribute : ValidationAttribute
     {
         public GenericValueValidationAttribute()
         {

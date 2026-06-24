@@ -1,0 +1,83 @@
+{
+  "info": {
+    "_postman_id": "34fe6560-8a80-44a2-bf84-f3e6ccbcbd6c",
+    "name": "Authentication",
+    "description": "API de autenticação para efetuar login no sistema.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "55039339",
+    "_collection_link": "https://go.postman.co/collection/55039339-34fe6560-8a80-44a2-bf84-f3e6ccbcbd6c?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.text(); // se retornar texto puro\r",
+              "\r",
+              "pm.environment.set(\"token\", response);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"Name\": \"Admin\",\r\n  \"Password\": \"Admin@123\",\r\n  \"Role\": \"Admin\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/{{api}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "api",
+      "value": "authentication"
+    }
+  ]
+}

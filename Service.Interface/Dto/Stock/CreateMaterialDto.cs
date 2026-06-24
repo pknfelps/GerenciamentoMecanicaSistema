@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Service.Interface.Dto.Stock
 {
-    public class CreatePartDto(string name, string brand, double price, int amount)
+    public class CreateMaterialDto(string name, string brand, double price, int amount)
     {
         [Description("Nome do item")]
         [Required, RegularNonEmptyStringExpression]
@@ -21,14 +21,14 @@ namespace Service.Interface.Dto.Stock
         [Required, GenericValueValidation]
         public int Amount { get; set; } = amount;
 
-        public virtual IPart ToDomain() => new Part(Name, Brand, Price, Amount);
+        public virtual IMaterial ToDomain() => new Material(Name, Brand, Price, Amount);
 
         public override bool Equals(object? obj)
         {
             if (obj is null)
                 return false;
 
-            var part = (CreatePartDto)obj;
+            var part = (CreateMaterialDto)obj;
 
             return Name == part.Name && Brand == part.Brand && Price == part.Price && Amount == part.Amount;
         }
