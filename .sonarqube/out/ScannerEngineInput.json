@@ -1,0 +1,536 @@
+{
+  "scannerProperties": [
+    {
+      "key": "sonar.scanner.app",
+      "value": "ScannerMSBuild"
+    },
+    {
+      "key": "sonar.scanner.appVersion",
+      "value": "11.2.1"
+    },
+    {
+      "key": "sonar.scanner.bootstrapStartTime",
+      "value": "1782265303000"
+    },
+    {
+      "key": "sonar.projectKey",
+      "value": "GerenciamentoMecanincaSistema"
+    },
+    {
+      "key": "sonar.working.directory",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\.sonar"
+    },
+    {
+      "key": "sonar.projectBaseDir",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema"
+    },
+    {
+      "key": "sonar.pullrequest.cache.basepath",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema"
+    },
+    {
+      "key": "sonar.sources",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DTOs\\obj\\Dto.csproj.nuget.dgspec.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DTOs\\obj\\DTOs.csproj.nuget.dgspec.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DTOs\\obj\\project.assets.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\postman\\collections\\Authentication.postman_collection.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\postman\\collections\\Catalog.postman_collection.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\postman\\collections\\Customers.postman_collection.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\postman\\collections\\Orders.postman_collection.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\postman\\collections\\Stock.postman_collection.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\postman\\collections\\Users.postman_collection.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\postman\\collections\\Vehicles.postman_collection.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\postman\\environments\\Dev.postman_environment.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\postman\\globals\\workspace.globals.yaml,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.vs\\GerenciamentoMecanicaSistema.slnx\\config\\applicationhost.config,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.vs\\GerenciamentoMecanicaSistema.slnx\\v18\\DocumentLayout.backup.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.vs\\GerenciamentoMecanicaSistema.slnx\\v18\\DocumentLayout.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DTOs\\bin\\Debug\\net10.0\\Dto.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DTOs\\bin\\Debug\\net10.0\\DTOs.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DTOs\\obj\\Debug\\net10.0\\Dto.sourcelink.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DTOs\\obj\\Debug\\net10.0\\DTOs.sourcelink.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\docker-compose.yaml"
+    },
+    {
+      "key": "sonar.tests",
+      "value": ""
+    },
+    {
+      "key": "sonar.modules",
+      "value": "88E3286D-98BF-02CE-74B2-9F0A737EB921,E528BBC3-1C26-8C35-F682-23718816ADCD,AADDFD2E-D1F3-36A9-C3A4-07F99ED49777,D9E83580-8BEE-4957-A1C8-EC04071A5762,FF27BE7E-FBDD-EA22-4B48-AB53331752C0,AA89DA64-BC2F-73FB-764E-70326ABD64CD,CE8F3387-4CAB-64ED-80E3-18319C5DCD81,4476BFA7-17F3-D360-697F-9CCB7D9B2FCE,02B79BC5-153E-2FD9-CAE3-8149E0D9044F,5836563F-AA04-4AD3-8859-8F85ADE92148,06E54496-48AF-4245-97FB-08A74E695175,AB81B7DC-D5CD-C85F-AB72-AD2D746A4692"
+    },
+    {
+      "key": "88E3286D-98BF-02CE-74B2-9F0A737EB921.sonar.projectKey",
+      "value": "GerenciamentoMecanincaSistema:88E3286D-98BF-02CE-74B2-9F0A737EB921"
+    },
+    {
+      "key": "88E3286D-98BF-02CE-74B2-9F0A737EB921.sonar.projectName",
+      "value": "Domain.Interface"
+    },
+    {
+      "key": "88E3286D-98BF-02CE-74B2-9F0A737EB921.sonar.projectBaseDir",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface"
+    },
+    {
+      "key": "88E3286D-98BF-02CE-74B2-9F0A737EB921.sonar.working.directory",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\.sonar\\mod0"
+    },
+    {
+      "key": "88E3286D-98BF-02CE-74B2-9F0A737EB921.sonar.sourceEncoding",
+      "value": "utf-8"
+    },
+    {
+      "key": "88E3286D-98BF-02CE-74B2-9F0A737EB921.sonar.tests",
+      "value": ""
+    },
+    {
+      "key": "88E3286D-98BF-02CE-74B2-9F0A737EB921.sonar.sources",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface\\Custumer\\ICustomer.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface\\Custumer\\IDocument.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface\\Custumer\\IEmail.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface\\Custumer\\IPhone.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface\\IEntity.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface\\Order\\IOrder.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface\\Order\\WorkOrderStatus.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface\\Service\\IMechanicalService.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface\\Stock\\IMaterial.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface\\User\\IPassword.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface\\User\\IUser.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface\\User\\Roles.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface\\Vehicle\\ILicensePlate.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface\\Vehicle\\IVehicle.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface\\obj\\Domain.Interface.csproj.nuget.dgspec.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface\\obj\\project.assets.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface\\bin\\Debug\\net10.0\\Domain.Interface.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain.Interface\\obj\\Debug\\net10.0\\Domain.Interface.sourcelink.json"
+    },
+    {
+      "key": "88E3286D-98BF-02CE-74B2-9F0A737EB921.sonar.cs.analyzer.projectOutPaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\0"
+    },
+    {
+      "key": "88E3286D-98BF-02CE-74B2-9F0A737EB921.sonar.cs.roslyn.reportFilePaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\0\\Issues.json"
+    },
+    {
+      "key": "88E3286D-98BF-02CE-74B2-9F0A737EB921.sonar.cs.scanner.telemetry",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\0\\Telemetry.json"
+    },
+    {
+      "key": "E528BBC3-1C26-8C35-F682-23718816ADCD.sonar.projectKey",
+      "value": "GerenciamentoMecanincaSistema:E528BBC3-1C26-8C35-F682-23718816ADCD"
+    },
+    {
+      "key": "E528BBC3-1C26-8C35-F682-23718816ADCD.sonar.projectName",
+      "value": "Domain"
+    },
+    {
+      "key": "E528BBC3-1C26-8C35-F682-23718816ADCD.sonar.projectBaseDir",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain"
+    },
+    {
+      "key": "E528BBC3-1C26-8C35-F682-23718816ADCD.sonar.working.directory",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\.sonar\\mod1"
+    },
+    {
+      "key": "E528BBC3-1C26-8C35-F682-23718816ADCD.sonar.sourceEncoding",
+      "value": "utf-8"
+    },
+    {
+      "key": "E528BBC3-1C26-8C35-F682-23718816ADCD.sonar.tests",
+      "value": ""
+    },
+    {
+      "key": "E528BBC3-1C26-8C35-F682-23718816ADCD.sonar.sources",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\obj\\Domain.csproj.nuget.dgspec.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\obj\\project.assets.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\bin\\Debug\\net10.0\\Domain.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\obj\\Debug\\net10.0\\Domain.sourcelink.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Customer\\Cnpj.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Customer\\Cpf.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Customer\\Customer.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Customer\\Document.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Customer\\DocumentWrapper.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Customer\\Email.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Customer\\Phone.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\MechanicalService\\MechanicalService.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Stock\\Material.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\User\\Password.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\User\\User.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Vehicle\\LicensePlate.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Vehicle\\LicensePlateWrapper.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Vehicle\\MercosulLicensePlate.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Vehicle\\OldBrazilLicensePlate.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Vehicle\\Vehicle.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\WorkOrder\\Order.cs"
+    },
+    {
+      "key": "E528BBC3-1C26-8C35-F682-23718816ADCD.sonar.cs.analyzer.projectOutPaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\1"
+    },
+    {
+      "key": "E528BBC3-1C26-8C35-F682-23718816ADCD.sonar.cs.roslyn.reportFilePaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\1\\Issues.json"
+    },
+    {
+      "key": "E528BBC3-1C26-8C35-F682-23718816ADCD.sonar.cs.scanner.telemetry",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\1\\Telemetry.json"
+    },
+    {
+      "key": "AADDFD2E-D1F3-36A9-C3A4-07F99ED49777.sonar.projectKey",
+      "value": "GerenciamentoMecanincaSistema:AADDFD2E-D1F3-36A9-C3A4-07F99ED49777"
+    },
+    {
+      "key": "AADDFD2E-D1F3-36A9-C3A4-07F99ED49777.sonar.projectName",
+      "value": "GerenciamentoMecanicaSistema"
+    },
+    {
+      "key": "AADDFD2E-D1F3-36A9-C3A4-07F99ED49777.sonar.projectBaseDir",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema"
+    },
+    {
+      "key": "AADDFD2E-D1F3-36A9-C3A4-07F99ED49777.sonar.working.directory",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\.sonar\\mod2"
+    },
+    {
+      "key": "AADDFD2E-D1F3-36A9-C3A4-07F99ED49777.sonar.sourceEncoding",
+      "value": "utf-8"
+    },
+    {
+      "key": "AADDFD2E-D1F3-36A9-C3A4-07F99ED49777.sonar.tests",
+      "value": ""
+    },
+    {
+      "key": "AADDFD2E-D1F3-36A9-C3A4-07F99ED49777.sonar.sources",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\appsettings.Development.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\appsettings.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Dockerfile,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\obj\\GerenciamentoMecanicaSistema.csproj.nuget.dgspec.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\obj\\project.assets.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Properties\\launchSettings.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\bin\\Debug\\net10.0\\appsettings.Development.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\bin\\Debug\\net10.0\\appsettings.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\bin\\Debug\\net10.0\\GerenciamentoMecanicaSistema.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\bin\\Debug\\net10.0\\GerenciamentoMecanicaSistema.runtimeconfig.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\bin\\Debug\\net10.0\\GerenciamentoMecanicaSistema.staticwebassets.endpoints.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\obj\\Debug\\net10.0\\ApiEndpoints.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\obj\\Debug\\net10.0\\GerenciamentoMecanicaSistema.sourcelink.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\obj\\Debug\\net10.0\\rjsmcshtml.dswa.cache.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\obj\\Debug\\net10.0\\rjsmrazor.dswa.cache.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\obj\\Debug\\net10.0\\rpswa.dswa.cache.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\obj\\Debug\\net10.0\\staticwebassets.build.endpoints.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\obj\\Debug\\net10.0\\staticwebassets.build.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\obj\\Debug\\net10.0\\EndpointInfo\\GerenciamentoMecanicaSistema.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\AuthenticationController.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\CatalogController.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\CustomersController.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\OrdersController.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\StockController.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\UsersController.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\VehiclesController.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Program.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\obj\\Debug\\net10.0\\GerenciamentoMecanicaSistema.GlobalUsings.g.cs,\"C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\obj\\Debug\\net10.0\\.NETCoreApp,Version=v10.0.AssemblyAttributes.cs\",C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\obj\\Debug\\net10.0\\GerenciamentoMecanicaSistema.AssemblyInfo.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\obj\\Debug\\net10.0\\GerenciamentoMecanicaSistema.MvcApplicationPartsAssemblyInfo.cs"
+    },
+    {
+      "key": "AADDFD2E-D1F3-36A9-C3A4-07F99ED49777.sonar.cs.analyzer.projectOutPaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\10"
+    },
+    {
+      "key": "AADDFD2E-D1F3-36A9-C3A4-07F99ED49777.sonar.cs.roslyn.reportFilePaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\10\\Issues.json"
+    },
+    {
+      "key": "AADDFD2E-D1F3-36A9-C3A4-07F99ED49777.sonar.cs.scanner.telemetry",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\10\\Telemetry.json"
+    },
+    {
+      "key": "D9E83580-8BEE-4957-A1C8-EC04071A5762.sonar.projectKey",
+      "value": "GerenciamentoMecanincaSistema:D9E83580-8BEE-4957-A1C8-EC04071A5762"
+    },
+    {
+      "key": "D9E83580-8BEE-4957-A1C8-EC04071A5762.sonar.projectName",
+      "value": "ControllerTests"
+    },
+    {
+      "key": "D9E83580-8BEE-4957-A1C8-EC04071A5762.sonar.projectBaseDir",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests"
+    },
+    {
+      "key": "D9E83580-8BEE-4957-A1C8-EC04071A5762.sonar.working.directory",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\.sonar\\mod3"
+    },
+    {
+      "key": "D9E83580-8BEE-4957-A1C8-EC04071A5762.sonar.sourceEncoding",
+      "value": "utf-8"
+    },
+    {
+      "key": "D9E83580-8BEE-4957-A1C8-EC04071A5762.sonar.sources",
+      "value": ""
+    },
+    {
+      "key": "D9E83580-8BEE-4957-A1C8-EC04071A5762.sonar.tests",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\obj\\ControllerTests.csproj.nuget.dgspec.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\obj\\project.assets.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\bin\\Debug\\net10.0\\appsettings.Development.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\bin\\Debug\\net10.0\\appsettings.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\bin\\Debug\\net10.0\\Bootstrapper.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\bin\\Debug\\net10.0\\ControllerTests.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\bin\\Debug\\net10.0\\ControllerTests.runtimeconfig.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\bin\\Debug\\net10.0\\DependencyInjection.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\bin\\Debug\\net10.0\\Domain.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\bin\\Debug\\net10.0\\Domain.Interface.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\bin\\Debug\\net10.0\\Dto.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\bin\\Debug\\net10.0\\DTOs.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\bin\\Debug\\net10.0\\GerenciamentoMecanicaSistema.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\bin\\Debug\\net10.0\\GerenciamentoMecanicaSistema.runtimeconfig.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\bin\\Debug\\net10.0\\GerenciamentoMecanicaSistema.staticwebassets.endpoints.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\bin\\Debug\\net10.0\\MvcTestingAppManifest.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\bin\\Debug\\net10.0\\Repository.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\bin\\Debug\\net10.0\\Repository.Interface.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\bin\\Debug\\net10.0\\Service.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\bin\\Debug\\net10.0\\Service.Interface.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\obj\\Debug\\net10.0\\ControllerTests.sourcelink.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\obj\\Debug\\net10.0\\MvcTestingAppManifest.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\AuthenticationControllerTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\BaseControllerTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\CatalogControllerTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\CustomerControllerTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\OrderControllerTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\StockControllerTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\TestWebApplicationFactory.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\UserControllerTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\VehicleControllerTests.cs"
+    },
+    {
+      "key": "D9E83580-8BEE-4957-A1C8-EC04071A5762.sonar.cs.analyzer.projectOutPaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\11"
+    },
+    {
+      "key": "D9E83580-8BEE-4957-A1C8-EC04071A5762.sonar.cs.roslyn.reportFilePaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\11\\Issues.json"
+    },
+    {
+      "key": "D9E83580-8BEE-4957-A1C8-EC04071A5762.sonar.cs.scanner.telemetry",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\11\\Telemetry.json"
+    },
+    {
+      "key": "FF27BE7E-FBDD-EA22-4B48-AB53331752C0.sonar.projectKey",
+      "value": "GerenciamentoMecanincaSistema:FF27BE7E-FBDD-EA22-4B48-AB53331752C0"
+    },
+    {
+      "key": "FF27BE7E-FBDD-EA22-4B48-AB53331752C0.sonar.projectName",
+      "value": "Repository.Interface"
+    },
+    {
+      "key": "FF27BE7E-FBDD-EA22-4B48-AB53331752C0.sonar.projectBaseDir",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository.Interface"
+    },
+    {
+      "key": "FF27BE7E-FBDD-EA22-4B48-AB53331752C0.sonar.working.directory",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\.sonar\\mod4"
+    },
+    {
+      "key": "FF27BE7E-FBDD-EA22-4B48-AB53331752C0.sonar.sourceEncoding",
+      "value": "utf-8"
+    },
+    {
+      "key": "FF27BE7E-FBDD-EA22-4B48-AB53331752C0.sonar.tests",
+      "value": ""
+    },
+    {
+      "key": "FF27BE7E-FBDD-EA22-4B48-AB53331752C0.sonar.sources",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository.Interface\\obj\\project.assets.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository.Interface\\obj\\Repository.Interface.csproj.nuget.dgspec.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository.Interface\\bin\\Debug\\net10.0\\Repository.Interface.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository.Interface\\obj\\Debug\\net10.0\\Repository.Interface.sourcelink.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository.Interface\\ICatalogRepository.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository.Interface\\ICustomerRepository.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository.Interface\\IOrdersRepository.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository.Interface\\IStockRepository.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository.Interface\\IUserRepository.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository.Interface\\IVehicleRepository.cs"
+    },
+    {
+      "key": "FF27BE7E-FBDD-EA22-4B48-AB53331752C0.sonar.cs.analyzer.projectOutPaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\2"
+    },
+    {
+      "key": "FF27BE7E-FBDD-EA22-4B48-AB53331752C0.sonar.cs.roslyn.reportFilePaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\2\\Issues.json"
+    },
+    {
+      "key": "FF27BE7E-FBDD-EA22-4B48-AB53331752C0.sonar.cs.scanner.telemetry",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\2\\Telemetry.json"
+    },
+    {
+      "key": "AA89DA64-BC2F-73FB-764E-70326ABD64CD.sonar.projectKey",
+      "value": "GerenciamentoMecanincaSistema:AA89DA64-BC2F-73FB-764E-70326ABD64CD"
+    },
+    {
+      "key": "AA89DA64-BC2F-73FB-764E-70326ABD64CD.sonar.projectName",
+      "value": "Service.Interface"
+    },
+    {
+      "key": "AA89DA64-BC2F-73FB-764E-70326ABD64CD.sonar.projectBaseDir",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface"
+    },
+    {
+      "key": "AA89DA64-BC2F-73FB-764E-70326ABD64CD.sonar.working.directory",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\.sonar\\mod5"
+    },
+    {
+      "key": "AA89DA64-BC2F-73FB-764E-70326ABD64CD.sonar.sourceEncoding",
+      "value": "utf-8"
+    },
+    {
+      "key": "AA89DA64-BC2F-73FB-764E-70326ABD64CD.sonar.tests",
+      "value": ""
+    },
+    {
+      "key": "AA89DA64-BC2F-73FB-764E-70326ABD64CD.sonar.sources",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\obj\\project.assets.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\obj\\Service.Interface.csproj.nuget.dgspec.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\bin\\Debug\\net10.0\\Service.Interface.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\obj\\Debug\\net10.0\\Service.Interface.sourcelink.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\CustomAttributes\\DateTimeValidationAttribute.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\CustomAttributes\\GenericValueValidationAttribute.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\CustomAttributes\\GuidValidationAttribute.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\CustomAttributes\\RegularDocumentExpressionAttribute.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\CustomAttributes\\RegularLicensePlateExpressionAttribute.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\CustomAttributes\\RegularNonEmptyStringExpressionAttribute.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\Customer\\CreateCustomerDto.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\Customer\\CustomerDto.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\Order\\ApproveOrderDto.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\Order\\CreateOrderDto.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\Order\\DetailedWorkOrderDto.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\Order\\WorkOrderDto.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\Service\\CreateServiceDto.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\Service\\ServiceDto.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\Stock\\CreateMaterialDto.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\Stock\\MaterialDto.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\Stock\\ValueUpdateDto.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\UpdateItemDto.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\User\\CreateUserDto.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\User\\UserDto.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\Vehicle\\CreateVehicleDto.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Dto\\Vehicle\\VehicleDto.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\IAuthenticationService.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\ICatalogService.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\ICustomerService.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\IEmailService.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\IOrdersService.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\ISmtpConnection.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\IStockService.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\IUserService.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\IVehicleService.cs"
+    },
+    {
+      "key": "AA89DA64-BC2F-73FB-764E-70326ABD64CD.sonar.cs.analyzer.projectOutPaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\3"
+    },
+    {
+      "key": "AA89DA64-BC2F-73FB-764E-70326ABD64CD.sonar.cs.roslyn.reportFilePaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\3\\Issues.json"
+    },
+    {
+      "key": "AA89DA64-BC2F-73FB-764E-70326ABD64CD.sonar.cs.scanner.telemetry",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\3\\Telemetry.json"
+    },
+    {
+      "key": "CE8F3387-4CAB-64ED-80E3-18319C5DCD81.sonar.projectKey",
+      "value": "GerenciamentoMecanincaSistema:CE8F3387-4CAB-64ED-80E3-18319C5DCD81"
+    },
+    {
+      "key": "CE8F3387-4CAB-64ED-80E3-18319C5DCD81.sonar.projectName",
+      "value": "Repository"
+    },
+    {
+      "key": "CE8F3387-4CAB-64ED-80E3-18319C5DCD81.sonar.projectBaseDir",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository"
+    },
+    {
+      "key": "CE8F3387-4CAB-64ED-80E3-18319C5DCD81.sonar.working.directory",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\.sonar\\mod6"
+    },
+    {
+      "key": "CE8F3387-4CAB-64ED-80E3-18319C5DCD81.sonar.sourceEncoding",
+      "value": "utf-8"
+    },
+    {
+      "key": "CE8F3387-4CAB-64ED-80E3-18319C5DCD81.sonar.tests",
+      "value": ""
+    },
+    {
+      "key": "CE8F3387-4CAB-64ED-80E3-18319C5DCD81.sonar.sources",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\obj\\project.assets.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\obj\\Repository.csproj.nuget.dgspec.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\bin\\Debug\\net10.0\\Repository.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\obj\\Debug\\net10.0\\Repository.sourcelink.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\BaseRepository.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\CatalogRepository.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\CustomerRepository.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\Dto\\CustomerDb.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\Dto\\MaterialDb.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\Dto\\MechanicalServiceDb.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\Dto\\OrderDb.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\Dto\\UserDb.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\Dto\\VehicleDb.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\OrdersRepository.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\QueryBuilder.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\StockRepository.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\UserRepository.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\VehicleRepository.cs"
+    },
+    {
+      "key": "CE8F3387-4CAB-64ED-80E3-18319C5DCD81.sonar.cs.analyzer.projectOutPaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\4"
+    },
+    {
+      "key": "CE8F3387-4CAB-64ED-80E3-18319C5DCD81.sonar.cs.roslyn.reportFilePaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\4\\Issues.json"
+    },
+    {
+      "key": "CE8F3387-4CAB-64ED-80E3-18319C5DCD81.sonar.cs.scanner.telemetry",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\4\\Telemetry.json"
+    },
+    {
+      "key": "4476BFA7-17F3-D360-697F-9CCB7D9B2FCE.sonar.projectKey",
+      "value": "GerenciamentoMecanincaSistema:4476BFA7-17F3-D360-697F-9CCB7D9B2FCE"
+    },
+    {
+      "key": "4476BFA7-17F3-D360-697F-9CCB7D9B2FCE.sonar.projectName",
+      "value": "DomainTests"
+    },
+    {
+      "key": "4476BFA7-17F3-D360-697F-9CCB7D9B2FCE.sonar.projectBaseDir",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests"
+    },
+    {
+      "key": "4476BFA7-17F3-D360-697F-9CCB7D9B2FCE.sonar.working.directory",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\.sonar\\mod7"
+    },
+    {
+      "key": "4476BFA7-17F3-D360-697F-9CCB7D9B2FCE.sonar.sourceEncoding",
+      "value": "utf-8"
+    },
+    {
+      "key": "4476BFA7-17F3-D360-697F-9CCB7D9B2FCE.sonar.sources",
+      "value": ""
+    },
+    {
+      "key": "4476BFA7-17F3-D360-697F-9CCB7D9B2FCE.sonar.tests",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\obj\\DomainTests.csproj.nuget.dgspec.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\obj\\project.assets.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\bin\\Debug\\net10.0\\DomainTests.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\bin\\Debug\\net10.0\\DomainTests.runtimeconfig.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\obj\\Debug\\net10.0\\DomainTests.sourcelink.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Costumer\\CnpjTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Costumer\\CpfTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Costumer\\CustomerTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Costumer\\DocumentWrapperTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Costumer\\EmailTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Costumer\\PhoneTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Order\\OrderTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Parts\\PartTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Service\\MechanicalServiceTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\User\\PasswordTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\User\\UserTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Vehicle\\LicensePlateWrapperTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Vehicle\\MercosulLicensePlateTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Vehicle\\OldBrazilLicensePlateTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Vehicle\\VehicleTests.cs"
+    },
+    {
+      "key": "4476BFA7-17F3-D360-697F-9CCB7D9B2FCE.sonar.cs.analyzer.projectOutPaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\5"
+    },
+    {
+      "key": "4476BFA7-17F3-D360-697F-9CCB7D9B2FCE.sonar.cs.roslyn.reportFilePaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\5\\Issues.json"
+    },
+    {
+      "key": "4476BFA7-17F3-D360-697F-9CCB7D9B2FCE.sonar.cs.scanner.telemetry",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\5\\Telemetry.json"
+    },
+    {
+      "key": "02B79BC5-153E-2FD9-CAE3-8149E0D9044F.sonar.projectKey",
+      "value": "GerenciamentoMecanincaSistema:02B79BC5-153E-2FD9-CAE3-8149E0D9044F"
+    },
+    {
+      "key": "02B79BC5-153E-2FD9-CAE3-8149E0D9044F.sonar.projectName",
+      "value": "Service"
+    },
+    {
+      "key": "02B79BC5-153E-2FD9-CAE3-8149E0D9044F.sonar.projectBaseDir",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service"
+    },
+    {
+      "key": "02B79BC5-153E-2FD9-CAE3-8149E0D9044F.sonar.working.directory",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\.sonar\\mod8"
+    },
+    {
+      "key": "02B79BC5-153E-2FD9-CAE3-8149E0D9044F.sonar.sourceEncoding",
+      "value": "utf-8"
+    },
+    {
+      "key": "02B79BC5-153E-2FD9-CAE3-8149E0D9044F.sonar.tests",
+      "value": ""
+    },
+    {
+      "key": "02B79BC5-153E-2FD9-CAE3-8149E0D9044F.sonar.sources",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\obj\\project.assets.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\obj\\Service.csproj.nuget.dgspec.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\bin\\Debug\\net10.0\\Service.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\obj\\Debug\\net10.0\\Service.sourcelink.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\AuthenticationService.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\CatalogService.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\CustomerService.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\EmailService.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\OrdersService.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\Settings\\EmailSettings.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\SmtpConnection.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\StockService.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\UserService.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\VehicleService.cs"
+    },
+    {
+      "key": "02B79BC5-153E-2FD9-CAE3-8149E0D9044F.sonar.cs.analyzer.projectOutPaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\6"
+    },
+    {
+      "key": "02B79BC5-153E-2FD9-CAE3-8149E0D9044F.sonar.cs.roslyn.reportFilePaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\6\\Issues.json"
+    },
+    {
+      "key": "02B79BC5-153E-2FD9-CAE3-8149E0D9044F.sonar.cs.scanner.telemetry",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\6\\Telemetry.json"
+    },
+    {
+      "key": "5836563F-AA04-4AD3-8859-8F85ADE92148.sonar.projectKey",
+      "value": "GerenciamentoMecanincaSistema:5836563F-AA04-4AD3-8859-8F85ADE92148"
+    },
+    {
+      "key": "5836563F-AA04-4AD3-8859-8F85ADE92148.sonar.projectName",
+      "value": "RepositoryTests"
+    },
+    {
+      "key": "5836563F-AA04-4AD3-8859-8F85ADE92148.sonar.projectBaseDir",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests"
+    },
+    {
+      "key": "5836563F-AA04-4AD3-8859-8F85ADE92148.sonar.working.directory",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\.sonar\\mod9"
+    },
+    {
+      "key": "5836563F-AA04-4AD3-8859-8F85ADE92148.sonar.sourceEncoding",
+      "value": "utf-8"
+    },
+    {
+      "key": "5836563F-AA04-4AD3-8859-8F85ADE92148.sonar.sources",
+      "value": ""
+    },
+    {
+      "key": "5836563F-AA04-4AD3-8859-8F85ADE92148.sonar.tests",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests\\obj\\project.assets.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests\\obj\\RepositoryTests.csproj.nuget.dgspec.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests\\bin\\Debug\\net10.0\\RepositoryTests.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests\\bin\\Debug\\net10.0\\RepositoryTests.runtimeconfig.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests\\obj\\Debug\\net10.0\\RepositoryTests.sourcelink.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests\\BaseRepositoryTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests\\CatalogRepositoryTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests\\CustomerRepositoryTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests\\OrdersRepositoryTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests\\StockRepositoryTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests\\UserRepositoryTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests\\VehicleRepositoryTests.cs"
+    },
+    {
+      "key": "5836563F-AA04-4AD3-8859-8F85ADE92148.sonar.cs.analyzer.projectOutPaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\7"
+    },
+    {
+      "key": "5836563F-AA04-4AD3-8859-8F85ADE92148.sonar.cs.roslyn.reportFilePaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\7\\Issues.json"
+    },
+    {
+      "key": "5836563F-AA04-4AD3-8859-8F85ADE92148.sonar.cs.scanner.telemetry",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\7\\Telemetry.json"
+    },
+    {
+      "key": "06E54496-48AF-4245-97FB-08A74E695175.sonar.projectKey",
+      "value": "GerenciamentoMecanincaSistema:06E54496-48AF-4245-97FB-08A74E695175"
+    },
+    {
+      "key": "06E54496-48AF-4245-97FB-08A74E695175.sonar.projectName",
+      "value": "ServiceTests"
+    },
+    {
+      "key": "06E54496-48AF-4245-97FB-08A74E695175.sonar.projectBaseDir",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ServiceTests"
+    },
+    {
+      "key": "06E54496-48AF-4245-97FB-08A74E695175.sonar.working.directory",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\.sonar\\mod10"
+    },
+    {
+      "key": "06E54496-48AF-4245-97FB-08A74E695175.sonar.sourceEncoding",
+      "value": "utf-8"
+    },
+    {
+      "key": "06E54496-48AF-4245-97FB-08A74E695175.sonar.sources",
+      "value": ""
+    },
+    {
+      "key": "06E54496-48AF-4245-97FB-08A74E695175.sonar.tests",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ServiceTests\\obj\\project.assets.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ServiceTests\\obj\\ServiceTests.csproj.nuget.dgspec.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ServiceTests\\bin\\Debug\\net10.0\\ServiceTests.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ServiceTests\\bin\\Debug\\net10.0\\ServiceTests.runtimeconfig.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ServiceTests\\obj\\Debug\\net10.0\\ServiceTests.sourcelink.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ServiceTests\\AuthenticationServiceTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ServiceTests\\CatalogServiceTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ServiceTests\\CustomerServiceTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ServiceTests\\EmailServiceTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ServiceTests\\OrdersServiceTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ServiceTests\\StockServiceTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ServiceTests\\UserServiceTests.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ServiceTests\\VehicleServiceTests.cs"
+    },
+    {
+      "key": "06E54496-48AF-4245-97FB-08A74E695175.sonar.cs.analyzer.projectOutPaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\8"
+    },
+    {
+      "key": "06E54496-48AF-4245-97FB-08A74E695175.sonar.cs.roslyn.reportFilePaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\8\\Issues.json"
+    },
+    {
+      "key": "06E54496-48AF-4245-97FB-08A74E695175.sonar.cs.scanner.telemetry",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\8\\Telemetry.json"
+    },
+    {
+      "key": "AB81B7DC-D5CD-C85F-AB72-AD2D746A4692.sonar.projectKey",
+      "value": "GerenciamentoMecanincaSistema:AB81B7DC-D5CD-C85F-AB72-AD2D746A4692"
+    },
+    {
+      "key": "AB81B7DC-D5CD-C85F-AB72-AD2D746A4692.sonar.projectName",
+      "value": "DependencyInjection"
+    },
+    {
+      "key": "AB81B7DC-D5CD-C85F-AB72-AD2D746A4692.sonar.projectBaseDir",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Bootstrapper"
+    },
+    {
+      "key": "AB81B7DC-D5CD-C85F-AB72-AD2D746A4692.sonar.working.directory",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\.sonar\\mod11"
+    },
+    {
+      "key": "AB81B7DC-D5CD-C85F-AB72-AD2D746A4692.sonar.sourceEncoding",
+      "value": "utf-8"
+    },
+    {
+      "key": "AB81B7DC-D5CD-C85F-AB72-AD2D746A4692.sonar.tests",
+      "value": ""
+    },
+    {
+      "key": "AB81B7DC-D5CD-C85F-AB72-AD2D746A4692.sonar.sources",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Bootstrapper\\obj\\Bootstrapper.csproj.nuget.dgspec.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Bootstrapper\\obj\\DependencyInjection.csproj.nuget.dgspec.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Bootstrapper\\obj\\project.assets.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Bootstrapper\\bin\\Debug\\net10.0\\Bootstrapper.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Bootstrapper\\bin\\Debug\\net10.0\\DependencyInjection.deps.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Bootstrapper\\obj\\Debug\\net10.0\\Bootstrapper.sourcelink.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Bootstrapper\\obj\\Debug\\net10.0\\DependencyInjection.sourcelink.json,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Bootstrapper\\RepositoryDependencyInjection.cs,C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Bootstrapper\\ServiceDependencyInjection.cs"
+    },
+    {
+      "key": "AB81B7DC-D5CD-C85F-AB72-AD2D746A4692.sonar.cs.analyzer.projectOutPaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\9"
+    },
+    {
+      "key": "AB81B7DC-D5CD-C85F-AB72-AD2D746A4692.sonar.cs.roslyn.reportFilePaths",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\9\\Issues.json"
+    },
+    {
+      "key": "AB81B7DC-D5CD-C85F-AB72-AD2D746A4692.sonar.cs.scanner.telemetry",
+      "value": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\.sonarqube\\out\\9\\Telemetry.json"
+    },
+    {
+      "key": "sonar.token",
+      "value": "***"
+    },
+    {
+      "key": "sonar.host.url",
+      "value": "http://localhost:9000"
+    },
+    {
+      "key": "sonar.visualstudio.enable",
+      "value": "false"
+    }
+  ]
+}

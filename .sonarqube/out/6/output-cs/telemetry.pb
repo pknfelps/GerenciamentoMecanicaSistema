@@ -1,0 +1,1 @@
+\ROC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\Service.csprojòCSharp14

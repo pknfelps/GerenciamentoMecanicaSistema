@@ -1,0 +1,1 @@
+ZRMC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Domain.csprojòCSharp14

@@ -1,0 +1,35 @@
+Product projects
+---------------------------------------
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Domain.Interface.csproj
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Domain.csproj
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema.csproj
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\Repository.Interface.csproj
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Service.Interface.csproj
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\Repository.csproj
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\Service.csproj
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Bootstrapper\DependencyInjection.csproj
+
+
+Test projects
+---------------------------------------
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ControllerTests\ControllerTests.csproj
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\DomainTests\DomainTests.csproj
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\RepositoryTests\RepositoryTests.csproj
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\ServiceTests.csproj
+
+
+Invalid projects
+---------------------------------------
+{none}
+
+
+Skipped projects
+---------------------------------------
+{none}
+
+
+Excluded projects
+---------------------------------------
+{none}
+
+

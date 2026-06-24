@@ -1,0 +1,16 @@
+﻿C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\AuthenticationController.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\CatalogController.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\CustomersController.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\OrdersController.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\StockController.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\UsersController.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\VehiclesController.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Program.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\obj\Debug\net10.0\GerenciamentoMecanicaSistema.GlobalUsings.g.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\obj\Debug\net10.0\.NETCoreApp,Version=v10.0.AssemblyAttributes.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\obj\Debug\net10.0\GerenciamentoMecanicaSistema.AssemblyInfo.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\obj\Debug\net10.0\GerenciamentoMecanicaSistema.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\appsettings.Development.json
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\appsettings.json
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Dockerfile
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Properties\launchSettings.json

@@ -1,0 +1,10 @@
+﻿C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\AuthenticationService.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\CatalogService.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\CustomerService.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\EmailService.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\OrdersService.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\Settings\EmailSettings.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\SmtpConnection.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\StockService.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\UserService.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\VehicleService.cs

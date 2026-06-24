@@ -1,0 +1,2 @@
+﻿C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Bootstrapper\RepositoryDependencyInjection.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Bootstrapper\ServiceDependencyInjection.cs

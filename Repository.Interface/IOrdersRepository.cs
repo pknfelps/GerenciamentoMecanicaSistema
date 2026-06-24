@@ -13,9 +13,9 @@ namespace Repository.Interface
         Task<int> AddServiceToOrder(Guid orderId, IMechanicalService service);
         Task<int> UpdateServiceOfOrder(Guid orderId, IMechanicalService service);
         Task<int> RemoveServiceFromOrder(Guid orderId, Guid serviceId);
-        Task<int> AddMaterialToOrder(Guid orderId, IMaterial part);
-        Task<int> UpdateMaterialFromOrder(Guid orderId, IMaterial part);
-        Task<int> RemoveMaterialFromOrder(Guid orderId, Guid partId);
+        Task<int> AddMaterialToOrder(Guid orderId, IMaterial material);
+        Task<int> UpdateMaterialFromOrder(Guid orderId, IMaterial material);
+        Task<int> RemoveMaterialFromOrder(Guid orderId, Guid materialId);
         Task<int> UpdateOrderBudget(Guid id, double budget);
         Task<int> UpdateOrderDuration(Guid id, TimeSpan duration);
         Task<int> DeleteOrder(Guid orderId);

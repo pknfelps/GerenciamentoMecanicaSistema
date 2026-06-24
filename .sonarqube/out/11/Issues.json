@@ -1,0 +1,1225 @@
+{
+  "$schema": "http://json.schemastore.org/sarif-1.0.0",
+  "version": "1.0.0",
+  "runs": [
+    {
+      "tool": {
+        "name": "Compilador do Microsoft (R) Visual C#",
+        "version": "5.6.0.0",
+        "fileVersion": "5.6.0-2.26270.133 (96856fd726ffd058fb3dfef0851dbafc7ef3b011)",
+        "semanticVersion": "5.6.0",
+        "language": "pt-BR"
+      },
+      "results": [
+        {
+          "ruleId": "CS8618",
+          "level": "warning",
+          "message": "O propriedade não anulável 'TestWebAppFactory' precisa conter um valor não nulo ao sair do construtor. Considere adicionar o modificador \"obrigatório\" ou declarar o propriedade como anulável.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/BaseControllerTests.cs",
+                "region": {
+                  "startLine": 12,
+                  "startColumn": 45,
+                  "endLine": 12,
+                  "endColumn": 62
+                }
+              }
+            }
+          ],
+          "relatedLocations": [
+            {
+              "physicalLocation": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/BaseControllerTests.cs",
+                "region": {
+                  "startLine": 12,
+                  "startColumn": 45,
+                  "endLine": 12,
+                  "endColumn": 62
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8618",
+          "level": "warning",
+          "message": "O propriedade não anulável 'TestClient' precisa conter um valor não nulo ao sair do construtor. Considere adicionar o modificador \"obrigatório\" ou declarar o propriedade como anulável.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/BaseControllerTests.cs",
+                "region": {
+                  "startLine": 13,
+                  "startColumn": 30,
+                  "endLine": 13,
+                  "endColumn": 40
+                }
+              }
+            }
+          ],
+          "relatedLocations": [
+            {
+              "physicalLocation": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/BaseControllerTests.cs",
+                "region": {
+                  "startLine": 13,
+                  "startColumn": 30,
+                  "endLine": 13,
+                  "endColumn": 40
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8602",
+          "level": "warning",
+          "message": "Desreferência de uma referência possivelmente nula.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/UserControllerTests.cs",
+                "region": {
+                  "startLine": 87,
+                  "startColumn": 25,
+                  "endLine": 87,
+                  "endColumn": 29
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8618",
+          "level": "warning",
+          "message": "O propriedade não anulável 'AuthenticationService' precisa conter um valor não nulo ao sair do construtor. Considere adicionar o modificador \"obrigatório\" ou declarar o propriedade como anulável.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/AuthenticationControllerTests.cs",
+                "region": {
+                  "startLine": 11,
+                  "startColumn": 40,
+                  "endLine": 11,
+                  "endColumn": 61
+                }
+              }
+            }
+          ],
+          "relatedLocations": [
+            {
+              "physicalLocation": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/AuthenticationControllerTests.cs",
+                "region": {
+                  "startLine": 11,
+                  "startColumn": 40,
+                  "endLine": 11,
+                  "endColumn": 61
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8618",
+          "level": "warning",
+          "message": "O propriedade não anulável 'UserService' precisa conter um valor não nulo ao sair do construtor. Considere adicionar o modificador \"obrigatório\" ou declarar o propriedade como anulável.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/UserControllerTests.cs",
+                "region": {
+                  "startLine": 11,
+                  "startColumn": 30,
+                  "endLine": 11,
+                  "endColumn": 41
+                }
+              }
+            }
+          ],
+          "relatedLocations": [
+            {
+              "physicalLocation": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/UserControllerTests.cs",
+                "region": {
+                  "startLine": 11,
+                  "startColumn": 30,
+                  "endLine": 11,
+                  "endColumn": 41
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8602",
+          "level": "warning",
+          "message": "Desreferência de uma referência possivelmente nula.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/CatalogControllerTests.cs",
+                "region": {
+                  "startLine": 102,
+                  "startColumn": 25,
+                  "endLine": 102,
+                  "endColumn": 32
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8602",
+          "level": "warning",
+          "message": "Desreferência de uma referência possivelmente nula.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/CustomerControllerTests.cs",
+                "region": {
+                  "startLine": 129,
+                  "startColumn": 29,
+                  "endLine": 129,
+                  "endColumn": 38
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8602",
+          "level": "warning",
+          "message": "Desreferência de uma referência possivelmente nula.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/VehicleControllerTests.cs",
+                "region": {
+                  "startLine": 116,
+                  "startColumn": 29,
+                  "endLine": 116,
+                  "endColumn": 37
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8602",
+          "level": "warning",
+          "message": "Desreferência de uma referência possivelmente nula.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/CustomerControllerTests.cs",
+                "region": {
+                  "startLine": 147,
+                  "startColumn": 28,
+                  "endLine": 147,
+                  "endColumn": 37
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8602",
+          "level": "warning",
+          "message": "Desreferência de uma referência possivelmente nula.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/CatalogControllerTests.cs",
+                "region": {
+                  "startLine": 125,
+                  "startColumn": 27,
+                  "endLine": 125,
+                  "endColumn": 35
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8602",
+          "level": "warning",
+          "message": "Desreferência de uma referência possivelmente nula.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/VehicleControllerTests.cs",
+                "region": {
+                  "startLine": 132,
+                  "startColumn": 27,
+                  "endLine": 132,
+                  "endColumn": 35
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8602",
+          "level": "warning",
+          "message": "Desreferência de uma referência possivelmente nula.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/OrderControllerTests.cs",
+                "region": {
+                  "startLine": 212,
+                  "startColumn": 25,
+                  "endLine": 212,
+                  "endColumn": 31
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8602",
+          "level": "warning",
+          "message": "Desreferência de uma referência possivelmente nula.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/OrderControllerTests.cs",
+                "region": {
+                  "startLine": 228,
+                  "startColumn": 25,
+                  "endLine": 228,
+                  "endColumn": 31
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8604",
+          "level": "warning",
+          "message": "Possível argumento de referência nula para o parâmetro 'source' em 'List<MaterialDto> Enumerable.ToList<MaterialDto>(IEnumerable<MaterialDto> source)'.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/StockControllerTests.cs",
+                "region": {
+                  "startLine": 156,
+                  "startColumn": 26,
+                  "endLine": 156,
+                  "endColumn": 32
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8602",
+          "level": "warning",
+          "message": "Desreferência de uma referência possivelmente nula.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/OrderControllerTests.cs",
+                "region": {
+                  "startLine": 244,
+                  "startColumn": 25,
+                  "endLine": 244,
+                  "endColumn": 31
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8618",
+          "level": "warning",
+          "message": "O propriedade não anulável 'VehicleService' precisa conter um valor não nulo ao sair do construtor. Considere adicionar o modificador \"obrigatório\" ou declarar o propriedade como anulável.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/VehicleControllerTests.cs",
+                "region": {
+                  "startLine": 11,
+                  "startColumn": 33,
+                  "endLine": 11,
+                  "endColumn": 47
+                }
+              }
+            }
+          ],
+          "relatedLocations": [
+            {
+              "physicalLocation": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/VehicleControllerTests.cs",
+                "region": {
+                  "startLine": 11,
+                  "startColumn": 33,
+                  "endLine": 11,
+                  "endColumn": 47
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8618",
+          "level": "warning",
+          "message": "O propriedade não anulável 'CatalogService' precisa conter um valor não nulo ao sair do construtor. Considere adicionar o modificador \"obrigatório\" ou declarar o propriedade como anulável.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/CatalogControllerTests.cs",
+                "region": {
+                  "startLine": 11,
+                  "startColumn": 33,
+                  "endLine": 11,
+                  "endColumn": 47
+                }
+              }
+            }
+          ],
+          "relatedLocations": [
+            {
+              "physicalLocation": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/CatalogControllerTests.cs",
+                "region": {
+                  "startLine": 11,
+                  "startColumn": 33,
+                  "endLine": 11,
+                  "endColumn": 47
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8602",
+          "level": "warning",
+          "message": "Desreferência de uma referência possivelmente nula.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/StockControllerTests.cs",
+                "region": {
+                  "startLine": 181,
+                  "startColumn": 28,
+                  "endLine": 181,
+                  "endColumn": 37
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8618",
+          "level": "warning",
+          "message": "O propriedade não anulável 'CustomerService' precisa conter um valor não nulo ao sair do construtor. Considere adicionar o modificador \"obrigatório\" ou declarar o propriedade como anulável.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/CustomerControllerTests.cs",
+                "region": {
+                  "startLine": 15,
+                  "startColumn": 34,
+                  "endLine": 15,
+                  "endColumn": 49
+                }
+              }
+            }
+          ],
+          "relatedLocations": [
+            {
+              "physicalLocation": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/CustomerControllerTests.cs",
+                "region": {
+                  "startLine": 15,
+                  "startColumn": 34,
+                  "endLine": 15,
+                  "endColumn": 49
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8602",
+          "level": "warning",
+          "message": "Desreferência de uma referência possivelmente nula.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/OrderControllerTests.cs",
+                "region": {
+                  "startLine": 260,
+                  "startColumn": 25,
+                  "endLine": 260,
+                  "endColumn": 31
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8618",
+          "level": "warning",
+          "message": "O propriedade não anulável 'StockService' precisa conter um valor não nulo ao sair do construtor. Considere adicionar o modificador \"obrigatório\" ou declarar o propriedade como anulável.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/StockControllerTests.cs",
+                "region": {
+                  "startLine": 12,
+                  "startColumn": 31,
+                  "endLine": 12,
+                  "endColumn": 43
+                }
+              }
+            }
+          ],
+          "relatedLocations": [
+            {
+              "physicalLocation": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/StockControllerTests.cs",
+                "region": {
+                  "startLine": 12,
+                  "startColumn": 31,
+                  "endLine": 12,
+                  "endColumn": 43
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8618",
+          "level": "warning",
+          "message": "O propriedade não anulável 'OrderService' precisa conter um valor não nulo ao sair do construtor. Considere adicionar o modificador \"obrigatório\" ou declarar o propriedade como anulável.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/OrderControllerTests.cs",
+                "region": {
+                  "startLine": 12,
+                  "startColumn": 32,
+                  "endLine": 12,
+                  "endColumn": 44
+                }
+              }
+            }
+          ],
+          "relatedLocations": [
+            {
+              "physicalLocation": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/OrderControllerTests.cs",
+                "region": {
+                  "startLine": 12,
+                  "startColumn": 32,
+                  "endLine": 12,
+                  "endColumn": 44
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "NUnit2010",
+          "level": "note",
+          "message": "Use Is.EqualTo constraint instead of direct comparison for better assertion messages in case of failure",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/UserControllerTests.cs",
+                "region": {
+                  "startLine": 87,
+                  "startColumn": 25,
+                  "endLine": 87,
+                  "endColumn": 50
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SuggestedConstraintString": "Is.EqualTo",
+              "SwapOperands": "False"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2010",
+          "level": "note",
+          "message": "Use Is.EqualTo constraint instead of direct comparison for better assertion messages in case of failure",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/VehicleControllerTests.cs",
+                "region": {
+                  "startLine": 116,
+                  "startColumn": 29,
+                  "endLine": 116,
+                  "endColumn": 60
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SuggestedConstraintString": "Is.EqualTo",
+              "SwapOperands": "False"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2010",
+          "level": "note",
+          "message": "Use Is.EqualTo constraint instead of direct comparison for better assertion messages in case of failure",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/VehicleControllerTests.cs",
+                "region": {
+                  "startLine": 117,
+                  "startColumn": 29,
+                  "endLine": 117,
+                  "endColumn": 60
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SuggestedConstraintString": "Is.EqualTo",
+              "SwapOperands": "False"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2010",
+          "level": "note",
+          "message": "Use Is.EqualTo constraint instead of direct comparison for better assertion messages in case of failure",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/VehicleControllerTests.cs",
+                "region": {
+                  "startLine": 136,
+                  "startColumn": 29,
+                  "endLine": 136,
+                  "endColumn": 56
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SuggestedConstraintString": "Is.EqualTo",
+              "SwapOperands": "False"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2010",
+          "level": "note",
+          "message": "Use Is.EqualTo constraint instead of direct comparison for better assertion messages in case of failure",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/CustomerControllerTests.cs",
+                "region": {
+                  "startLine": 149,
+                  "startColumn": 25,
+                  "endLine": 149,
+                  "endColumn": 62
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SuggestedConstraintString": "Is.EqualTo",
+              "SwapOperands": "False"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2045",
+          "level": "note",
+          "message": "Call independent Assert statements from inside an Assert.Multiple",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/VehicleControllerTests.cs",
+                "region": {
+                  "startLine": 129,
+                  "startColumn": 13,
+                  "endLine": 129,
+                  "endColumn": 76
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SupportsEnterMultipleScope": "EnterMultipleScope"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2010",
+          "level": "note",
+          "message": "Use Is.EqualTo constraint instead of direct comparison for better assertion messages in case of failure",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/CustomerControllerTests.cs",
+                "region": {
+                  "startLine": 129,
+                  "startColumn": 29,
+                  "endLine": 129,
+                  "endColumn": 70
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SuggestedConstraintString": "Is.EqualTo",
+              "SwapOperands": "False"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2010",
+          "level": "note",
+          "message": "Use Is.EqualTo constraint instead of direct comparison for better assertion messages in case of failure",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/CustomerControllerTests.cs",
+                "region": {
+                  "startLine": 130,
+                  "startColumn": 29,
+                  "endLine": 130,
+                  "endColumn": 70
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SuggestedConstraintString": "Is.EqualTo",
+              "SwapOperands": "False"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2045",
+          "level": "note",
+          "message": "Call independent Assert statements from inside an Assert.Multiple",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/CatalogControllerTests.cs",
+                "region": {
+                  "startLine": 122,
+                  "startColumn": 13,
+                  "endLine": 122,
+                  "endColumn": 76
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SupportsEnterMultipleScope": "EnterMultipleScope"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2045",
+          "level": "note",
+          "message": "Call independent Assert statements from inside an Assert.Multiple",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/CatalogControllerTests.cs",
+                "region": {
+                  "startLine": 100,
+                  "startColumn": 13,
+                  "endLine": 100,
+                  "endColumn": 76
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SupportsEnterMultipleScope": "EnterMultipleScope"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2010",
+          "level": "note",
+          "message": "Use Is.EqualTo constraint instead of direct comparison for better assertion messages in case of failure",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/OrderControllerTests.cs",
+                "region": {
+                  "startLine": 213,
+                  "startColumn": 25,
+                  "endLine": 213,
+                  "endColumn": 56
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SuggestedConstraintString": "Is.EqualTo",
+              "SwapOperands": "False"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2045",
+          "level": "note",
+          "message": "Call independent Assert statements from inside an Assert.Multiple",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/OrderControllerTests.cs",
+                "region": {
+                  "startLine": 210,
+                  "startColumn": 13,
+                  "endLine": 210,
+                  "endColumn": 76
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SupportsEnterMultipleScope": "EnterMultipleScope"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2010",
+          "level": "note",
+          "message": "Use Is.EqualTo constraint instead of direct comparison for better assertion messages in case of failure",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/OrderControllerTests.cs",
+                "region": {
+                  "startLine": 230,
+                  "startColumn": 25,
+                  "endLine": 230,
+                  "endColumn": 52
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SuggestedConstraintString": "Is.EqualTo",
+              "SwapOperands": "False"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2045",
+          "level": "note",
+          "message": "Call independent Assert statements from inside an Assert.Multiple",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/OrderControllerTests.cs",
+                "region": {
+                  "startLine": 225,
+                  "startColumn": 13,
+                  "endLine": 225,
+                  "endColumn": 76
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SupportsEnterMultipleScope": "EnterMultipleScope"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2010",
+          "level": "note",
+          "message": "Use Is.EqualTo constraint instead of direct comparison for better assertion messages in case of failure",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/StockControllerTests.cs",
+                "region": {
+                  "startLine": 164,
+                  "startColumn": 29,
+                  "endLine": 164,
+                  "endColumn": 64
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SuggestedConstraintString": "Is.EqualTo",
+              "SwapOperands": "False"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2010",
+          "level": "note",
+          "message": "Use Is.EqualTo constraint instead of direct comparison for better assertion messages in case of failure",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/StockControllerTests.cs",
+                "region": {
+                  "startLine": 165,
+                  "startColumn": 29,
+                  "endLine": 165,
+                  "endColumn": 64
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SuggestedConstraintString": "Is.EqualTo",
+              "SwapOperands": "False"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2010",
+          "level": "note",
+          "message": "Use Is.EqualTo constraint instead of direct comparison for better assertion messages in case of failure",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/OrderControllerTests.cs",
+                "region": {
+                  "startLine": 246,
+                  "startColumn": 25,
+                  "endLine": 246,
+                  "endColumn": 52
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SuggestedConstraintString": "Is.EqualTo",
+              "SwapOperands": "False"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2045",
+          "level": "note",
+          "message": "Call independent Assert statements from inside an Assert.Multiple",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/OrderControllerTests.cs",
+                "region": {
+                  "startLine": 241,
+                  "startColumn": 13,
+                  "endLine": 241,
+                  "endColumn": 76
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SupportsEnterMultipleScope": "EnterMultipleScope"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2010",
+          "level": "note",
+          "message": "Use Is.EqualTo constraint instead of direct comparison for better assertion messages in case of failure",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/StockControllerTests.cs",
+                "region": {
+                  "startLine": 183,
+                  "startColumn": 25,
+                  "endLine": 183,
+                  "endColumn": 59
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SuggestedConstraintString": "Is.EqualTo",
+              "SwapOperands": "False"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2010",
+          "level": "note",
+          "message": "Use Is.EqualTo constraint instead of direct comparison for better assertion messages in case of failure",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/OrderControllerTests.cs",
+                "region": {
+                  "startLine": 261,
+                  "startColumn": 25,
+                  "endLine": 261,
+                  "endColumn": 56
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SuggestedConstraintString": "Is.EqualTo",
+              "SwapOperands": "False"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2045",
+          "level": "note",
+          "message": "Call independent Assert statements from inside an Assert.Multiple",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ControllerTests/OrderControllerTests.cs",
+                "region": {
+                  "startLine": 258,
+                  "startColumn": 13,
+                  "endLine": 258,
+                  "endColumn": 76
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SupportsEnterMultipleScope": "EnterMultipleScope"
+            }
+          }
+        }
+      ],
+      "rules": {
+        "CS8602": {
+          "id": "CS8602",
+          "shortDescription": "Desreferência de uma referência possivelmente nula.",
+          "defaultLevel": "warning",
+          "helpUri": "https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&k=k(CS8602)",
+          "properties": {
+            "category": "Compiler",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Compiler",
+              "Telemetry"
+            ]
+          }
+        },
+        "CS8604": {
+          "id": "CS8604",
+          "shortDescription": "Possível argumento de referência nula.",
+          "defaultLevel": "warning",
+          "helpUri": "https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&k=k(CS8604)",
+          "properties": {
+            "category": "Compiler",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Compiler",
+              "Telemetry"
+            ]
+          }
+        },
+        "CS8618": {
+          "id": "CS8618",
+          "shortDescription": "O campo não anulável precisa conter um valor não nulo ao sair do construtor. Considere adicionar o modificador \"obrigatório\" ou declarar como anulável.",
+          "defaultLevel": "warning",
+          "helpUri": "https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&k=k(CS8618)",
+          "properties": {
+            "category": "Compiler",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Compiler",
+              "Telemetry"
+            ]
+          }
+        },
+        "NUnit2010": {
+          "id": "NUnit2010",
+          "shortDescription": "Use EqualConstraint for better assertion messages in case of failure",
+          "fullDescription": "Using EqualConstraint will lead to better assertion messages in case of failure.",
+          "defaultLevel": "note",
+          "helpUri": "https://github.com/nunit/nunit.analyzers/tree/master/documentation/NUnit2010.md",
+          "properties": {
+            "category": "Assertion",
+            "isEnabledByDefault": true
+          }
+        },
+        "NUnit2045": {
+          "id": "NUnit2045",
+          "shortDescription": "Use Assert.Multiple",
+          "fullDescription": "Hosting Asserts inside an Assert.Multiple allows detecting more than one failure.",
+          "defaultLevel": "note",
+          "helpUri": "https://github.com/nunit/nunit.analyzers/tree/master/documentation/NUnit2045.md",
+          "properties": {
+            "category": "Assertion",
+            "isEnabledByDefault": true
+          }
+        }
+      }
+    }
+  ]
+}

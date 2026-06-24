@@ -1,0 +1,14 @@
+﻿C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\BaseRepository.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\CatalogRepository.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\CustomerRepository.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\Dto\CustomerDb.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\Dto\MaterialDb.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\Dto\MechanicalServiceDb.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\Dto\OrderDb.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\Dto\UserDb.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\Dto\VehicleDb.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\OrdersRepository.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\QueryBuilder.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\StockRepository.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\UserRepository.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\VehicleRepository.cs

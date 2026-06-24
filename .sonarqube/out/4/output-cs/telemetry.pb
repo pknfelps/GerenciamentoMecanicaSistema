@@ -1,0 +1,1 @@
+bRUC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\Repository.csprojòCSharp14

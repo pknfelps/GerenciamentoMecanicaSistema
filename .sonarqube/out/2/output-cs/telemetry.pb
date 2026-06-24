@@ -1,0 +1,1 @@
+vRiC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\Repository.Interface.csprojòCSharp14

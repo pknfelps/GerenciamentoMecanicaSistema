@@ -1,0 +1,6 @@
+﻿C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\ICatalogRepository.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\ICustomerRepository.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\IOrdersRepository.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\IStockRepository.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\IUserRepository.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\IVehicleRepository.cs

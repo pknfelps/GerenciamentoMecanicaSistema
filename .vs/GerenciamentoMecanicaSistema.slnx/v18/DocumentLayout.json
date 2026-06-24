@@ -3,20 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{5836563F-AA04-4AD3-8859-8F85ADE92148}|RepositoryTests\\RepositoryTests.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\repositorytests\\catalogrepositorytests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{5836563F-AA04-4AD3-8859-8F85ADE92148}|RepositoryTests\\RepositoryTests.csproj|solutionrelative:repositorytests\\catalogrepositorytests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{02B79BC5-153E-2FD9-CAE3-8149E0D9044F}|Service\\Service.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\service\\stockservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{02B79BC5-153E-2FD9-CAE3-8149E0D9044F}|Service\\Service.csproj|solutionrelative:service\\stockservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AA89DA64-BC2F-73FB-764E-70326ABD64CD}|Service.Interface\\Service.Interface.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\service.interface\\istockservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AA89DA64-BC2F-73FB-764E-70326ABD64CD}|Service.Interface\\Service.Interface.csproj|solutionrelative:service.interface\\istockservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\repository\\ordersrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|solutionrelative:repository\\ordersrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\repository\\catalogrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|solutionrelative:repository\\catalogrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\gerenciamentomecanicasistema\\controllers\\customerscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|solutionrelative:gerenciamentomecanicasistema\\controllers\\customerscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{FF27BE7E-FBDD-EA22-4B48-AB53331752C0}|Repository.Interface\\Repository.Interface.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\repository.interface\\iordersrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FF27BE7E-FBDD-EA22-4B48-AB53331752C0}|Repository.Interface\\Repository.Interface.csproj|solutionrelative:repository.interface\\iordersrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -26,62 +26,58 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "CatalogRepositoryTests.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests\\CatalogRepositoryTests.cs",
-              "RelativeDocumentMoniker": "RepositoryTests\\CatalogRepositoryTests.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests\\CatalogRepositoryTests.cs",
-              "RelativeToolTip": "RepositoryTests\\CatalogRepositoryTests.cs",
-              "ViewState": "AgIAADIAAAAAAAAAAAAAAD0AAAAyAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-23T22:35:17.03Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{e1b7d1f8-9b3c-49b1-8f4f-bfc63a88835d}"
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "OrdersRepository.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\OrdersRepository.cs",
-              "RelativeDocumentMoniker": "Repository\\OrdersRepository.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\OrdersRepository.cs",
-              "RelativeToolTip": "Repository\\OrdersRepository.cs",
-              "ViewState": "AgIAAHEAAAAAAAAAAAAiwD4AAAAQAAAAAAAAAA==",
+              "Title": "IStockService.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\IStockService.cs",
+              "RelativeDocumentMoniker": "Service.Interface\\IStockService.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\IStockService.cs",
+              "RelativeToolTip": "Service.Interface\\IStockService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAA7AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-23T22:26:18.257Z",
+              "WhenOpened": "2026-06-24T01:45:56.762Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "CatalogRepository.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\CatalogRepository.cs",
-              "RelativeDocumentMoniker": "Repository\\CatalogRepository.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\CatalogRepository.cs",
-              "RelativeToolTip": "Repository\\CatalogRepository.cs",
-              "ViewState": "AgIAABMAAAAAAAAAAAA7wAoAAAAlAAAAAAAAAA==",
+              "DocumentIndex": 0,
+              "Title": "StockService.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\StockService.cs",
+              "RelativeDocumentMoniker": "Service\\StockService.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\StockService.cs",
+              "RelativeToolTip": "Service\\StockService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-23T22:25:11.933Z",
+              "WhenOpened": "2026-06-24T01:45:54.643Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 3,
-              "Title": "CustomersController.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\CustomersController.cs",
-              "RelativeDocumentMoniker": "GerenciamentoMecanicaSistema\\Controllers\\CustomersController.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\CustomersController.cs",
-              "RelativeToolTip": "GerenciamentoMecanicaSistema\\Controllers\\CustomersController.cs",
-              "ViewState": "AgIAABYAAAAAAAAAAAA7wAAAAAAAAAAAAAAAAA==",
+              "Title": "IOrdersRepository.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository.Interface\\IOrdersRepository.cs",
+              "RelativeDocumentMoniker": "Repository.Interface\\IOrdersRepository.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository.Interface\\IOrdersRepository.cs",
+              "RelativeToolTip": "Repository.Interface\\IOrdersRepository.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAAA0AAABRAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-23T21:51:32.19Z",
+              "WhenOpened": "2026-06-24T01:45:02.376Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "OrdersRepository.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\OrdersRepository.cs",
+              "RelativeDocumentMoniker": "Repository\\OrdersRepository.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\OrdersRepository.cs",
+              "RelativeToolTip": "Repository\\OrdersRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAABrAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-24T01:44:36.337Z",
               "EditorCaption": ""
             }
           ]

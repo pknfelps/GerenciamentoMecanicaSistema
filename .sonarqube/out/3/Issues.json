@@ -1,0 +1,198 @@
+{
+  "$schema": "http://json.schemastore.org/sarif-1.0.0",
+  "version": "1.0.0",
+  "runs": [
+    {
+      "tool": {
+        "name": "Compilador do Microsoft (R) Visual C#",
+        "version": "5.6.0.0",
+        "fileVersion": "5.6.0-2.26270.133 (96856fd726ffd058fb3dfef0851dbafc7ef3b011)",
+        "semanticVersion": "5.6.0",
+        "language": "pt-BR"
+      },
+      "results": [
+        {
+          "ruleId": "S107",
+          "level": "warning",
+          "message": "Constructor has 8 parameters, which is greater than the 7 authorized.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Service.Interface/Dto/Order/WorkOrderDto.cs",
+                "region": {
+                  "startLine": 8,
+                  "startColumn": 30,
+                  "endLine": 8,
+                  "endColumn": 186
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "S1244",
+          "level": "warning",
+          "message": "Do not check floating point equality with exact values, use a range instead.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Service.Interface/Dto/Order/WorkOrderDto.cs",
+                "region": {
+                  "startLine": 46,
+                  "startColumn": 143,
+                  "endLine": 46,
+                  "endColumn": 145
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "S1244",
+          "level": "warning",
+          "message": "Do not check floating point equality with exact values, use a range instead.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Service.Interface/Dto/Service/CreateServiceDto.cs",
+                "region": {
+                  "startLine": 33,
+                  "startColumn": 64,
+                  "endLine": 33,
+                  "endColumn": 66
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "S1244",
+          "level": "warning",
+          "message": "Do not check floating point equality with exact values, use a range instead.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Service.Interface/Dto/Service/CreateServiceDto.cs",
+                "region": {
+                  "startLine": 33,
+                  "startColumn": 97,
+                  "endLine": 33,
+                  "endColumn": 99
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "S1244",
+          "level": "warning",
+          "message": "Do not check floating point equality with exact values, use a range instead.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Service.Interface/Dto/Stock/CreateMaterialDto.cs",
+                "region": {
+                  "startLine": 33,
+                  "startColumn": 70,
+                  "endLine": 33,
+                  "endColumn": 72
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "S1244",
+          "level": "warning",
+          "message": "Do not check floating point equality with exact values, use a range instead.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Service.Interface/Dto/Stock/MaterialDto.cs",
+                "region": {
+                  "startLine": 28,
+                  "startColumn": 75,
+                  "endLine": 28,
+                  "endColumn": 77
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "S1244",
+          "level": "warning",
+          "message": "Do not check floating point equality with exact values, use a range instead.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Service.Interface/Dto/Order/DetailedWorkOrderDto.cs",
+                "region": {
+                  "startLine": 46,
+                  "startColumn": 143,
+                  "endLine": 46,
+                  "endColumn": 145
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        }
+      ],
+      "rules": {
+        "S107": {
+          "id": "S107",
+          "shortDescription": "Methods should not have too many parameters",
+          "fullDescription": "Methods with a long parameter list are difficult to use because maintainers must figure out the role of each parameter and keep track of their position.",
+          "defaultLevel": "warning",
+          "properties": {
+            "category": "Major Code Smell",
+            "isEnabledByDefault": false,
+            "tags": [
+              "C#",
+              "MainSourceScope",
+              "TestSourceScope",
+              "SonarWay"
+            ]
+          }
+        },
+        "S1244": {
+          "id": "S1244",
+          "shortDescription": "Floating point numbers should not be tested for equality",
+          "fullDescription": "Floating point numbers in C# (and in most other programming languages) are not precise. They are a binary approximation of the actual value. This means that even if two floating point numbers appear to be equal, they might not be due to the tiny differences in their binary representation.",
+          "defaultLevel": "warning",
+          "properties": {
+            "category": "Major Bug",
+            "isEnabledByDefault": true,
+            "tags": [
+              "C#",
+              "MainSourceScope",
+              "TestSourceScope",
+              "SonarWay"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

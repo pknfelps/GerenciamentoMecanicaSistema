@@ -1,0 +1,1 @@
+pRcC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Service.Interface.csprojòCSharp14

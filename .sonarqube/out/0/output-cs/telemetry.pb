@@ -1,0 +1,1 @@
+nRaC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Domain.Interface.csprojòCSharp14
