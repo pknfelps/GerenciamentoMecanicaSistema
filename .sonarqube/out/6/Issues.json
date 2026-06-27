@@ -97,27 +97,6 @@
           }
         },
         {
-          "ruleId": "S927",
-          "level": "warning",
-          "message": "Rename parameter 'materialDto' to 'partDto' to match the interface declaration.",
-          "locations": [
-            {
-              "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Service/StockService.cs",
-                "region": {
-                  "startLine": 12,
-                  "startColumn": 65,
-                  "endLine": 12,
-                  "endColumn": 76
-                }
-              }
-            }
-          ],
-          "properties": {
-            "warningLevel": 1
-          }
-        },
-        {
           "ruleId": "S1192",
           "level": "warning",
           "message": "Define a constant instead of using this literal 'Ordem não encontrada' 6 times.",
@@ -183,9 +162,9 @@
               "physicalLocation": {
                 "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Service/OrdersService.cs",
                 "region": {
-                  "startLine": 290,
+                  "startLine": 275,
                   "startColumn": 99,
-                  "endLine": 290,
+                  "endLine": 275,
                   "endColumn": 121
                 }
               }
@@ -276,22 +255,6 @@
             "tags": [
               "C#",
               "MainSourceScope",
-              "SonarWay"
-            ]
-          }
-        },
-        "S927": {
-          "id": "S927",
-          "shortDescription": "Parameter names should match base declaration and other partial definitions",
-          "fullDescription": "Parameters are part of the method signature and its identity.",
-          "defaultLevel": "warning",
-          "properties": {
-            "category": "Critical Code Smell",
-            "isEnabledByDefault": true,
-            "tags": [
-              "C#",
-              "MainSourceScope",
-              "TestSourceScope",
               "SonarWay"
             ]
           }

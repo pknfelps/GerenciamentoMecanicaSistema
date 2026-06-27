@@ -1,1 +1,1 @@
-bRUC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\Repository.csprojòCSharp14
+pRcC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Service.Interface.csprojòCSharp14

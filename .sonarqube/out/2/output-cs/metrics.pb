@@ -4,9 +4,9 @@ cC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\I
 `C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\IUserRepository.csr		
 t
 aC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\IStockRepository.csr	
-~
-bC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\IOrdersRepository.csr	
-v
+|
+bC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\IOrdersRepository.csr	
+v
 dC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\ICustomerRepository.csr	
 u
 cC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\ICatalogRepository.csr	

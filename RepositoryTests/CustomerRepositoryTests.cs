@@ -17,7 +17,7 @@ namespace RepositoryTests
                 var customer = Substitute.For<ICustomer>();
                 customer.Id.Returns(Guid.NewGuid());
                 customer.Name.Returns("Fulano");
-                customer.Document.Id.Returns("123.456.789-12");
+                customer.Document.Id.Returns("417.384.220-11");
                 customer.Phone.Number.Returns("(11) 31234-5678");
                 customer.Email.Address.Returns("fulano@gmail.com");
                 return customer;
@@ -32,7 +32,7 @@ namespace RepositoryTests
                 var customer = Substitute.For<ICustomer>();
                 customer.Id.Returns(ExistingCustomerId);
                 customer.Name.Returns("Ciclano");
-                customer.Document.Id.Returns("12.123.456/0001-12");
+                customer.Document.Id.Returns("65.457.513/0001-71");
                 customer.Phone.Number.Returns("(11) 91234-5678");
                 customer.Email.Address.Returns("ciclano@gmail.com");
                 return customer;
@@ -46,7 +46,7 @@ namespace RepositoryTests
                 var customer = Substitute.For<ICustomer>();
                 customer.Id.Returns(ExistingCustomerId);
                 customer.Name.Returns("Ciclano");
-                customer.Document.Id.Returns("12.123.456/0001-12");
+                customer.Document.Id.Returns("65.457.513/0001-71");
                 customer.Phone.Number.Returns("(11) 94321-8765");
                 customer.Email.Address.Returns("ciclano.company@gmail.com");
                 return customer;

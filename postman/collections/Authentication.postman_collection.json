@@ -77,7 +77,7 @@
   "variable": [
     {
       "key": "api",
-      "value": "authentication"
+      "value": ""
     }
   ]
 }

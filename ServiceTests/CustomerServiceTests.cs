@@ -4,7 +4,6 @@ using Repository.Interface;
 using Service;
 using Service.Interface;
 using Service.Interface.Dto.Customer;
-using System.Dynamic;
 
 namespace ServiceTests
 {
@@ -13,9 +12,9 @@ namespace ServiceTests
         private ICustomerService CustomerService { get; set; }
         private ICustomerRepository CustomerRepository { get; set; }
 
-        private static CreateCustomerDto CustomerToCreate { get; } = new("Fulano", "12345678912", "11912345678", "fulano@gmail.com");
-        private static CreateCustomerDto CustomerToCreateFormated { get; set; } = new("Fulano", "123.456.789-12", "(11) 91234-5678", "fulano@gmail.com");
-        private static CreateCustomerDto CustomerToFailCreation { get; set; } = new("Teste", "987.654.321-98", "(11) 91234-5678", "teste@gmail.com");
+        private static CreateCustomerDto CustomerToCreate { get; } = new("Fulano", "66211973063", "11912345678", "fulano@gmail.com");
+        private static CreateCustomerDto CustomerToCreateFormated { get; set; } = new("Fulano", "662.119.730-63", "(11) 91234-5678", "fulano@gmail.com");
+        private static CreateCustomerDto CustomerToFailCreation { get; set; } = new("Teste", "274.465.520-18", "(11) 91234-5678", "teste@gmail.com");
 
         private static readonly Guid ExistingCustomerId = Guid.NewGuid();
         private static ICustomer ExistingCustomer
@@ -25,7 +24,7 @@ namespace ServiceTests
                 var customer = Substitute.For<ICustomer>();
                 customer.Id.Returns(ExistingCustomerId);
                 customer.Name.Returns("Ciclano");
-                customer.Document.Id.Returns("12.123.456/0001-12");
+                customer.Document.Id.Returns("10.359.666/0001-94");
                 customer.Phone.Number.Returns("(11) 91234-5678");
                 customer.Email.Address.Returns("ciclano@gmail.com");
                 return customer;
@@ -40,17 +39,17 @@ namespace ServiceTests
                 var customer = Substitute.For<ICustomer>();
                 customer.Id.Returns(ExistingCustomer2Id);
                 customer.Name.Returns("Beltrano");
-                customer.Document.Id.Returns("12.123.456/0001-15");
+                customer.Document.Id.Returns("65.457.513/0001-71");
                 customer.Phone.Number.Returns("(11) 91234-5678");
                 customer.Email.Address.Returns("beltrano@gmail.com");
                 return customer;
             }
         }
 
-        private static CustomerDto ExistingCustomerDto { get; } = new(ExistingCustomerId, "Ciclano", "12.123.456/0001-12", "(11) 91234-5678", "ciclano@gmail.com");
-        private static CustomerDto ExistingCustomer2Dto { get; } = new(ExistingCustomer2Id, "Beltrano", "12.123.456/0001-15", "(11) 91234-5678", "beltrano@gmail.com");
-        private static CreateCustomerDto CustomerToUpdateDto { get; } = new("Ciclano", "12.123.456/0001-12", "(11) 94321-8765", "ciclano.company@gmail.com");
-        private static CreateCustomerDto CustomerToFailtUpdateOrDeleteDto { get; } = new("Beltrano", "12.123.456/0001-15", "(11) 91234-5678", "beltrano@gmail.com");
+        private static CustomerDto ExistingCustomerDto { get; } = new(ExistingCustomerId, "Ciclano", "10.359.666/0001-94", "(11) 91234-5678", "ciclano@gmail.com");
+        private static CustomerDto ExistingCustomer2Dto { get; } = new(ExistingCustomer2Id, "Beltrano", "65.457.513/0001-71", "(11) 91234-5678", "beltrano@gmail.com");
+        private static CreateCustomerDto CustomerToUpdateDto { get; } = new("Ciclano", "10.359.666/0001-94", "(11) 94321-8765", "ciclano.company@gmail.com");
+        private static CreateCustomerDto CustomerToFailtUpdateOrDeleteDto { get; } = new("Beltrano", "65.457.513/0001-71", "(11) 91234-5678", "beltrano@gmail.com");
 
         [SetUp]
         public void SetUp()
@@ -213,7 +212,7 @@ namespace ServiceTests
         {
             var customer = new CreateCustomerDto("Teste", "358.410.168-64", "(11) 21245-6458", "teste@gmail.com");
 
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.UpdateCustomer(Arg.Any<Guid>(), customer));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.UpdateCustomer(Guid.NewGuid(), customer));
         }
 
         [Test]

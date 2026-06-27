@@ -1,6 +1,6 @@
 ﻿using Domain.Customer;
 
-namespace DomainTests.Costumer
+namespace DomainTests.Customer
 {
     public class CpfTests
     {
@@ -31,9 +31,15 @@ namespace DomainTests.Costumer
         }
 
         [Test]
+        public void MustNotCreateCpfIfItIsInvalid()
+        {
+            Assert.Catch<ArgumentException>(() => new Cpf("12345678912"));
+        }
+
+        [Test]
         public void MustCreateCpf()
         {
-            Cpf cpf = new("123.456.789-12");
+            Cpf cpf = new("662.119.730-63");
 
             Assert.That(cpf, Is.Not.Null);
             Assert.That(cpf.Id, Is.Not.Null);
@@ -43,10 +49,10 @@ namespace DomainTests.Costumer
         [Test]
         public void MustCreateCpfAndNormalize()
         {
-            Cpf cpf = new("12345678912");
+            Cpf cpf = new("66211973063");
 
             Assert.That(cpf, Is.Not.Null);
-            Assert.That(cpf.Id, Is.EqualTo("123.456.789-12"));
+            Assert.That(cpf.Id, Is.EqualTo("662.119.730-63"));
         }
     }
 }

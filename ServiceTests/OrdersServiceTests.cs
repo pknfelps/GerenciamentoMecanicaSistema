@@ -26,9 +26,9 @@ namespace ServiceTests
         private ICatalogService MechanicalService { get; set; }
         private IEmailService EmailService { get; set; }
 
-        private static CustomerDto ExistingCustomer { get; } = new(Guid.NewGuid(), "Teste", "123.456.789-12", "(11) 91234-5678", "teste@gmail.com");
+        private static CustomerDto ExistingCustomer { get; } = new(Guid.NewGuid(), "Teste", "417.384.220-11", "(11) 91234-5678", "teste@gmail.com");
 
-        private static CustomerDto ExistingFailCustomer { get; } = new(Guid.NewGuid(), "Teste", "321.654.987-21", "(11) 91234-5678", "teste@gmail.com");
+        private static CustomerDto ExistingFailCustomer { get; } = new(Guid.NewGuid(), "Teste", "662.119.730-63", "(11) 91234-5678", "teste@gmail.com");
 
         private static VehicleDto ExistingVehicle { get; } = new(Guid.NewGuid(), ExistingCustomer.Document, "Honda", "Civic", 2026, "CVC2026");
 
@@ -117,18 +117,32 @@ namespace ServiceTests
                 return orders.Where(x => x.CustomerDocument.Id == document);
             });
 
-            Repository.UpdateOrderStatus(Arg.Any<Guid>(), Arg.Any<WorkOrderStatus>()).Returns(callInfo =>
+            Repository.UpdateOrder(Arg.Any<IOrder>()).Returns(callInfo =>
             {
-                var id = callInfo.ArgAt<Guid>(0);
-                var status = callInfo.ArgAt<WorkOrderStatus>(1);
+                var order = callInfo.ArgAt<IOrder>(0);
 
-                if (id == ExistingReceivedOrder.Id && (status == WorkOrderStatus.InDiagnosis || status == WorkOrderStatus.WaitingForExecution || status == WorkOrderStatus.Finished))
-                    return 1;
+                if (order.Id == ExistingReceivedOrder.Id)
+                {
+                    if (order.Status == WorkOrderStatus.InDiagnosis || order.Status == WorkOrderStatus.WaitingForExecution)
+                        return 1;
 
-                if (id == ExistingOrderInDiagnosisId && (status == WorkOrderStatus.WaitingForApproval || status == WorkOrderStatus.Finished || status == WorkOrderStatus.InExecution || status == WorkOrderStatus.Delivered))
-                    return 1;
+                    if (order.Status == WorkOrderStatus.Finished)
+                        return 1;
+                }
 
-                if (id == ExistingTestOrder.Id && status == WorkOrderStatus.WaitingForApproval)
+                if (order.Id == ExistingOrderInDiagnosisId)
+                {
+                    if (order.Status == WorkOrderStatus.WaitingForApproval && order.Budget != 0.0)
+                        return 1;
+
+                    if (order.Status == WorkOrderStatus.InExecution || order.Status == WorkOrderStatus.Delivered)
+                        return 1;
+
+                    if (order.Status == WorkOrderStatus.Finished)
+                        return 1;
+                }
+
+                if (order.Id == ExistingTestOrder.Id && order.Status == WorkOrderStatus.WaitingForApproval)
                     return 1;
 
                 return 0;
@@ -195,28 +209,6 @@ namespace ServiceTests
                 var partId = callInfo.ArgAt<Guid>(1);
 
                 if (id == ExistingOrderInDiagnosisId && partId == ExistingPart2.Id)
-                    return 1;
-
-                return 0;
-            });
-
-            Repository.UpdateOrderBudget(Arg.Any<Guid>(), Arg.Any<double>()).Returns(callInfo =>
-            {
-                var id = callInfo.ArgAt<Guid>(0);
-                var value = callInfo.ArgAt<double>(1);
-
-                if (id == ExistingOrderInDiagnosisId && value > 0)
-                    return 1;
-
-                return 0;
-            });
-
-            Repository.UpdateOrderDuration(Arg.Any<Guid>(), Arg.Any<TimeSpan>()).Returns(callInfo =>
-            {
-                var id = callInfo.ArgAt<Guid>(0);
-                var value = callInfo.ArgAt<TimeSpan>(1);
-
-                if (id == ExistingOrderInDiagnosisId && value > TimeSpan.Zero)
                     return 1;
 
                 return 0;
@@ -644,7 +636,7 @@ namespace ServiceTests
             await Service.StartDiagnosis(ExistingReceivedOrder.Id);
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
-            await Repository.Received(1).UpdateOrderStatus(ExistingReceivedOrder.Id, WorkOrderStatus.InDiagnosis);
+            await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
@@ -653,7 +645,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.StartDiagnosis(Guid.NewGuid()));
 
             await Repository.Received(1).GetOrder(Arg.Any<Guid>());
-            await Repository.ReceivedWithAnyArgs(0).UpdateOrderStatus(Arg.Any<Guid>(), Arg.Any<WorkOrderStatus>());
+            await Repository.Received(0).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
@@ -662,7 +654,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.StartDiagnosis(ExistingOrderInDiagnosis.Id));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosis.Id);
-            await Repository.Received(1).UpdateOrderStatus(ExistingOrderInDiagnosis.Id, WorkOrderStatus.InDiagnosis);
+            await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
@@ -931,9 +923,7 @@ namespace ServiceTests
             await Service.CompleteDiagnosis(ExistingOrderInDiagnosisId);
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
-            await Repository.Received(1).UpdateOrderStatus(ExistingOrderInDiagnosisId, WorkOrderStatus.WaitingForApproval);
-            await Repository.ReceivedWithAnyArgs(1).UpdateOrderBudget(ExistingOrderInDiagnosisId, Arg.Any<double>());
-            await Repository.Received(0).UpdateOrderStatus(ExistingOrderInDiagnosisId, WorkOrderStatus.InDiagnosis);
+            await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
             await EmailService.ReceivedWithAnyArgs(1).NotifyBudget(Arg.Any<ICustomer>(), Arg.Any<IVehicle>(), Arg.Any<IOrder>());
         }
 
@@ -943,33 +933,17 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CompleteDiagnosis(Guid.NewGuid()));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
-            await Repository.Received(0).UpdateOrderStatus(ExistingOrderInDiagnosisId, WorkOrderStatus.WaitingForApproval);
-            await Repository.ReceivedWithAnyArgs(0).UpdateOrderBudget(ExistingOrderInDiagnosisId, Arg.Any<double>());
-            await Repository.Received(0).UpdateOrderStatus(ExistingOrderInDiagnosisId, WorkOrderStatus.InDiagnosis);
+            await Repository.Received(0).UpdateOrder(Arg.Any<IOrder>());
             await EmailService.ReceivedWithAnyArgs(0).NotifyBudget(Arg.Any<ICustomer>(), Arg.Any<IVehicle>(), Arg.Any<IOrder>());
         }
 
         [Test]
-        public async Task MustFailToCompleteDiagnosisWhenUpdateStatus()
+        public async Task MustFailToCompleteDiagnosis()
         {
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CompleteDiagnosis(ExistingReceivedOrder.Id));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
-            await Repository.Received(1).UpdateOrderStatus(ExistingReceivedOrder.Id, WorkOrderStatus.WaitingForApproval);
-            await Repository.ReceivedWithAnyArgs(0).UpdateOrderBudget(ExistingOrderInDiagnosisId, Arg.Any<double>());
-            await Repository.Received(0).UpdateOrderStatus(ExistingOrderInDiagnosisId, WorkOrderStatus.InDiagnosis);
-            await EmailService.ReceivedWithAnyArgs(0).NotifyBudget(Arg.Any<ICustomer>(), Arg.Any<IVehicle>(), Arg.Any<IOrder>());
-        }
-
-        [Test]
-        public async Task MustFailToCompleteDiagnosisWhenUpdateBudget()
-        {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CompleteDiagnosis(ExistingTestOrder.Id));
-
-            await Repository.Received(1).GetOrder(ExistingTestOrder.Id);
-            await Repository.Received(1).UpdateOrderStatus(ExistingTestOrder.Id, WorkOrderStatus.WaitingForApproval);
-            await Repository.ReceivedWithAnyArgs(1).UpdateOrderBudget(ExistingTestOrder.Id, Arg.Any<double>());
-            await Repository.Received(1).UpdateOrderStatus(ExistingTestOrder.Id, WorkOrderStatus.InDiagnosis);
+            await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
             await EmailService.ReceivedWithAnyArgs(0).NotifyBudget(Arg.Any<ICustomer>(), Arg.Any<IVehicle>(), Arg.Any<IOrder>());
         }
 
@@ -980,7 +954,7 @@ namespace ServiceTests
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
-            await Repository.Received(1).UpdateOrderStatus(ExistingReceivedOrder.Id, WorkOrderStatus.WaitingForExecution);
+            await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
@@ -990,7 +964,7 @@ namespace ServiceTests
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
-            await Repository.Received(1).UpdateOrderStatus(ExistingReceivedOrder.Id, WorkOrderStatus.Finished);
+            await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
@@ -1000,7 +974,7 @@ namespace ServiceTests
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
             await StockService.ReceivedWithAnyArgs(2).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
-            await Repository.Received(1).UpdateOrderStatus(ExistingOrderInDiagnosisId, WorkOrderStatus.Finished);
+            await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
@@ -1010,7 +984,7 @@ namespace ServiceTests
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
-            await Repository.ReceivedWithAnyArgs(0).UpdateOrderStatus(Arg.Any<Guid>(), Arg.Any<WorkOrderStatus>());
+            await Repository.ReceivedWithAnyArgs(0).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
@@ -1020,7 +994,7 @@ namespace ServiceTests
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
-            await Repository.ReceivedWithAnyArgs(0).UpdateOrderStatus(Arg.Any<Guid>(), Arg.Any<WorkOrderStatus>());
+            await Repository.ReceivedWithAnyArgs(0).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
@@ -1030,7 +1004,7 @@ namespace ServiceTests
 
             await Repository.Received(1).GetOrder(ExistingTestOrder.Id);
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
-            await Repository.ReceivedWithAnyArgs(1).UpdateOrderStatus(ExistingTestOrder.Id, WorkOrderStatus.Finished);
+            await Repository.ReceivedWithAnyArgs(1).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
@@ -1039,7 +1013,7 @@ namespace ServiceTests
             await Service.StartExecution(ExistingOrderInDiagnosisId);
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
-            await Repository.Received(1).UpdateOrderStatus(ExistingOrderInDiagnosisId, WorkOrderStatus.InExecution);
+            await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
@@ -1048,7 +1022,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.StartExecution(Guid.NewGuid()));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
-            await Repository.ReceivedWithAnyArgs(0).UpdateOrderStatus(Arg.Any<Guid>(), Arg.Any<WorkOrderStatus>());
+            await Repository.ReceivedWithAnyArgs(0).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
@@ -1057,7 +1031,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.StartExecution(ExistingReceivedOrder.Id));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
-            await Repository.Received(1).UpdateOrderStatus(ExistingReceivedOrder.Id, WorkOrderStatus.InExecution);
+            await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
@@ -1066,7 +1040,7 @@ namespace ServiceTests
             await Service.CompleteExecution(ExistingOrderInDiagnosisId);
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
-            await Repository.Received(1).UpdateOrderStatus(ExistingOrderInDiagnosisId, WorkOrderStatus.Finished);
+            await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
@@ -1075,7 +1049,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CompleteExecution(Guid.NewGuid()));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
-            await Repository.ReceivedWithAnyArgs(0).UpdateOrderStatus(Arg.Any<Guid>(), Arg.Any<WorkOrderStatus>());
+            await Repository.ReceivedWithAnyArgs(0).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
@@ -1084,7 +1058,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CompleteExecution(ExistingTestOrder.Id));
 
             await Repository.Received(1).GetOrder(ExistingTestOrder.Id);
-            await Repository.Received(1).UpdateOrderStatus(ExistingTestOrder.Id, WorkOrderStatus.Finished);
+            await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
@@ -1093,7 +1067,7 @@ namespace ServiceTests
             await Service.DeliverVehicle(ExistingOrderInDiagnosisId);
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
-            await Repository.Received(1).UpdateOrderStatus(ExistingOrderInDiagnosisId, WorkOrderStatus.Delivered);
+            await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
@@ -1102,7 +1076,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeliverVehicle(Guid.NewGuid()));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
-            await Repository.ReceivedWithAnyArgs(0).UpdateOrderStatus(Arg.Any<Guid>(), Arg.Any<WorkOrderStatus>());
+            await Repository.ReceivedWithAnyArgs(0).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
@@ -1111,7 +1085,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeliverVehicle(ExistingTestOrder.Id));
 
             await Repository.Received(1).GetOrder(ExistingTestOrder.Id);
-            await Repository.Received(1).UpdateOrderStatus(ExistingTestOrder.Id, WorkOrderStatus.Delivered);
+            await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
@@ -1228,6 +1202,8 @@ namespace ServiceTests
 
                 order.Status.Returns(status);
             });
+
+            order.When(x => x.StartDiagnosis()).Do(_ => order.Status.Returns(WorkOrderStatus.InDiagnosis));
 
             order.When(x => x.StartService()).Do(_ => order.Status.Returns(WorkOrderStatus.InExecution));
 

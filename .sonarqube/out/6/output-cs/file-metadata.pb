@@ -5,10 +5,10 @@ lC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\obj\Debug\net1
 RC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\VehicleService.csutf-8X
 OC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\UserService.csutf-8Y
 PC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\StockService.csutf-8[
-RC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\SmtpConnection.csutf-8c
-ZC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\Settings\EmailSettings.csutf-8Z
-QC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\OrdersService.csutf-8Y
+RC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\SmtpConnection.csutf-8Z
+QC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\OrdersService.csutf-8c
+ZC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\Settings\EmailSettings.csutf-8Y
 PC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\EmailService.csutf-8\
-SC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\CustomerService.csutf-8[
-RC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\CatalogService.csutf-8b
-YC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\AuthenticationService.csutf-8
+SC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\CustomerService.csutf-8b
+YC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\AuthenticationService.csutf-8[
+RC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\CatalogService.csutf-8

@@ -14,16 +14,16 @@
         {
           "ruleId": "S107",
           "level": "warning",
-          "message": "Constructor has 9 parameters, which is greater than the 7 authorized.",
+          "message": "Constructor has 8 parameters, which is greater than the 7 authorized.",
           "locations": [
             {
               "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Repository/Dto/OrderDb.cs",
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Service.Interface/Dto/Order/WorkOrderDto.cs",
                 "region": {
-                  "startLine": 34,
-                  "startColumn": 23,
-                  "endLine": 34,
-                  "endColumn": 200
+                  "startLine": 8,
+                  "startColumn": 30,
+                  "endLine": 8,
+                  "endColumn": 186
                 }
               }
             }
@@ -33,18 +33,18 @@
           }
         },
         {
-          "ruleId": "S107",
+          "ruleId": "S1244",
           "level": "warning",
-          "message": "Constructor has 10 parameters, which is greater than the 7 authorized.",
+          "message": "Do not check floating point equality with exact values, use a range instead.",
           "locations": [
             {
               "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Repository/Dto/OrderDb.cs",
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Service.Interface/Dto/Service/CreateServiceDto.cs",
                 "region": {
-                  "startLine": 47,
-                  "startColumn": 23,
-                  "endLine": 47,
-                  "endColumn": 248
+                  "startLine": 33,
+                  "startColumn": 64,
+                  "endLine": 33,
+                  "endColumn": 66
                 }
               }
             }
@@ -54,18 +54,81 @@
           }
         },
         {
-          "ruleId": "S927",
+          "ruleId": "S1244",
           "level": "warning",
-          "message": "Rename parameter 'material' to 'part' to match the interface declaration.",
+          "message": "Do not check floating point equality with exact values, use a range instead.",
           "locations": [
             {
               "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Repository/OrdersRepository.cs",
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Service.Interface/Dto/Service/CreateServiceDto.cs",
                 "region": {
-                  "startLine": 172,
+                  "startLine": 33,
+                  "startColumn": 97,
+                  "endLine": 33,
+                  "endColumn": 99
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "S1244",
+          "level": "warning",
+          "message": "Do not check floating point equality with exact values, use a range instead.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Service.Interface/Dto/Order/WorkOrderDto.cs",
+                "region": {
+                  "startLine": 46,
+                  "startColumn": 143,
+                  "endLine": 46,
+                  "endColumn": 145
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "S1244",
+          "level": "warning",
+          "message": "Do not check floating point equality with exact values, use a range instead.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Service.Interface/Dto/Stock/CreateMaterialDto.cs",
+                "region": {
+                  "startLine": 33,
+                  "startColumn": 70,
+                  "endLine": 33,
+                  "endColumn": 72
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "S1244",
+          "level": "warning",
+          "message": "Do not check floating point equality with exact values, use a range instead.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Service.Interface/Dto/Stock/MaterialDto.cs",
+                "region": {
+                  "startLine": 28,
                   "startColumn": 75,
-                  "endLine": 172,
-                  "endColumn": 83
+                  "endLine": 28,
+                  "endColumn": 77
                 }
               }
             }
@@ -75,39 +138,18 @@
           }
         },
         {
-          "ruleId": "S927",
+          "ruleId": "S1244",
           "level": "warning",
-          "message": "Rename parameter 'materialId' to 'partId' to match the interface declaration.",
+          "message": "Do not check floating point equality with exact values, use a range instead.",
           "locations": [
             {
               "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Repository/OrdersRepository.cs",
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Service.Interface/Dto/Order/DetailedWorkOrderDto.cs",
                 "region": {
-                  "startLine": 179,
-                  "startColumn": 75,
-                  "endLine": 179,
-                  "endColumn": 85
-                }
-              }
-            }
-          ],
-          "properties": {
-            "warningLevel": 1
-          }
-        },
-        {
-          "ruleId": "S927",
-          "level": "warning",
-          "message": "Rename parameter 'material' to 'part' to match the interface declaration.",
-          "locations": [
-            {
-              "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/Repository/OrdersRepository.cs",
-                "region": {
-                  "startLine": 184,
-                  "startColumn": 80,
-                  "endLine": 184,
-                  "endColumn": 88
+                  "startLine": 46,
+                  "startColumn": 143,
+                  "endLine": 46,
+                  "endColumn": 145
                 }
               }
             }
@@ -134,13 +176,13 @@
             ]
           }
         },
-        "S927": {
-          "id": "S927",
-          "shortDescription": "Parameter names should match base declaration and other partial definitions",
-          "fullDescription": "Parameters are part of the method signature and its identity.",
+        "S1244": {
+          "id": "S1244",
+          "shortDescription": "Floating point numbers should not be tested for equality",
+          "fullDescription": "Floating point numbers in C# (and in most other programming languages) are not precise. They are a binary approximation of the actual value. This means that even if two floating point numbers appear to be equal, they might not be due to the tiny differences in their binary representation.",
           "defaultLevel": "warning",
           "properties": {
-            "category": "Critical Code Smell",
+            "category": "Major Bug",
             "isEnabledByDefault": true,
             "tags": [
               "C#",

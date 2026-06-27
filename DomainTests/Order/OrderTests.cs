@@ -9,7 +9,7 @@ namespace DomainTests.Order
     {
         private IOrder ReceivedOrder { get; set; }
         private IOrder OrderInExecution { get; set; }
-        private string Document { get; set; } = "123.456.789-12";
+        private string Document { get; set; } = "662.119.730-63";
         private string LicensePlate { get; set; } = "CAR1234";
 
         [SetUp]

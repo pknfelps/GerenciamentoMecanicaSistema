@@ -49,7 +49,7 @@ namespace RepositoryTests
             get
             {
                 var order = Substitute.For<IOrder>();
-                order.CustomerDocument.Id.Returns("123.456.789-12");
+                order.CustomerDocument.Id.Returns("417.384.220-11");
                 order.VehicleLicensePlate.License.Returns("CVC2026");
                 order.Services.Returns([]);
                 order.Materials.Returns([]);
@@ -62,14 +62,14 @@ namespace RepositoryTests
         }
 
         private static readonly Guid ExistingOrderId = Guid.NewGuid();
-        private static readonly DateTime ExistingOrderDateCreated = DateTime.Now;
+        private static readonly DateTime ExistingOrderDateCreated = DateTime.Now.AddMinutes(-5);
         private static IOrder ExistingOrder
         {
             get
             {
                 var order = Substitute.For<IOrder>();
                 order.Id.Returns(ExistingOrderId);
-                order.CustomerDocument.Id.Returns("123.456.789-12");
+                order.CustomerDocument.Id.Returns("417.384.220-11");
                 order.VehicleLicensePlate.License.Returns("CVC2026");
                 order.Services.Returns([]);
                 order.Materials.Returns([]);
@@ -154,12 +154,12 @@ namespace RepositoryTests
 
             await Connection.ExecuteAsync($"""
                 INSERT INTO customers(id, name, document, phone, email)
-                VALUES ('{Guid.NewGuid()}', 'Teste', '123.456.789-12', '(11) 91234-5678', 'teste@gmail.com');
+                VALUES ('{Guid.NewGuid()}', 'Teste', '417.384.220-11', '(11) 91234-5678', 'teste@gmail.com');
                 """);
 
             await Connection.ExecuteAsync($"""
                 INSERT INTO vehicles(id, customer_document, brand, model, year, license_plate)
-                VALUES ('{Guid.NewGuid()}', '123.456.789-12', 'Honda', 'Civic', 2026, 'CVC2026');
+                VALUES ('{Guid.NewGuid()}', '417.384.220-11', 'Honda', 'Civic', 2026, 'CVC2026');
                 """);
 
             await Connection.ExecuteAsync($"""
@@ -386,9 +386,21 @@ namespace RepositoryTests
         }
 
         [Test]
-        public async Task MustUpdateOrderStatus()
+        public async Task MustUpdateOrder()
         {
-            var registry = await Repository.UpdateOrderStatus(ExistingOrderId, WorkOrderStatus.WaitingForExecution);
+            var order = Substitute.For<IOrder>();
+            order.Id.Returns(ExistingOrderId);
+            order.CustomerDocument.Id.Returns("417.384.220-11");
+            order.VehicleLicensePlate.License.Returns("CVC2026");
+            order.Services.Returns([]);
+            order.Materials.Returns([]);
+            order.Budget.Returns(200);
+            order.Status.Returns(WorkOrderStatus.Finished);
+            order.DateCreated.Returns(ExistingOrderDateCreated);
+            order.DateFinished.Returns(DateTime.Now);
+            order.Duration.Returns(TimeSpan.FromHours(6));
+
+            var registry = await Repository.UpdateOrder(order);
 
             Assert.That(registry, Is.Not.EqualTo(0));
         }
@@ -443,22 +455,6 @@ namespace RepositoryTests
             part.Amount.Returns(5);
 
             var registry = await Repository.UpdateMaterialFromOrder(ExistingOrderId, part);
-
-            Assert.That(registry, Is.Not.EqualTo(0));
-        }
-
-        [Test]
-        public async Task MustUpdateOrderBudget()
-        {
-            var registry = await Repository.UpdateOrderBudget(ExistingOrderId, 200);
-
-            Assert.That(registry, Is.Not.EqualTo(0));
-        }
-
-        [Test]
-        public async Task MustUpdateOrderDuration()
-        {
-            var registry = await Repository.UpdateOrderDuration(ExistingOrderId, TimeSpan.FromHours(6));
 
             Assert.That(registry, Is.Not.EqualTo(0));
         }

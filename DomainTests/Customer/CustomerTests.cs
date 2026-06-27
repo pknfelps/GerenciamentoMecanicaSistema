@@ -1,13 +1,11 @@
-﻿using Domain.Customer;
-
-namespace DomainTests.Costumer
+﻿namespace DomainTests.Customer
 {
     public class CustomerTests
     {
         [Test]
         public void MustCreateCustomerWithoutId()
         {
-            Customer cliente = new("Fulano", "123.456.789-12", "11 91234-5678", "fulano@gmail.com");
+            Domain.Customer.Customer cliente = new("Fulano", "662.119.730-63", "11 91234-5678", "fulano@gmail.com");
 
             Assert.That(cliente, Is.Not.Null);
 
@@ -22,7 +20,7 @@ namespace DomainTests.Costumer
             Assert.Multiple(() =>
             {
                 Assert.That(cliente.Document, Is.Not.Null);
-                Assert.That(cliente.Document.Id, Is.EqualTo("123.456.789-12"));
+                Assert.That(cliente.Document.Id, Is.EqualTo("662.119.730-63"));
             });
 
             Assert.Multiple(() =>
@@ -43,7 +41,7 @@ namespace DomainTests.Costumer
         {
             Guid clienteId = Guid.NewGuid();
 
-            Customer cliente = new(clienteId, "Fulano", "123.456.789-12", "11 91234-5678", "fulano@gmail.com");
+            Domain.Customer.Customer cliente = new(clienteId, "Fulano", "662.119.730-63", "11 91234-5678", "fulano@gmail.com");
 
             Assert.That(cliente, Is.Not.Null);
 
@@ -58,7 +56,7 @@ namespace DomainTests.Costumer
             Assert.Multiple(() =>
             {
                 Assert.That(cliente.Document, Is.Not.Null);
-                Assert.That(cliente.Document.Id, Is.EqualTo("123.456.789-12"));
+                Assert.That(cliente.Document.Id, Is.EqualTo("662.119.730-63"));
             });
 
             Assert.Multiple(() =>
@@ -75,10 +73,16 @@ namespace DomainTests.Costumer
         }
 
         [Test]
+        public void MustNotCreateCustomerWithEmptyId()
+        {
+            Assert.Throws<ArgumentNullException>(() => new Domain.Customer.Customer(Guid.Empty, "Fulano", "662.119.730-63", "11 91234-5678", "fulano@gmail.com"));
+        }
+
+        [Test]
         public void MustNotCreateCustomerIfNomeIsEmpty()
         {
-            Assert.Throws<ArgumentNullException>(() => new Customer("", "123.456.789-12", "11 91234-5678", "fulano@gmail.com"));
-            Assert.Throws<ArgumentNullException>(() => new Customer(" ", "123.456.789-12", "11 91234-5678", "fulano@gmail.com"));
+            Assert.Throws<ArgumentNullException>(() => new Domain.Customer.Customer("", "123.456.789-12", "11 91234-5678", "fulano@gmail.com"));
+            Assert.Throws<ArgumentNullException>(() => new Domain.Customer.Customer(" ", "123.456.789-12", "11 91234-5678", "fulano@gmail.com"));
         }
     }
 }

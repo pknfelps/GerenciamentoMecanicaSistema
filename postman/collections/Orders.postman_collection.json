@@ -28,7 +28,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"CustomerDocument\": \"123.456.789-12\",\r\n    \"VehicleLicensePlate\": \"CVC2025\"\r\n}",
+          "raw": "{\r\n    \"CustomerDocument\": \"662.119.730-63\",\r\n    \"VehicleLicensePlate\": \"CVC2025\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -307,7 +307,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"CustomerDocument\": \"987.654.321-12\",\r\n    \"Approved\": true\r\n}",
+          "raw": "{\r\n    \"CustomerDocument\": \"662.119.730-63\",\r\n    \"Approved\": true\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -450,19 +450,19 @@
   "variable": [
     {
       "key": "api",
-      "value": "orders"
+      "value": ""
     },
     {
       "key": "services",
-      "value": "services"
+      "value": ""
     },
     {
       "key": "materials",
-      "value": "materials"
+      "value": ""
     },
     {
       "key": "complete_diagnosis",
-      "value": "diagnosis/complete"
+      "value": ""
     },
     {
       "key": "order_id",
@@ -470,31 +470,31 @@
     },
     {
       "key": "approve_budget",
-      "value": "budget"
+      "value": ""
     },
     {
       "key": "start_execution",
-      "value": "execution/start"
+      "value": ""
     },
     {
       "key": "complete_execution",
-      "value": "execution/complete"
+      "value": ""
     },
     {
       "key": "vehicle_delivered",
-      "value": "delivery"
+      "value": ""
     },
     {
       "key": "start_diagnosis",
-      "value": "diagnosis/start"
+      "value": ""
     },
     {
       "key": "get_detailed",
-      "value": "details"
+      "value": ""
     },
     {
       "key": "get_vehicle_orders",
-      "value": "vehicles"
+      "value": ""
     }
   ]
 }

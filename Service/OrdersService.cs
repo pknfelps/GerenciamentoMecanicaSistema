@@ -70,7 +70,7 @@ namespace Service
 
             order.StartDiagnosis();
 
-            var registry = await Repository.UpdateOrderStatus(orderId, WorkOrderStatus.InDiagnosis);
+            var registry = await Repository.UpdateOrder(order);
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao atualizar a ordem");
@@ -195,24 +195,10 @@ namespace Service
 
             order.FinalizeDiagnosis();
 
-            var registry = await Repository.UpdateOrderStatus(orderId, order.Status);
+            var registry = await Repository.UpdateOrder(order);
 
             if (registry == 0)
-                throw new InvalidOperationException("Falha ao atualizar status da ordem");
-
-            try
-            {
-                registry = await Repository.UpdateOrderBudget(orderId, order.Budget);
-
-                if (registry == 0)
-                    throw new InvalidOperationException("Falha ao atualizar orçamento da ordem");
-            }
-            catch
-            {
-                await Repository.UpdateOrderStatus(orderId, WorkOrderStatus.InDiagnosis);
-
-                throw;
-            }
+                throw new InvalidOperationException("Falha ao atualizar ordem");
 
             try
             {
@@ -239,7 +225,7 @@ namespace Service
                     await StockService.RestoreMaterialAmount(item.Id, item.Amount);
             }
 
-            var registry = await Repository.UpdateOrderStatus(orderId, order.Status);
+            var registry = await Repository.UpdateOrder(order);
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao aprovar ou recusar o orçamento");
@@ -251,7 +237,7 @@ namespace Service
 
             order.StartService();
 
-            var registry = await Repository.UpdateOrderStatus(orderId, order.Status);
+            var registry = await Repository.UpdateOrder(order);
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao inicar execução");
@@ -266,10 +252,9 @@ namespace Service
             foreach (var item in order.Materials)
                 await StockService.ConsumeReservedAmount(item.Id, item.Amount);
 
-            var updateStatus = await Repository.UpdateOrderStatus(orderId, order.Status);
-            var updateDuration = await Repository.UpdateOrderDuration(orderId, order.Duration);
+            var registry = await Repository.UpdateOrder(order);
 
-            if (updateStatus == 0 || updateDuration == 0)
+            if (registry == 0)
                 throw new InvalidOperationException("Falha ao completar execução");
         }
 
@@ -279,7 +264,7 @@ namespace Service
 
             order.DeliverVehicle();
 
-            var registry = await Repository.UpdateOrderStatus(orderId, order.Status);
+            var registry = await Repository.UpdateOrder(order);
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao inicar execução");

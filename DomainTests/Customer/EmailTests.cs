@@ -1,6 +1,6 @@
 ﻿using Domain.Customer;
 
-namespace DomainTests.Costumer
+namespace DomainTests.Customer
 {
     public class EmailTests
     {

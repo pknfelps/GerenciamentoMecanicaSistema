@@ -2,7 +2,7 @@
 {
     public class VehicleTests
     {
-        private string CostumerDocument { get; set; } = "123.456.789-12";
+        private string CostumerDocument { get; set; } = "662.119.730-63";
 
         [Test]
         public void MustCreateVehicleWithoutId()

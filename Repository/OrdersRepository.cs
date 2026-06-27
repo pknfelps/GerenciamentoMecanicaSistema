@@ -44,7 +44,7 @@ namespace Repository
                 os.budget, 
                 os.status, 
                 os.date_created, 
-                os.date_finished 
+                os.date_finished
 
             FROM orders os
             LEFT JOIN order_services s ON s.order_id = os.id
@@ -62,9 +62,12 @@ namespace Repository
                 os.date_finished;
             """;
 
-        public static string UpdateOrderStatusSql { get; private set; } = """
+        public static string UpdateOrderSql { get; private set; } = """
             UPDATE orders
-            SET status = @Status
+            SET budget = @Budget,
+                status = @Status,
+                date_finished = @DateFinished,
+                duration = @Duration
             WHERE id = @Id;
             """;
 
@@ -98,18 +101,6 @@ namespace Repository
         public static string RemoveMaterialFromOrderSql { get; private set; } = """
             DELETE FROM order_materials
             WHERE id = @materialId AND order_id = @orderId;
-            """;
-
-        public static string UpdateOrderBudgetSql { get; private set; } = """
-            UPDATE orders
-            SET budget = @budget
-            WHERE id = @id;
-            """;
-
-        public static string UpdateOrderDurationSql { get; private set; } = """
-            UPDATE orders
-            SET duration = @duration
-            WHERE id = @id;
             """;
 
         public static string DeleteServicesFromOrderSql { get; private set; } = """
@@ -149,9 +140,9 @@ namespace Repository
             return order.ToDomain();
         }
 
-        public async Task<int> UpdateOrderStatus(Guid orderId, WorkOrderStatus status)
+        public async Task<int> UpdateOrder(IOrder order)
         {
-            return await Connection.ExecuteAsync(UpdateOrderStatusSql, new { Id = orderId, Status = status.ToString() });
+            return await Connection.ExecuteAsync(UpdateOrderSql, order);
         }
 
         public async Task<int> AddServiceToOrder(Guid orderId, IMechanicalService service)
@@ -186,16 +177,6 @@ namespace Repository
             var materialDb = MaterialDb.Create(material);
 
             return await Connection.ExecuteAsync(UpdateMaterialFromOrderSql, new { order_id = orderId, Id = materialDb.Id, Amount = materialDb.Amount });
-        }
-
-        public async Task<int> UpdateOrderBudget(Guid id, double budget)
-        {
-            return await Connection.ExecuteAsync(UpdateOrderBudgetSql, new { id, budget });
-        }
-
-        public async Task<int> UpdateOrderDuration(Guid id, TimeSpan duration)
-        {
-            return await Connection.ExecuteAsync(UpdateOrderDurationSql, new { id, duration });
         }
 
         public async Task<int> DeleteOrder(Guid orderId)

@@ -33,27 +33,6 @@
           }
         },
         {
-          "ruleId": "S2068",
-          "level": "warning",
-          "message": "\"password\" detected here, make sure this is not a hard-coded credential.",
-          "locations": [
-            {
-              "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/GerenciamentoMecanicaSistema/appsettings.json",
-                "region": {
-                  "startLine": 15,
-                  "startColumn": 27,
-                  "endLine": 15,
-                  "endColumn": 114
-                }
-              }
-            }
-          ],
-          "properties": {
-            "warningLevel": 1
-          }
-        },
-        {
           "ruleId": "S1118",
           "level": "warning",
           "message": "Add a 'protected' constructor or the 'static' keyword to the class declaration.",
@@ -66,6 +45,27 @@
                   "startColumn": 18,
                   "endLine": 9,
                   "endColumn": 25
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "S2068",
+          "level": "warning",
+          "message": "\"password\" detected here, make sure this is not a hard-coded credential.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/GerenciamentoMecanicaSistema/appsettings.json",
+                "region": {
+                  "startLine": 15,
+                  "startColumn": 27,
+                  "endLine": 15,
+                  "endColumn": 114
                 }
               }
             }

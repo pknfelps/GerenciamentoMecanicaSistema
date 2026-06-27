@@ -1,9 +1,9 @@
-﻿C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\DomainTests\Costumer\CnpjTests.cs
-C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\DomainTests\Costumer\CpfTests.cs
-C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\DomainTests\Costumer\CustomerTests.cs
-C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\DomainTests\Costumer\DocumentWrapperTests.cs
-C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\DomainTests\Costumer\EmailTests.cs
-C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\DomainTests\Costumer\PhoneTests.cs
+﻿C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\DomainTests\Customer\CnpjTests.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\DomainTests\Customer\CpfTests.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\DomainTests\Customer\CustomerTests.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\DomainTests\Customer\DocumentWrapperTests.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\DomainTests\Customer\EmailTests.cs
+C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\DomainTests\Customer\PhoneTests.cs
 C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\DomainTests\Order\OrderTests.cs
 C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\DomainTests\Parts\PartTests.cs
 C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\DomainTests\Service\MechanicalServiceTests.cs

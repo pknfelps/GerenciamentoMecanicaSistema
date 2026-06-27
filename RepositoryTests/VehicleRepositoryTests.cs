@@ -10,7 +10,7 @@ namespace RepositoryTests
     {
         private IVehicleRepository VehicleRepository { get; set; }
 
-        private static readonly string ExistingCustomerDocument = "123.456.789-12";
+        private static readonly string ExistingCustomerDocument = "417.384.220-11";
 
         private IVehicle VehicleToRegister
         {

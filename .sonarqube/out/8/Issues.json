@@ -380,6 +380,30 @@
           }
         },
         {
+          "ruleId": "CS8602",
+          "level": "warning",
+          "message": "Desreferência de uma referência possivelmente nula.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CatalogServiceTests.cs",
+                "region": {
+                  "startLine": 192,
+                  "startColumn": 29,
+                  "endLine": 192,
+                  "endColumn": 36
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
           "ruleId": "CS8618",
           "level": "warning",
           "message": "O propriedade não anulável 'CustomerService' precisa conter um valor não nulo ao sair do construtor. Considere adicionar o modificador \"obrigatório\" ou declarar o propriedade como anulável.",
@@ -391,9 +415,9 @@
               "resultFile": {
                 "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CustomerServiceTests.cs",
                 "region": {
-                  "startLine": 13,
+                  "startLine": 12,
                   "startColumn": 34,
-                  "endLine": 13,
+                  "endLine": 12,
                   "endColumn": 49
                 }
               }
@@ -404,9 +428,9 @@
               "physicalLocation": {
                 "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CustomerServiceTests.cs",
                 "region": {
-                  "startLine": 13,
+                  "startLine": 12,
                   "startColumn": 34,
-                  "endLine": 13,
+                  "endLine": 12,
                   "endColumn": 49
                 }
               }
@@ -428,9 +452,9 @@
               "resultFile": {
                 "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CustomerServiceTests.cs",
                 "region": {
-                  "startLine": 14,
+                  "startLine": 13,
                   "startColumn": 37,
-                  "endLine": 14,
+                  "endLine": 13,
                   "endColumn": 55
                 }
               }
@@ -441,9 +465,9 @@
               "physicalLocation": {
                 "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CustomerServiceTests.cs",
                 "region": {
-                  "startLine": 14,
+                  "startLine": 13,
                   "startColumn": 37,
-                  "endLine": 14,
+                  "endLine": 13,
                   "endColumn": 55
                 }
               }
@@ -468,30 +492,6 @@
                   "startLine": 198,
                   "startColumn": 29,
                   "endLine": 198,
-                  "endColumn": 36
-                }
-              }
-            }
-          ],
-          "properties": {
-            "warningLevel": 1
-          }
-        },
-        {
-          "ruleId": "CS8602",
-          "level": "warning",
-          "message": "Desreferência de uma referência possivelmente nula.",
-          "suppressionStates": [
-            "suppressedInSource"
-          ],
-          "locations": [
-            {
-              "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CatalogServiceTests.cs",
-                "region": {
-                  "startLine": 192,
-                  "startColumn": 29,
-                  "endLine": 192,
                   "endColumn": 36
                 }
               }
@@ -609,12 +609,12 @@
           "locations": [
             {
               "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/StockServiceTests.cs",
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CatalogServiceTests.cs",
                 "region": {
-                  "startLine": 13,
-                  "startColumn": 31,
-                  "endLine": 13,
-                  "endColumn": 38
+                  "startLine": 12,
+                  "startColumn": 33,
+                  "endLine": 12,
+                  "endColumn": 40
                 }
               }
             }
@@ -622,12 +622,12 @@
           "relatedLocations": [
             {
               "physicalLocation": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/StockServiceTests.cs",
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CatalogServiceTests.cs",
                 "region": {
-                  "startLine": 13,
-                  "startColumn": 31,
-                  "endLine": 13,
-                  "endColumn": 38
+                  "startLine": 12,
+                  "startColumn": 33,
+                  "endLine": 12,
+                  "endColumn": 40
                 }
               }
             }
@@ -646,12 +646,12 @@
           "locations": [
             {
               "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/StockServiceTests.cs",
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CatalogServiceTests.cs",
                 "region": {
-                  "startLine": 14,
-                  "startColumn": 34,
-                  "endLine": 14,
-                  "endColumn": 44
+                  "startLine": 13,
+                  "startColumn": 36,
+                  "endLine": 13,
+                  "endColumn": 46
                 }
               }
             }
@@ -659,12 +659,12 @@
           "relatedLocations": [
             {
               "physicalLocation": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/StockServiceTests.cs",
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CatalogServiceTests.cs",
                 "region": {
-                  "startLine": 14,
-                  "startColumn": 34,
-                  "endLine": 14,
-                  "endColumn": 44
+                  "startLine": 13,
+                  "startColumn": 36,
+                  "endLine": 13,
+                  "endColumn": 46
                 }
               }
             }
@@ -683,12 +683,12 @@
           "locations": [
             {
               "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CatalogServiceTests.cs",
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/StockServiceTests.cs",
                 "region": {
-                  "startLine": 12,
-                  "startColumn": 33,
-                  "endLine": 12,
-                  "endColumn": 40
+                  "startLine": 13,
+                  "startColumn": 31,
+                  "endLine": 13,
+                  "endColumn": 38
                 }
               }
             }
@@ -696,12 +696,12 @@
           "relatedLocations": [
             {
               "physicalLocation": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CatalogServiceTests.cs",
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/StockServiceTests.cs",
                 "region": {
-                  "startLine": 12,
-                  "startColumn": 33,
-                  "endLine": 12,
-                  "endColumn": 40
+                  "startLine": 13,
+                  "startColumn": 31,
+                  "endLine": 13,
+                  "endColumn": 38
                 }
               }
             }
@@ -720,12 +720,12 @@
           "locations": [
             {
               "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CatalogServiceTests.cs",
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/StockServiceTests.cs",
                 "region": {
-                  "startLine": 13,
-                  "startColumn": 36,
-                  "endLine": 13,
-                  "endColumn": 46
+                  "startLine": 14,
+                  "startColumn": 34,
+                  "endLine": 14,
+                  "endColumn": 44
                 }
               }
             }
@@ -733,12 +733,12 @@
           "relatedLocations": [
             {
               "physicalLocation": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CatalogServiceTests.cs",
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/StockServiceTests.cs",
                 "region": {
-                  "startLine": 13,
-                  "startColumn": 36,
-                  "endLine": 13,
-                  "endColumn": 46
+                  "startLine": 14,
+                  "startColumn": 34,
+                  "endLine": 14,
+                  "endColumn": 44
                 }
               }
             }
@@ -759,9 +759,9 @@
               "resultFile": {
                 "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/OrdersServiceTests.cs",
                 "region": {
-                  "startLine": 422,
+                  "startLine": 414,
                   "startColumn": 29,
-                  "endLine": 422,
+                  "endLine": 414,
                   "endColumn": 34
                 }
               }
@@ -783,9 +783,9 @@
               "resultFile": {
                 "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/OrdersServiceTests.cs",
                 "region": {
-                  "startLine": 461,
+                  "startLine": 453,
                   "startColumn": 29,
-                  "endLine": 461,
+                  "endLine": 453,
                   "endColumn": 34
                 }
               }
@@ -1094,27 +1094,6 @@
         {
           "ruleId": "CA1859",
           "level": "note",
-          "message": "Altere o tipo de propriedade 'EmailService' de 'Service.Interface.IEmailService' para 'Service.EmailService' para melhorar o desempenho",
-          "locations": [
-            {
-              "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/EmailServiceTests.cs",
-                "region": {
-                  "startLine": 18,
-                  "startColumn": 31,
-                  "endLine": 18,
-                  "endColumn": 43
-                }
-              }
-            }
-          ],
-          "properties": {
-            "warningLevel": 1
-          }
-        },
-        {
-          "ruleId": "CA1859",
-          "level": "note",
           "message": "Altere o tipo de propriedade 'AuthenticationService' de 'Service.Interface.IAuthenticationService' para 'Service.AuthenticationService' para melhorar o desempenho",
           "locations": [
             {
@@ -1136,16 +1115,16 @@
         {
           "ruleId": "CA1859",
           "level": "note",
-          "message": "Altere o tipo de propriedade 'UserService' de 'Service.Interface.IUserService' para 'Service.UserService' para melhorar o desempenho",
+          "message": "Altere o tipo de propriedade 'EmailService' de 'Service.Interface.IEmailService' para 'Service.EmailService' para melhorar o desempenho",
           "locations": [
             {
               "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/UserServiceTests.cs",
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/EmailServiceTests.cs",
                 "region": {
-                  "startLine": 12,
-                  "startColumn": 30,
-                  "endLine": 12,
-                  "endColumn": 41
+                  "startLine": 18,
+                  "startColumn": 31,
+                  "endLine": 18,
+                  "endColumn": 43
                 }
               }
             }
@@ -1163,9 +1142,9 @@
               "resultFile": {
                 "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CustomerServiceTests.cs",
                 "region": {
-                  "startLine": 159,
+                  "startLine": 158,
                   "startColumn": 29,
-                  "endLine": 159,
+                  "endLine": 158,
                   "endColumn": 68
                 }
               }
@@ -1188,35 +1167,10 @@
               "resultFile": {
                 "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CustomerServiceTests.cs",
                 "region": {
-                  "startLine": 160,
+                  "startLine": 159,
                   "startColumn": 29,
-                  "endLine": 160,
+                  "endLine": 159,
                   "endColumn": 69
-                }
-              }
-            }
-          ],
-          "properties": {
-            "warningLevel": 1,
-            "customProperties": {
-              "SuggestedConstraintString": "Is.EqualTo",
-              "SwapOperands": "False"
-            }
-          }
-        },
-        {
-          "ruleId": "NUnit2010",
-          "level": "note",
-          "message": "Use Is.EqualTo constraint instead of direct comparison for better assertion messages in case of failure",
-          "locations": [
-            {
-              "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CustomerServiceTests.cs",
-                "region": {
-                  "startLine": 172,
-                  "startColumn": 25,
-                  "endLine": 172,
-                  "endColumn": 64
                 }
               }
             }
@@ -1286,6 +1240,31 @@
           "locations": [
             {
               "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CustomerServiceTests.cs",
+                "region": {
+                  "startLine": 171,
+                  "startColumn": 25,
+                  "endLine": 171,
+                  "endColumn": 64
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "SuggestedConstraintString": "Is.EqualTo",
+              "SwapOperands": "False"
+            }
+          }
+        },
+        {
+          "ruleId": "NUnit2010",
+          "level": "note",
+          "message": "Use Is.EqualTo constraint instead of direct comparison for better assertion messages in case of failure",
+          "locations": [
+            {
+              "resultFile": {
                 "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/StockServiceTests.cs",
                 "region": {
                   "startLine": 175,
@@ -1332,15 +1311,36 @@
         {
           "ruleId": "CA1859",
           "level": "note",
+          "message": "Altere o tipo de propriedade 'UserService' de 'Service.Interface.IUserService' para 'Service.UserService' para melhorar o desempenho",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/UserServiceTests.cs",
+                "region": {
+                  "startLine": 12,
+                  "startColumn": 30,
+                  "endLine": 12,
+                  "endColumn": 41
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA1859",
+          "level": "note",
           "message": "Altere o tipo de propriedade 'CustomerService' de 'Service.Interface.ICustomerService' para 'Service.CustomerService' para melhorar o desempenho",
           "locations": [
             {
               "resultFile": {
                 "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CustomerServiceTests.cs",
                 "region": {
-                  "startLine": 13,
+                  "startLine": 12,
                   "startColumn": 34,
-                  "endLine": 13,
+                  "endLine": 12,
                   "endColumn": 49
                 }
               }
@@ -1374,16 +1374,16 @@
         {
           "ruleId": "CA1859",
           "level": "note",
-          "message": "Altere o tipo de propriedade 'Service' de 'Service.Interface.IStockService' para 'Service.StockService' para melhorar o desempenho",
+          "message": "Altere o tipo de propriedade 'Service' de 'Service.Interface.ICatalogService' para 'Service.CatalogService' para melhorar o desempenho",
           "locations": [
             {
               "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/StockServiceTests.cs",
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CatalogServiceTests.cs",
                 "region": {
-                  "startLine": 13,
-                  "startColumn": 31,
-                  "endLine": 13,
-                  "endColumn": 38
+                  "startLine": 12,
+                  "startColumn": 33,
+                  "endLine": 12,
+                  "endColumn": 40
                 }
               }
             }
@@ -1395,16 +1395,16 @@
         {
           "ruleId": "CA1859",
           "level": "note",
-          "message": "Altere o tipo de propriedade 'Service' de 'Service.Interface.ICatalogService' para 'Service.CatalogService' para melhorar o desempenho",
+          "message": "Altere o tipo de propriedade 'Service' de 'Service.Interface.IStockService' para 'Service.StockService' para melhorar o desempenho",
           "locations": [
             {
               "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/CatalogServiceTests.cs",
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/ServiceTests/StockServiceTests.cs",
                 "region": {
-                  "startLine": 12,
-                  "startColumn": 33,
-                  "endLine": 12,
-                  "endColumn": 40
+                  "startLine": 13,
+                  "startColumn": 31,
+                  "endLine": 13,
+                  "endColumn": 38
                 }
               }
             }

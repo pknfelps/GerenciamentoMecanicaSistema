@@ -5,6 +5,7 @@
         public const int DigitCount = 14;
 
         protected override int DocumentDigitCount { get; set; } = DigitCount;
+        protected override int InitialVerifierDigitMultiplier { get; set; } = 5;
 
         public Cnpj(string id) : base(id)
         {

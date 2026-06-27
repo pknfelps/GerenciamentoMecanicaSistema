@@ -8,10 +8,10 @@ RC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Vehicle\Vehicle
 _C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Vehicle\MercosulLicensePlate.csutf-8g
 ^C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Vehicle\LicensePlateWrapper.csutf-8`
 WC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Vehicle\LicensePlate.csutf-8U
-LC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\User\User.csutf-8o
-fC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\MechanicalService\MechanicalService.csutf-8Z
-QC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Stock\Material.csutf-8Y
+LC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\User\User.csutf-8Y
 PC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\User\Password.csutf-8Z
+QC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Stock\Material.csutf-8o
+fC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\MechanicalService\MechanicalService.csutf-8Z
 QC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Customer\Phone.csutf-8Z
 QC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Customer\Email.csutf-8d
 [C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Customer\DocumentWrapper.csutf-8]

@@ -5,6 +5,7 @@
         public const int DigitCount = 11;
 
         protected override int DocumentDigitCount { get; set; } = DigitCount;
+        protected override int InitialVerifierDigitMultiplier { get; set; } = 10;
 
         public Cpf(string id) : base(id) 
         {

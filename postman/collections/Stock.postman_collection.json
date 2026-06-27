@@ -208,19 +208,19 @@
   "variable": [
     {
       "key": "api",
-      "value": "stock"
+      "value": ""
     },
     {
       "key": "amount",
-      "value": "amount"
+      "value": ""
     },
     {
       "key": "price",
-      "value": "price"
+      "value": ""
     },
     {
       "key": "id",
-      "value": "b03ae302-a3dc-40ba-a7ce-2430a7f0ee5d"
+      "value": ""
     }
   ]
 }

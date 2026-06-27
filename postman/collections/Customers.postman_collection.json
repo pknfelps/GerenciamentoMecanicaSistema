@@ -15,7 +15,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"Name\": \"Ciclano\",\r\n    \"Document\": \"12345678912\",\r\n    \"Phone\": \"11912345678\",\r\n    \"Email\": \"ciclano@gmail.com\"\r\n}",
+          "raw": "{\r\n    \"Name\": \"Ciclano\",\r\n    \"Document\": \"52088005005\",\r\n    \"Phone\": \"11912345678\",\r\n    \"Email\": \"ciclano@gmail.com\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -75,7 +75,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"Name\": \"Ciclano\",\r\n    \"Document\": \"12345678912\",\r\n    \"Phone\": \"11912345678\",\r\n    \"Email\": \"ciclano.update@gmail.com\"\r\n}",
+          "raw": "{\r\n    \"Name\": \"Ciclano\",\r\n    \"Document\": \"662.119.730-63\",\r\n    \"Phone\": \"11912345678\",\r\n    \"Email\": \"ciclano.update@gmail.com\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -163,7 +163,7 @@
   "variable": [
     {
       "key": "api",
-      "value": "customers"
+      "value": ""
     }
   ]
 }

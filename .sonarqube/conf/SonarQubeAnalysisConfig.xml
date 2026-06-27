@@ -160,11 +160,13 @@
     <Property Name="sonaranalyzer-vbnet.pluginKey">vbnet</Property>
     <Property Name="sonar.java.jvmframeworkconfig.activate">true</Property>
     <Property Name="sonar.updatecenter.url">https://downloads.sonarsource.com/sonarqube/update/update-center.properties</Property>
-    <Property Name="sonar.core.startTime">6/23/2026 10:11:51 PM</Property>
     <Property Name="sonar.core.id">147B411E-AZ73Lv8NIk2AB8MfMTjp</Property>
+    <Property Name="sonar.core.startTime">6/27/2026 2:38:45 PM</Property>
   </ServerSettings>
   <LocalSettings>
     <Property Name="sonar.host.url">http://localhost:9000</Property>
+    <Property Name="sonar.cs.vscoveragexml.reportsPaths">**/coverage.xml</Property>
+    <Property Name="sonar.exclusions">**/coverage.xml</Property>
   </LocalSettings>
   <ScannerOptsSettings />
   <AnalyzersSettings>

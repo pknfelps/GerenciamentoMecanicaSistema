@@ -17,7 +17,7 @@ CREATE TABLE customers (
 );
 
 INSERT INTO customers(id, name, document, phone, email)
-VALUES ('445b6ba5-523b-426f-9aaa-164754c203ca', 'Fulano', '123.456.789-12', '(11) 91234-5678', 'fulano@gmail.com');
+VALUES ('445b6ba5-523b-426f-9aaa-164754c203ca', 'Fulano', '662.119.730-63', '(11) 91234-5678', 'fulano@gmail.com');
 
 CREATE TABLE vehicles (
     id UUID PRIMARY KEY,
@@ -29,7 +29,7 @@ CREATE TABLE vehicles (
 );
 
 INSERT INTO vehicles(id, customer_document, brand, model, year, license_plate)
-VALUES ('60ec3776-ac80-47b4-a3a3-dd21e3e15361', '123.456.789-12', 'Honda', 'Civic', 2025, "CVC2025");
+VALUES ('60ec3776-ac80-47b4-a3a3-dd21e3e15361', '662.119.730-63', 'Honda', 'Civic', 2025, 'CVC2025');
 
 CREATE TABLE orders (
     id UUID PRIMARY KEY,
@@ -62,7 +62,7 @@ CREATE TABLE catalog (
 );
 
 INSERT INTO catalog(id, description, hours, price_per_hour)
-VALUES ('8dcc551f-5c3a-4746-8f51-a18be6107a2f', 'Troca de Óleo', 1, 20, 1);
+VALUES ('8dcc551f-5c3a-4746-8f51-a18be6107a2f', 'Troca de Óleo', 1, 20);
 
 CREATE TABLE order_materials (
     id UUID NOT NULL REFERENCES stock(id),
