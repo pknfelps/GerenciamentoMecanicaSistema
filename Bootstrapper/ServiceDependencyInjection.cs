@@ -1,4 +1,5 @@
 using Infrastructure.Authentication;
+using Infrastructure.Email;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.DependencyInjection;
 using Service;
@@ -20,7 +21,8 @@ namespace DependencyInjection
             service.AddTransient<ITokenGenerator, JwtTokenGenerator>();
 
             service.AddTransient<ISmtpClient, SmtpClient>();
-            service.AddTransient<ISmtpConnection, SmtpConnection>();
+            service.AddTransient<SmtpConnection>();
+            service.AddTransient<IEmailSender, MailKitEmailSender>();
             service.AddTransient<IEmailService, EmailService>();
         }
     }

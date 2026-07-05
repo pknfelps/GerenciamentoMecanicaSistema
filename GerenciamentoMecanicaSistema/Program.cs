@@ -1,7 +1,7 @@
 using DependencyInjection;
+using Infrastructure.Email;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Service.Settings;
 using System.Text;
 
 namespace GerenciamentoMecanicaSistema

@@ -1,37 +1,22 @@
-﻿using Domain.Interface.Custumer;
+using Domain.Interface.Custumer;
 using Domain.Interface.Order;
 using Domain.Interface.Vehicle;
-using MailKit.Net.Smtp;
-using Microsoft.Extensions.Options;
-using MimeKit;
 using NSubstitute;
 using Service;
 using Service.Interface;
-using Service.Settings;
 
 namespace ServiceTests
 {
     public class EmailServiceTests
     {
-        private ISmtpClient Client { get; set; }
-        private ISmtpConnection Connection { get; set; }
+        private IEmailSender EmailSender { get; set; }
         private IEmailService EmailService { get; set; }
 
         [SetUp]
         public void SetUp()
         {
-            EmailSettings emailSettings = new() { SenderName = "Mecânica", SenderEmail = "noreply@mecanica.com" };
-
-            var settings = Substitute.For<IOptions<EmailSettings>>();
-            settings.Value.Returns(emailSettings);
-
-            Client = Substitute.For<ISmtpClient>();
-            Client.SendAsync(Arg.Any<MimeMessage>()).Returns("completed");
-
-            Connection = Substitute.For<ISmtpConnection>();
-            Connection.GetClientAsync().Returns(Client);
-
-            EmailService = new EmailService(settings, Connection);
+            EmailSender = Substitute.For<IEmailSender>();
+            EmailService = new EmailService(EmailSender);
         }
 
         [Test]
@@ -51,14 +36,12 @@ namespace ServiceTests
 
             await EmailService.NotifyBudget(customer, vehicle, order);
 
-            await Connection.Received(1).GetClientAsync();
-            await Client.ReceivedWithAnyArgs(1).SendAsync(Arg.Any<MimeMessage>());
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            Client.Dispose();
+            await EmailSender.Received(1).SendAsync(
+                customer.Name,
+                customer.Email.Address,
+                "Serviço Finalizado",
+                Arg.Is<string>(body => body.Contains(customer.Name) && body.Contains(vehicle.Model) && body.Contains(order.Budget.ToString())),
+                Arg.Is<string>(body => body.Contains(customer.Name) && body.Contains(vehicle.Model) && body.Contains(order.Budget.ToString())));
         }
     }
 }

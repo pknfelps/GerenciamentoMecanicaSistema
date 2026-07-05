@@ -1,12 +1,10 @@
-﻿using MailKit.Net.Smtp;
+using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Options;
-using Service.Interface;
-using Service.Settings;
 
-namespace Service
+namespace Infrastructure.Email
 {
-    public class SmtpConnection(ISmtpClient client, IOptions<EmailSettings> settings) : ISmtpConnection, IAsyncDisposable
+    public class SmtpConnection(ISmtpClient client, IOptions<EmailSettings> settings) : IAsyncDisposable
     {
         private readonly ISmtpClient Client = client;
         private readonly EmailSettings Settings = settings.Value;
