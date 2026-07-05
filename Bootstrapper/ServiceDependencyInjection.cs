@@ -1,9 +1,8 @@
-﻿using MailKit.Net.Smtp;
-using Microsoft.Extensions.Configuration;
+using Infrastructure.Authentication;
+using MailKit.Net.Smtp;
 using Microsoft.Extensions.DependencyInjection;
 using Service;
 using Service.Interface;
-using Service.Settings;
 
 namespace DependencyInjection
 {
@@ -18,6 +17,7 @@ namespace DependencyInjection
             service.AddTransient<IVehicleService, VehicleService>();
             service.AddTransient<ICatalogService, CatalogService>();
             service.AddTransient<IOrdersService, OrdersService>();
+            service.AddTransient<ITokenGenerator, JwtTokenGenerator>();
 
             service.AddTransient<ISmtpClient, SmtpClient>();
             service.AddTransient<ISmtpConnection, SmtpConnection>();

@@ -1,5 +1,4 @@
-﻿using Domain.Interface.User;
-using Microsoft.Extensions.Configuration;
+using Domain.Interface.User;
 using NSubstitute;
 using Repository.Interface;
 using Service;
@@ -10,9 +9,11 @@ namespace ServiceTests
 {
     public class AuthenticationServiceTests
     {
+        private const string GeneratedToken = "generated-token";
+
         private IAuthenticationService AuthenticationService { get; set; }
         private IUserRepository UsuarioRepository { get; set; }
-        private IConfiguration Configuration { get; set; }
+        private ITokenGenerator TokenGenerator { get; set; }
 
         private static readonly Guid ExistingUserId = Guid.NewGuid();
         private static IUser ExistingUser
@@ -36,7 +37,7 @@ namespace ServiceTests
         public void SetUp()
         {
             UsuarioRepository = Substitute.For<IUserRepository>();
-            Configuration = Substitute.For<IConfiguration>();
+            TokenGenerator = Substitute.For<ITokenGenerator>();
 
             UsuarioRepository.GetUser(Arg.Any<string>(), Arg.Any<string>()).Returns(callInfo =>
             {
@@ -49,11 +50,9 @@ namespace ServiceTests
                 return null;
             });
 
-            Configuration["Jwt:Key"].Returns("chaveTestesecurityKeyfortestingTokengeneration");
-            Configuration["Jwt:Issuer"].Returns("admin");
-            Configuration["Jwt:Audience"].Returns("mecanica");
+            TokenGenerator.Generate(Arg.Any<string>(), Arg.Any<string>()).Returns(GeneratedToken);
 
-            AuthenticationService = new AuthenticationService(Configuration, UsuarioRepository);
+            AuthenticationService = new AuthenticationService(UsuarioRepository, TokenGenerator);
         }
 
         [Test]
@@ -61,9 +60,10 @@ namespace ServiceTests
         {
             var token = await AuthenticationService.Authenticate(ExistingUserDto);
 
-            Assert.That(string.IsNullOrEmpty(token), Is.False);
+            Assert.That(token, Is.EqualTo(GeneratedToken));
 
             await UsuarioRepository.Received(1).GetUser(ExistingUser.Name, ExistingUser.Role.ToString());
+            TokenGenerator.Received(1).Generate(ExistingUser.Name, ExistingUser.Role.ToString());
         }
 
         [Test]
@@ -74,6 +74,7 @@ namespace ServiceTests
             Assert.That(string.IsNullOrEmpty(token), Is.True);
 
             await UsuarioRepository.Received(1).GetUser(UnexistingUser.Name, UnexistingUser.Role);
+            TokenGenerator.DidNotReceiveWithAnyArgs().Generate(default!, default!);
         }
 
         [Test]
@@ -84,6 +85,7 @@ namespace ServiceTests
             Assert.That(string.IsNullOrEmpty(token), Is.True);
 
             await UsuarioRepository.Received(1).GetUser(ExistingUserWithWrongPassword.Name, ExistingUserWithWrongPassword.Role);
+            TokenGenerator.DidNotReceiveWithAnyArgs().Generate(default!, default!);
         }
     }
 }
