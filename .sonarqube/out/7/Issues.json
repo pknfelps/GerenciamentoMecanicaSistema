@@ -171,27 +171,6 @@
           "ruleId": "CS8602",
           "level": "warning",
           "message": "Desreferência de uma referência possivelmente nula.",
-          "locations": [
-            {
-              "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/RepositoryTests/CatalogRepositoryTests.cs",
-                "region": {
-                  "startLine": 110,
-                  "startColumn": 29,
-                  "endLine": 110,
-                  "endColumn": 36
-                }
-              }
-            }
-          ],
-          "properties": {
-            "warningLevel": 1
-          }
-        },
-        {
-          "ruleId": "CS8602",
-          "level": "warning",
-          "message": "Desreferência de uma referência possivelmente nula.",
           "suppressionStates": [
             "suppressedInSource"
           ],
@@ -204,30 +183,6 @@
                   "startColumn": 29,
                   "endLine": 125,
                   "endColumn": 36
-                }
-              }
-            }
-          ],
-          "properties": {
-            "warningLevel": 1
-          }
-        },
-        {
-          "ruleId": "CS8602",
-          "level": "warning",
-          "message": "Desreferência de uma referência possivelmente nula.",
-          "suppressionStates": [
-            "suppressedInSource"
-          ],
-          "locations": [
-            {
-              "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/RepositoryTests/CustomerRepositoryTests.cs",
-                "region": {
-                  "startLine": 127,
-                  "startColumn": 29,
-                  "endLine": 127,
-                  "endColumn": 37
                 }
               }
             }
@@ -272,9 +227,9 @@
               "resultFile": {
                 "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/RepositoryTests/CustomerRepositoryTests.cs",
                 "region": {
-                  "startLine": 150,
+                  "startLine": 127,
                   "startColumn": 29,
-                  "endLine": 150,
+                  "endLine": 127,
                   "endColumn": 37
                 }
               }
@@ -293,10 +248,58 @@
               "resultFile": {
                 "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/RepositoryTests/CatalogRepositoryTests.cs",
                 "region": {
-                  "startLine": 135,
+                  "startLine": 110,
                   "startColumn": 29,
-                  "endLine": 135,
+                  "endLine": 110,
                   "endColumn": 36
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8602",
+          "level": "warning",
+          "message": "Desreferência de uma referência possivelmente nula.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/RepositoryTests/CustomerRepositoryTests.cs",
+                "region": {
+                  "startLine": 150,
+                  "startColumn": 29,
+                  "endLine": 150,
+                  "endColumn": 37
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8602",
+          "level": "warning",
+          "message": "Desreferência de uma referência possivelmente nula.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/RepositoryTests/StockRepositoryTests.cs",
+                "region": {
+                  "startLine": 153,
+                  "startColumn": 29,
+                  "endLine": 153,
+                  "endColumn": 33
                 }
               }
             }
@@ -333,52 +336,15 @@
           "ruleId": "CS8602",
           "level": "warning",
           "message": "Desreferência de uma referência possivelmente nula.",
-          "suppressionStates": [
-            "suppressedInSource"
-          ],
           "locations": [
             {
               "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/RepositoryTests/StockRepositoryTests.cs",
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/RepositoryTests/CatalogRepositoryTests.cs",
                 "region": {
-                  "startLine": 153,
+                  "startLine": 135,
                   "startColumn": 29,
-                  "endLine": 153,
-                  "endColumn": 33
-                }
-              }
-            }
-          ],
-          "properties": {
-            "warningLevel": 1
-          }
-        },
-        {
-          "ruleId": "CS8618",
-          "level": "warning",
-          "message": "O propriedade não anulável 'Repository' precisa conter um valor não nulo ao sair do construtor. Considere adicionar o modificador \"obrigatório\" ou declarar o propriedade como anulável.",
-          "locations": [
-            {
-              "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/RepositoryTests/CatalogRepositoryTests.cs",
-                "region": {
-                  "startLine": 11,
-                  "startColumn": 36,
-                  "endLine": 11,
-                  "endColumn": 46
-                }
-              }
-            }
-          ],
-          "relatedLocations": [
-            {
-              "physicalLocation": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/RepositoryTests/CatalogRepositoryTests.cs",
-                "region": {
-                  "startLine": 11,
-                  "startColumn": 36,
-                  "endLine": 11,
-                  "endColumn": 46
+                  "endLine": 135,
+                  "endColumn": 36
                 }
               }
             }
@@ -446,6 +412,40 @@
           }
         },
         {
+          "ruleId": "CS8618",
+          "level": "warning",
+          "message": "O propriedade não anulável 'Repository' precisa conter um valor não nulo ao sair do construtor. Considere adicionar o modificador \"obrigatório\" ou declarar o propriedade como anulável.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/RepositoryTests/CatalogRepositoryTests.cs",
+                "region": {
+                  "startLine": 11,
+                  "startColumn": 36,
+                  "endLine": 11,
+                  "endColumn": 46
+                }
+              }
+            }
+          ],
+          "relatedLocations": [
+            {
+              "physicalLocation": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/RepositoryTests/CatalogRepositoryTests.cs",
+                "region": {
+                  "startLine": 11,
+                  "startColumn": 36,
+                  "endLine": 11,
+                  "endColumn": 46
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
           "ruleId": "CS8602",
           "level": "warning",
           "message": "Desreferência de uma referência possivelmente nula.",
@@ -494,6 +494,30 @@
           }
         },
         {
+          "ruleId": "CS8602",
+          "level": "warning",
+          "message": "Desreferência de uma referência possivelmente nula.",
+          "suppressionStates": [
+            "suppressedInSource"
+          ],
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/RepositoryTests/StockRepositoryTests.cs",
+                "region": {
+                  "startLine": 204,
+                  "startColumn": 25,
+                  "endLine": 204,
+                  "endColumn": 29
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
           "ruleId": "CS8618",
           "level": "warning",
           "message": "O propriedade não anulável 'Repository' precisa conter um valor não nulo ao sair do construtor. Considere adicionar o modificador \"obrigatório\" ou declarar o propriedade como anulável.",
@@ -519,30 +543,6 @@
                   "startColumn": 37,
                   "endLine": 11,
                   "endColumn": 47
-                }
-              }
-            }
-          ],
-          "properties": {
-            "warningLevel": 1
-          }
-        },
-        {
-          "ruleId": "CS8602",
-          "level": "warning",
-          "message": "Desreferência de uma referência possivelmente nula.",
-          "suppressionStates": [
-            "suppressedInSource"
-          ],
-          "locations": [
-            {
-              "resultFile": {
-                "uri": "file:///C:/Users/felip/source/repos/GerenciamentoMecanicaSistema/RepositoryTests/StockRepositoryTests.cs",
-                "region": {
-                  "startLine": 204,
-                  "startColumn": 25,
-                  "endLine": 204,
-                  "endColumn": 29
                 }
               }
             }

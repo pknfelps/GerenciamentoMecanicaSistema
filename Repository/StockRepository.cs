@@ -45,14 +45,16 @@ namespace Repository
 
         public async Task<IEnumerable<IMaterial>> GetMaterials(Guid? id = null, string name = "", string brand = "")
         {
-            var materials = await Connection.QueryAsync<MaterialDb>(GetItensSql.BuildQuery(BuildQueryParameters(id, name, brand)));
+            var query = GetItensSql.BuildQuery(BuildQueryParameters(id, name, brand));
+            var materials = await Connection.QueryAsync<MaterialDb>(query.Sql, query.Parameters);
 
             return materials.Select(material => material.ToDomain());
         }
 
         public async Task<IMaterial?> GetMaterial(Guid? id = null, string name = "", string brand = "")
         {
-            var material = await Connection.QuerySingleOrDefaultAsync<MaterialDb>(GetItensSql.BuildQuery(BuildQueryParameters(id, name, brand)));
+            var query = GetItensSql.BuildQuery(BuildQueryParameters(id, name, brand));
+            var material = await Connection.QuerySingleOrDefaultAsync<MaterialDb>(query.Sql, query.Parameters);
 
             if (material == null)
                 return null;

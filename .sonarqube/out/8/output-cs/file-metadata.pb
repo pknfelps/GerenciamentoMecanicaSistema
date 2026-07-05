@@ -3,9 +3,9 @@ vC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\obj\Debug
 tC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\obj\Debug\net10.0\ServiceTests.AssemblyInfo.csutf-8“
 ‡C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\obj\Debug\net10.0\.NETCoreApp,Version=v10.0.AssemblyAttributes.csutf-8w
 lC:\Users\felip\.nuget\packages\microsoft.net.test.sdk\17.14.0\build\net8.0\Microsoft.NET.Test.Sdk.Program.csutf-8e
-\C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\VehicleServiceTests.csutf-8c
-ZC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\StockServiceTests.csutf-8b
-YC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\UserServiceTests.csutf-8d
+\C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\VehicleServiceTests.csutf-8b
+YC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\UserServiceTests.csutf-8c
+ZC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\StockServiceTests.csutf-8d
 [C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\OrdersServiceTests.csutf-8c
 ZC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\EmailServiceTests.csutf-8f
 ]C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\CustomerServiceTests.csutf-8e

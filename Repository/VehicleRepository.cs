@@ -42,14 +42,16 @@ namespace Repository
 
         public async Task<IEnumerable<IVehicle>> GetVehicles(Guid? id = null, string license_plate = "")
         {
-            var vehicles = await Connection.QueryAsync<VehicleDb>(GetVehiclesSql.BuildQuery(BuildQueryParameters(id ,license_plate)));
+            var query = GetVehiclesSql.BuildQuery(BuildQueryParameters(id, license_plate));
+            var vehicles = await Connection.QueryAsync<VehicleDb>(query.Sql, query.Parameters);
 
             return vehicles.Select(vehicle => vehicle.ToDomain());
         }
 
         public async Task<IVehicle?> GetVehicle(Guid? id = null, string license_plate = "")
         {
-            var vehicle = await Connection.QuerySingleOrDefaultAsync<VehicleDb?>(GetVehiclesSql.BuildQuery(BuildQueryParameters(id, license_plate)));
+            var query = GetVehiclesSql.BuildQuery(BuildQueryParameters(id, license_plate));
+            var vehicle = await Connection.QuerySingleOrDefaultAsync<VehicleDb?>(query.Sql, query.Parameters);
 
             if (vehicle == null)
                 return null;

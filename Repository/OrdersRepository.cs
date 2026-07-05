@@ -125,14 +125,16 @@ namespace Repository
 
         public async Task<IEnumerable<IOrder>> GetOrders(Guid? id = null, string customer_document = "", string vehicle_license_plate = "")
         {
-            var orders = await Connection.QueryAsync<OrderDb>(GetOrdersSql.BuildQuery(BuildQueryParameters(id, customer_document, vehicle_license_plate)));
+            var query = GetOrdersSql.BuildQuery(BuildQueryParameters(id, customer_document, vehicle_license_plate));
+            var orders = await Connection.QueryAsync<OrderDb>(query.Sql, query.Parameters);
 
             return orders.Select(order => order.ToDomain());
         }
 
         public async Task<IOrder?> GetOrder(Guid? id = null, string customer_document = "", string vehicle_license_plate = "")
         {
-            var order = await Connection.QuerySingleOrDefaultAsync<OrderDb>(GetOrdersSql.BuildQuery(BuildQueryParameters(id, customer_document, vehicle_license_plate)));
+            var query = GetOrdersSql.BuildQuery(BuildQueryParameters(id, customer_document, vehicle_license_plate));
+            var order = await Connection.QuerySingleOrDefaultAsync<OrderDb>(query.Sql, query.Parameters);
 
             if (order == null)
                 return null;

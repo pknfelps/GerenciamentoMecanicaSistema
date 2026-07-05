@@ -40,14 +40,16 @@ namespace Repository
 
         public async Task<IEnumerable<ICustomer>> GetCustomers(Guid? id = null, string name = "", string document = "")
         {
-            var customers = await Connection.QueryAsync<CustomerDb>(GetCustomersSql.BuildQuery(BuildQueryParameters(id, name, document)));
+            var query = GetCustomersSql.BuildQuery(BuildQueryParameters(id, name, document));
+            var customers = await Connection.QueryAsync<CustomerDb>(query.Sql, query.Parameters);
 
             return customers.Select(customer => customer.ToDomain());
         }
 
         public async Task<ICustomer?> GetCustomer(Guid? id = null, string name = "", string document = "")
         {
-            var customer = await Connection.QuerySingleOrDefaultAsync<CustomerDb>(GetCustomersSql.BuildQuery(BuildQueryParameters(id, name, document)));
+            var query = GetCustomersSql.BuildQuery(BuildQueryParameters(id, name, document));
+            var customer = await Connection.QuerySingleOrDefaultAsync<CustomerDb>(query.Sql, query.Parameters);
 
             if (customer == null)
                 return null;

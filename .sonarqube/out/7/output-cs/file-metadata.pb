@@ -4,9 +4,9 @@ zC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\RepositoryTests\obj\De
 ŠC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\RepositoryTests\obj\Debug\net10.0\.NETCoreApp,Version=v10.0.AssemblyAttributes.csutf-8}
 rC:\Users\felip\.nuget\packages\microsoft.net.test.sdk\17.8.0\build\netcoreapp3.1\Microsoft.NET.Test.Sdk.Program.csutf-8k
 bC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\RepositoryTests\VehicleRepositoryTests.csutf-8h
-_C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\RepositoryTests\BaseRepositoryTests.csutf-8k
-bC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\RepositoryTests\CatalogRepositoryTests.csutf-8h
 _C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\RepositoryTests\UserRepositoryTests.csutf-8i
 `C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\RepositoryTests\StockRepositoryTests.csutf-8j
 aC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\RepositoryTests\OrdersRepositoryTests.csutf-8l
-cC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\RepositoryTests\CustomerRepositoryTests.csutf-8
+cC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\RepositoryTests\CustomerRepositoryTests.csutf-8k
+bC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\RepositoryTests\CatalogRepositoryTests.csutf-8h
+_C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\RepositoryTests\BaseRepositoryTests.csutf-8

@@ -40,14 +40,16 @@ namespace Repository
 
         public async Task<IEnumerable<IMechanicalService>> GetServices(Guid? id = null, string description = "")
         {
-            var catalog = await Connection.QueryAsync<MechanicalServiceDb>(GetServicesSql.BuildQuery(BuildQueryParameters(id, description)));
+            var query = GetServicesSql.BuildQuery(BuildQueryParameters(id, description));
+            var catalog = await Connection.QueryAsync<MechanicalServiceDb>(query.Sql, query.Parameters);
 
             return catalog.Select(service => service.ToDomain());
         }
 
         public async Task<IMechanicalService?> GetService(Guid? id = null, string description = "")
         {
-            var service = await Connection.QuerySingleOrDefaultAsync<MechanicalServiceDb>(GetServicesSql.BuildQuery(BuildQueryParameters(id, description)));
+            var query = GetServicesSql.BuildQuery(BuildQueryParameters(id, description));
+            var service = await Connection.QuerySingleOrDefaultAsync<MechanicalServiceDb>(query.Sql, query.Parameters);
 
             if (service == null)
                 return null;
