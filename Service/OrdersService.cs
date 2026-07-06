@@ -5,17 +5,19 @@ using Domain.WorkOrder;
 using Repository.Interface;
 using Service.Interface;
 using Service.Interface.Commands.Order;
+using Service.Interface.Events;
+using Service.Interface.Events.Order;
 using Service.Interface.Results.Order;
 
 namespace Service
 {
-    public class OrdersService(IOrdersRepository repository, IOrderDependenciesGateway dependenciesGateway, IStockService stockService, IEmailService emailService, ITransactionManager transactionManager) : IOrdersService
+    public class OrdersService(IOrdersRepository repository, IOrderDependenciesGateway dependenciesGateway, IStockService stockService, ITransactionManager transactionManager, IApplicationEventDispatcher eventDispatcher) : IOrdersService
     {
         private IOrdersRepository Repository { get; set; } = repository;
         private IOrderDependenciesGateway DependenciesGateway { get; set; } = dependenciesGateway;
         private IStockService StockService { get; set; } = stockService;
-        private IEmailService EmailService { get; set; } = emailService;
         private ITransactionManager TransactionManager { get; set; } = transactionManager;
+        private IApplicationEventDispatcher EventDispatcher { get; set; } = eventDispatcher;
 
         public async Task CreateServiceOrder(CreateOrderCommand orderToCreate)
         {
@@ -190,14 +192,7 @@ namespace Service
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao atualizar ordem");
 
-            try
-            {
-                await NotifyOrderCompleted(order);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Falha ao enviar email para o cliente. {e}");
-            }
+            await EventDispatcher.Publish(new BudgetAvailableEvent(order));
         }
 
         public async Task ApproveBudget(Guid orderId, ApproveOrderCommand approve)
@@ -299,14 +294,6 @@ namespace Service
                 throw new InvalidOperationException("Falha ao deletar ordem");
         }
 
-        private async Task NotifyOrderCompleted(IOrder workOrder)
-        {
-            var customer = await DependenciesGateway.GetCustomerByDocument(workOrder.CustomerDocument.Id) ?? throw new InvalidOperationException("Falha ao notificar o cliente. Cliente não encontrado");
-
-            var vehicle = await DependenciesGateway.GetVehicleByLicensePlate(workOrder.VehicleLicensePlate.License) ?? throw new InvalidOperationException("Falha ao notificar o cliente. Veículo não encontrado");
-
-            await EmailService.NotifyBudget(customer, vehicle, workOrder);
-        }
     }
 }
 

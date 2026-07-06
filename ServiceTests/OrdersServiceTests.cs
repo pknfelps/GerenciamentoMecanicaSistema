@@ -8,6 +8,8 @@ using Repository.Interface;
 using Service;
 using Service.Interface;
 using Service.Interface.Commands.Order;
+using Service.Interface.Events;
+using Service.Interface.Events.Order;
 using Service.Interface.Results.Order;
 using Service.Interface.Results.Customer;
 using Service.Interface.Results.Vehicle;
@@ -20,8 +22,8 @@ namespace ServiceTests
         private IOrdersRepository Repository { get; set; }
         private IOrderDependenciesGateway DependenciesGateway { get; set; }
         private IStockService StockService { get; set; }
-        private IEmailService EmailService { get; set; }
         private ITransactionManager TransactionManager { get; set; }
+        private IApplicationEventDispatcher EventDispatcher { get; set; }
 
         private static CustomerResult ExistingCustomer { get; } = new(Guid.NewGuid(), "Teste", "417.384.220-11", "(11) 91234-5678", "teste@gmail.com");
         private static ICustomer ExistingCustomerDomain { get; } = CreateSubstituteCustomer(ExistingCustomer.Id, ExistingCustomer.Name, ExistingCustomer.Document);
@@ -272,14 +274,13 @@ namespace ServiceTests
                 return null;
             });
 
-            EmailService = Substitute.For<IEmailService>();
-
-            EmailService.NotifyBudget(Arg.Any<ICustomer>(), Arg.Any<IVehicle>(), Arg.Any<IOrder>()).Returns(Task.CompletedTask);
-
             TransactionManager = Substitute.For<ITransactionManager>();
             TransactionManager.ExecuteInTransaction(Arg.Any<Func<Task>>()).Returns(callInfo => callInfo.Arg<Func<Task>>()());
 
-            Service = new OrdersService(Repository, DependenciesGateway, StockService, EmailService, TransactionManager);
+            EventDispatcher = Substitute.For<IApplicationEventDispatcher>();
+            EventDispatcher.Publish(Arg.Any<IApplicationEvent>()).Returns(Task.CompletedTask);
+
+            Service = new OrdersService(Repository, DependenciesGateway, StockService, TransactionManager, EventDispatcher);
         }
 
         [Test]
@@ -919,7 +920,7 @@ namespace ServiceTests
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
-            await EmailService.ReceivedWithAnyArgs(1).NotifyBudget(Arg.Any<ICustomer>(), Arg.Any<IVehicle>(), Arg.Any<IOrder>());
+            await EventDispatcher.Received(1).Publish(Arg.Is<BudgetAvailableEvent>(notification => notification.Order == ExistingOrderInDiagnosis));
         }
 
         [Test]
@@ -929,7 +930,7 @@ namespace ServiceTests
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await Repository.Received(0).UpdateOrder(Arg.Any<IOrder>());
-            await EmailService.ReceivedWithAnyArgs(0).NotifyBudget(Arg.Any<ICustomer>(), Arg.Any<IVehicle>(), Arg.Any<IOrder>());
+            await EventDispatcher.ReceivedWithAnyArgs(0).Publish(Arg.Any<IApplicationEvent>());
         }
 
         [Test]
@@ -939,7 +940,7 @@ namespace ServiceTests
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
-            await EmailService.ReceivedWithAnyArgs(0).NotifyBudget(Arg.Any<ICustomer>(), Arg.Any<IVehicle>(), Arg.Any<IOrder>());
+            await EventDispatcher.ReceivedWithAnyArgs(0).Publish(Arg.Any<IApplicationEvent>());
         }
 
         [Test]

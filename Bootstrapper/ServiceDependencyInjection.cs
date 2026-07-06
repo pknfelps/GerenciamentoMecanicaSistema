@@ -3,7 +3,9 @@ using Infrastructure.Email;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.DependencyInjection;
 using Service;
+using Service.Events;
 using Service.Interface;
+using Service.Interface.Events;
 
 namespace DependencyInjection
 {
@@ -19,6 +21,8 @@ namespace DependencyInjection
             service.AddTransient<ICatalogService, CatalogService>();
             service.AddTransient<IOrdersService, OrdersService>();
             service.AddTransient<IOrderDependenciesGateway, OrderDependenciesGateway>();
+            service.AddTransient<IApplicationEventDispatcher, ApplicationEventDispatcher>();
+            service.AddTransient<IApplicationEventHandler, BudgetAvailableEventHandler>();
             service.AddTransient<ITokenGenerator, JwtTokenGenerator>();
 
             service.AddTransient<ISmtpClient, SmtpClient>();
