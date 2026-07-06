@@ -12,6 +12,7 @@ using Service.Interface.Dto.Order;
 using Service.Interface.Dto.Service;
 using Service.Interface.Dto.Stock;
 using Service.Interface.Dto.Vehicle;
+using Service.Interface.Results.Catalog;
 using Service.Interface.Results.Customer;
 
 namespace ServiceTests
@@ -35,9 +36,9 @@ namespace ServiceTests
         private static CreateOrderDto OrderToCreate { get; } = new(ExistingCustomer.Document, ExistingVehicle.LicensePlate);
 
         private static IMechanicalService ExistingService { get; } = CreateSubstituteService(Guid.NewGuid(), "Revisão", 6, 100, 1);
-        private static ServiceDto ExistingServiceDto { get; } = new(ExistingService.Id, "Revisão", 6, 100, 1);
+        private static ServiceResult ExistingServiceResult { get; } = new(ExistingService.Id, "Revisão", 6, 100, 1);
         private static IMechanicalService ExistingService2 { get; } = CreateSubstituteService(Guid.NewGuid(), "Troca de Pneu", 2, 150, 1);
-        private static ServiceDto ExistingService2Dto { get; } = new(ExistingService2.Id, "Troca de Pneu", 2, 150, 1);
+        private static ServiceResult ExistingService2Result { get; } = new(ExistingService2.Id, "Troca de Pneu", 2, 150, 1);
         private static IMaterial ExistingPart { get; } = CreateSubstitutePart(Guid.NewGuid(), "Pneu", "Michelin", 600, 10, 4);
         private static MaterialDto ExistingPartDto { get; } = new(ExistingPart.Id, ExistingPart.Name, ExistingPart.Brand, ExistingPart.Price, ExistingPart.Amount, ExistingPart.ReservedAmount);
         private static IMaterial ExistingPart2 { get; } = CreateSubstitutePart(Guid.NewGuid(), "Óleo de Motor", "Lubrax", 35, 20, 0);
@@ -272,10 +273,10 @@ namespace ServiceTests
                 var id = callInfo.ArgAt<Guid>(0);
 
                 if (id == ExistingService.Id)
-                    return ExistingServiceDto;
+                    return ExistingServiceResult;
 
                 if (id == ExistingService2.Id)
-                    return ExistingService2Dto;
+                    return ExistingService2Result;
 
                 return null;
             });

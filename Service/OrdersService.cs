@@ -1,5 +1,6 @@
 ﻿using Domain.Customer;
 using Domain.Interface.Order;
+using Domain.MechanicalService;
 using Domain.Vehicle;
 using Domain.WorkOrder;
 using Repository.Interface;
@@ -88,9 +89,11 @@ namespace Service
             {
                 var service = await CatalogService.GetService(serviceDto.Id) ?? throw new InvalidOperationException($"Serviço com id \"{serviceDto.Id}\" não encontrado");
 
-                order.AddService(service.ToDomain());
+                var serviceToAdd = new MechanicalService(service.Id, service.Description, service.Hours, service.PricePerHour, service.Amount);
 
-                registry = await Repository.AddServiceToOrder(orderId, service.ToDomain());
+                order.AddService(serviceToAdd);
+
+                registry = await Repository.AddServiceToOrder(orderId, serviceToAdd);
             }
             else
             {

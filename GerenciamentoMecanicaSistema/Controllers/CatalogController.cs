@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using GerenciamentoMecanicaSistema.Contracts.Requests.Catalog;
+using GerenciamentoMecanicaSistema.Contracts.Responses.Catalog;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interface;
 using Service.Interface.Dto.CustomAttributes;
-using Service.Interface.Dto.Service;
 
 namespace GerenciamentoMecanicaSistema.Controllers
 {
@@ -19,22 +20,22 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> RegisterService([FromBody] CreateServiceDto serviceDto)
+        public async Task<IActionResult> RegisterService([FromBody] CreateServiceRequest service)
         {
-            await CatalogService.RegisterService(serviceDto);
+            await CatalogService.RegisterService(service.ToCommand());
 
             return Created();
         }
 
         [HttpGet()]
         [EndpointDescription("Endpoint para listar os serviços")]
-        [ProducesResponseType(typeof(IEnumerable<ServiceDto>), StatusCodes.Status200OK, Description = "Retorna a lista de serviços")]
+        [ProducesResponseType(typeof(IEnumerable<ServiceResponse>), StatusCodes.Status200OK, Description = "Retorna a lista de serviços")]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         public async Task<OkObjectResult> GetServices([FromQuery] Guid? id = null, [FromQuery] string description = "")
         {
             var services = await CatalogService.GetServices(id, description);
 
-            return Ok(services);
+            return Ok(services.Select(ServiceResponse.Create));
         }
 
         [HttpPatch("{id}")]
@@ -43,9 +44,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> UpdateService([FromRoute, GuidValidation] Guid id, [FromBody] CreateServiceDto serviceDto)
+        public async Task<IActionResult> UpdateService([FromRoute, GuidValidation] Guid id, [FromBody] CreateServiceRequest service)
         {
-            await CatalogService.UpdateService(id, serviceDto);
+            await CatalogService.UpdateService(id, service.ToCommand());
 
             return NoContent();
         }
