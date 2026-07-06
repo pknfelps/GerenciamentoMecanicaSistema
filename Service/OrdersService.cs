@@ -1,6 +1,7 @@
 ﻿using Domain.Customer;
 using Domain.Interface.Order;
 using Domain.MechanicalService;
+using Domain.Stock;
 using Domain.Vehicle;
 using Domain.WorkOrder;
 using Repository.Interface;
@@ -141,7 +142,9 @@ namespace Service
                 {
                     var stockItem = await StockService.GetMaterial(orderItem.Id) ?? throw new InvalidOperationException("Item não encontrado no estoque");
 
-                    var itemAdded = order.AddMaterial(stockItem.ToDomain());
+                    var materialToAdd = new Material(stockItem.Id, stockItem.Name, stockItem.Brand, stockItem.Price, stockItem.Amount, stockItem.ReservedAmount);
+
+                    var itemAdded = order.AddMaterial(materialToAdd);
 
                     registry = await Repository.AddMaterialToOrder(orderId, itemAdded);
                 }

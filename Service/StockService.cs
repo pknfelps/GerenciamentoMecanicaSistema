@@ -1,7 +1,9 @@
-﻿using Domain.Interface.Stock;
+using Domain.Interface.Stock;
+using Domain.Stock;
 using Repository.Interface;
 using Service.Interface;
-using Service.Interface.Dto.Stock;
+using Service.Interface.Commands.Stock;
+using Service.Interface.Results.Stock;
 
 namespace Service
 {
@@ -9,25 +11,25 @@ namespace Service
     {
         private IStockRepository Repository { get; set; } = repository;
 
-        public async Task RegisterNewMaterial(CreateMaterialDto materialDto)
+        public async Task RegisterNewMaterial(CreateMaterialCommand material)
         {
-            if (await Repository.GetMaterial(name: materialDto.Name, brand: materialDto.Brand) != null)
+            if (await Repository.GetMaterial(name: material.Name, brand: material.Brand) != null)
                 throw new InvalidOperationException("Item já cadastrado");
 
-            var registry = await Repository.RegisterNewMaterial(materialDto.ToDomain());
+            var registry = await Repository.RegisterNewMaterial(CreateDomain(material));
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao cadastrar o item");
         }
 
-        public async Task<IEnumerable<MaterialDto>> GetMaterials(Guid? id = null, string name = "", string brand = "")
+        public async Task<IEnumerable<MaterialResult>> GetMaterials(Guid? id = null, string name = "", string brand = "")
         {
             var itens = await Repository.GetMaterials(id, name, brand);
 
-            return itens.Select(MaterialDto.Create);
+            return itens.Select(MaterialResult.Create);
         }
 
-        public async Task<MaterialDto?> GetMaterial(Guid? id = null, string name = "", string brand = "")
+        public async Task<MaterialResult?> GetMaterial(Guid? id = null, string name = "", string brand = "")
         {
             if (id == null && string.IsNullOrEmpty(name) && string.IsNullOrEmpty(brand))
                 throw new InvalidOperationException("Falha ao procurar item. Nenhum argumento fornecido");
@@ -37,7 +39,7 @@ namespace Service
             if (material == null)
                 return null;
 
-            return MaterialDto.Create(material);
+            return MaterialResult.Create(material);
         }
 
         public async Task AddMaterialAmount(Guid id, int value)
@@ -106,6 +108,8 @@ namespace Service
             if (result == 0)
                 throw new InvalidOperationException("Falha ao deletar o item");
         }
+
+        private static IMaterial CreateDomain(CreateMaterialCommand material) => new Material(material.Name, material.Brand, material.Price, material.Amount);
 
         private async Task UpdateItemAmount(IMaterial material)
         {

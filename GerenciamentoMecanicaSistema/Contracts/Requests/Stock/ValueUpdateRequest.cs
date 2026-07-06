@@ -1,10 +1,10 @@
-﻿using Service.Interface.Dto.CustomAttributes;
+using Service.Interface.Dto.CustomAttributes;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace Service.Interface.Dto.Stock
+namespace GerenciamentoMecanicaSistema.Contracts.Requests.Stock
 {
-    public class ValueUpdateDto<T>(T value)
+    public class ValueUpdateRequest<T>(T value)
     {
         [Description("Quantidade a atualizar do item")]
         [Required, GenericValueValidation]

@@ -1,7 +1,9 @@
-﻿using NSubstitute;
+using GerenciamentoMecanicaSistema.Contracts.Requests.Stock;
+using GerenciamentoMecanicaSistema.Contracts.Responses.Stock;
+using NSubstitute;
 using Service.Interface;
-using Service.Interface.Dto;
-using Service.Interface.Dto.Stock;
+using Service.Interface.Commands.Stock;
+using Service.Interface.Results.Stock;
 using System.Net;
 using System.Net.Http.Json;
 
@@ -11,33 +13,33 @@ namespace ControllerTests
     {
         private IStockService StockService { get; set; }
 
-        private static readonly CreateMaterialDto MaterialToRegister = new("Óleo de motor", "Lubrax", 41.90, 5);
-        private static readonly CreateMaterialDto InvalidMaterialToRegister = new("", "", 0.00, 0);
-        private static readonly CreateMaterialDto MaterialToFailRegister = new("Teste", "Testando", 15, 1);
-        private static readonly ValueUpdateDto<int> MaterialToFailIntOperations = new(5);
-        private static readonly ValueUpdateDto<double> MaterialToFailDoubleOperations = new(10.00);
-        private static readonly ValueUpdateDto<int> InvalidIntMaterialUpdate = new(0);
-        private static readonly ValueUpdateDto<double> InvalidDoubleMaterialUpdate = new(0);
+        private static readonly CreateMaterialRequest MaterialToRegister = new("Óleo de motor", "Lubrax", 41.90, 5);
+        private static readonly CreateMaterialRequest InvalidMaterialToRegister = new("", "", 0.00, 0);
+        private static readonly CreateMaterialRequest MaterialToFailRegister = new("Teste", "Testando", 15, 1);
+        private static readonly ValueUpdateRequest<int> MaterialToFailIntOperations = new(5);
+        private static readonly ValueUpdateRequest<double> MaterialToFailDoubleOperations = new(10.00);
+        private static readonly ValueUpdateRequest<int> InvalidIntMaterialUpdate = new(0);
+        private static readonly ValueUpdateRequest<double> InvalidDoubleMaterialUpdate = new(0);
 
-        private static readonly List<MaterialDto> StockMaterials =
+        private static readonly List<MaterialResult> StockMaterials =
         [
             new (Guid.NewGuid(), "Vela de ignição", "Bosch", 6.00, 20, 5),
             new (Guid.NewGuid(), "Flúido para radiador", "Gitanes", 30.00, 5, 0)
         ];
 
-        private static readonly ValueUpdateDto<int> IntMaterialUpdate = new(5);
+        private static readonly ValueUpdateRequest<int> IntMaterialUpdate = new(5);
 
-        private static readonly ValueUpdateDto<double> DoubleMaterialToUpdate = new(8.45);
+        private static readonly ValueUpdateRequest<double> DoubleMaterialToUpdate = new(8.45);
 
         protected override void MockService()
         {
             StockService = TestWebAppFactory.StockServiceMock;
 
-            StockService.RegisterNewMaterial(Arg.Any<CreateMaterialDto>()).Returns(callInfo =>
+            StockService.RegisterNewMaterial(Arg.Any<CreateMaterialCommand>()).Returns(callInfo =>
             {
-                var material = callInfo.ArgAt<CreateMaterialDto>(0);
+                var material = callInfo.ArgAt<CreateMaterialCommand>(0);
 
-                if (material.Equals(MaterialToRegister))
+                if (material.Equals(MaterialToRegister.ToCommand()))
                     return Task.CompletedTask;
 
                 throw new InvalidOperationException();
@@ -122,7 +124,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
 
-            await StockService.Received(1).RegisterNewMaterial(MaterialToRegister);
+            await StockService.Received(1).RegisterNewMaterial(MaterialToRegister.ToCommand());
         }
 
         [Test]
@@ -132,7 +134,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await StockService.Received(0).RegisterNewMaterial(Arg.Any<MaterialDto>());
+            await StockService.Received(0).RegisterNewMaterial(Arg.Any<CreateMaterialCommand>());
         }
 
         [Test]
@@ -142,7 +144,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await StockService.Received(1).RegisterNewMaterial(MaterialToFailRegister);
+            await StockService.Received(1).RegisterNewMaterial(MaterialToFailRegister.ToCommand());
         }
 
         [Test]
@@ -152,7 +154,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            var result = await response.Content.ReadFromJsonAsync<IEnumerable<MaterialDto>>();
+            var result = await response.Content.ReadFromJsonAsync<IEnumerable<MaterialResponse>>();
             var intems = result.ToList();
 
             await StockService.Received(1).GetMaterials();
@@ -161,8 +163,8 @@ namespace ControllerTests
 
             Assert.Multiple(() =>
             {
-                Assert.That(intems[0].Equals(StockMaterials[0]), Is.True);
-                Assert.That(intems[1].Equals(StockMaterials[1]), Is.True);
+                Assert.That(intems[0].Id, Is.EqualTo(StockMaterials[0].Id));
+                Assert.That(intems[1].Id, Is.EqualTo(StockMaterials[1].Id));
             });
         }
 
@@ -173,14 +175,14 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            var materials = await response.Content.ReadFromJsonAsync<List<MaterialDto>>();
+            var materials = await response.Content.ReadFromJsonAsync<List<MaterialResponse>>();
 
             await StockService.Received(1).GetMaterials(name: StockMaterials[0].Name, brand: StockMaterials[0].Brand);
             Assert.That(materials, Has.Count.EqualTo(1));
 
             var material = materials[0];
             Assert.That(material, Is.Not.Null);
-            Assert.That(material.Equals(StockMaterials[0]), Is.True);
+            Assert.That(material.Id, Is.EqualTo(StockMaterials[0].Id));
         }
 
         [Test]

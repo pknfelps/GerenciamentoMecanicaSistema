@@ -1,12 +1,13 @@
-﻿using Service.Interface.Dto.Stock;
+using Service.Interface.Commands.Stock;
+using Service.Interface.Results.Stock;
 
 namespace Service.Interface
 {
     public interface IStockService
     {
-        Task RegisterNewMaterial(CreateMaterialDto materialDto);
-        Task<IEnumerable<MaterialDto>> GetMaterials(Guid? id = null, string name = "", string brand = "");
-        Task<MaterialDto?> GetMaterial(Guid? id = null, string name = "", string brand = "");
+        Task RegisterNewMaterial(CreateMaterialCommand material);
+        Task<IEnumerable<MaterialResult>> GetMaterials(Guid? id = null, string name = "", string brand = "");
+        Task<MaterialResult?> GetMaterial(Guid? id = null, string name = "", string brand = "");
         Task AddMaterialAmount(Guid id, int value);
         Task RemoveMaterialAmount(Guid id, int value);
         Task ReserveMaterialAmount(Guid id, int value);

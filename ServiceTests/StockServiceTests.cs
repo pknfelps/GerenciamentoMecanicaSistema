@@ -1,10 +1,11 @@
-﻿using Domain.Interface.Stock;
+using Domain.Interface.Stock;
 using NSubstitute;
 using Repository.Interface;
 using Service;
 using Service.Interface;
+using Service.Interface.Commands.Stock;
 using Service.Interface.Dto;
-using Service.Interface.Dto.Stock;
+using Service.Interface.Results.Stock;
 
 namespace ServiceTests
 {
@@ -13,8 +14,8 @@ namespace ServiceTests
         private IStockService Service { get; set; }
         private IStockRepository Repository { get; set; }
 
-        private static CreateMaterialDto PartToRegister { get; } = new("Óleo de motor", "Lubrax", 41.90, 5);
-        private static CreateMaterialDto PartToFailRegister { get; } = new("Teste", "Testando", 15, 1);
+        private static CreateMaterialCommand PartToRegister { get; } = new("Óleo de motor", "Lubrax", 41.90, 5);
+        private static CreateMaterialCommand PartToFailRegister { get; } = new("Teste", "Testando", 15, 1);
 
         private static readonly Guid ExistingPartId = Guid.NewGuid();
         private static IMaterial ExistingPart
@@ -48,8 +49,9 @@ namespace ServiceTests
             }
         }
 
-        private static MaterialDto ExistingPartDto { get; } = new(ExistingPartId, "Vela de ignição", "Bosch", 6.00, 20, 5);
-        private static MaterialDto ExistingPart2Dto { get; } = new(ExistingPart2Id, "Flúido para radiador", "Gitanes", 30.00, 5, 0);
+        private static MaterialResult ExistingPartResult { get; } = new(ExistingPartId, "Vela de ignição", "Bosch", 6.00, 20, 5);
+        private static MaterialResult ExistingPart2Result { get; } = new(ExistingPart2Id, "Flúido para radiador", "Gitanes", 30.00, 5, 0);
+        private static CreateMaterialCommand ExistingPartCommand { get; } = new("Vela de ignição", "Bosch", 6.00, 20);
         private static UpdateItemDto<int> PartToFailIntOperations { get; } = new(Guid.NewGuid(), 5);
         private static UpdateItemDto<double> PartToFailDoubleOperations { get; } = new(Guid.NewGuid(), 10.00);
         private static UpdateItemDto<int> PartToAddAmount { get; } = new(ExistingPartId, 5);
@@ -135,9 +137,9 @@ namespace ServiceTests
         [Test]
         public async Task MustNotRegisterNewPartIfAlreadyExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RegisterNewMaterial(ExistingPartDto));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RegisterNewMaterial(ExistingPartCommand));
 
-            await Repository.Received(1).GetMaterial(name: ExistingPartDto.Name, brand: ExistingPartDto.Brand);
+            await Repository.Received(1).GetMaterial(name: ExistingPartCommand.Name, brand: ExistingPartCommand.Brand);
         }
 
         [Test]
@@ -159,8 +161,8 @@ namespace ServiceTests
             Assert.That(itens, Has.Count.EqualTo(2));
             Assert.Multiple(() =>
             {
-                Assert.That(itens[0].Equals(ExistingPartDto), Is.True);
-                Assert.That(itens[1].Equals(ExistingPart2Dto), Is.True);
+                Assert.That(itens[0], Is.EqualTo(ExistingPartResult));
+                Assert.That(itens[1], Is.EqualTo(ExistingPart2Result));
             });
         }
 
@@ -171,8 +173,7 @@ namespace ServiceTests
 
             await Repository.Received(1).GetMaterial(name: ExistingPart.Name, brand: ExistingPart.Brand);
 
-            Assert.That(item, Is.Not.Null);
-            Assert.That(item.Equals(ExistingPartDto), Is.True);
+            Assert.That(item, Is.EqualTo(ExistingPartResult));
         }
 
         [Test]
@@ -192,8 +193,7 @@ namespace ServiceTests
 
             await Repository.Received(1).GetMaterial(ExistingPart.Id);
 
-            Assert.That(item, Is.Not.Null);
-            Assert.That(item.Equals(ExistingPartDto), Is.True);
+            Assert.That(item, Is.EqualTo(ExistingPartResult));
         }
 
         [Test]

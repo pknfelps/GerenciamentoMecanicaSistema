@@ -10,9 +10,9 @@ using Service.Interface;
 using Service.Interface.Dto;
 using Service.Interface.Dto.Order;
 using Service.Interface.Dto.Service;
-using Service.Interface.Dto.Stock;
 using Service.Interface.Results.Catalog;
 using Service.Interface.Results.Customer;
+using Service.Interface.Results.Stock;
 using Service.Interface.Results.Vehicle;
 
 namespace ServiceTests
@@ -40,9 +40,9 @@ namespace ServiceTests
         private static IMechanicalService ExistingService2 { get; } = CreateSubstituteService(Guid.NewGuid(), "Troca de Pneu", 2, 150, 1);
         private static ServiceResult ExistingService2Result { get; } = new(ExistingService2.Id, "Troca de Pneu", 2, 150, 1);
         private static IMaterial ExistingPart { get; } = CreateSubstitutePart(Guid.NewGuid(), "Pneu", "Michelin", 600, 10, 4);
-        private static MaterialDto ExistingPartDto { get; } = new(ExistingPart.Id, ExistingPart.Name, ExistingPart.Brand, ExistingPart.Price, ExistingPart.Amount, ExistingPart.ReservedAmount);
+        private static MaterialResult ExistingPartResult { get; } = new(ExistingPart.Id, ExistingPart.Name, ExistingPart.Brand, ExistingPart.Price, ExistingPart.Amount, ExistingPart.ReservedAmount);
         private static IMaterial ExistingPart2 { get; } = CreateSubstitutePart(Guid.NewGuid(), "Óleo de Motor", "Lubrax", 35, 20, 0);
-        private static MaterialDto ExistingPart2Dto { get; } = new(ExistingPart2.Id, ExistingPart2.Name, ExistingPart2.Brand, ExistingPart2.Price, ExistingPart2.Amount, ExistingPart2.ReservedAmount);
+        private static MaterialResult ExistingPart2Result { get; } = new(ExistingPart2.Id, ExistingPart2.Name, ExistingPart2.Brand, ExistingPart2.Price, ExistingPart2.Amount, ExistingPart2.ReservedAmount);
         private static IOrder ExistingReceivedOrder { get; } = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0, WorkOrderStatus.Received);
         private static IOrder ExistingTestOrder { get; set; } = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0, WorkOrderStatus.Received);
         private static readonly Guid ExistingOrderInDiagnosisId = Guid.NewGuid();
@@ -255,10 +255,10 @@ namespace ServiceTests
                 var id = callInfo.ArgAt<Guid>(0);
 
                 if (id == ExistingPart.Id)
-                    return ExistingPartDto;
+                    return ExistingPartResult;
 
                 if (id == ExistingPart2.Id)
-                    return ExistingPart2Dto;
+                    return ExistingPart2Result;
 
                 return null;
             });
