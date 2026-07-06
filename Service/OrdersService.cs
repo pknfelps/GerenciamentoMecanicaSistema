@@ -78,19 +78,19 @@ namespace Service
                 throw new InvalidOperationException("Falha ao atualizar a ordem");
         }
 
-        public async Task AddServiceToOrder(Guid orderId, UpdateOrderItemCommand<int> serviceDto)
+        public async Task AddServiceToOrder(Guid orderId, UpdateOrderItemCommand<int> service)
         {
             var order = await Repository.GetOrder(orderId) ?? throw new InvalidOperationException("Ordem não encontrada");
 
-            var orderService = order.Services.FirstOrDefault(x => x.Id == serviceDto.Id);
+            var orderService = order.Services.FirstOrDefault(x => x.Id == service.Id);
 
             int registry = 0;
 
             if (orderService == null)
             {
-                var service = await CatalogService.GetService(serviceDto.Id) ?? throw new InvalidOperationException($"Serviço com id \"{serviceDto.Id}\" não encontrado");
+                var serviceCatalog = await CatalogService.GetService(service.Id) ?? throw new InvalidOperationException($"Serviço com id \"{service.Id}\" não encontrado");
 
-                var serviceToAdd = new MechanicalService(service.Id, service.Description, service.Hours, service.PricePerHour, service.Amount);
+                var serviceToAdd = new MechanicalService(serviceCatalog.Id, serviceCatalog.Description, serviceCatalog.Hours, serviceCatalog.PricePerHour, serviceCatalog.Amount);
 
                 order.AddService(serviceToAdd);
 
@@ -98,7 +98,7 @@ namespace Service
             }
             else
             {
-                orderService.AddServiceAmount(serviceDto.Value);
+                orderService.AddServiceAmount(service.Value);
 
                 registry = await Repository.UpdateServiceOfOrder(orderId, orderService);
             }
@@ -107,20 +107,20 @@ namespace Service
                 throw new InvalidOperationException("Erro ao salvar serviço");
         }
 
-        public async Task RemoveServiceOfOrder(Guid orderId, UpdateOrderItemCommand<int> serviceDto)
+        public async Task RemoveServiceOfOrder(Guid orderId, UpdateOrderItemCommand<int> service)
         {
             var order = await Repository.GetOrder(orderId) ?? throw new InvalidOperationException("Ordem não encontrada");
 
-            var service = order.Services.First(x => x.Id == serviceDto.Id);
+            var orderService = order.Services.First(x => x.Id == service.Id);
 
-            service.RemoveServiceAmount(serviceDto.Value);
+            orderService.RemoveServiceAmount(service.Value);
 
             int registry;
 
-            if (service.Amount == 0)
-                registry = await Repository.RemoveServiceFromOrder(orderId, serviceDto.Id);
+            if (orderService.Amount == 0)
+                registry = await Repository.RemoveServiceFromOrder(orderId, service.Id);
             else
-                registry = await Repository.UpdateServiceOfOrder(orderId, service);
+                registry = await Repository.UpdateServiceOfOrder(orderId, orderService);
 
             if (registry == 0)
                 throw new InvalidOperationException("Erro ao salvar serviço");

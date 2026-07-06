@@ -16,7 +16,7 @@ namespace GerenciamentoMecanicaSistema.Contracts.Responses.Order
         [Required]
         public List<MaterialResponse> Materials { get; set; } = materials;
 
-        public static DetailedWorkOrderResponse Create(DetailedWorkOrderResult order)
+        public static new DetailedWorkOrderResponse Create(DetailedWorkOrderResult order)
         {
             var services = order.Services.Select(ServiceResponse.Create);
             var materials = order.Materials.Select(MaterialResponse.Create);
