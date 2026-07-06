@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using GerenciamentoMecanicaSistema.Contracts.Requests.Order;
+using GerenciamentoMecanicaSistema.Contracts.Responses.Order;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interface;
-using Service.Interface.Dto;
 using Service.Interface.Dto.CustomAttributes;
-using Service.Interface.Dto.Order;
 
 namespace GerenciamentoMecanicaSistema.Controllers
 {
@@ -20,46 +20,46 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDto orderToCreate)
+        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest orderToCreate)
         {
-            await OrderService.CreateServiceOrder(orderToCreate);
+            await OrderService.CreateServiceOrder(orderToCreate.ToCommand());
 
             return Created();
         }
 
         [HttpGet()]
         [EndpointDescription("Endpoint para listar as ordens de serviço")]
-        [ProducesResponseType(typeof(IEnumerable<WorkOrderDto>), StatusCodes.Status200OK, Description = "Retorna a lista de ordens")]
+        [ProducesResponseType(typeof(IEnumerable<WorkOrderResponse>), StatusCodes.Status200OK, Description = "Retorna a lista de ordens")]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         public async Task<OkObjectResult> GetOrders([FromQuery] Guid? id = null, [FromQuery] string vehicleLicensePlate = "")
         {
             var orders = await OrderService.GetOrders(id: id, vehicleLicensePlate: vehicleLicensePlate);
 
-            return Ok(orders.Select(WorkOrderDto.Create));
+            return Ok(orders.Select(WorkOrderResponse.Create));
         }
 
         [HttpGet("details")]
         [EndpointDescription("Endpoint para listar as ordens de serviço detalhadas")]
-        [ProducesResponseType(typeof(IEnumerable<DetailedWorkOrderDto>), StatusCodes.Status200OK, Description = "Retorna a lista de ordens")]
+        [ProducesResponseType(typeof(IEnumerable<DetailedWorkOrderResponse>), StatusCodes.Status200OK, Description = "Retorna a lista de ordens")]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         public async Task<OkObjectResult> GetDetailedOrders([FromQuery] Guid? id = null, [FromQuery] string vehicleLicensePlate = "")
         {
             var orders = await OrderService.GetOrders(id: id, vehicleLicensePlate: vehicleLicensePlate);
 
-            return Ok(orders);
+            return Ok(orders.Select(DetailedWorkOrderResponse.Create));
         }
 
         [AllowAnonymous]
         [HttpGet("vehicles/{licensePlate}")]
         [EndpointDescription("Endpoint para exibir as ordens detalhadas de um veículo. Não requer autenticação JWT para que possa ser acessado pelos clientes para acompanhar a ordem.")]
-        [ProducesResponseType(typeof(DetailedWorkOrderDto), StatusCodes.Status200OK, Description = "Retorna todas as ordens detalhadas do cliente")]
+        [ProducesResponseType(typeof(IEnumerable<DetailedWorkOrderResponse>), StatusCodes.Status200OK, Description = "Retorna todas as ordens detalhadas do cliente")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> GetVehicleOrders([FromRoute, RegularLicensePlateExpression] string licensePlate)
         {
             var order = await OrderService.GetOrders(vehicleLicensePlate: licensePlate);
 
-            return Ok(order);
+            return Ok(order.Select(DetailedWorkOrderResponse.Create));
         }
 
         [HttpPatch("{id}/diagnosis/start")]
@@ -82,9 +82,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> AddServiceToOrder([FromRoute, GuidValidation] Guid id, [FromBody] UpdateItemDto<int> service)
+        public async Task<IActionResult> AddServiceToOrder([FromRoute, GuidValidation] Guid id, [FromBody] UpdateOrderItemRequest<int> service)
         {
-            await OrderService.AddServiceToOrder(id, service);
+            await OrderService.AddServiceToOrder(id, service.ToCommand());
 
             return Ok();
         }
@@ -95,9 +95,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> RemoveServiceOfOrder([FromRoute, GuidValidation] Guid id, [FromBody] UpdateItemDto<int> service)
+        public async Task<IActionResult> RemoveServiceOfOrder([FromRoute, GuidValidation] Guid id, [FromBody] UpdateOrderItemRequest<int> service)
         {
-            await OrderService.RemoveServiceOfOrder(id, service);
+            await OrderService.RemoveServiceOfOrder(id, service.ToCommand());
 
             return NoContent();
         }
@@ -108,9 +108,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> AddMaterialToOrder([FromRoute, GuidValidation] Guid id, [FromBody] UpdateItemDto<int> orderItem)
+        public async Task<IActionResult> AddMaterialToOrder([FromRoute, GuidValidation] Guid id, [FromBody] UpdateOrderItemRequest<int> orderItem)
         {
-            await OrderService.AddMaterialToOrder(id, orderItem);
+            await OrderService.AddMaterialToOrder(id, orderItem.ToCommand());
 
             return Ok();
         }
@@ -121,9 +121,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> RemoveMaterialOrSupplieFromOrder([FromRoute, GuidValidation] Guid id, [FromBody] UpdateItemDto<int> orderItem)
+        public async Task<IActionResult> RemoveMaterialOrSupplieFromOrder([FromRoute, GuidValidation] Guid id, [FromBody] UpdateOrderItemRequest<int> orderItem)
         {
-            await OrderService.RemoveMaterialFromOrder(id, orderItem);
+            await OrderService.RemoveMaterialFromOrder(id, orderItem.ToCommand());
 
             return NoContent();
         }
@@ -147,9 +147,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> ApproveBudget([FromRoute, GuidValidation] Guid id, [FromBody] ApproveOrderDto approveOrder)
+        public async Task<IActionResult> ApproveBudget([FromRoute, GuidValidation] Guid id, [FromBody] ApproveOrderRequest approveOrder)
         {
-            await OrderService.ApproveBudget(id, approveOrder);
+            await OrderService.ApproveBudget(id, approveOrder.ToCommand());
 
             return NoContent();
         }

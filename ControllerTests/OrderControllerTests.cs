@@ -1,8 +1,6 @@
-﻿using NSubstitute;
+﻿using GerenciamentoMecanicaSistema.Contracts.Requests.Order;`r`nusing GerenciamentoMecanicaSistema.Contracts.Responses.Order;`r`nusing NSubstitute;
 using Service.Interface;
-using Service.Interface.Dto;
-using Service.Interface.Dto.Order;
-using System.Net;
+using Service.Interface.Commands.Order;`r`nusing Service.Interface.Results.Order;`r`nusing System.Net;
 using System.Net.Http.Json;
 
 namespace ControllerTests
@@ -11,17 +9,17 @@ namespace ControllerTests
     {
         private IOrdersService OrderService { get; set; }
 
-        private static readonly CreateOrderDto OrderToCreate = new("123.456.789-12", "TST1234");
-        private static readonly DetailedWorkOrderDto ExistingOrder = new(Guid.NewGuid(), "123.456.789-12", "TST1234", 0.0, "Received", DateTime.Now, DateTime.MinValue, [], [], TimeSpan.Zero);
-        private static readonly UpdateItemDto<int> OrderUpdate = new(Guid.NewGuid(), 1);
+        private static readonly CreateOrderRequest OrderToCreate = new("123.456.789-12", "TST1234");
+        private static readonly DetailedWorkOrderResult ExistingOrder = new(Guid.NewGuid(), "123.456.789-12", "TST1234", 0.0, "Received", DateTime.Now, DateTime.MinValue, [], [], TimeSpan.Zero);
+        private static readonly UpdateOrderItemCommand<int> OrderUpdate = new(Guid.NewGuid(), 1);
 
         protected override void MockService()
         {
             OrderService = TestWebAppFactory.OrderServiceMock;
 
-            OrderService.CreateServiceOrder(Arg.Any<CreateOrderDto>()).Returns(callInfo =>
+            OrderService.CreateServiceOrder(Arg.Any<CreateOrderRequest>()).Returns(callInfo =>
             {
-                var order = callInfo.ArgAt<CreateOrderDto>(0);
+                var order = callInfo.ArgAt<CreateOrderRequest>(0);
 
                 if (order.Equals(OrderToCreate))
                     return Task.CompletedTask;
@@ -66,7 +64,7 @@ namespace ControllerTests
                 throw new InvalidOperationException();
             });
 
-            OrderService.AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>()).Returns(callInfo =>
+            OrderService.AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
@@ -76,7 +74,7 @@ namespace ControllerTests
                 throw new InvalidOperationException();
             });
 
-            OrderService.RemoveServiceOfOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>()).Returns(callInfo =>
+            OrderService.RemoveServiceOfOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
@@ -86,7 +84,7 @@ namespace ControllerTests
                 throw new InvalidOperationException();
             });
 
-            OrderService.AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>()).Returns(callInfo =>
+            OrderService.AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
@@ -97,7 +95,7 @@ namespace ControllerTests
                 throw new InvalidOperationException();
             });
 
-            OrderService.RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>()).Returns(callInfo =>
+            OrderService.RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
@@ -117,7 +115,7 @@ namespace ControllerTests
                 throw new InvalidOperationException();
             });
 
-            OrderService.ApproveBudget(Arg.Any<Guid>(), Arg.Any<ApproveOrderDto>()).Returns(callInfo =>
+            OrderService.ApproveBudget(Arg.Any<Guid>(), Arg.Any<ApproveOrderRequest>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
@@ -183,7 +181,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PostAsJsonAsync($"orders", new { Teste = "Teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).CreateServiceOrder(Arg.Any<CreateOrderDto>());
+            await OrderService.ReceivedWithAnyArgs(0).CreateServiceOrder(Arg.Any<CreateOrderRequest>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
@@ -191,7 +189,7 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnInternalServerErrorIfTryCreateOrderWithInvalidOrder()
         {
-            var order = new CreateOrderDto("321.654.987-98", "XXX0000");
+            var order = new CreateOrderRequest("321.654.987-98", "XXX0000");
             var response = await TestClient.PostAsJsonAsync($"orders", order);
 
             await OrderService.Received(1).CreateServiceOrder(order);
@@ -203,7 +201,7 @@ namespace ControllerTests
         public async Task MustGetOrders()
         {
             var response = await TestClient.GetAsync($"orders");
-            var orders = await response.Content.ReadFromJsonAsync<List<WorkOrderDto>>();
+            var orders = await response.Content.ReadFromJsonAsync<List<WorkOrderResponse>>();
 
             await OrderService.Received(1).GetOrders();
 
@@ -218,7 +216,7 @@ namespace ControllerTests
         {
             var response = await TestClient.GetAsync($"orders?id={ExistingOrder.Id}");
 
-            var orders = await response.Content.ReadFromJsonAsync<List<WorkOrderDto>>();
+            var orders = await response.Content.ReadFromJsonAsync<List<WorkOrderResponse>>();
 
             await OrderService.Received(1).GetOrders(id: ExistingOrder.Id);
 
@@ -234,7 +232,7 @@ namespace ControllerTests
         public async Task MustGetDetailedOrder()
         {
             var response = await TestClient.GetAsync($"orders/details?id={ExistingOrder.Id}");
-            var orders = await response.Content.ReadFromJsonAsync<List<DetailedWorkOrderDto>>();
+            var orders = await response.Content.ReadFromJsonAsync<List<DetailedWorkOrderResult>>();
 
             await OrderService.Received(1).GetOrders(id: ExistingOrder.Id);
 
@@ -251,7 +249,7 @@ namespace ControllerTests
         {
             var response = await TestClient.GetAsync($"orders/vehicles/{ExistingOrder.VehicleLicensePlate}");
 
-            var orders = await response.Content.ReadFromJsonAsync<List<DetailedWorkOrderDto>>();
+            var orders = await response.Content.ReadFromJsonAsync<List<DetailedWorkOrderResult>>();
 
             await OrderService.Received(1).GetOrders(vehicleLicensePlate: ExistingOrder.VehicleLicensePlate);
 
@@ -307,7 +305,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PostAsJsonAsync($"orders/{ExistingOrder.Id}/services", OrderUpdate);
 
-            await OrderService.Received(1).AddServiceToOrder(ExistingOrder.Id, Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).AddServiceToOrder(ExistingOrder.Id, Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         }
@@ -317,7 +315,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PostAsJsonAsync($"orders/{Guid.NewGuid()}/services", OrderUpdate);
 
-            await OrderService.Received(1).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
         }
@@ -327,7 +325,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PatchAsJsonAsync($"orders/0000/services", new { Teste = "Teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.ReceivedWithAnyArgs(0).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
@@ -337,7 +335,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/services", OrderUpdate);
 
-            await OrderService.Received(1).RemoveServiceOfOrder(ExistingOrder.Id, Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).RemoveServiceOfOrder(ExistingOrder.Id, Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         }
@@ -347,7 +345,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PatchAsJsonAsync($"orders/{Guid.NewGuid()}/services", OrderUpdate);
 
-            await OrderService.Received(1).RemoveServiceOfOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).RemoveServiceOfOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
         }
@@ -357,7 +355,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PatchAsJsonAsync($"orders/0000/services", new { Teste = "Teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).RemoveServiceOfOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.ReceivedWithAnyArgs(0).RemoveServiceOfOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
@@ -367,7 +365,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PostAsJsonAsync($"orders/{ExistingOrder.Id}/materials", OrderUpdate);
 
-            await OrderService.Received(1).AddMaterialToOrder(ExistingOrder.Id, Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).AddMaterialToOrder(ExistingOrder.Id, Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         }
@@ -377,7 +375,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PostAsJsonAsync($"orders/{Guid.NewGuid()}/materials", OrderUpdate);
 
-            await OrderService.Received(1).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
         }
@@ -387,7 +385,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/materials", new { Teste = "Teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.ReceivedWithAnyArgs(0).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
@@ -397,7 +395,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/materials", OrderUpdate);
 
-            await OrderService.Received(1).RemoveMaterialFromOrder(ExistingOrder.Id, Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).RemoveMaterialFromOrder(ExistingOrder.Id, Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         }
@@ -407,7 +405,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PatchAsJsonAsync($"orders/{Guid.NewGuid()}/materials", OrderUpdate);
 
-            await OrderService.Received(1).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
         }
@@ -417,7 +415,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/materials", new { Teste = "Teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.ReceivedWithAnyArgs(0).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
@@ -456,7 +454,7 @@ namespace ControllerTests
         [Test]
         public async Task MustApproveBudget()
         {
-            var approve = new ApproveOrderDto(ExistingOrder.CustomerDocument, true);
+            var approve = new ApproveOrderRequest(ExistingOrder.CustomerDocument, true);
             var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/budget", approve);
 
             await OrderService.Received(1).ApproveBudget(ExistingOrder.Id, approve);
@@ -467,7 +465,7 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnInvalidServerErrorIfTryApproveBudgetThatNotExists()
         {
-            var approve = new ApproveOrderDto(ExistingOrder.CustomerDocument, true);
+            var approve = new ApproveOrderRequest(ExistingOrder.CustomerDocument, true);
             var response = await TestClient.PatchAsJsonAsync($"orders/{Guid.NewGuid()}/budget", approve);
 
             await OrderService.Received(1).ApproveBudget(Arg.Any<Guid>(), approve);
@@ -480,7 +478,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PatchAsJsonAsync($"orders/0000/budget", new { Teste = "teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).ApproveBudget(Arg.Any<Guid>(), Arg.Any<ApproveOrderDto>());
+            await OrderService.ReceivedWithAnyArgs(0).ApproveBudget(Arg.Any<Guid>(), Arg.Any<ApproveOrderRequest>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
@@ -610,3 +608,4 @@ namespace ControllerTests
         }
     }
 }
+
