@@ -1,6 +1,6 @@
-﻿using Dapper;
+using Dapper;
 using Domain.Interface.Service;
-using Repository.Dto;
+using Repository.PersistenceModels;
 using Repository.Interface;
 using System.Data;
 
@@ -10,11 +10,11 @@ namespace Repository
     {
         public static string RegisterServiceSql { get; private set; } = """
             INSERT INTO catalog(id, description, hours, price_per_hour)
-            VALUES (@Id, @Description, @Hours, @Price_Per_Hour);
+            VALUES (@Id, @Description, @Hours, @PricePerHour);
             """;
 
         public static string GetServicesSql { get; private set; } = """
-            SELECT id, description, hours, price_per_hour
+            SELECT id, description, hours, price_per_hour AS PricePerHour
             FROM catalog
             {0}
             LIMIT 50;
@@ -22,9 +22,9 @@ namespace Repository
 
         public static string UpdateServiceSql { get; private set; } = """
             UPDATE catalog
-            SET description = @Description,
-                hours = @Hours,
-                price_per_hour = @Price_Per_Hour
+                SET description = @Description,
+                    hours = @Hours,
+                    price_per_hour = @PricePerHour
             Where id = @Id;
             """;
 

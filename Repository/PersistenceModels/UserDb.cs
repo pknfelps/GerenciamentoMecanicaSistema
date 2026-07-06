@@ -1,8 +1,8 @@
-﻿using Domain.Interface.User;
+using Domain.Interface.User;
 using Domain.User;
 using System.Text.Json.Serialization;
 
-namespace Repository.Dto
+namespace Repository.PersistenceModels
 {
     internal class UserDb
     {

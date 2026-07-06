@@ -3,36 +3,12 @@
   "WorkspaceRootPath": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{D9E83580-8BEE-4957-A1C8-EC04071A5762}|ControllerTests\\ControllerTests.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\controllertests\\ordercontrollertests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D9E83580-8BEE-4957-A1C8-EC04071A5762}|ControllerTests\\ControllerTests.csproj|solutionrelative:controllertests\\ordercontrollertests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\repository\\persistencemodels\\vehicledb.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|solutionrelative:repository\\persistencemodels\\vehicledb.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{02B79BC5-153E-2FD9-CAE3-8149E0D9044F}|Service\\Service.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\service\\customerservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{02B79BC5-153E-2FD9-CAE3-8149E0D9044F}|Service\\Service.csproj|solutionrelative:service\\customerservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\gerenciamentomecanicasistema\\controllers\\customerscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|solutionrelative:gerenciamentomecanicasistema\\controllers\\customerscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AA89DA64-BC2F-73FB-764E-70326ABD64CD}|Service.Interface\\Service.Interface.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\service.interface\\commands\\customer\\createcustomercommand.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AA89DA64-BC2F-73FB-764E-70326ABD64CD}|Service.Interface\\Service.Interface.csproj|solutionrelative:service.interface\\commands\\customer\\createcustomercommand.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\gerenciamentomecanicasistema\\contracts\\responses\\customer\\customerresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|solutionrelative:gerenciamentomecanicasistema\\contracts\\responses\\customer\\customerresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\gerenciamentomecanicasistema\\contracts\\requests\\customer\\createcustomerrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|solutionrelative:gerenciamentomecanicasistema\\contracts\\requests\\customer\\createcustomerrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AA89DA64-BC2F-73FB-764E-70326ABD64CD}|Service.Interface\\Service.Interface.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\service.interface\\icustomerservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AA89DA64-BC2F-73FB-764E-70326ABD64CD}|Service.Interface\\Service.Interface.csproj|solutionrelative:service.interface\\icustomerservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AA89DA64-BC2F-73FB-764E-70326ABD64CD}|Service.Interface\\Service.Interface.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\service.interface\\results\\customer\\customerresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AA89DA64-BC2F-73FB-764E-70326ABD64CD}|Service.Interface\\Service.Interface.csproj|solutionrelative:service.interface\\results\\customer\\customerresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\repository\\persistencemodels\\customerdb.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|solutionrelative:repository\\persistencemodels\\customerdb.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -42,114 +18,36 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "OrderControllerTests.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\OrderControllerTests.cs",
-              "RelativeDocumentMoniker": "ControllerTests\\OrderControllerTests.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ControllerTests\\OrderControllerTests.cs",
-              "RelativeToolTip": "ControllerTests\\OrderControllerTests.cs",
-              "ViewState": "AgIAAAkAAAAAAAAAAAAAABEAAAAtAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-06T02:25:07.514Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "CustomersController.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\CustomersController.cs",
-              "RelativeDocumentMoniker": "GerenciamentoMecanicaSistema\\Controllers\\CustomersController.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Controllers\\CustomersController.cs",
-              "RelativeToolTip": "GerenciamentoMecanicaSistema\\Controllers\\CustomersController.cs",
-              "ViewState": "AgIAAAwAAAAAAAAAAAAAABYAAABPAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-06T00:02:15.635Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "ICustomerService.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\ICustomerService.cs",
-              "RelativeDocumentMoniker": "Service.Interface\\ICustomerService.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\ICustomerService.cs",
-              "RelativeToolTip": "Service.Interface\\ICustomerService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-06T00:02:02.095Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "CustomerResult.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Results\\Customer\\CustomerResult.cs",
-              "RelativeDocumentMoniker": "Service.Interface\\Results\\Customer\\CustomerResult.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Results\\Customer\\CustomerResult.cs",
-              "RelativeToolTip": "Service.Interface\\Results\\Customer\\CustomerResult.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-06T00:01:31.223Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "CreateCustomerCommand.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Commands\\Customer\\CreateCustomerCommand.cs",
-              "RelativeDocumentMoniker": "Service.Interface\\Commands\\Customer\\CreateCustomerCommand.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service.Interface\\Commands\\Customer\\CreateCustomerCommand.cs",
-              "RelativeToolTip": "Service.Interface\\Commands\\Customer\\CreateCustomerCommand.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAASAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-06T00:00:59.743Z",
-              "EditorCaption": ""
-            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{e1b7d1f8-9b3c-49b1-8f4f-bfc63a88835d}"
             },
             {
               "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "VehicleDb.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\PersistenceModels\\VehicleDb.cs",
+              "RelativeDocumentMoniker": "Repository\\PersistenceModels\\VehicleDb.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\PersistenceModels\\VehicleDb.cs",
+              "RelativeToolTip": "Repository\\PersistenceModels\\VehicleDb.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAcAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-06T12:57:49.363Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "CustomerService.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\CustomerService.cs",
-              "RelativeDocumentMoniker": "Service\\CustomerService.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\CustomerService.cs",
-              "RelativeToolTip": "Service\\CustomerService.cs",
-              "ViewState": "AgIAAA0AAAAAAAAAAABEwBMAAAAAAAAAAAAAAA==",
+              "Title": "CustomerDb.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\PersistenceModels\\CustomerDb.cs",
+              "RelativeDocumentMoniker": "Repository\\PersistenceModels\\CustomerDb.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Repository\\PersistenceModels\\CustomerDb.cs",
+              "RelativeToolTip": "Repository\\PersistenceModels\\CustomerDb.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-06T00:00:57.581Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "CustomerResponse.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Contracts\\Responses\\Customer\\CustomerResponse.cs",
-              "RelativeDocumentMoniker": "GerenciamentoMecanicaSistema\\Contracts\\Responses\\Customer\\CustomerResponse.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Contracts\\Responses\\Customer\\CustomerResponse.cs",
-              "RelativeToolTip": "GerenciamentoMecanicaSistema\\Contracts\\Responses\\Customer\\CustomerResponse.cs",
-              "ViewState": "AgIAAAgAAAAAAAAAAAA0wBAAAAAyAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-05T23:59:51.906Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "CreateCustomerRequest.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Contracts\\Requests\\Customer\\CreateCustomerRequest.cs",
-              "RelativeDocumentMoniker": "GerenciamentoMecanicaSistema\\Contracts\\Requests\\Customer\\CreateCustomerRequest.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Contracts\\Requests\\Customer\\CreateCustomerRequest.cs",
-              "RelativeToolTip": "GerenciamentoMecanicaSistema\\Contracts\\Requests\\Customer\\CreateCustomerRequest.cs",
-              "ViewState": "AgIAAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-05T23:59:40.953Z",
+              "WhenOpened": "2026-07-06T12:57:31.371Z",
               "EditorCaption": ""
             }
           ]

@@ -1,6 +1,6 @@
-﻿using Dapper;
+using Dapper;
 using Domain.Interface.Custumer;
-using Repository.Dto;
+using Repository.PersistenceModels;
 using Repository.Interface;
 using System.Data;
 

@@ -1,6 +1,6 @@
-﻿using Dapper;
+using Dapper;
 using Domain.Interface.Stock;
-using Repository.Dto;
+using Repository.PersistenceModels;
 using Repository.Interface;
 using System.Data;
 
@@ -10,11 +10,11 @@ namespace Repository
     {
         public static string RegisterMaterialSql { get; private set; } = """
                 INSERT INTO stock(id, name, brand, price, amount, reserved_amount)
-                VALUES (@Id, @Name, @Brand, @Price, @Amount, @Reserved_Amount);
+                VALUES (@Id, @Name, @Brand, @Price, @Amount, @ReservedAmount);
                 """;
 
         public static string GetItensSql { get; private set; } = """
-                SELECT id, name, brand, price, amount, reserved_amount
+                SELECT id, name, brand, price, amount, reserved_amount AS ReservedAmount
                 FROM stock
                 {0}
                 LIMIT 50;
@@ -29,7 +29,7 @@ namespace Repository
         public static string UpdateMaterialAmountSql { get; private set; } = """
                 UPDATE stock
                 SET amount = @Amount,
-                    reserved_amount = @Reserved_Amount
+                    reserved_amount = @ReservedAmount
                 WHERE id = @Id;
                 """;
 

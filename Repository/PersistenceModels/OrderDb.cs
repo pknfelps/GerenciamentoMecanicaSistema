@@ -1,20 +1,20 @@
-﻿using Domain.Interface.Order;
+using Domain.Interface.Order;
 using Domain.Interface.Service;
 using Domain.Interface.Stock;
 using Domain.WorkOrder;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Repository.Dto
+namespace Repository.PersistenceModels
 {
     internal class OrderDb
     {
         [JsonPropertyName("id")]
         public Guid Id { get; private set; }
         [JsonPropertyName("customoer_document")]
-        public string Customer_Document { get; private set; }
+        public string CustomerDocument { get; private set; }
         [JsonPropertyName("vehicle_license_plate")]
-        public string Vehicle_License_Plate { get; private set; }
+        public string VehicleLicensePlate { get; private set; }
         [JsonPropertyName("services")]
         public List<MechanicalServiceDb> Services { get; private set; }
         [JsonPropertyName("parts")]
@@ -24,37 +24,37 @@ namespace Repository.Dto
         [JsonPropertyName("status")]
         public string Status { get; private set; }
         [JsonPropertyName("date_created")]
-        public DateTime Date_Created { get; private set; }
+        public DateTime DateCreated { get; private set; }
         [JsonPropertyName("date_finished")]
-        public DateTime Date_Finished { get; private set; }
+        public DateTime DateFinished { get; private set; }
         [JsonPropertyName("duration")]
         public TimeSpan Duration { get; private set; }
 
         // Used by GetOrders or GetCustomerOrders that returns the detailed order
-        public OrderDb(Guid id, string customer_document, string vehicle_license_plate, string services, string materials, double budget, string status, DateTime date_created, DateTime date_finished)
+        public OrderDb(Guid id, string customerDocument, string vehicleLicensePlate, string services, string materials, double budget, string status, DateTime dateCreated, DateTime dateFinished)
         {
             Id = id;
-            Customer_Document = customer_document;
-            Vehicle_License_Plate = vehicle_license_plate;
+            CustomerDocument = customerDocument;
+            VehicleLicensePlate = vehicleLicensePlate;
             Services = JsonSerializer.Deserialize<List<MechanicalServiceDb>>(services) ?? [];
             Materials = JsonSerializer.Deserialize<List<MaterialDb>>(materials) ?? [];
             Budget = budget;
             Status = status;
-            Date_Created = date_created;
-            Date_Finished = date_finished;
+            DateCreated = dateCreated;
+            DateFinished = dateFinished;
         }
 
-        public OrderDb(Guid id, string customer_document, string vehicle_license_plate, List<MechanicalServiceDb> services, List<MaterialDb> materials, double budget, string status, DateTime date_created, DateTime date_finished, TimeSpan duration)
+        public OrderDb(Guid id, string customerDocument, string vehicleLicensePlate, List<MechanicalServiceDb> services, List<MaterialDb> materials, double budget, string status, DateTime dateCreated, DateTime dateFinished, TimeSpan duration)
         {
             Id = id;
-            Customer_Document = customer_document;
-            Vehicle_License_Plate = vehicle_license_plate;
+            CustomerDocument = customerDocument;
+            VehicleLicensePlate = vehicleLicensePlate;
             Services = services;
             Materials = materials;
             Budget = budget;
             Status = status;
-            Date_Created = date_created;
-            Date_Finished = date_finished;
+            DateCreated = dateCreated;
+            DateFinished = dateFinished;
             Duration = duration;
         }
 
@@ -65,7 +65,7 @@ namespace Repository.Dto
             var services = Services == null ? new List<IMechanicalService>() : [.. Services.Select(service => service.ToDomain())];
             var materials = Materials == null ? new List<IMaterial>() : [.. Materials.Select(material => material.ToDomain())];
 
-            return new Order(Id, Customer_Document, Vehicle_License_Plate, services, materials, Budget, Enum.Parse<WorkOrderStatus>(Status), Date_Created, Date_Finished);
+            return new Order(Id, CustomerDocument, VehicleLicensePlate, services, materials, Budget, Enum.Parse<WorkOrderStatus>(Status), DateCreated, DateFinished);
         }
     }
 }

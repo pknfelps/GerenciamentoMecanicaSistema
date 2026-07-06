@@ -1,8 +1,8 @@
-﻿using Dapper;
+using Dapper;
 using Domain.Customer;
 using Domain.Interface.Vehicle;
 using Domain.Vehicle;
-using Repository.Dto;
+using Repository.PersistenceModels;
 using Repository.Interface;
 using System.Data;
 
@@ -12,11 +12,11 @@ namespace Repository
     {
         public static string RegisterVehicleSql { get; private set; } = """
                 INSERT INTO vehicles(id, customer_document, brand, model, year, license_plate)
-                VALUES (@Id, @Customer_Document, @Brand, @Model, @Year, @License_Plate);
+                VALUES (@Id, @CustomerDocument, @Brand, @Model, @Year, @LicensePlate);
                 """;
 
         public static string GetVehiclesSql { get; private set; } = """
-                SELECT id, customer_document, brand, model, year, license_plate
+                SELECT id, customer_document AS CustomerDocument, brand, model, year, license_plate AS LicensePlate
                 FROM vehicles
                 {0}
                 LIMIT 50;
@@ -27,7 +27,7 @@ namespace Repository
                 SET brand = @Brand,
                     model = @Model,
                     year = @Year
-                WHERE license_plate = @License_Plate;
+                WHERE license_plate = @LicensePlate;
                 """;
 
         public static string DeleteVehicleSql { get; private set; } = """

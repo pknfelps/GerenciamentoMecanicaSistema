@@ -1,8 +1,8 @@
-﻿using Domain.Interface.Stock;
+using Domain.Interface.Stock;
 using Domain.Stock;
 using System.Text.Json.Serialization;
 
-namespace Repository.Dto
+namespace Repository.PersistenceModels
 {
     internal class MaterialDb
     {
@@ -17,10 +17,10 @@ namespace Repository.Dto
         [JsonPropertyName("amount")]
         public int Amount { get; init; } = 0;
         [JsonPropertyName("reserved_amount")]
-        public int Reserved_Amount { get; init; } = 0;
+        public int ReservedAmount { get; init; } = 0;
 
-        public static MaterialDb Create(IMaterial material) => new() { Id = material.Id, Name = material.Name, Brand = material.Brand, Price = material.Price, Amount = material.Amount, Reserved_Amount = material.ReservedAmount };
+        public static MaterialDb Create(IMaterial material) => new() { Id = material.Id, Name = material.Name, Brand = material.Brand, Price = material.Price, Amount = material.Amount, ReservedAmount = material.ReservedAmount };
 
-        public IMaterial ToDomain() => new Material(Id, Name, Brand, Price, Amount, Reserved_Amount);
+        public IMaterial ToDomain() => new Material(Id, Name, Brand, Price, Amount, ReservedAmount);
     }
 }

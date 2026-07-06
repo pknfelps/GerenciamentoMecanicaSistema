@@ -1,8 +1,8 @@
-﻿using Dapper;
+using Dapper;
 using Domain.Interface.Order;
 using Domain.Interface.Service;
 using Domain.Interface.Stock;
-using Repository.Dto;
+using Repository.PersistenceModels;
 using Repository.Interface;
 using System.Data;
 
@@ -12,14 +12,14 @@ namespace Repository
     {
         public static string CreateServiceSql { get; private set; } = """
             INSERT INTO orders(id, customer_document, vehicle_license_plate, budget, status, date_created, date_finished, duration)
-            VALUES (@Id, @Customer_Document, @Vehicle_License_Plate, @Budget, @Status, @Date_Created, @Date_Finished, @Duration);
+            VALUES (@Id, @CustomerDocument, @VehicleLicensePlate, @Budget, @Status, @DateCreated, @DateFinished, @Duration);
             """;
 
         public static string GetOrdersSql { get; private set; } = """
             SELECT 
                 os.id, 
-                os.customer_document, 
-                os.vehicle_license_plate, 
+                os.customer_document AS CustomerDocument, 
+                os.vehicle_license_plate AS VehicleLicensePlate, 
 
                 CASE
                     WHEN COUNT(s.id) = 0 THEN '[]'::json
@@ -43,8 +43,8 @@ namespace Repository
 
                 os.budget, 
                 os.status, 
-                os.date_created, 
-                os.date_finished
+                os.date_created AS DateCreated, 
+                os.date_finished AS DateFinished
 
             FROM orders os
             LEFT JOIN order_services s ON s.order_id = os.id
@@ -73,7 +73,7 @@ namespace Repository
 
         public static string AddServiceToOrderSql { get; private set; } = """
             INSERT INTO order_services(id, order_id, description, hours, price_per_hour, amount)
-            VALUES (@Id, @orderId, @Description, @Hours, @Price_Per_Hour, @Amount);
+            VALUES (@Id, @orderId, @Description, @Hours, @PricePerHour, @Amount);
             """;
 
         public static string UpdateServiceAmountOfOrderSql { get; private set; } = """
@@ -149,7 +149,7 @@ namespace Repository
 
         public async Task<int> AddServiceToOrder(Guid orderId, IMechanicalService service)
         {
-            return await Connection.ExecuteAsync(AddServiceToOrderSql, new { Id = service.Id, orderId = orderId, Description = service.Description, Hours = service.Hours, Price_Per_Hour = service.PricePerHour, Amount = service.Amount });
+            return await Connection.ExecuteAsync(AddServiceToOrderSql, new { Id = service.Id, orderId = orderId, Description = service.Description, Hours = service.Hours, PricePerHour = service.PricePerHour, Amount = service.Amount });
         }
 
         public async Task<int> UpdateServiceOfOrder(Guid orderId, IMechanicalService service)

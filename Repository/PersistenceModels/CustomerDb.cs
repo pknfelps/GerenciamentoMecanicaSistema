@@ -1,10 +1,10 @@
-﻿using Domain.Customer;
+using Domain.Customer;
 using Domain.Interface.Custumer;
 using System.Text.Json.Serialization;
 
-namespace Repository.Dto
+namespace Repository.PersistenceModels
 {
-    public class CustomerDb
+    internal class CustomerDb
     {
         [JsonPropertyName("id")]
         public Guid Id { get; init; } = Guid.Empty;
