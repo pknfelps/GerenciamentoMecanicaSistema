@@ -226,7 +226,7 @@ namespace RepositoryTests
         public async Task MustRollbackMaterialAmountUpdateInTransaction()
         {
             var transactionContext = new DbTransactionContext();
-            var transactionManager = new TransactionManager(Connection, transactionContext);
+            var transactionManager = new TransactionManager(Connection, transactionContext, Substitute.For<Microsoft.Extensions.Logging.ILogger<TransactionManager>>());
             var transactionalRepository = new StockRepository(Connection, transactionContext);
 
             Assert.ThrowsAsync<InvalidOperationException>(async () =>

@@ -1,12 +1,14 @@
+using Microsoft.Extensions.Logging;
 using Repository.Interface;
 using System.Data;
 
 namespace Repository
 {
-    public class TransactionManager(IDbConnection connection, DbTransactionContext transactionContext) : ITransactionManager
+    public class TransactionManager(IDbConnection connection, DbTransactionContext transactionContext, ILogger<TransactionManager> logger) : ITransactionManager
     {
         private IDbConnection Connection { get; } = connection;
         private DbTransactionContext TransactionContext { get; } = transactionContext;
+        private ILogger<TransactionManager> Logger { get; } = logger;
 
         public async Task ExecuteInTransaction(Func<Task> operation)
         {
@@ -32,9 +34,10 @@ namespace Repository
 
                 return result;
             }
-            catch
+            catch (Exception e)
             {
                 transaction.Rollback();
+                Logger.LogError(e, "Transação revertida após falha durante execução de operação persistente");
                 throw;
             }
             finally

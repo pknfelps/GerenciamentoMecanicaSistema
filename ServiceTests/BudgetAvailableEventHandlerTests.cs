@@ -1,6 +1,7 @@
 using Domain.Interface.Custumer;
 using Domain.Interface.Order;
 using Domain.Interface.Vehicle;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Service.Events;
 using Service.Interface;
@@ -19,7 +20,7 @@ namespace ServiceTests
         {
             DependenciesGateway = Substitute.For<IOrderDependenciesGateway>();
             EmailService = Substitute.For<IEmailService>();
-            Handler = new BudgetAvailableEventHandler(DependenciesGateway, EmailService);
+            Handler = new BudgetAvailableEventHandler(DependenciesGateway, EmailService, Substitute.For<ILogger<BudgetAvailableEventHandler>>());
         }
 
         [Test]

@@ -2,6 +2,7 @@
 using Domain.Interface.Order;
 using Domain.Vehicle;
 using Domain.WorkOrder;
+using Microsoft.Extensions.Logging;
 using Repository.Interface;
 using Service.Interface;
 using Service.Interface.Commands.Order;
@@ -11,13 +12,14 @@ using Service.Interface.Results.Order;
 
 namespace Service
 {
-    public class OrdersService(IOrdersRepository repository, IOrderDependenciesGateway dependenciesGateway, IStockService stockService, ITransactionManager transactionManager, IApplicationEventDispatcher eventDispatcher) : IOrdersService
+    public class OrdersService(IOrdersRepository repository, IOrderDependenciesGateway dependenciesGateway, IStockService stockService, ITransactionManager transactionManager, IApplicationEventDispatcher eventDispatcher, ILogger<OrdersService> logger) : IOrdersService
     {
         private IOrdersRepository Repository { get; set; } = repository;
         private IOrderDependenciesGateway DependenciesGateway { get; set; } = dependenciesGateway;
         private IStockService StockService { get; set; } = stockService;
         private ITransactionManager TransactionManager { get; set; } = transactionManager;
         private IApplicationEventDispatcher EventDispatcher { get; set; } = eventDispatcher;
+        private ILogger<OrdersService> Logger { get; set; } = logger;
 
         public async Task CreateServiceOrder(CreateOrderCommand orderToCreate)
         {
@@ -191,6 +193,12 @@ namespace Service
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao atualizar ordem");
+
+            Logger.LogInformation(
+                "Diagnóstico concluído e evento de orçamento disponível será publicado. OrderId: {OrderId}. Status: {Status}. Budget: {Budget}",
+                order.Id,
+                order.Status,
+                order.Budget);
 
             await EventDispatcher.Publish(new BudgetAvailableEvent(order));
         }

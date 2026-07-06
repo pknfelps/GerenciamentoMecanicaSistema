@@ -3,6 +3,7 @@ using Domain.Interface.Order;
 using Domain.Interface.Service;
 using Domain.Interface.Stock;
 using Domain.Interface.Vehicle;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Repository.Interface;
 using Service;
@@ -280,7 +281,7 @@ namespace ServiceTests
             EventDispatcher = Substitute.For<IApplicationEventDispatcher>();
             EventDispatcher.Publish(Arg.Any<IApplicationEvent>()).Returns(Task.CompletedTask);
 
-            Service = new OrdersService(Repository, DependenciesGateway, StockService, TransactionManager, EventDispatcher);
+            Service = new OrdersService(Repository, DependenciesGateway, StockService, TransactionManager, EventDispatcher, Substitute.For<ILogger<OrdersService>>());
         }
 
         [Test]
