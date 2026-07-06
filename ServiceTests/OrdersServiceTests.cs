@@ -8,11 +8,11 @@ using Repository.Interface;
 using Service;
 using Service.Interface;
 using Service.Interface.Dto;
-using Service.Interface.Dto.Customer;
 using Service.Interface.Dto.Order;
 using Service.Interface.Dto.Service;
 using Service.Interface.Dto.Stock;
 using Service.Interface.Dto.Vehicle;
+using Service.Interface.Results.Customer;
 
 namespace ServiceTests
 {
@@ -26,9 +26,9 @@ namespace ServiceTests
         private ICatalogService MechanicalService { get; set; }
         private IEmailService EmailService { get; set; }
 
-        private static CustomerDto ExistingCustomer { get; } = new(Guid.NewGuid(), "Teste", "417.384.220-11", "(11) 91234-5678", "teste@gmail.com");
+        private static CustomerResult ExistingCustomer { get; } = new(Guid.NewGuid(), "Teste", "417.384.220-11", "(11) 91234-5678", "teste@gmail.com");
 
-        private static CustomerDto ExistingFailCustomer { get; } = new(Guid.NewGuid(), "Teste", "662.119.730-63", "(11) 91234-5678", "teste@gmail.com");
+        private static CustomerResult ExistingFailCustomer { get; } = new(Guid.NewGuid(), "Teste", "662.119.730-63", "(11) 91234-5678", "teste@gmail.com");
 
         private static VehicleDto ExistingVehicle { get; } = new(Guid.NewGuid(), ExistingCustomer.Document, "Honda", "Civic", 2026, "CVC2026");
 
@@ -226,7 +226,7 @@ namespace ServiceTests
 
             CustomerService = Substitute.For<ICustomerService>();
 
-            List<CustomerDto> customers = [ExistingCustomer, ExistingFailCustomer];
+            List<CustomerResult> customers = [ExistingCustomer, ExistingFailCustomer];
 
             CustomerService.GetCustomer(document: Arg.Any<string>()).Returns(callInfo =>
             {

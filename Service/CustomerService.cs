@@ -1,8 +1,9 @@
-﻿using Domain.Customer;
+using Domain.Customer;
 using Domain.Interface.Custumer;
 using Repository.Interface;
 using Service.Interface;
-using Service.Interface.Dto.Customer;
+using Service.Interface.Commands.Customer;
+using Service.Interface.Results.Customer;
 
 namespace Service
 {
@@ -10,28 +11,30 @@ namespace Service
     {
         private ICustomerRepository Repository { get; set; } = repository;
 
-        public async Task RegisterCustomer(CreateCustomerDto customerDto)
+        public async Task RegisterCustomer(CreateCustomerCommand customer)
         {
-            if (await Repository.GetCustomer(document: DocumentWrapper.CreateDocument(customerDto.Document).Id) != null)
+            if (await Repository.GetCustomer(document: DocumentWrapper.CreateDocument(customer.Document).Id) != null)
                 throw new InvalidOperationException("Cliente já existe no sistema");
 
-            var registry = await Repository.RegisterCustomer(customerDto.ToDomain());
+            ICustomer customerToRegister = new Customer(customer.Name, customer.Document, customer.Phone, customer.Email);
+
+            var registry = await Repository.RegisterCustomer(customerToRegister);
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao criar o cliente");
         }
 
-        public async Task<IEnumerable<CustomerDto>> GetCustomers(Guid? id = null, string name = "", string document = "")
+        public async Task<IEnumerable<CustomerResult>> GetCustomers(Guid? id = null, string name = "", string document = "")
         {
             if (!string.IsNullOrEmpty(document))
                 document = DocumentWrapper.CreateDocument(document).Id;
 
             var customers = await Repository.GetCustomers(id, name, document);
 
-            return customers.Select(CustomerDto.Create);
+            return customers.Select(CreateResult);
         }
 
-        public async Task<CustomerDto?> GetCustomer(Guid? id = null, string name = "", string document = "")
+        public async Task<CustomerResult?> GetCustomer(Guid? id = null, string name = "", string document = "")
         {
             if (id == null && string.IsNullOrEmpty(name) && string.IsNullOrEmpty(document))
                 throw new InvalidOperationException("Erro ao buscar cliente. Nenhum parâmetro fornecido");
@@ -44,16 +47,16 @@ namespace Service
             if (customer == null)
                 return null;
 
-            return CustomerDto.Create(customer);
+            return CreateResult(customer);
         }
 
-        public async Task UpdateCustomer(Guid id, CreateCustomerDto customerDto)
+        public async Task UpdateCustomer(Guid id, CreateCustomerCommand customer)
         {
             _ = await Repository.GetCustomer(id) ?? throw new InvalidOperationException("Cliente não existe no sistema");
 
-            ICustomer customer = new Customer(id, customerDto.Name, customerDto.Document, customerDto.Phone, customerDto.Email);
+            ICustomer customerToUpdate = new Customer(id, customer.Name, customer.Document, customer.Phone, customer.Email);
 
-            var registry = await Repository.UpdateCustomer(customer);
+            var registry = await Repository.UpdateCustomer(customerToUpdate);
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao atualizar o cliente");
@@ -67,6 +70,11 @@ namespace Service
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao deletar o cliente");
+        }
+
+        private static CustomerResult CreateResult(ICustomer customer)
+        {
+            return new(customer.Id, customer.Name, customer.Document.Id, customer.Phone.Number, customer.Email.Address);
         }
     }
 }

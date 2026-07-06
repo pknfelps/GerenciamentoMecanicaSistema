@@ -1,13 +1,14 @@
-﻿using Service.Interface.Dto.Customer;
+using Service.Interface.Commands.Customer;
+using Service.Interface.Results.Customer;
 
 namespace Service.Interface
 {
     public interface ICustomerService
     {
-        Task RegisterCustomer(CreateCustomerDto customerDto);
-        Task<IEnumerable<CustomerDto>> GetCustomers(Guid? id = null, string name = "", string document = "");
-        Task<CustomerDto?> GetCustomer(Guid? id = null, string name = "", string document = "");
-        Task UpdateCustomer(Guid id, CreateCustomerDto customerDto);
+        Task RegisterCustomer(CreateCustomerCommand customer);
+        Task<IEnumerable<CustomerResult>> GetCustomers(Guid? id = null, string name = "", string document = "");
+        Task<CustomerResult?> GetCustomer(Guid? id = null, string name = "", string document = "");
+        Task UpdateCustomer(Guid id, CreateCustomerCommand customer);
         Task DeleteCustomer(Guid id);
     }
 }

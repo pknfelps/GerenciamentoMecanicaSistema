@@ -292,7 +292,9 @@ namespace Service
 
             var vehicle = await VehicleService.GetVehicle(licensePlate: workOrder.VehicleLicensePlate.License) ?? throw new InvalidOperationException("Falha ao notificar o cliente. Veículo não encontrado");
 
-            await EmailService.NotifyBudget(customer.ToDomain(), vehicle.ToDomain(), workOrder);
+            var customerDomain = new Customer(customer.Id, customer.Name, customer.Document, customer.Phone, customer.Email);
+
+            await EmailService.NotifyBudget(customerDomain, vehicle.ToDomain(), workOrder);
         }
     }
 }
