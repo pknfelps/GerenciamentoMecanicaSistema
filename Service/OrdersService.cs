@@ -297,7 +297,9 @@ namespace Service
 
             var customerDomain = new Customer(customer.Id, customer.Name, customer.Document, customer.Phone, customer.Email);
 
-            await EmailService.NotifyBudget(customerDomain, vehicle.ToDomain(), workOrder);
+            var vehicleDomain = new Vehicle(vehicle.Id, vehicle.CustomerDocument, vehicle.Brand, vehicle.Model, vehicle.Year, vehicle.LicensePlate);
+
+            await EmailService.NotifyBudget(customerDomain, vehicleDomain, workOrder);
         }
     }
 }

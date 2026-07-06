@@ -11,9 +11,9 @@ using Service.Interface.Dto;
 using Service.Interface.Dto.Order;
 using Service.Interface.Dto.Service;
 using Service.Interface.Dto.Stock;
-using Service.Interface.Dto.Vehicle;
 using Service.Interface.Results.Catalog;
 using Service.Interface.Results.Customer;
+using Service.Interface.Results.Vehicle;
 
 namespace ServiceTests
 {
@@ -31,7 +31,7 @@ namespace ServiceTests
 
         private static CustomerResult ExistingFailCustomer { get; } = new(Guid.NewGuid(), "Teste", "662.119.730-63", "(11) 91234-5678", "teste@gmail.com");
 
-        private static VehicleDto ExistingVehicle { get; } = new(Guid.NewGuid(), ExistingCustomer.Document, "Honda", "Civic", 2026, "CVC2026");
+        private static VehicleResult ExistingVehicle { get; } = new(Guid.NewGuid(), ExistingCustomer.Document, "Honda", "Civic", 2026, "CVC2026");
 
         private static CreateOrderDto OrderToCreate { get; } = new(ExistingCustomer.Document, ExistingVehicle.LicensePlate);
 

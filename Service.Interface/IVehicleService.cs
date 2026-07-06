@@ -1,13 +1,14 @@
-﻿using Service.Interface.Dto.Vehicle;
+using Service.Interface.Commands.Vehicle;
+using Service.Interface.Results.Vehicle;
 
 namespace Service.Interface
 {
     public interface IVehicleService
     {
-        Task RegisterVehicle(CreateVehicleDto vehicleDto);
-        Task<IEnumerable<VehicleDto>> GetVehicles(Guid? id = null, string licensePlate = "");
-        Task<VehicleDto?> GetVehicle(Guid? id = null, string licensePlate = "");
-        Task UpdateVehicle(Guid id, CreateVehicleDto vehicleDto);
+        Task RegisterVehicle(CreateVehicleCommand vehicle);
+        Task<IEnumerable<VehicleResult>> GetVehicles(Guid? id = null, string licensePlate = "");
+        Task<VehicleResult?> GetVehicle(Guid? id = null, string licensePlate = "");
+        Task UpdateVehicle(Guid id, CreateVehicleCommand vehicle);
         Task DeleteVehicle(Guid id);
     }
 }

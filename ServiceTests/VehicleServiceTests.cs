@@ -3,7 +3,7 @@ using NSubstitute;
 using Repository.Interface;
 using Service;
 using Service.Interface;
-using Service.Interface.Dto.Vehicle;
+using Service.Interface.Commands.Vehicle;
 
 namespace ServiceTests
 {
@@ -12,8 +12,8 @@ namespace ServiceTests
         private IVehicleService VehicleService { get; set; }
         private IVehicleRepository Repository { get; set; }
 
-        private static CreateVehicleDto VehicleToRegister { get; } = new("417.384.220-11", "Fiat", "Mobi", 2025, "FIT4M08");
-        private static CreateVehicleDto VehicleToFailRegister { get; } = new("417.384.220-11", "Test", "Test", 0000, "TST1234");
+        private static CreateVehicleCommand VehicleToRegister { get; } = new("417.384.220-11", "Fiat", "Mobi", 2025, "FIT4M08");
+        private static CreateVehicleCommand VehicleToFailRegister { get; } = new("417.384.220-11", "Test", "Test", 0000, "TST1234");
 
         private static readonly Guid ExistingVehicleId = Guid.NewGuid();
         private static IVehicle ExistingVehicle
@@ -45,9 +45,9 @@ namespace ServiceTests
             }
         }
 
-        private static VehicleDto ExistingVehicleDto { get; } = new(Guid.NewGuid(), "12345678912", "Honda", "Civic", 2024, "CVC2024");
-        private static CreateVehicleDto ExistingVehicleToUpdate { get; } = new("417.384.220-11", "Honda", "City", 2020, "CVC2024");
-        private static CreateVehicleDto ExistingVehicleToFailUpdateOrDelete { get; } = new("417.384.220-11", "Test", "Test", 2020, "FKA0F20");
+        private static CreateVehicleCommand ExistingVehicleCommand { get; } = new("12345678912", "Honda", "Civic", 2024, "CVC2024");
+        private static CreateVehicleCommand ExistingVehicleToUpdate { get; } = new("417.384.220-11", "Honda", "City", 2020, "CVC2024");
+        private static CreateVehicleCommand ExistingVehicleToFailUpdateOrDelete { get; } = new("417.384.220-11", "Test", "Test", 2020, "FKA0F20");
 
         [SetUp]
         public void SetUp()
@@ -128,9 +128,9 @@ namespace ServiceTests
         [Test]
         public async Task MustNotRegisterVehicleIfAlreadyExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.RegisterVehicle(ExistingVehicleDto));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.RegisterVehicle(ExistingVehicleCommand));
 
-            await Repository.ReceivedWithAnyArgs(1).GetVehicle(license_plate: ExistingVehicleDto.LicensePlate);
+            await Repository.ReceivedWithAnyArgs(1).GetVehicle(license_plate: ExistingVehicleCommand.LicensePlate);
             await Repository.ReceivedWithAnyArgs(0).RegisterVehicle(Arg.Any<IVehicle>());
         }
 
