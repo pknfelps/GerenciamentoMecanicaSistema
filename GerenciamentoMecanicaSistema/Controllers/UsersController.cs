@@ -1,9 +1,9 @@
 using GerenciamentoMecanicaSistema.Contracts.Requests.User;
 using GerenciamentoMecanicaSistema.Contracts.Responses.User;
+using GerenciamentoMecanicaSistema.Contracts.Validation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interface;
-using Service.Interface.Commands.User;
 
 namespace GerenciamentoMecanicaSistema.Controllers
 {
@@ -34,9 +34,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         [ProducesResponseType(StatusCodes.Status404NotFound, Description = "Usuário não encontrado")]
-        public async Task<IActionResult> GetUser([FromQuery] string name, [FromQuery] string role)
+        public async Task<IActionResult> GetUser([FromQuery, RegularNonEmptyStringExpression] string name = "", [FromQuery, RegularNonEmptyStringExpression] string role = "")
         {
-            var usuario = await UsersService.GetUser(new CreateUserCommand(name, "", role));
+            var usuario = await UsersService.GetUser(name, role);
 
             if (usuario is null)
                 return NotFound();

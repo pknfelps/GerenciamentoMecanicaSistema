@@ -22,9 +22,9 @@ namespace Service
                 throw new InvalidOperationException("Falha ao cadastrar o usuário");
         }
 
-        public async Task<UserResult?> GetUser(CreateUserCommand user)
+        public async Task<UserResult?> GetUser(string name = "", string role = "")
         {
-            var registeredUser = await Repository.GetUser(user.Name, user.Role);
+            var registeredUser = await Repository.GetUser(name, role);
 
             if (registeredUser == null)
                 return null;

@@ -6,6 +6,6 @@ namespace Service.Interface
     public interface IUserService
     {
         Task RegisterUser(CreateUserCommand user);
-        Task<UserResult?> GetUser(CreateUserCommand user);
+        Task<UserResult?> GetUser(string name = "", string role = "");
     }
 }

@@ -9,9 +9,7 @@ using Service;
 using Service.Interface;
 using Service.Interface.Commands.Order;
 using Service.Interface.Results.Order;
-using Service.Interface.Results.Catalog;
 using Service.Interface.Results.Customer;
-using Service.Interface.Results.Stock;
 using Service.Interface.Results.Vehicle;
 
 namespace ServiceTests
@@ -20,28 +18,25 @@ namespace ServiceTests
     {
         private IOrdersService Service { get; set; }
         private IOrdersRepository Repository { get; set; }
-        private ICustomerService CustomerService { get; set; }
-        private IVehicleService VehicleService { get; set; }
+        private IOrderDependenciesGateway DependenciesGateway { get; set; }
         private IStockService StockService { get; set; }
-        private ICatalogService MechanicalService { get; set; }
         private IEmailService EmailService { get; set; }
 
         private static CustomerResult ExistingCustomer { get; } = new(Guid.NewGuid(), "Teste", "417.384.220-11", "(11) 91234-5678", "teste@gmail.com");
+        private static ICustomer ExistingCustomerDomain { get; } = CreateSubstituteCustomer(ExistingCustomer.Id, ExistingCustomer.Name, ExistingCustomer.Document);
 
         private static CustomerResult ExistingFailCustomer { get; } = new(Guid.NewGuid(), "Teste", "662.119.730-63", "(11) 91234-5678", "teste@gmail.com");
+        private static ICustomer ExistingFailCustomerDomain { get; } = CreateSubstituteCustomer(ExistingFailCustomer.Id, ExistingFailCustomer.Name, ExistingFailCustomer.Document);
 
         private static VehicleResult ExistingVehicle { get; } = new(Guid.NewGuid(), ExistingCustomer.Document, "Honda", "Civic", 2026, "CVC2026");
+        private static IVehicle ExistingVehicleDomain { get; } = CreateSubstituteVehicle(ExistingVehicle.Id, ExistingVehicle.CustomerDocument, ExistingVehicle.LicensePlate);
 
         private static CreateOrderCommand OrderToCreate { get; } = new(ExistingCustomer.Document, ExistingVehicle.LicensePlate);
 
         private static IMechanicalService ExistingService { get; } = CreateSubstituteService(Guid.NewGuid(), "Revisão", 6, 100, 1);
-        private static ServiceResult ExistingServiceResult { get; } = new(ExistingService.Id, "Revisão", 6, 100, 1);
         private static IMechanicalService ExistingService2 { get; } = CreateSubstituteService(Guid.NewGuid(), "Troca de Pneu", 2, 150, 1);
-        private static ServiceResult ExistingService2Result { get; } = new(ExistingService2.Id, "Troca de Pneu", 2, 150, 1);
         private static IMaterial ExistingPart { get; } = CreateSubstitutePart(Guid.NewGuid(), "Pneu", "Michelin", 600, 10, 4);
-        private static MaterialResult ExistingPartResult { get; } = new(ExistingPart.Id, ExistingPart.Name, ExistingPart.Brand, ExistingPart.Price, ExistingPart.Amount, ExistingPart.ReservedAmount);
         private static IMaterial ExistingPart2 { get; } = CreateSubstitutePart(Guid.NewGuid(), "Óleo de Motor", "Lubrax", 35, 20, 0);
-        private static MaterialResult ExistingPart2Result { get; } = new(ExistingPart2.Id, ExistingPart2.Name, ExistingPart2.Brand, ExistingPart2.Price, ExistingPart2.Amount, ExistingPart2.ReservedAmount);
         private static IOrder ExistingReceivedOrder { get; } = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0, WorkOrderStatus.Received);
         private static IOrder ExistingTestOrder { get; set; } = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0, WorkOrderStatus.Received);
         private static readonly Guid ExistingOrderInDiagnosisId = Guid.NewGuid();
@@ -224,40 +219,38 @@ namespace ServiceTests
                 return 0;
             });
 
-            CustomerService = Substitute.For<ICustomerService>();
+            DependenciesGateway = Substitute.For<IOrderDependenciesGateway>();
 
-            List<CustomerResult> customers = [ExistingCustomer, ExistingFailCustomer];
+            List<ICustomer> customers = [ExistingCustomerDomain, ExistingFailCustomerDomain];
 
-            CustomerService.GetCustomer(document: Arg.Any<string>()).Returns(callInfo =>
+            DependenciesGateway.GetCustomerByDocument(Arg.Any<string>()).Returns(callInfo =>
             {
-                var document = callInfo.ArgAt<string>(2);
+                var document = callInfo.ArgAt<string>(0);
 
-                return customers.FirstOrDefault(x => x.Document == document);
+                return customers.FirstOrDefault(x => x.Document.Id == document);
             });
 
-            VehicleService = Substitute.For<IVehicleService>();
-
-            VehicleService.GetVehicle(licensePlate: Arg.Any<string>()).Returns(callInfo =>
+            DependenciesGateway.GetVehicleByLicensePlate(Arg.Any<string>()).Returns(callInfo =>
             {
-                var license = callInfo.ArgAt<string>(1);
+                var license = callInfo.ArgAt<string>(0);
 
                 if (license == ExistingVehicle.LicensePlate)
-                    return ExistingVehicle;
+                    return ExistingVehicleDomain;
 
                 return null;
             });
 
             StockService = Substitute.For<IStockService>();
 
-            StockService.GetMaterial(Arg.Any<Guid>()).Returns(callInfo =>
+            DependenciesGateway.GetMaterialById(Arg.Any<Guid>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
                 if (id == ExistingPart.Id)
-                    return ExistingPartResult;
+                    return ExistingPart;
 
                 if (id == ExistingPart2.Id)
-                    return ExistingPart2Result;
+                    return ExistingPart2;
 
                 return null;
             });
@@ -265,17 +258,15 @@ namespace ServiceTests
             StockService.ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>()).Returns(Task.CompletedTask);
             StockService.RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>()).Returns(Task.CompletedTask);
 
-            MechanicalService = Substitute.For<ICatalogService>();
-
-            MechanicalService.GetService(Arg.Any<Guid>()).Returns(callInfo =>
+            DependenciesGateway.GetServiceById(Arg.Any<Guid>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
                 if (id == ExistingService.Id)
-                    return ExistingServiceResult;
+                    return ExistingService;
 
                 if (id == ExistingService2.Id)
-                    return ExistingService2Result;
+                    return ExistingService2;
 
                 return null;
             });
@@ -284,7 +275,7 @@ namespace ServiceTests
 
             EmailService.NotifyBudget(Arg.Any<ICustomer>(), Arg.Any<IVehicle>(), Arg.Any<IOrder>()).Returns(Task.CompletedTask);
 
-            Service = new OrdersService(Repository, CustomerService, VehicleService, StockService, MechanicalService, EmailService);
+            Service = new OrdersService(Repository, DependenciesGateway, StockService, EmailService);
         }
 
         [Test]
@@ -292,8 +283,8 @@ namespace ServiceTests
         {
             await Service.CreateServiceOrder(OrderToCreate);
 
-            await CustomerService.Received(1).GetCustomer(document: ExistingCustomer.Document);
-            await VehicleService.Received(1).GetVehicle(licensePlate: ExistingVehicle.LicensePlate);
+            await DependenciesGateway.Received(1).GetCustomerByDocument(ExistingCustomer.Document);
+            await DependenciesGateway.Received(1).GetVehicleByLicensePlate(ExistingVehicle.LicensePlate);
             await Repository.ReceivedWithAnyArgs(1).CreateOrder(Arg.Any<IOrder>());
         }
 
@@ -304,8 +295,8 @@ namespace ServiceTests
 
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CreateServiceOrder(order));
 
-            await CustomerService.Received(1).GetCustomer(document: order.CustomerDocument);
-            await VehicleService.ReceivedWithAnyArgs(0).GetVehicle();
+            await DependenciesGateway.Received(1).GetCustomerByDocument(order.CustomerDocument);
+            await DependenciesGateway.ReceivedWithAnyArgs(0).GetVehicleByLicensePlate(default!);
             await Repository.ReceivedWithAnyArgs(0).CreateOrder(Arg.Any<IOrder>());
         }
 
@@ -316,8 +307,8 @@ namespace ServiceTests
 
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CreateServiceOrder(order));
 
-            await CustomerService.Received(1).GetCustomer(document: ExistingCustomer.Document);
-            await VehicleService.Received(1).GetVehicle(licensePlate: order.VehicleLicensePlate);
+            await DependenciesGateway.Received(1).GetCustomerByDocument(ExistingCustomer.Document);
+            await DependenciesGateway.Received(1).GetVehicleByLicensePlate(order.VehicleLicensePlate);
             await Repository.ReceivedWithAnyArgs(0).CreateOrder(Arg.Any<IOrder>());
         }
 
@@ -328,8 +319,8 @@ namespace ServiceTests
 
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CreateServiceOrder(order));
 
-            await CustomerService.Received(1).GetCustomer(document: ExistingFailCustomer.Document);
-            await VehicleService.Received(1).GetVehicle(licensePlate: ExistingVehicle.LicensePlate);
+            await DependenciesGateway.Received(1).GetCustomerByDocument(ExistingFailCustomer.Document);
+            await DependenciesGateway.Received(1).GetVehicleByLicensePlate(ExistingVehicle.LicensePlate);
             await Repository.ReceivedWithAnyArgs(1).CreateOrder(Arg.Any<IOrder>());
         }
 
@@ -663,7 +654,7 @@ namespace ServiceTests
             await Service.AddServiceToOrder(ExistingReceivedOrder.Id, new(ExistingService.Id, 1));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
-            await MechanicalService.Received(1).GetService(ExistingService.Id);
+            await DependenciesGateway.Received(1).GetServiceById(ExistingService.Id);
             await Repository.Received(1).AddServiceToOrder(ExistingReceivedOrder.Id, Arg.Any<IMechanicalService>());
             await Repository.ReceivedWithAnyArgs(0).UpdateServiceOfOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
         }
@@ -674,7 +665,7 @@ namespace ServiceTests
             await Service.AddServiceToOrder(ExistingOrderInDiagnosis.Id, new(ExistingService.Id, 1));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosis.Id);
-            await MechanicalService.ReceivedWithAnyArgs(0).GetService(Arg.Any<Guid>());
+            await DependenciesGateway.ReceivedWithAnyArgs(0).GetServiceById(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
             await Repository.Received(1).UpdateServiceOfOrder(ExistingOrderInDiagnosis.Id, Arg.Any<IMechanicalService>());
         }
@@ -685,7 +676,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddServiceToOrder(Guid.NewGuid(), new UpdateOrderItemCommand<int>(ExistingService.Id, 1)));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
-            await MechanicalService.ReceivedWithAnyArgs(0).GetService(Arg.Any<Guid>());
+            await DependenciesGateway.ReceivedWithAnyArgs(0).GetServiceById(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
             await Repository.ReceivedWithAnyArgs(0).UpdateServiceOfOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
         }
@@ -696,7 +687,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddServiceToOrder(ExistingReceivedOrder.Id, new UpdateOrderItemCommand<int>(Guid.NewGuid(), 1)));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
-            await MechanicalService.ReceivedWithAnyArgs(1).GetService(Arg.Any<Guid>());
+            await DependenciesGateway.ReceivedWithAnyArgs(1).GetServiceById(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
             await Repository.ReceivedWithAnyArgs(0).UpdateServiceOfOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
         }
@@ -707,7 +698,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddServiceToOrder(ExistingReceivedOrder.Id, new UpdateOrderItemCommand<int>(ExistingService2.Id, 1)));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
-            await MechanicalService.Received(1).GetService(ExistingService2.Id);
+            await DependenciesGateway.Received(1).GetServiceById(ExistingService2.Id);
             await Repository.ReceivedWithAnyArgs(1).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
             await Repository.ReceivedWithAnyArgs(0).UpdateServiceOfOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
         }
@@ -718,7 +709,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddServiceToOrder(ExistingOrderInDiagnosis.Id, new UpdateOrderItemCommand<int>(ExistingService2.Id, 1)));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosis.Id);
-            await MechanicalService.ReceivedWithAnyArgs(0).GetService(Arg.Any<Guid>());
+            await DependenciesGateway.ReceivedWithAnyArgs(0).GetServiceById(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
             await Repository.ReceivedWithAnyArgs(1).UpdateServiceOfOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
         }
@@ -1115,6 +1106,26 @@ namespace ServiceTests
             await Repository.Received(1).DeleteOrder(ExistingOrderInDiagnosisId);
         }
 
+        private static ICustomer CreateSubstituteCustomer(Guid id, string name, string document)
+        {
+            var customer = Substitute.For<ICustomer>();
+            customer.Id.Returns(id);
+            customer.Name.Returns(name);
+            customer.Document.Id.Returns(document);
+
+            return customer;
+        }
+
+        private static IVehicle CreateSubstituteVehicle(Guid id, string customerDocument, string licensePlate)
+        {
+            var vehicle = Substitute.For<IVehicle>();
+            vehicle.Id.Returns(id);
+            vehicle.CustomerDocument.Id.Returns(customerDocument);
+            vehicle.LicensePlate.License.Returns(licensePlate);
+
+            return vehicle;
+        }
+
         private static IMechanicalService CreateSubstituteService(Guid id, string description, float hours, double pricePerHour, int amount)
         {
             var service = Substitute.For<IMechanicalService>();
@@ -1219,4 +1230,6 @@ namespace ServiceTests
         }
     }
 }
+
+
 

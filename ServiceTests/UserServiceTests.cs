@@ -89,7 +89,7 @@ namespace ServiceTests
         [Test]
         public async Task MustGetUser()
         {
-            var User = await UserService.GetUser(ExistingUserCommand);
+            var User = await UserService.GetUser(ExistingUserCommand.Name, ExistingUserCommand.Role);
 
             await UserRepository.ReceivedWithAnyArgs(1).GetUser(Arg.Any<string>(), Arg.Any<string>());
 
@@ -105,7 +105,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotGetUserIfNotExists()
         {
-            var User = await UserService.GetUser(UserToRegister);
+            var User = await UserService.GetUser(UserToRegister.Name, UserToRegister.Role);
 
             await UserRepository.ReceivedWithAnyArgs(1).GetUser(Arg.Any<string>(), Arg.Any<string>());
 

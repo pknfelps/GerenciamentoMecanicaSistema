@@ -18,6 +18,7 @@ namespace DependencyInjection
             service.AddTransient<IVehicleService, VehicleService>();
             service.AddTransient<ICatalogService, CatalogService>();
             service.AddTransient<IOrdersService, OrdersService>();
+            service.AddTransient<IOrderDependenciesGateway, OrderDependenciesGateway>();
             service.AddTransient<ITokenGenerator, JwtTokenGenerator>();
 
             service.AddTransient<ISmtpClient, SmtpClient>();

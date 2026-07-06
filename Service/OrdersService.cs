@@ -1,7 +1,5 @@
 ﻿using Domain.Customer;
 using Domain.Interface.Order;
-using Domain.MechanicalService;
-using Domain.Stock;
 using Domain.Vehicle;
 using Domain.WorkOrder;
 using Repository.Interface;
@@ -11,22 +9,23 @@ using Service.Interface.Results.Order;
 
 namespace Service
 {
-    public class OrdersService(IOrdersRepository repository, ICustomerService customerService, IVehicleService vehicleService, IStockService stockService, ICatalogService mechanicalServiceService, IEmailService emailService) : IOrdersService
+    public class OrdersService(IOrdersRepository repository, IOrderDependenciesGateway dependenciesGateway, IStockService stockService, IEmailService emailService) : IOrdersService
     {
         private IOrdersRepository Repository { get; set; } = repository;
-        private ICustomerService CustomerService { get; set; } = customerService;
-        private IVehicleService VehicleService { get; set; } = vehicleService;
+        private IOrderDependenciesGateway DependenciesGateway { get; set; } = dependenciesGateway;
         private IStockService StockService { get; set; } = stockService;
-        private ICatalogService CatalogService { get; set; } = mechanicalServiceService;
         private IEmailService EmailService { get; set; } = emailService;
 
         public async Task CreateServiceOrder(CreateOrderCommand orderToCreate)
         {
-            var customer = await CustomerService.GetCustomer(document: DocumentWrapper.CreateDocument(orderToCreate.CustomerDocument).Id) ?? throw new InvalidOperationException("Cliente não cadastrado. Realize o cadastro antes de criar a ordem de serviço");
+            var customerDocument = DocumentWrapper.CreateDocument(orderToCreate.CustomerDocument).Id;
+            var vehicleLicensePlate = LicensePlateWrapper.CreateLicensePlate(orderToCreate.VehicleLicensePlate).License;
 
-            var vehicle = await VehicleService.GetVehicle(licensePlate: orderToCreate.VehicleLicensePlate) ?? throw new InvalidOperationException("Documento não cadastrado. Realize o cadastro antes de criar a ordem de serviço");
+            var customer = await DependenciesGateway.GetCustomerByDocument(customerDocument) ?? throw new InvalidOperationException("Cliente não cadastrado. Realize o cadastro antes de criar a ordem de serviço");
 
-            var order = new Order(customer.Document, vehicle.LicensePlate);
+            var vehicle = await DependenciesGateway.GetVehicleByLicensePlate(vehicleLicensePlate) ?? throw new InvalidOperationException("Documento não cadastrado. Realize o cadastro antes de criar a ordem de serviço");
+
+            var order = new Order(customer.Document.Id, vehicle.LicensePlate.License);
 
             var registry = await Repository.CreateOrder(order);
 
@@ -88,9 +87,7 @@ namespace Service
 
             if (orderService == null)
             {
-                var serviceCatalog = await CatalogService.GetService(service.Id) ?? throw new InvalidOperationException($"Serviço com id \"{service.Id}\" não encontrado");
-
-                var serviceToAdd = new MechanicalService(serviceCatalog.Id, serviceCatalog.Description, serviceCatalog.Hours, serviceCatalog.PricePerHour, serviceCatalog.Amount);
+                var serviceToAdd = await DependenciesGateway.GetServiceById(service.Id) ?? throw new InvalidOperationException($"Serviço com id \"{service.Id}\" não encontrado");
 
                 order.AddService(serviceToAdd);
 
@@ -140,11 +137,9 @@ namespace Service
 
                 if (material == null)
                 {
-                    var stockItem = await StockService.GetMaterial(orderItem.Id) ?? throw new InvalidOperationException("Item não encontrado no estoque");
+                    var stockItem = await DependenciesGateway.GetMaterialById(orderItem.Id) ?? throw new InvalidOperationException("Item não encontrado no estoque");
 
-                    var materialToAdd = new Material(stockItem.Id, stockItem.Name, stockItem.Brand, stockItem.Price, stockItem.Amount, stockItem.ReservedAmount);
-
-                    var itemAdded = order.AddMaterial(materialToAdd);
+                    var itemAdded = order.AddMaterial(stockItem);
 
                     registry = await Repository.AddMaterialToOrder(orderId, itemAdded);
                 }
@@ -294,16 +289,14 @@ namespace Service
 
         private async Task NotifyOrderCompleted(IOrder workOrder)
         {
-            var customer = await CustomerService.GetCustomer(document: workOrder.CustomerDocument.Id) ?? throw new InvalidOperationException("Falha ao notificar o cliente. Cliente não encontrado");
+            var customer = await DependenciesGateway.GetCustomerByDocument(workOrder.CustomerDocument.Id) ?? throw new InvalidOperationException("Falha ao notificar o cliente. Cliente não encontrado");
 
-            var vehicle = await VehicleService.GetVehicle(licensePlate: workOrder.VehicleLicensePlate.License) ?? throw new InvalidOperationException("Falha ao notificar o cliente. Veículo não encontrado");
+            var vehicle = await DependenciesGateway.GetVehicleByLicensePlate(workOrder.VehicleLicensePlate.License) ?? throw new InvalidOperationException("Falha ao notificar o cliente. Veículo não encontrado");
 
-            var customerDomain = new Customer(customer.Id, customer.Name, customer.Document, customer.Phone, customer.Email);
-
-            var vehicleDomain = new Vehicle(vehicle.Id, vehicle.CustomerDocument, vehicle.Brand, vehicle.Model, vehicle.Year, vehicle.LicensePlate);
-
-            await EmailService.NotifyBudget(customerDomain, vehicleDomain, workOrder);
+            await EmailService.NotifyBudget(customer, vehicle, workOrder);
         }
     }
 }
+
+
 

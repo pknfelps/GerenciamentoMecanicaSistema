@@ -16,7 +16,6 @@ namespace ControllerTests
         private readonly CreateUserRequest UserToRegister = new("Fulano", "Fulano@123", "User");
         private static Guid ExistingUserId = Guid.NewGuid();
         private readonly UserResult ExistingUser = new(ExistingUserId, "Ciclano", "Ciclano@123", "Admin");
-        private readonly CreateUserCommand ExistingUserWithNoPassword = new("Ciclano", "", "Admin");
 
         protected override void MockService()
         {
@@ -32,11 +31,12 @@ namespace ControllerTests
                 throw new InvalidOperationException();
             });
 
-            UserService.GetUser(Arg.Any<CreateUserCommand>()).Returns(callInfo =>
+            UserService.GetUser(Arg.Any<string>(), Arg.Any<string>()).Returns(callInfo =>
             {
-                var user = callInfo.ArgAt<CreateUserCommand>(0);
+                var name = callInfo.ArgAt<string>(0);
+                var role = callInfo.ArgAt<string>(1);
 
-                if (user.Name == ExistingUser.Name && user.Role == ExistingUser.Role)
+                if (name == ExistingUser.Name && role == ExistingUser.Role)
                     return ExistingUser;
 
                 return null;
@@ -78,13 +78,13 @@ namespace ControllerTests
         [Test]
         public async Task MustGetUserByNomeAndCargo()
         {
-            var response = await TestClient.GetAsync($"users?name={ExistingUserWithNoPassword.Name}&role={ExistingUserWithNoPassword.Role}");
+            var response = await TestClient.GetAsync($"users?name={ExistingUser.Name}&role={ExistingUser.Role}");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
             var user = await response.Content.ReadFromJsonAsync<UserResponse>();
 
-            await UserService.Received(1).GetUser(ExistingUserWithNoPassword);
+            await UserService.Received(1).GetUser(ExistingUser.Name, ExistingUser.Role);
 
             Assert.That(user, Is.Not.Null);
             Assert.That(user.Id, Is.EqualTo(ExistingUser.Id));
@@ -97,7 +97,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
 
-            await UserService.Received(1).GetUser(new CreateUserCommand("teste", "", "teste"));
+            await UserService.Received(1).GetUser("teste", "teste");
         }
 
         [Test]
@@ -107,7 +107,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await UserService.ReceivedWithAnyArgs(0).GetUser(Arg.Any<CreateUserCommand>());
+            await UserService.ReceivedWithAnyArgs(0).GetUser(Arg.Any<string>(), Arg.Any<string>());
         }
     }
 }
