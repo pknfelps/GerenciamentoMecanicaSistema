@@ -3,7 +3,7 @@ using NSubstitute;
 using Repository.Interface;
 using Service;
 using Service.Interface;
-using Service.Interface.Dto.User;
+using Service.Interface.Commands.User;
 
 namespace ServiceTests
 {
@@ -29,9 +29,9 @@ namespace ServiceTests
             }
         }
 
-        private static CreateUserDto ExistingUserDto { get; } = new("Admin", "Admin@123", "Admin");
-        private static CreateUserDto ExistingUserWithWrongPassword { get; } = new("Admin", "Teste@123", "Admin");
-        private static CreateUserDto UnexistingUser { get; } = new("Fulano", "Fulano@123", "Usuario");
+        private static CreateUserCommand ExistingUserCommand { get; } = new("Admin", "Admin@123", "Admin");
+        private static CreateUserCommand ExistingUserWithWrongPassword { get; } = new("Admin", "Teste@123", "Admin");
+        private static CreateUserCommand UnexistingUser { get; } = new("Fulano", "Fulano@123", "Usuario");
 
         [SetUp]
         public void SetUp()
@@ -58,7 +58,7 @@ namespace ServiceTests
         [Test]
         public async Task MustLogInAndGenerateToken()
         {
-            var token = await AuthenticationService.Authenticate(ExistingUserDto);
+            var token = await AuthenticationService.Authenticate(ExistingUserCommand);
 
             Assert.That(token, Is.EqualTo(GeneratedToken));
 

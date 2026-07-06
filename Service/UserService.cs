@@ -1,8 +1,9 @@
-﻿using Domain.Interface.User;
+using Domain.Interface.User;
 using Domain.User;
 using Repository.Interface;
 using Service.Interface;
-using Service.Interface.Dto.User;
+using Service.Interface.Commands.User;
+using Service.Interface.Results.User;
 
 namespace Service
 {
@@ -10,25 +11,27 @@ namespace Service
     {
         private IUserRepository Repository { get; set; } = repository;
 
-        public async Task RegisterUser(CreateUserDto userDto)
+        public async Task RegisterUser(CreateUserCommand user)
         {
-            if (await Repository.GetUser(userDto.Name, userDto.Role.ToString()) != null)
+            if (await Repository.GetUser(user.Name, user.Role.ToString()) != null)
                 throw new InvalidOperationException("Usuario já cadastrado no sistema");
 
-            var registry = await Repository.RegisterUser(userDto.ToDomain());
+            var registry = await Repository.RegisterUser(CreateDomain(user));
 
             if (registry == 0)
                 throw new InvalidOperationException("Falha ao cadastrar o usuário");
         }
 
-        public async Task<UserDto?> GetUser(CreateUserDto userDto)
+        public async Task<UserResult?> GetUser(CreateUserCommand user)
         {
-            var user = await Repository.GetUser(userDto.Name, userDto.Role);
+            var registeredUser = await Repository.GetUser(user.Name, user.Role);
 
-            if (user == null)
+            if (registeredUser == null)
                 return null;
 
-            return UserDto.Create(user);
+            return UserResult.Create(registeredUser);
         }
+
+        private static IUser CreateDomain(CreateUserCommand user) => new User(user.Name, user.Password, user.Role);
     }
 }

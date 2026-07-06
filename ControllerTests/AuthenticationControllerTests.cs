@@ -1,6 +1,7 @@
-﻿using NSubstitute;
+using GerenciamentoMecanicaSistema.Contracts.Requests.User;
+using NSubstitute;
 using Service.Interface;
-using Service.Interface.Dto.User;
+using Service.Interface.Commands.User;
 using System.Net;
 using System.Net.Http.Json;
 
@@ -10,9 +11,9 @@ namespace ControllerTests
     {
         private IAuthenticationService AuthenticationService { get; set; }
 
-        private readonly CreateUserDto UsuarioExistente = new("Ciclano", "Ciclano@123", "Admin");
-        private readonly CreateUserDto UsuarioExistenteComSenhaErrada = new("Ciclano", "Ciclano@321", "Admin");
-        private readonly CreateUserDto UsuarioInexistente = new("Fulano", "Fulano@123", "Usuario");
+        private readonly CreateUserRequest UsuarioExistente = new("Ciclano", "Ciclano@123", "Admin");
+        private readonly CreateUserRequest UsuarioExistenteComSenhaErrada = new("Ciclano", "Ciclano@321", "Admin");
+        private readonly CreateUserRequest UsuarioInexistente = new("Fulano", "Fulano@123", "Usuario");
         private readonly string TokenValido = "TokenvalidoCriadocomsUcessoaPartirDetestedeController";
         private readonly string UnauthorizedMessage = "Usuário ou senha inválidos";
 
@@ -28,11 +29,11 @@ namespace ControllerTests
         {
             AuthenticationService = TestWebAppFactory.AuthenticationServiceMock;
 
-            AuthenticationService.Authenticate(Arg.Any<CreateUserDto>()).Returns(callInfo =>
+            AuthenticationService.Authenticate(Arg.Any<CreateUserCommand>()).Returns(callInfo =>
             {
-                var usuario = callInfo.Arg<CreateUserDto>();
+                var usuario = callInfo.Arg<CreateUserCommand>();
 
-                if (usuario.Equals(UsuarioExistente))
+                if (usuario.Equals(UsuarioExistente.ToCommand()))
                     return TokenValido;
 
                 return string.Empty;
@@ -54,7 +55,7 @@ namespace ControllerTests
                 Assert.That(token, Is.EqualTo(TokenValido));
             });
 
-            await AuthenticationService.Received(1).Authenticate(UsuarioExistente);
+            await AuthenticationService.Received(1).Authenticate(UsuarioExistente.ToCommand());
         }
 
         [Test]
@@ -64,7 +65,7 @@ namespace ControllerTests
 
             var token = await response.Content.ReadAsStringAsync();
 
-            await AuthenticationService.Received(1).Authenticate(UsuarioInexistente);
+            await AuthenticationService.Received(1).Authenticate(UsuarioInexistente.ToCommand());
 
             Assert.Multiple(() =>
             {
@@ -80,7 +81,7 @@ namespace ControllerTests
 
             var token = await response.Content.ReadAsStringAsync();
 
-            await AuthenticationService.Received(1).Authenticate(UsuarioExistenteComSenhaErrada);
+            await AuthenticationService.Received(1).Authenticate(UsuarioExistenteComSenhaErrada.ToCommand());
 
             Assert.Multiple(() =>
             {
@@ -94,7 +95,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PostAsJsonAsync("authentication", new { Nome = "Teste", Cargo = "Inválido" });
 
-            await AuthenticationService.ReceivedWithAnyArgs(0).Authenticate(Arg.Any<UserDto>());
+            await AuthenticationService.ReceivedWithAnyArgs(0).Authenticate(Arg.Any<CreateUserCommand>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }

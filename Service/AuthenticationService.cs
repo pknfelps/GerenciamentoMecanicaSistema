@@ -1,6 +1,6 @@
 using Repository.Interface;
 using Service.Interface;
-using Service.Interface.Dto.User;
+using Service.Interface.Commands.User;
 
 namespace Service
 {
@@ -9,17 +9,17 @@ namespace Service
         private IUserRepository UserRepository { get; set; } = userRepository;
         private ITokenGenerator TokenGenerator { get; set; } = tokenGenerator;
 
-        public async Task<string> Authenticate(CreateUserDto userDto)
+        public async Task<string> Authenticate(CreateUserCommand user)
         {
-            var user = await UserRepository.GetUser(userDto.Name, userDto.Role);
+            var registeredUser = await UserRepository.GetUser(user.Name, user.Role);
 
-            if (user == null)
+            if (registeredUser == null)
                 return string.Empty;
 
-            if (userDto.Password != user.Password.Secret)
+            if (user.Password != registeredUser.Password.Secret)
                 return string.Empty;
 
-            return TokenGenerator.Generate(user.Name, user.Role.ToString());
+            return TokenGenerator.Generate(registeredUser.Name, registeredUser.Role.ToString());
         }
     }
 }
