@@ -8,7 +8,7 @@ using System.Data;
 
 namespace Repository
 {
-    public class VehicleRepository(IDbConnection connection) : BaseRepository(connection), IVehicleRepository
+    public class VehicleRepository(IDbConnection connection, DbTransactionContext? transactionContext = null) : BaseRepository(connection, transactionContext), IVehicleRepository
     {
         public static string RegisterVehicleSql { get; private set; } = """
                 INSERT INTO vehicles(id, customer_document, brand, model, year, license_plate)
@@ -37,13 +37,13 @@ namespace Repository
 
         public async Task<int> RegisterVehicle(IVehicle vehicle)
         {
-            return await Connection.ExecuteAsync(RegisterVehicleSql, VehicleDb.Create(vehicle));
+            return await Connection.ExecuteAsync(RegisterVehicleSql, VehicleDb.Create(vehicle), Transaction);
         }
 
         public async Task<IEnumerable<IVehicle>> GetVehicles(Guid? id = null, string license_plate = "")
         {
             var query = GetVehiclesSql.BuildQuery(BuildQueryParameters(id, license_plate));
-            var vehicles = await Connection.QueryAsync<VehicleDb>(query.Sql, query.Parameters);
+            var vehicles = await Connection.QueryAsync<VehicleDb>(query.Sql, query.Parameters, Transaction);
 
             return vehicles.Select(vehicle => vehicle.ToDomain());
         }
@@ -51,7 +51,7 @@ namespace Repository
         public async Task<IVehicle?> GetVehicle(Guid? id = null, string license_plate = "")
         {
             var query = GetVehiclesSql.BuildQuery(BuildQueryParameters(id, license_plate));
-            var vehicle = await Connection.QuerySingleOrDefaultAsync<VehicleDb?>(query.Sql, query.Parameters);
+            var vehicle = await Connection.QuerySingleOrDefaultAsync<VehicleDb?>(query.Sql, query.Parameters, Transaction);
 
             if (vehicle == null)
                 return null;
@@ -61,12 +61,12 @@ namespace Repository
 
         public async Task<int> UpdateVehicle(IVehicle vehicle)
         {
-            return await Connection.ExecuteAsync(UpdateVehicleSql, VehicleDb.Create(vehicle));
+            return await Connection.ExecuteAsync(UpdateVehicleSql, VehicleDb.Create(vehicle), Transaction);
         }
 
         public async Task<int> DeleteVehicle(Guid vehicleId)
         {
-            return await Connection.ExecuteAsync(DeleteVehicleSql, new { vehicleId });
+            return await Connection.ExecuteAsync(DeleteVehicleSql, new { vehicleId }, Transaction);
         }
 
         private static Dictionary<string, object?> BuildQueryParameters(Guid? id = null, string license_plate = "")

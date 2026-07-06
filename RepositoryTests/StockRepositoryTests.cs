@@ -223,6 +223,31 @@ namespace RepositoryTests
         }
 
         [Test]
+        public async Task MustRollbackMaterialAmountUpdateInTransaction()
+        {
+            var transactionContext = new DbTransactionContext();
+            var transactionManager = new TransactionManager(Connection, transactionContext);
+            var transactionalRepository = new StockRepository(Connection, transactionContext);
+
+            Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await transactionManager.ExecuteInTransaction(async () =>
+                {
+                    await transactionalRepository.UpdateMaterialAmount(PartToUpdateAmount);
+                    throw new InvalidOperationException("force rollback");
+                }));
+
+            var item = await Repository.GetMaterial(id: ExistingPart.Id);
+
+            Assert.That(item, Is.Not.Null);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(item.Amount, Is.EqualTo(ExistingPart.Amount));
+                Assert.That(item.ReservedAmount, Is.EqualTo(ExistingPart.ReservedAmount));
+            });
+        }
+
+        [Test]
         public async Task MustDeletePart()
         {
             var registry = await Repository.DeleteMaterial(ExistingPart.Id);

@@ -6,7 +6,7 @@ using System.Data;
 
 namespace Repository
 {
-    public class StockRepository(IDbConnection connection) : BaseRepository(connection), IStockRepository
+    public class StockRepository(IDbConnection connection, DbTransactionContext? transactionContext = null) : BaseRepository(connection, transactionContext), IStockRepository
     {
         public static string RegisterMaterialSql { get; private set; } = """
                 INSERT INTO stock(id, name, brand, price, amount, reserved_amount)
@@ -40,13 +40,13 @@ namespace Repository
 
         public async Task<int> RegisterNewMaterial(IMaterial material)
         {
-            return await Connection.ExecuteAsync(RegisterMaterialSql, MaterialDb.Create(material));
+            return await Connection.ExecuteAsync(RegisterMaterialSql, MaterialDb.Create(material), Transaction);
         }
 
         public async Task<IEnumerable<IMaterial>> GetMaterials(Guid? id = null, string name = "", string brand = "")
         {
             var query = GetItensSql.BuildQuery(BuildQueryParameters(id, name, brand));
-            var materials = await Connection.QueryAsync<MaterialDb>(query.Sql, query.Parameters);
+            var materials = await Connection.QueryAsync<MaterialDb>(query.Sql, query.Parameters, Transaction);
 
             return materials.Select(material => material.ToDomain());
         }
@@ -54,7 +54,7 @@ namespace Repository
         public async Task<IMaterial?> GetMaterial(Guid? id = null, string name = "", string brand = "")
         {
             var query = GetItensSql.BuildQuery(BuildQueryParameters(id, name, brand));
-            var material = await Connection.QuerySingleOrDefaultAsync<MaterialDb>(query.Sql, query.Parameters);
+            var material = await Connection.QuerySingleOrDefaultAsync<MaterialDb>(query.Sql, query.Parameters, Transaction);
 
             if (material == null)
                 return null;
@@ -64,17 +64,17 @@ namespace Repository
 
         public async Task<int> UpdateMaterialPrice(IMaterial material)
         {
-            return await Connection.ExecuteAsync(UpdateMaterialPriceSql, MaterialDb.Create(material));
+            return await Connection.ExecuteAsync(UpdateMaterialPriceSql, MaterialDb.Create(material), Transaction);
         }
 
         public async Task<int> UpdateMaterialAmount(IMaterial material)
         {
-            return await Connection.ExecuteAsync(UpdateMaterialAmountSql, MaterialDb.Create(material));
+            return await Connection.ExecuteAsync(UpdateMaterialAmountSql, MaterialDb.Create(material), Transaction);
         }
 
         public async Task<int> DeleteMaterial(Guid materialId)
         {
-            return await Connection.ExecuteAsync(DeleMaterialSql, new { Id = materialId });
+            return await Connection.ExecuteAsync(DeleMaterialSql, new { Id = materialId }, Transaction);
         }
 
         private static Dictionary<string, object?> BuildQueryParameters(Guid? id = null, string name = "", string brand = "")

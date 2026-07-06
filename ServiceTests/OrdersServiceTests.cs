@@ -21,6 +21,7 @@ namespace ServiceTests
         private IOrderDependenciesGateway DependenciesGateway { get; set; }
         private IStockService StockService { get; set; }
         private IEmailService EmailService { get; set; }
+        private ITransactionManager TransactionManager { get; set; }
 
         private static CustomerResult ExistingCustomer { get; } = new(Guid.NewGuid(), "Teste", "417.384.220-11", "(11) 91234-5678", "teste@gmail.com");
         private static ICustomer ExistingCustomerDomain { get; } = CreateSubstituteCustomer(ExistingCustomer.Id, ExistingCustomer.Name, ExistingCustomer.Document);
@@ -275,7 +276,10 @@ namespace ServiceTests
 
             EmailService.NotifyBudget(Arg.Any<ICustomer>(), Arg.Any<IVehicle>(), Arg.Any<IOrder>()).Returns(Task.CompletedTask);
 
-            Service = new OrdersService(Repository, DependenciesGateway, StockService, EmailService);
+            TransactionManager = Substitute.For<ITransactionManager>();
+            TransactionManager.ExecuteInTransaction(Arg.Any<Func<Task>>()).Returns(callInfo => callInfo.Arg<Func<Task>>()());
+
+            Service = new OrdersService(Repository, DependenciesGateway, StockService, EmailService, TransactionManager);
         }
 
         [Test]
@@ -809,7 +813,7 @@ namespace ServiceTests
             await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(0).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
             await Repository.ReceivedWithAnyArgs(0).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
-            await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
@@ -821,7 +825,7 @@ namespace ServiceTests
             await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(1).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
             await Repository.ReceivedWithAnyArgs(0).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
-            await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
@@ -833,7 +837,7 @@ namespace ServiceTests
             await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(0).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
             await Repository.ReceivedWithAnyArgs(1).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
-            await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
@@ -878,7 +882,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveMaterialFromOrder(ExistingReceivedOrder.Id, new(Guid.NewGuid(), 1)));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
-            await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(0).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
             await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -890,7 +894,7 @@ namespace ServiceTests
             Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveMaterialFromOrder(ExistingOrderInDiagnosisId, new(ExistingPart.Id, 4)));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
-            await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(1).RemoveMaterialFromOrder(ExistingOrderInDiagnosisId, ExistingPart.Id);
             await Repository.ReceivedWithAnyArgs(0).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
             await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -905,7 +909,7 @@ namespace ServiceTests
             await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(0).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(1).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
-            await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]

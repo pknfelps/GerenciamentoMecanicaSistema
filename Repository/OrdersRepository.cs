@@ -8,7 +8,7 @@ using System.Data;
 
 namespace Repository
 {
-    public class OrdersRepository(IDbConnection connection) : BaseRepository(connection), IOrdersRepository
+    public class OrdersRepository(IDbConnection connection, DbTransactionContext? transactionContext = null) : BaseRepository(connection, transactionContext), IOrdersRepository
     {
         public static string CreateServiceSql { get; private set; } = """
             INSERT INTO orders(id, customer_document, vehicle_license_plate, budget, status, date_created, date_finished, duration)
@@ -120,13 +120,13 @@ namespace Repository
 
         public async Task<int> CreateOrder(IOrder serviceOrder)
         {
-            return await Connection.ExecuteAsync(CreateServiceSql, OrderDb.Create(serviceOrder));
+            return await Connection.ExecuteAsync(CreateServiceSql, OrderDb.Create(serviceOrder), Transaction);
         }
 
         public async Task<IEnumerable<IOrder>> GetOrders(Guid? id = null, string customer_document = "", string vehicle_license_plate = "")
         {
             var query = GetOrdersSql.BuildQuery(BuildQueryParameters(id, customer_document, vehicle_license_plate));
-            var orders = await Connection.QueryAsync<OrderDb>(query.Sql, query.Parameters);
+            var orders = await Connection.QueryAsync<OrderDb>(query.Sql, query.Parameters, Transaction);
 
             return orders.Select(order => order.ToDomain());
         }
@@ -134,7 +134,7 @@ namespace Repository
         public async Task<IOrder?> GetOrder(Guid? id = null, string customer_document = "", string vehicle_license_plate = "")
         {
             var query = GetOrdersSql.BuildQuery(BuildQueryParameters(id, customer_document, vehicle_license_plate));
-            var order = await Connection.QuerySingleOrDefaultAsync<OrderDb>(query.Sql, query.Parameters);
+            var order = await Connection.QuerySingleOrDefaultAsync<OrderDb>(query.Sql, query.Parameters, Transaction);
 
             if (order == null)
                 return null;
@@ -144,50 +144,50 @@ namespace Repository
 
         public async Task<int> UpdateOrder(IOrder order)
         {
-            return await Connection.ExecuteAsync(UpdateOrderSql, order);
+            return await Connection.ExecuteAsync(UpdateOrderSql, order, Transaction);
         }
 
         public async Task<int> AddServiceToOrder(Guid orderId, IMechanicalService service)
         {
-            return await Connection.ExecuteAsync(AddServiceToOrderSql, new { Id = service.Id, orderId = orderId, Description = service.Description, Hours = service.Hours, PricePerHour = service.PricePerHour, Amount = service.Amount });
+            return await Connection.ExecuteAsync(AddServiceToOrderSql, new { Id = service.Id, orderId = orderId, Description = service.Description, Hours = service.Hours, PricePerHour = service.PricePerHour, Amount = service.Amount }, Transaction);
         }
 
         public async Task<int> UpdateServiceOfOrder(Guid orderId, IMechanicalService service)
         {
-            return await Connection.ExecuteAsync(UpdateServiceAmountOfOrderSql, new { Id = service.Id, orderId = orderId, Amount = service.Amount });
+            return await Connection.ExecuteAsync(UpdateServiceAmountOfOrderSql, new { Id = service.Id, orderId = orderId, Amount = service.Amount }, Transaction);
         }
 
         public async Task<int> RemoveServiceFromOrder(Guid orderId, Guid serviceId)
         {
-            return await Connection.ExecuteAsync(DeleteServiceFromOrderSql, new { orderId, serviceId });
+            return await Connection.ExecuteAsync(DeleteServiceFromOrderSql, new { orderId, serviceId }, Transaction);
         }
 
         public async Task<int> AddMaterialToOrder(Guid orderId, IMaterial material)
         {
             var materialDb = MaterialDb.Create(material);
 
-            return await Connection.ExecuteAsync(AddMaterialToOrderSql, new { Id = materialDb.Id, orderId = orderId, Name = materialDb.Name, Brand = materialDb.Brand, Price = materialDb.Price, Amount = materialDb.Amount });
+            return await Connection.ExecuteAsync(AddMaterialToOrderSql, new { Id = materialDb.Id, orderId = orderId, Name = materialDb.Name, Brand = materialDb.Brand, Price = materialDb.Price, Amount = materialDb.Amount }, Transaction);
         }
 
         public async Task<int> RemoveMaterialFromOrder(Guid orderId, Guid materialId)
         {
-            return await Connection.ExecuteAsync(RemoveMaterialFromOrderSql, new { orderId, materialId });
+            return await Connection.ExecuteAsync(RemoveMaterialFromOrderSql, new { orderId, materialId }, Transaction);
         }
 
         public async Task<int> UpdateMaterialFromOrder(Guid orderId, IMaterial material)
         {
             var materialDb = MaterialDb.Create(material);
 
-            return await Connection.ExecuteAsync(UpdateMaterialFromOrderSql, new { order_id = orderId, Id = materialDb.Id, Amount = materialDb.Amount });
+            return await Connection.ExecuteAsync(UpdateMaterialFromOrderSql, new { order_id = orderId, Id = materialDb.Id, Amount = materialDb.Amount }, Transaction);
         }
 
         public async Task<int> DeleteOrder(Guid orderId)
         {
-            await Connection.ExecuteAsync(DeleteServicesFromOrderSql, new { orderId });
+            await Connection.ExecuteAsync(DeleteServicesFromOrderSql, new { orderId }, Transaction);
 
-            await Connection.ExecuteAsync(RemoveMaterialsFromOrderSql, new { orderId });
+            await Connection.ExecuteAsync(RemoveMaterialsFromOrderSql, new { orderId }, Transaction);
 
-            return await Connection.ExecuteAsync(DeleteOrderSql, new { orderId });
+            return await Connection.ExecuteAsync(DeleteOrderSql, new { orderId }, Transaction);
         }
 
         private static Dictionary<string, object?> BuildQueryParameters(Guid? id = null, string customer_document = "", string vehicle_license_plate = "")

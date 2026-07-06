@@ -23,6 +23,8 @@ namespace DependencyInjection
                 return connection;
             });
 
+            service.AddScoped<DbTransactionContext>();
+            service.AddScoped<ITransactionManager, TransactionManager>();
             service.AddScoped<ICustomerRepository, CustomerRepository>();
             service.AddScoped<IUserRepository, UserRepository>();
             service.AddScoped<IStockRepository, StockRepository>();

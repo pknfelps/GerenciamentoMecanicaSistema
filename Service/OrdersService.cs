@@ -9,12 +9,13 @@ using Service.Interface.Results.Order;
 
 namespace Service
 {
-    public class OrdersService(IOrdersRepository repository, IOrderDependenciesGateway dependenciesGateway, IStockService stockService, IEmailService emailService) : IOrdersService
+    public class OrdersService(IOrdersRepository repository, IOrderDependenciesGateway dependenciesGateway, IStockService stockService, IEmailService emailService, ITransactionManager transactionManager) : IOrdersService
     {
         private IOrdersRepository Repository { get; set; } = repository;
         private IOrderDependenciesGateway DependenciesGateway { get; set; } = dependenciesGateway;
         private IStockService StockService { get; set; } = stockService;
         private IEmailService EmailService { get; set; } = emailService;
+        private ITransactionManager TransactionManager { get; set; } = transactionManager;
 
         public async Task CreateServiceOrder(CreateOrderCommand orderToCreate)
         {
@@ -127,12 +128,12 @@ namespace Service
         {
             var order = await Repository.GetOrder(orderId) ?? throw new InvalidOperationException("Ordem não encontrada");
 
-            await StockService.ReserveMaterialAmount(orderItem.Id, orderItem.Value);
-
             var material = order.Materials.FirstOrDefault(x => x.Id == orderItem.Id);
 
-            try
+            await TransactionManager.ExecuteInTransaction(async () =>
             {
+                await StockService.ReserveMaterialAmount(orderItem.Id, orderItem.Value);
+
                 int registry;
 
                 if (material == null)
@@ -152,23 +153,17 @@ namespace Service
 
                 if (registry == 0)
                     throw new InvalidOperationException("Erro ao salvar serviço");
-            }
-            catch
-            {
-                await StockService.RestoreMaterialAmount(orderItem.Id, orderItem.Value);
-
-                throw;
-            }
+            });
         }
 
         public async Task RemoveMaterialFromOrder(Guid orderId, UpdateOrderItemCommand<int> orderItem)
         {
             var order = await Repository.GetOrder(orderId) ?? throw new InvalidOperationException("Ordem não encontrada");
 
-            await StockService.RestoreMaterialAmount(orderItem.Id, orderItem.Value);
-
-            try
+            await TransactionManager.ExecuteInTransaction(async () =>
             {
+                await StockService.RestoreMaterialAmount(orderItem.Id, orderItem.Value);
+
                 var material = order.Materials.First(x => x.Id == orderItem.Id);
 
                 material.RemoveAmount(orderItem.Value);
@@ -181,13 +176,7 @@ namespace Service
 
                 if (registry == 0)
                     throw new InvalidOperationException("Erro ao salvar serviço");
-            }
-            catch
-            {
-                await StockService.ReserveMaterialAmount(orderItem.Id, orderItem.Value);
-
-                throw;
-            }
+            });
         }
 
         public async Task CompleteDiagnosis(Guid orderId)
@@ -222,8 +211,18 @@ namespace Service
 
             if (!approve.Approved)
             {
-                foreach (var item in order.Materials)
-                    await StockService.RestoreMaterialAmount(item.Id, item.Amount);
+                await TransactionManager.ExecuteInTransaction(async () =>
+                {
+                    foreach (var item in order.Materials)
+                        await StockService.RestoreMaterialAmount(item.Id, item.Amount);
+
+                    var registry = await Repository.UpdateOrder(order);
+
+                    if (registry == 0)
+                        throw new InvalidOperationException("Falha ao aprovar ou recusar o orçamento");
+                });
+
+                return;
             }
 
             var registry = await Repository.UpdateOrder(order);
@@ -250,13 +249,16 @@ namespace Service
 
             order.CompleteService();
 
-            foreach (var item in order.Materials)
-                await StockService.ConsumeReservedAmount(item.Id, item.Amount);
+            await TransactionManager.ExecuteInTransaction(async () =>
+            {
+                foreach (var item in order.Materials)
+                    await StockService.ConsumeReservedAmount(item.Id, item.Amount);
 
-            var registry = await Repository.UpdateOrder(order);
+                var registry = await Repository.UpdateOrder(order);
 
-            if (registry == 0)
-                throw new InvalidOperationException("Falha ao completar execução");
+                if (registry == 0)
+                    throw new InvalidOperationException("Falha ao completar execução");
+            });
         }
 
         public async Task DeliverVehicle(Guid orderId)
@@ -277,8 +279,18 @@ namespace Service
 
             if (order.Status is not WorkOrderStatus.Finished and not WorkOrderStatus.Delivered)
             {
-                foreach (var item in order.Materials)
-                    await StockService.RestoreMaterialAmount(item.Id, item.Amount);
+                await TransactionManager.ExecuteInTransaction(async () =>
+                {
+                    foreach (var item in order.Materials)
+                        await StockService.RestoreMaterialAmount(item.Id, item.Amount);
+
+                    var registry = await Repository.DeleteOrder(orderId);
+
+                    if (registry == 0)
+                        throw new InvalidOperationException("Falha ao deletar ordem");
+                });
+
+                return;
             }
 
             var registry = await Repository.DeleteOrder(orderId);
