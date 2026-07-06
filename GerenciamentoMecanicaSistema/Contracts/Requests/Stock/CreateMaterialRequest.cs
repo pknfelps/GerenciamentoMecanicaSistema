@@ -1,5 +1,5 @@
 using Service.Interface.Commands.Stock;
-using Service.Interface.Dto.CustomAttributes;
+using GerenciamentoMecanicaSistema.Contracts.Validation;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 

@@ -1,11 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
-namespace Service.Interface.Dto.CustomAttributes
+namespace GerenciamentoMecanicaSistema.Contracts.Validation
 {
     [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property)]
     internal class DateTimeValidationAttribute : ValidationAttribute
     {
-        public DateTimeValidationAttribute() 
+        public DateTimeValidationAttribute()
         {
             ErrorMessage = "O campo {0} não é uma data válida";
         }

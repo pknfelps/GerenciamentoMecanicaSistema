@@ -8,7 +8,6 @@ using Repository.Interface;
 using Service;
 using Service.Interface;
 using Service.Interface.Commands.Order;
-using Service.Interface.Dto.Service;
 using Service.Interface.Results.Order;
 using Service.Interface.Results.Catalog;
 using Service.Interface.Results.Customer;

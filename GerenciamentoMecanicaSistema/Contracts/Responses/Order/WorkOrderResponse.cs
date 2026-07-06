@@ -1,4 +1,4 @@
-using Service.Interface.Dto.CustomAttributes;
+using GerenciamentoMecanicaSistema.Contracts.Validation;
 using Service.Interface.Results.Order;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;

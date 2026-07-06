@@ -3,7 +3,7 @@ using GerenciamentoMecanicaSistema.Contracts.Responses.Vehicle;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interface;
-using Service.Interface.Dto.CustomAttributes;
+using GerenciamentoMecanicaSistema.Contracts.Validation;
 
 namespace GerenciamentoMecanicaSistema.Controllers
 {

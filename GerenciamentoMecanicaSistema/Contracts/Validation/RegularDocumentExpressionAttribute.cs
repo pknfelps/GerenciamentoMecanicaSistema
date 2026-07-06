@@ -1,6 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
-namespace Service.Interface.Dto.CustomAttributes
+namespace GerenciamentoMecanicaSistema.Contracts.Validation
 {
     [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property)]
     public class RegularDocumentExpressionAttribute : RegularExpressionAttribute

@@ -50,8 +50,8 @@ namespace ServiceTests
         private static CustomerResult ExistingCustomerResult { get; } = new(ExistingCustomerId, "Ciclano", "10.359.666/0001-94", "(11) 91234-5678", "ciclano@gmail.com");
         private static CustomerResult ExistingCustomer2Result { get; } = new(ExistingCustomer2Id, "Beltrano", "65.457.513/0001-71", "(11) 91234-5678", "beltrano@gmail.com");
         private static CreateCustomerCommand ExistingCustomerCommand { get; } = new("Ciclano", "10.359.666/0001-94", "(11) 91234-5678", "ciclano@gmail.com");
-        private static CreateCustomerCommand CustomerToUpdateDto { get; } = new("Ciclano", "10.359.666/0001-94", "(11) 94321-8765", "ciclano.company@gmail.com");
-        private static CreateCustomerCommand CustomerToFailtUpdateOrDeleteDto { get; } = new("Beltrano", "65.457.513/0001-71", "(11) 91234-5678", "beltrano@gmail.com");
+        private static CreateCustomerCommand CustomerToUpdate { get; } = new("Ciclano", "10.359.666/0001-94", "(11) 94321-8765", "ciclano.company@gmail.com");
+        private static CreateCustomerCommand CustomerToFailUpdateOrDelete { get; } = new("Beltrano", "65.457.513/0001-71", "(11) 91234-5678", "beltrano@gmail.com");
 
         [SetUp]
         public void SetUp()
@@ -204,7 +204,7 @@ namespace ServiceTests
         [Test]
         public async Task MustUpdateCustomer()
         {
-            await CustomerService.UpdateCustomer(ExistingCustomer.Id, CustomerToUpdateDto);
+            await CustomerService.UpdateCustomer(ExistingCustomer.Id, CustomerToUpdate);
 
             await CustomerRepository.Received(1).UpdateCustomer(Arg.Any<ICustomer>());
         }
@@ -220,7 +220,7 @@ namespace ServiceTests
         [Test]
         public async Task MustThrowExceptionIfFailedToUpdate()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.UpdateCustomer(ExistingCustomerId, CustomerToFailtUpdateOrDeleteDto));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.UpdateCustomer(ExistingCustomerId, CustomerToFailUpdateOrDelete));
 
             await CustomerRepository.Received(1).UpdateCustomer(Arg.Any<ICustomer>());
         }

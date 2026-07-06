@@ -4,7 +4,6 @@ using Repository.Interface;
 using Service;
 using Service.Interface;
 using Service.Interface.Commands.Stock;
-using Service.Interface.Dto;
 using Service.Interface.Results.Stock;
 
 namespace ServiceTests
@@ -52,12 +51,12 @@ namespace ServiceTests
         private static MaterialResult ExistingPartResult { get; } = new(ExistingPartId, "Vela de ignição", "Bosch", 6.00, 20, 5);
         private static MaterialResult ExistingPart2Result { get; } = new(ExistingPart2Id, "Flúido para radiador", "Gitanes", 30.00, 5, 0);
         private static CreateMaterialCommand ExistingPartCommand { get; } = new("Vela de ignição", "Bosch", 6.00, 20);
-        private static UpdateItemDto<int> PartToFailIntOperations { get; } = new(Guid.NewGuid(), 5);
-        private static UpdateItemDto<double> PartToFailDoubleOperations { get; } = new(Guid.NewGuid(), 10.00);
-        private static UpdateItemDto<int> PartToAddAmount { get; } = new(ExistingPartId, 5);
-        private static UpdateItemDto<int> PartToFailAddAmount { get; } = new(ExistingPart2Id, 5);
-        private static UpdateItemDto<double> PartToUpdatePrice { get; } = new(ExistingPartId, 10.00);
-        private static UpdateItemDto<double> PartToFailUpdatePrice { get; } = new(ExistingPart2Id, 35.00);
+        private static (Guid Id, int Value) PartToFailIntOperations { get; } = new(Guid.NewGuid(), 5);
+        private static (Guid Id, double Value) PartToFailDoubleOperations { get; } = new(Guid.NewGuid(), 10.00);
+        private static (Guid Id, int Value) PartToAddAmount { get; } = new(ExistingPartId, 5);
+        private static (Guid Id, int Value) PartToFailAddAmount { get; } = new(ExistingPart2Id, 5);
+        private static (Guid Id, double Value) PartToUpdatePrice { get; } = new(ExistingPartId, 10.00);
+        private static (Guid Id, double Value) PartToFailUpdatePrice { get; } = new(ExistingPart2Id, 35.00);
 
         [SetUp]
         public void SetUp()
