@@ -1,3 +1,4 @@
+using Domain.Interface.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interface.Exceptions;
 
@@ -24,6 +25,16 @@ namespace GerenciamentoMecanicaSistema.Middleware
 
                 await WriteProblemDetails(context, exception, GetStatusCode(exception));
             }
+            catch (DomainBaseException exception)
+            {
+                Logger.LogWarning(
+                    exception,
+                    "Erro de domínio tratado. Path: {Path}. StatusCode: {StatusCode}",
+                    context.Request.Path,
+                    GetStatusCode(exception));
+
+                await WriteProblemDetails(context, exception, GetStatusCode(exception));
+            }
             catch (Exception exception)
             {
                 Logger.LogError(exception, "Erro inesperado durante a requisição. Path: {Path}", context.Request.Path);
@@ -45,6 +56,14 @@ namespace GerenciamentoMecanicaSistema.Middleware
                 ConflictException => StatusCodes.Status409Conflict,
                 BusinessRuleException => StatusCodes.Status422UnprocessableEntity,
                 ApplicationFailureException => StatusCodes.Status500InternalServerError,
+                _ => StatusCodes.Status500InternalServerError
+            };
+
+        private static int GetStatusCode(DomainBaseException exception) =>
+            exception switch
+            {
+                DomainValidationException => StatusCodes.Status400BadRequest,
+                DomainBusinessRuleException => StatusCodes.Status422UnprocessableEntity,
                 _ => StatusCodes.Status500InternalServerError
             };
 
