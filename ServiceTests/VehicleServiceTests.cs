@@ -3,6 +3,7 @@ using NSubstitute;
 using Repository.Interface;
 using Service;
 using Service.Interface;
+using Service.Interface.Exceptions;
 using Service.Interface.Commands.Vehicle;
 
 namespace ServiceTests
@@ -128,7 +129,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotRegisterVehicleIfAlreadyExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.RegisterVehicle(ExistingVehicleCommand));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await VehicleService.RegisterVehicle(ExistingVehicleCommand));
 
             await Repository.ReceivedWithAnyArgs(1).GetVehicle(license_plate: ExistingVehicleCommand.LicensePlate);
             await Repository.ReceivedWithAnyArgs(0).RegisterVehicle(Arg.Any<IVehicle>());
@@ -137,7 +138,7 @@ namespace ServiceTests
         [Test]
         public async Task MustThrowExceptionIfFailToRegisterVehicle()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.RegisterVehicle(VehicleToFailRegister));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await VehicleService.RegisterVehicle(VehicleToFailRegister));
 
             await Repository.ReceivedWithAnyArgs(1).GetVehicle(license_plate: VehicleToFailRegister.LicensePlate);
             await Repository.ReceivedWithAnyArgs(1).RegisterVehicle(Arg.Any<IVehicle>());
@@ -223,7 +224,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotUpdateVehicleIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.UpdateVehicle(Guid.NewGuid(), VehicleToRegister));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await VehicleService.UpdateVehicle(Guid.NewGuid(), VehicleToRegister));
 
             await Repository.Received(1).GetVehicle(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).UpdateVehicle(Arg.Any<IVehicle>());
@@ -232,7 +233,7 @@ namespace ServiceTests
         [Test]
         public async Task MustThrowExceptionIfFailtToUpdateVehicle()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.UpdateVehicle(ExistingVehicleId, ExistingVehicleToFailUpdateOrDelete));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await VehicleService.UpdateVehicle(ExistingVehicleId, ExistingVehicleToFailUpdateOrDelete));
 
             await Repository.Received(1).GetVehicle(ExistingVehicleId);
             await Repository.ReceivedWithAnyArgs(1).UpdateVehicle(Arg.Any<IVehicle>());
@@ -250,7 +251,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotDeleteVehicleIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.DeleteVehicle(Guid.NewGuid()));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await VehicleService.DeleteVehicle(Guid.NewGuid()));
 
             await Repository.Received(1).GetVehicle(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).DeleteVehicle(Arg.Any<Guid>());
@@ -259,10 +260,11 @@ namespace ServiceTests
         [Test]
         public async Task MustThrowExceptionIfFailtToDeleteVehicle()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await VehicleService.DeleteVehicle(ExistingVehicle2Id));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await VehicleService.DeleteVehicle(ExistingVehicle2Id));
 
             await Repository.Received(1).GetVehicle(ExistingVehicle2Id);
             await Repository.ReceivedWithAnyArgs(1).DeleteVehicle(ExistingVehicle2.Id);
         }
     }
 }
+

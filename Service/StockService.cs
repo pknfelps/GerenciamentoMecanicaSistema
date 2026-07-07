@@ -2,6 +2,7 @@
 using Domain.Stock;
 using Repository.Interface;
 using Service.Interface;
+using Service.Interface.Exceptions;
 using Service.Interface.Commands.Stock;
 using Service.Interface.Results.Stock;
 
@@ -14,12 +15,12 @@ namespace Service
         public async Task RegisterNewMaterial(CreateMaterialCommand material)
         {
             if (await Repository.GetMaterial(name: material.Name, brand: material.Brand) != null)
-                throw new InvalidOperationException("Item já cadastrado");
+                throw new ConflictException("Item já cadastrado");
 
             var registry = await Repository.RegisterNewMaterial(CreateDomain(material));
 
             if (registry == 0)
-                throw new InvalidOperationException("Falha ao cadastrar o item");
+                throw new ApplicationFailureException("Falha ao cadastrar o item");
         }
 
         public async Task<IEnumerable<MaterialResult>> GetMaterials(Guid? id = null, string name = "", string brand = "")
@@ -32,7 +33,7 @@ namespace Service
         public async Task<MaterialResult?> GetMaterial(Guid? id = null, string name = "", string brand = "")
         {
             if (id == null && string.IsNullOrEmpty(name) && string.IsNullOrEmpty(brand))
-                throw new InvalidOperationException("Falha ao procurar item. Nenhum argumento fornecido");
+                throw new InvalidRequestException("Falha ao procurar item. Nenhum argumento fornecido");
 
             var material = await Repository.GetMaterial(id, name, brand);
 
@@ -44,7 +45,7 @@ namespace Service
 
         public async Task AddMaterialAmount(Guid id, int value)
         {
-            var materialDb = await Repository.GetMaterial(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
+            var materialDb = await Repository.GetMaterial(id) ?? throw new NotFoundException("Item ainda não cadastrado");
 
             materialDb.AddAmount(value);
 
@@ -53,7 +54,7 @@ namespace Service
 
         public async Task RemoveMaterialAmount(Guid id, int value)
         {
-            var materialDb = await Repository.GetMaterial(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
+            var materialDb = await Repository.GetMaterial(id) ?? throw new NotFoundException("Item ainda não cadastrado");
 
             materialDb.RemoveAmount(value);
 
@@ -62,7 +63,7 @@ namespace Service
 
         public async Task ReserveMaterialAmount(Guid id, int value)
         {
-            var materialDb = await Repository.GetMaterial(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
+            var materialDb = await Repository.GetMaterial(id) ?? throw new NotFoundException("Item ainda não cadastrado");
 
             materialDb.ReserveAmount(value);
 
@@ -71,7 +72,7 @@ namespace Service
 
         public async Task RestoreMaterialAmount(Guid id, int value)
         {
-            var materialDb = await Repository.GetMaterial(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
+            var materialDb = await Repository.GetMaterial(id) ?? throw new NotFoundException("Item ainda não cadastrado");
 
             materialDb.RestoreAmount(value);
 
@@ -80,7 +81,7 @@ namespace Service
 
         public async Task ConsumeReservedAmount(Guid id, int value)
         {
-            var materialDb = await Repository.GetMaterial(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
+            var materialDb = await Repository.GetMaterial(id) ?? throw new NotFoundException("Item ainda não cadastrado");
 
             materialDb.ConsumeReservedAmount(value);
 
@@ -89,24 +90,24 @@ namespace Service
 
         public async Task UpdateMaterialPrice(Guid id, decimal value)
         {
-            var materialDb = await Repository.GetMaterial(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
+            var materialDb = await Repository.GetMaterial(id) ?? throw new NotFoundException("Item ainda não cadastrado");
 
             materialDb.UpdatePrice(value);
 
             var result = await Repository.UpdateMaterialPrice(materialDb);
 
             if (result == 0)
-                throw new InvalidOperationException("Falha ao atualizar o item");
+                throw new ApplicationFailureException("Falha ao atualizar o item");
         }
 
         public async Task DeleteMaterial(Guid id)
         {
-            var material = await Repository.GetMaterial(id: id) ?? throw new InvalidOperationException("Item não encontrado no estoque");
+            var material = await Repository.GetMaterial(id: id) ?? throw new NotFoundException("Item não encontrado no estoque");
 
             var result = await Repository.DeleteMaterial(material.Id);
 
             if (result == 0)
-                throw new InvalidOperationException("Falha ao deletar o item");
+                throw new ApplicationFailureException("Falha ao deletar o item");
         }
 
         private static IMaterial CreateDomain(CreateMaterialCommand material) => new Material(material.Name, material.Brand, material.Price, material.Amount);
@@ -116,7 +117,7 @@ namespace Service
             var result = await Repository.UpdateMaterialAmount(material);
 
             if (result == 0)
-                throw new InvalidOperationException("Falha ao atualizar o item");
+                throw new ApplicationFailureException("Falha ao atualizar o item");
         }
     }
 }

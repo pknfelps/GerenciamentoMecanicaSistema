@@ -1,7 +1,8 @@
-using GerenciamentoMecanicaSistema.Contracts.Requests.Vehicle;
+﻿using GerenciamentoMecanicaSistema.Contracts.Requests.Vehicle;
 using GerenciamentoMecanicaSistema.Contracts.Responses.Vehicle;
 using NSubstitute;
 using Service.Interface;
+using Service.Interface.Exceptions;
 using Service.Interface.Commands.Vehicle;
 using Service.Interface.Results.Vehicle;
 using System.Net;
@@ -35,7 +36,7 @@ namespace ControllerTests
                 if (vehicle.Equals(VehicleToRegister.ToCommand()))
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new ConflictException("Conflito");
             });
 
             VehicleService.GetVehicles(licensePlate: Arg.Any<string>()).Returns(callInfo =>
@@ -55,7 +56,7 @@ namespace ControllerTests
                 if (Vehicles.FirstOrDefault(x => x.Id == id) != default)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
             VehicleService.DeleteVehicle(Arg.Any<Guid>()).Returns(callInfo =>
@@ -65,7 +66,7 @@ namespace ControllerTests
                 if (Vehicles.FirstOrDefault(x => x.Id == id) != default)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
         }
 
@@ -90,11 +91,11 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfFailRegisterVehicle()
+        public async Task MustReturnConflictIfTryRegisterVehicleThatAlreadyExists()
         {
             var response = await TestClient.PostAsJsonAsync("vehicles", VehicleResponse.Create(Vehicles[0]));
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
 
             await VehicleService.Received(1).RegisterVehicle(Arg.Any<CreateVehicleCommand>());
         }
@@ -166,13 +167,13 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfFailUpdateVehicle()
+        public async Task MustReturnNotFoundIfTryUpdateVehicleThatNotExists()
         {
             var vehicle = new CreateVehicleRequest(VehicleToRegister.CustomerDocument, VehicleToRegister.Brand, VehicleToRegister.Model, VehicleToRegister.Year, VehicleToRegister.LicensePlate);
 
             var response = await TestClient.PatchAsJsonAsync($"vehicles/{Guid.NewGuid()}", vehicle);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
 
             await VehicleService.Received(1).UpdateVehicle(Arg.Any<Guid>(), vehicle.ToCommand());
         }
@@ -198,11 +199,11 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfFailDeleteVehicle()
+        public async Task MustReturnNotFoundIfTryDeleteVehicleThatNotExists()
         {
             var response = await TestClient.DeleteAsync($"vehicles/{Guid.NewGuid()}");
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
 
             await VehicleService.Received(1).DeleteVehicle(Arg.Any<Guid>());
         }

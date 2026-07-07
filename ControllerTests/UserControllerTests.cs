@@ -1,7 +1,8 @@
-using GerenciamentoMecanicaSistema.Contracts.Requests.User;
+﻿using GerenciamentoMecanicaSistema.Contracts.Requests.User;
 using GerenciamentoMecanicaSistema.Contracts.Responses.User;
 using NSubstitute;
 using Service.Interface;
+using Service.Interface.Exceptions;
 using Service.Interface.Commands.User;
 using Service.Interface.Results.User;
 using System.Net;
@@ -28,7 +29,7 @@ namespace ControllerTests
                 if (user.Equals(UserToRegister.ToCommand()))
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new ConflictException("Conflito");
             });
 
             UserService.GetUser(Arg.Any<string>(), Arg.Any<string>()).Returns(callInfo =>
@@ -64,13 +65,13 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfTryRegisterAUserThatAlreadyExists()
+        public async Task MustReturnConflictIfTryRegisterAUserThatAlreadyExists()
         {
             var user = new CreateUserRequest(ExistingUser.Name, ExistingUser.Password, ExistingUser.Role);
 
             var response = await TestClient.PostAsJsonAsync("users", user);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
 
             await UserService.Received(1).RegisterUser(user.ToCommand());
         }

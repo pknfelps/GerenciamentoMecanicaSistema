@@ -3,6 +3,7 @@ using NSubstitute;
 using Repository.Interface;
 using Service;
 using Service.Interface;
+using Service.Interface.Exceptions;
 using Service.Interface.Commands.Customer;
 using Service.Interface.Results.Customer;
 
@@ -135,13 +136,13 @@ namespace ServiceTests
         [Test]
         public async Task MustNotCreateCustomerIfExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.RegisterCustomer(ExistingCustomerCommand));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await CustomerService.RegisterCustomer(ExistingCustomerCommand));
         }
 
         [Test]
         public async Task MustThrowExceptionIfFailedToCreateCustomer()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.RegisterCustomer(CustomerToFailCreation));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await CustomerService.RegisterCustomer(CustomerToFailCreation));
 
             await CustomerRepository.ReceivedWithAnyArgs(1).RegisterCustomer(Arg.Any<ICustomer>());
         }
@@ -196,7 +197,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotGetCustomerWithNoParameters()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.GetCustomer());
+            Assert.CatchAsync<ApplicationBaseException>(async () => await CustomerService.GetCustomer());
 
             await CustomerRepository.Received(0).GetCustomer();
         }
@@ -214,13 +215,13 @@ namespace ServiceTests
         {
             var customer = new CreateCustomerCommand("Teste", "358.410.168-64", "(11) 21245-6458", "teste@gmail.com");
 
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.UpdateCustomer(Guid.NewGuid(), customer));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await CustomerService.UpdateCustomer(Guid.NewGuid(), customer));
         }
 
         [Test]
         public async Task MustThrowExceptionIfFailedToUpdate()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.UpdateCustomer(ExistingCustomerId, CustomerToFailUpdateOrDelete));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await CustomerService.UpdateCustomer(ExistingCustomerId, CustomerToFailUpdateOrDelete));
 
             await CustomerRepository.Received(1).UpdateCustomer(Arg.Any<ICustomer>());
         }
@@ -236,15 +237,16 @@ namespace ServiceTests
         [Test]
         public async Task MustNotDeleteCustomerIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.DeleteCustomer(Guid.NewGuid()));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await CustomerService.DeleteCustomer(Guid.NewGuid()));
         }
 
         [Test]
         public async Task MustThrowExceptionIfFailToDelete()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.DeleteCustomer(ExistingCustomer2.Id));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await CustomerService.DeleteCustomer(ExistingCustomer2.Id));
 
             await CustomerRepository.Received(1).DeleteCustomer(ExistingCustomer2.Id);
         }
     }
 }
+

@@ -1,5 +1,6 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Service.Interface;
+using Service.Interface.Exceptions;
 using Service.Interface.Events;
 using Service.Interface.Events.Order;
 
@@ -22,8 +23,8 @@ namespace Service.Events
 
             try
             {
-                var customer = await DependenciesGateway.GetCustomerByDocument(order.CustomerDocument.Id) ?? throw new InvalidOperationException("Falha ao notificar o cliente. Cliente não encontrado");
-                var vehicle = await DependenciesGateway.GetVehicleByLicensePlate(order.VehicleLicensePlate.License) ?? throw new InvalidOperationException("Falha ao notificar o cliente. Veículo não encontrado");
+                var customer = await DependenciesGateway.GetCustomerByDocument(order.CustomerDocument.Id) ?? throw new ApplicationFailureException("Falha ao notificar o cliente. Cliente não encontrado");
+                var vehicle = await DependenciesGateway.GetVehicleByLicensePlate(order.VehicleLicensePlate.License) ?? throw new ApplicationFailureException("Falha ao notificar o cliente. Veículo não encontrado");
 
                 await EmailService.NotifyBudget(customer, vehicle, order);
             }

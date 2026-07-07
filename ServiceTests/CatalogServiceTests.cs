@@ -3,6 +3,7 @@ using NSubstitute;
 using Repository.Interface;
 using Service;
 using Service.Interface;
+using Service.Interface.Exceptions;
 using Service.Interface.Commands.Catalog;
 using Service.Interface.Results.Catalog;
 
@@ -134,7 +135,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotRegisterServiceIfAlreadyExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RegisterService(ExistingServiceToCreate));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RegisterService(ExistingServiceToCreate));
 
             await Repository.Received(1).GetService(description: ExistingServiceToCreate.Description);
             await Repository.Received(0).RegisterService(Arg.Any<IMechanicalService>());
@@ -143,7 +144,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailRegisterService()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RegisterService(ServiceToFailCreation));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RegisterService(ServiceToFailCreation));
 
             await Repository.Received(1).GetService(description: ServiceToFailCreation.Description);
             await Repository.Received(1).RegisterService(Arg.Any<IMechanicalService>());
@@ -234,7 +235,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotGetServiceIfNoParameterWasGiven()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.GetService());
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.GetService());
         }
 
         [Test]
@@ -251,7 +252,7 @@ namespace ServiceTests
         {
             var service = new CreateServiceCommand("Revisão Automotiva", 4, 150, 1);
 
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdateService(Guid.NewGuid(), service));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.UpdateService(Guid.NewGuid(), service));
 
             await Repository.Received(1).GetService(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).UpdateService(Arg.Any<IMechanicalService>());
@@ -262,7 +263,7 @@ namespace ServiceTests
         {
             var service = new CreateServiceCommand("Revisão Automotiva", 4, 150, 1);
 
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdateService(ExistingServiceId, service));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.UpdateService(ExistingServiceId, service));
 
             await Repository.Received(1).GetService(ExistingServiceId);
             await Repository.Received(1).UpdateService(Arg.Any<IMechanicalService>());
@@ -280,7 +281,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotDeleteServiceIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeleteService(Guid.NewGuid()));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.DeleteService(Guid.NewGuid()));
 
             await Repository.Received(1).GetService(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).DeleteService(Arg.Any<Guid>());
@@ -289,10 +290,11 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToDeleteService()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeleteService(ExistingService2Id));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.DeleteService(ExistingService2Id));
 
             await Repository.Received(1).GetService(ExistingService2Id);
             await Repository.Received(1).DeleteService(ExistingService2Id);
         }
     }
 }
+

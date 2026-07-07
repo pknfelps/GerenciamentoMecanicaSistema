@@ -8,6 +8,7 @@ using NSubstitute;
 using Repository.Interface;
 using Service;
 using Service.Interface;
+using Service.Interface.Exceptions;
 using Service.Interface.Commands.Order;
 using Service.Interface.Events;
 using Service.Interface.Events.Order;
@@ -299,7 +300,7 @@ namespace ServiceTests
         {
             var order = new CreateOrderCommand("000.000.000-00", ExistingVehicle.LicensePlate);
 
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CreateServiceOrder(order));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.CreateServiceOrder(order));
 
             await DependenciesGateway.Received(1).GetCustomerByDocument(order.CustomerDocument);
             await DependenciesGateway.ReceivedWithAnyArgs(0).GetVehicleByLicensePlate(default!);
@@ -311,7 +312,7 @@ namespace ServiceTests
         {
             var order = new CreateOrderCommand(ExistingCustomer.Document, "AAA0000");
 
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CreateServiceOrder(order));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.CreateServiceOrder(order));
 
             await DependenciesGateway.Received(1).GetCustomerByDocument(ExistingCustomer.Document);
             await DependenciesGateway.Received(1).GetVehicleByLicensePlate(order.VehicleLicensePlate);
@@ -323,7 +324,7 @@ namespace ServiceTests
         {
             var order = new CreateOrderCommand(ExistingFailCustomer.Document, ExistingVehicle.LicensePlate);
 
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CreateServiceOrder(order));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.CreateServiceOrder(order));
 
             await DependenciesGateway.Received(1).GetCustomerByDocument(ExistingFailCustomer.Document);
             await DependenciesGateway.Received(1).GetVehicleByLicensePlate(ExistingVehicle.LicensePlate);
@@ -468,7 +469,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotGetOrderIfNoParameterWasGiven()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.GetOrder());
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.GetOrder());
         }
 
         [Test]
@@ -639,7 +640,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotStartDiagnosisIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.StartDiagnosis(Guid.NewGuid()));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.StartDiagnosis(Guid.NewGuid()));
 
             await Repository.Received(1).GetOrder(Arg.Any<Guid>());
             await Repository.Received(0).UpdateOrder(Arg.Any<IOrder>());
@@ -648,7 +649,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToStartDiagnosis()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.StartDiagnosis(ExistingOrderInDiagnosis.Id));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.StartDiagnosis(ExistingOrderInDiagnosis.Id));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosis.Id);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
@@ -679,7 +680,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotAddServiceIfOrderNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddServiceToOrder(Guid.NewGuid(), new UpdateOrderItemCommand<int>(ExistingService.Id, 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddServiceToOrder(Guid.NewGuid(), new UpdateOrderItemCommand<int>(ExistingService.Id, 1)));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await DependenciesGateway.ReceivedWithAnyArgs(0).GetServiceById(Arg.Any<Guid>());
@@ -690,7 +691,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotAddServiceIfServiceNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddServiceToOrder(ExistingReceivedOrder.Id, new UpdateOrderItemCommand<int>(Guid.NewGuid(), 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddServiceToOrder(ExistingReceivedOrder.Id, new UpdateOrderItemCommand<int>(Guid.NewGuid(), 1)));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
             await DependenciesGateway.ReceivedWithAnyArgs(1).GetServiceById(Arg.Any<Guid>());
@@ -701,7 +702,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToAddServiceToOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddServiceToOrder(ExistingReceivedOrder.Id, new UpdateOrderItemCommand<int>(ExistingService2.Id, 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddServiceToOrder(ExistingReceivedOrder.Id, new UpdateOrderItemCommand<int>(ExistingService2.Id, 1)));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
             await DependenciesGateway.Received(1).GetServiceById(ExistingService2.Id);
@@ -712,7 +713,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToAddServiceAmountToOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddServiceToOrder(ExistingOrderInDiagnosis.Id, new UpdateOrderItemCommand<int>(ExistingService2.Id, 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddServiceToOrder(ExistingOrderInDiagnosis.Id, new UpdateOrderItemCommand<int>(ExistingService2.Id, 1)));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosis.Id);
             await DependenciesGateway.ReceivedWithAnyArgs(0).GetServiceById(Arg.Any<Guid>());
@@ -743,7 +744,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotRemoveServiceIfOrderNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveServiceOfOrder(Guid.NewGuid(), new UpdateOrderItemCommand<int>(ExistingService.Id, 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RemoveServiceOfOrder(Guid.NewGuid(), new UpdateOrderItemCommand<int>(ExistingService.Id, 1)));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).RemoveServiceFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>());
@@ -753,7 +754,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToRemoveServiceOfOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveServiceOfOrder(ExistingOrderInDiagnosis.Id, new UpdateOrderItemCommand<int>(ExistingService2.Id, 4)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RemoveServiceOfOrder(ExistingOrderInDiagnosis.Id, new UpdateOrderItemCommand<int>(ExistingService2.Id, 4)));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosis.Id);
             await Repository.Received(1).RemoveServiceFromOrder(ExistingOrderInDiagnosis.Id, ExistingService2.Id);
@@ -763,7 +764,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToRemoveServiceAmountToOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveServiceOfOrder(ExistingOrderInDiagnosis.Id, new UpdateOrderItemCommand<int>(ExistingService2.Id, 2)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RemoveServiceOfOrder(ExistingOrderInDiagnosis.Id, new UpdateOrderItemCommand<int>(ExistingService2.Id, 2)));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosis.Id);
             await Repository.ReceivedWithAnyArgs(0).RemoveServiceFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>());
@@ -797,7 +798,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotAddPartToOrderIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddMaterialToOrder(Guid.NewGuid(), new(ExistingPart.Id, 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddMaterialToOrder(Guid.NewGuid(), new(ExistingPart.Id, 1)));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await StockService.ReceivedWithAnyArgs(0).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -809,7 +810,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotAddPartToOrderIfPartNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddMaterialToOrder(ExistingReceivedOrder.Id, new(Guid.NewGuid(), 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddMaterialToOrder(ExistingReceivedOrder.Id, new(Guid.NewGuid(), 1)));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
             await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -821,7 +822,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToAddPartToOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddMaterialToOrder(ExistingReceivedOrder.Id, new(ExistingPart2.Id, 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddMaterialToOrder(ExistingReceivedOrder.Id, new(ExistingPart2.Id, 1)));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
             await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -833,7 +834,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToAddPartAmountToOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddMaterialToOrder(ExistingOrderInDiagnosis.Id, new(ExistingPart2.Id, 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddMaterialToOrder(ExistingOrderInDiagnosis.Id, new(ExistingPart2.Id, 1)));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosis.Id);
             await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -869,7 +870,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotRemovePartFromOrderIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveMaterialFromOrder(Guid.NewGuid(), new(ExistingPart.Id, 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RemoveMaterialFromOrder(Guid.NewGuid(), new(ExistingPart.Id, 1)));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await StockService.ReceivedWithAnyArgs(0).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -881,7 +882,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotRemovePartFromOrderIfPartNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveMaterialFromOrder(ExistingReceivedOrder.Id, new(Guid.NewGuid(), 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RemoveMaterialFromOrder(ExistingReceivedOrder.Id, new(Guid.NewGuid(), 1)));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
             await StockService.ReceivedWithAnyArgs(0).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -893,7 +894,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToRemovePartFromOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveMaterialFromOrder(ExistingOrderInDiagnosisId, new(ExistingPart.Id, 4)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RemoveMaterialFromOrder(ExistingOrderInDiagnosisId, new(ExistingPart.Id, 4)));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
             await StockService.ReceivedWithAnyArgs(0).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -905,7 +906,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToRemovePartAmountFromOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddMaterialToOrder(ExistingOrderInDiagnosis.Id, new(ExistingPart2.Id, 0)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddMaterialToOrder(ExistingOrderInDiagnosis.Id, new(ExistingPart2.Id, 0)));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosis.Id);
             await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -927,7 +928,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotCompleteDiagnosisIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CompleteDiagnosis(Guid.NewGuid()));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.CompleteDiagnosis(Guid.NewGuid()));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await Repository.Received(0).UpdateOrder(Arg.Any<IOrder>());
@@ -937,7 +938,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToCompleteDiagnosis()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CompleteDiagnosis(ExistingReceivedOrder.Id));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.CompleteDiagnosis(ExistingReceivedOrder.Id));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
@@ -977,7 +978,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotApproveOrRefuseBudgetIfOrderNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ApproveBudget(Guid.NewGuid(), new("681.487.685-11", false)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(Guid.NewGuid(), new("681.487.685-11", false)));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -987,7 +988,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotApproveOrRefuseBudgetWithWrongDocument()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ApproveBudget(ExistingOrderInDiagnosisId, new("000.000.000-00", false)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(ExistingOrderInDiagnosisId, new("000.000.000-00", false)));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -997,7 +998,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToApproveOrRefuseBudget()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ApproveBudget(ExistingTestOrder.Id, new(ExistingTestOrder.CustomerDocument.Id, false)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(ExistingTestOrder.Id, new(ExistingTestOrder.CustomerDocument.Id, false)));
 
             await Repository.Received(1).GetOrder(ExistingTestOrder.Id);
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -1016,7 +1017,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotStartExecutionIfOrderNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.StartExecution(Guid.NewGuid()));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.StartExecution(Guid.NewGuid()));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).UpdateOrder(Arg.Any<IOrder>());
@@ -1025,7 +1026,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToStartExecution()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.StartExecution(ExistingReceivedOrder.Id));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.StartExecution(ExistingReceivedOrder.Id));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
@@ -1043,7 +1044,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotCompleteExecutionIfOrderNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CompleteExecution(Guid.NewGuid()));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.CompleteExecution(Guid.NewGuid()));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).UpdateOrder(Arg.Any<IOrder>());
@@ -1052,7 +1053,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToCompleteExecution()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CompleteExecution(ExistingTestOrder.Id));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.CompleteExecution(ExistingTestOrder.Id));
 
             await Repository.Received(1).GetOrder(ExistingTestOrder.Id);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
@@ -1070,7 +1071,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotDeliverVehicleIfOrderNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeliverVehicle(Guid.NewGuid()));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.DeliverVehicle(Guid.NewGuid()));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).UpdateOrder(Arg.Any<IOrder>());
@@ -1079,7 +1080,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToDeliverVehicle()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeliverVehicle(ExistingTestOrder.Id));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.DeliverVehicle(ExistingTestOrder.Id));
 
             await Repository.Received(1).GetOrder(ExistingTestOrder.Id);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
@@ -1097,7 +1098,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotDeleteOrderIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeleteOrder(Guid.NewGuid()));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.DeleteOrder(Guid.NewGuid()));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).DeleteOrder(Arg.Any<Guid>());
@@ -1106,7 +1107,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToDeleteOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeleteOrder(ExistingOrderInDiagnosisId));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.DeleteOrder(ExistingOrderInDiagnosisId));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
             await Repository.Received(1).DeleteOrder(ExistingOrderInDiagnosisId);
@@ -1236,6 +1237,7 @@ namespace ServiceTests
         }
     }
 }
+
 
 
 

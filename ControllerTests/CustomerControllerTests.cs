@@ -1,7 +1,8 @@
-using GerenciamentoMecanicaSistema.Contracts.Requests.Customer;
+﻿using GerenciamentoMecanicaSistema.Contracts.Requests.Customer;
 using GerenciamentoMecanicaSistema.Contracts.Responses.Customer;
 using NSubstitute;
 using Service.Interface;
+using Service.Interface.Exceptions;
 using Service.Interface.Commands.Customer;
 using Service.Interface.Results.Customer;
 using System.Net;
@@ -37,7 +38,7 @@ namespace ControllerTests
                 if (customer.Equals(CustomerToRegister.ToCommand()))
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new ConflictException("Conflito");
             });
 
             CustomerService.GetCustomers(document: Arg.Any<string>()).Returns(callInfo =>
@@ -64,7 +65,7 @@ namespace ControllerTests
                 if (id == ExistingCustomers[0].Id)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
             CustomerService.DeleteCustomer(Arg.Any<Guid>()).Returns(callInfo =>
@@ -74,7 +75,7 @@ namespace ControllerTests
                 if (id == ExistingCustomers[0].Id)
                     return Task.CompletedTask;
 
-                throw new InvalidCastException();
+                throw new NotFoundException("Recurso não encontrado");
             });
         }
 
@@ -99,13 +100,13 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfTryCreateACustomerThatAlreadyExists()
+        public async Task MustReturnConflictIfTryCreateACustomerThatAlreadyExists()
         {
             var existingCustomer = new CreateCustomerRequest(ExistingCustomers[0].Name, ExistingCustomers[0].Document, ExistingCustomers[0].Phone, ExistingCustomers[0].Email);
 
             var response = await TestClient.PostAsJsonAsync("/customers", existingCustomer);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
 
             await CustomerService.Received(1).RegisterCustomer(existingCustomer.ToCommand());
         }
@@ -182,13 +183,13 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfTryUpdateACustomerThatNotExists()
+        public async Task MustReturnNotFoundIfTryUpdateACustomerThatNotExists()
         {
             var customerToFail = new CreateCustomerRequest("Nome", "000.000.000-12", "(11) 00000-0000", "nome@gmai.com");
 
             var response = await TestClient.PatchAsJsonAsync($"/customers/{Guid.NewGuid()}", customerToFail);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
 
             await CustomerService.Received(1).UpdateCustomer(Arg.Any<Guid>(), customerToFail.ToCommand());
         }
@@ -214,11 +215,11 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfTryDeleteACustomerThatNotExists()
+        public async Task MustReturnNotFoundIfTryDeleteACustomerThatNotExists()
         {
             var response = await TestClient.DeleteAsync($"/customers/{Guid.NewGuid()}");
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
 
             await CustomerService.Received(1).DeleteCustomer(Arg.Any<Guid>());
         }

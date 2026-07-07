@@ -1,8 +1,9 @@
-using Domain.Interface.User;
+﻿using Domain.Interface.User;
 using NSubstitute;
 using Repository.Interface;
 using Service;
 using Service.Interface;
+using Service.Interface.Exceptions;
 using Service.Interface.Commands.User;
 using Service.Interface.Results.User;
 
@@ -73,7 +74,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotCreateUserIfExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await UserService.RegisterUser(ExistingUserCommand));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await UserService.RegisterUser(ExistingUserCommand));
 
             await UserRepository.ReceivedWithAnyArgs(0).RegisterUser(Arg.Any<IUser>());
         }
@@ -81,7 +82,7 @@ namespace ServiceTests
         [Test]
         public async Task MustThrowExceptionIfFailRegister()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await UserService.RegisterUser(UserToFail));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await UserService.RegisterUser(UserToFail));
 
             await UserRepository.ReceivedWithAnyArgs(1).RegisterUser(Arg.Any<IUser>());
         }
@@ -113,3 +114,4 @@ namespace ServiceTests
         }
     }
 }
+

@@ -1,7 +1,8 @@
-using Domain.Interface.User;
+﻿using Domain.Interface.User;
 using Domain.User;
 using Repository.Interface;
 using Service.Interface;
+using Service.Interface.Exceptions;
 using Service.Interface.Commands.User;
 using Service.Interface.Results.User;
 
@@ -14,12 +15,12 @@ namespace Service
         public async Task RegisterUser(CreateUserCommand user)
         {
             if (await Repository.GetUser(user.Name, user.Role.ToString()) != null)
-                throw new InvalidOperationException("Usuario já cadastrado no sistema");
+                throw new ConflictException("Usuario jÃ¡ cadastrado no sistema");
 
             var registry = await Repository.RegisterUser(CreateDomain(user));
 
             if (registry == 0)
-                throw new InvalidOperationException("Falha ao cadastrar o usuário");
+                throw new ApplicationFailureException("Falha ao cadastrar o usuÃ¡rio");
         }
 
         public async Task<UserResult?> GetUser(string name = "", string role = "")

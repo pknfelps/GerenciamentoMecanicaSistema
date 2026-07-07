@@ -2,6 +2,7 @@
 using GerenciamentoMecanicaSistema.Contracts.Responses.Catalog;
 using NSubstitute;
 using Service.Interface;
+using Service.Interface.Exceptions;
 using Service.Interface.Commands.Catalog;
 using Service.Interface.Results.Catalog;
 using System.Net;
@@ -29,7 +30,7 @@ namespace ControllerTests
                 if (service.Equals(ServiceToRegister.ToCommand()))
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new ApplicationFailureException("Falha interna");
             });
 
             CatalogService.GetServices(id: Arg.Any<Guid?>()).Returns(callInfo =>
@@ -49,7 +50,7 @@ namespace ControllerTests
                 if (id == ExistingServiceId)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
             CatalogService.DeleteService(Arg.Any<Guid>()).Returns(callInfo =>
@@ -59,7 +60,7 @@ namespace ControllerTests
                 if (id == ExistingServiceId)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
         }
 
@@ -145,13 +146,13 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfTryUpdateServiceThatNotExists()
+        public async Task MustReturnNotFoundIfTryUpdateServiceThatNotExists()
         {
             var service = new CreateServiceRequest(ExistingService.Description, ExistingService.Hours, ExistingService.PricePerHour, 1);
 
             var response = await TestClient.PatchAsJsonAsync($"catalog/{Guid.NewGuid()}", service);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
 
             await CatalogService.Received(1).UpdateService(Arg.Any<Guid>(), service.ToCommand());
         }
@@ -177,11 +178,11 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfTryDeleteServiceThatNotExists()
+        public async Task MustReturnNotFoundIfTryDeleteServiceThatNotExists()
         {
             var response = await TestClient.DeleteAsync($"catalog/{Guid.NewGuid()}");
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
 
             await CatalogService.ReceivedWithAnyArgs(1).DeleteService(Arg.Any<Guid>());
         }
@@ -209,3 +210,7 @@ namespace ControllerTests
         }
     }
 }
+
+
+
+
