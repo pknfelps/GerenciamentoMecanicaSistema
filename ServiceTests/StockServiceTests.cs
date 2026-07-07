@@ -23,6 +23,7 @@ namespace ServiceTests
             {
                 var part = Substitute.For<IMaterial>();
                 part.Id.Returns(ExistingPartId);
+                part.Name.Returns("Vela de ignição");
                 part.Brand.Returns("Bosch");
                 part.Price.Returns(6.00m);
                 part.Amount.Returns(20);
