@@ -41,15 +41,15 @@ namespace ServiceTests
         private static IMechanicalService ExistingService2 { get; } = CreateSubstituteService(Guid.NewGuid(), "Troca de Pneu", 2, 150, 1);
         private static IMaterial ExistingPart { get; } = CreateSubstitutePart(Guid.NewGuid(), "Pneu", "Michelin", 600, 10, 4);
         private static IMaterial ExistingPart2 { get; } = CreateSubstitutePart(Guid.NewGuid(), "Óleo de Motor", "Lubrax", 35, 20, 0);
-        private static IOrder ExistingReceivedOrder { get; } = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0, WorkOrderStatus.Received);
-        private static IOrder ExistingTestOrder { get; set; } = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0, WorkOrderStatus.Received);
+        private static IOrder ExistingReceivedOrder { get; } = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0m, WorkOrderStatus.Received);
+        private static IOrder ExistingTestOrder { get; set; } = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0m, WorkOrderStatus.Received);
         private static readonly Guid ExistingOrderInDiagnosisId = Guid.NewGuid();
         private static IOrder ExistingOrderInDiagnosis { get; set; }
 
         [SetUp]
         public async Task SetUp()
         {
-            ExistingOrderInDiagnosis = CreateSubstituteOrder(ExistingOrderInDiagnosisId, [CreateSubstituteService(ExistingService.Id, ExistingService.Description, ExistingService.Hours, ExistingService.PricePerHour, 2), CreateSubstituteService(ExistingService2.Id, ExistingService2.Description, ExistingService2.Hours, ExistingService2.PricePerHour, 4)], [CreateSubstitutePart(ExistingPart.Id, ExistingPart.Name, ExistingPart.Brand, ExistingPart.Price, 4, 0), CreateSubstitutePart(ExistingPart2.Id, ExistingPart2.Name, ExistingPart2.Brand, ExistingPart2.Price, 1, 0)], 0.0, WorkOrderStatus.InDiagnosis);
+            ExistingOrderInDiagnosis = CreateSubstituteOrder(ExistingOrderInDiagnosisId, [CreateSubstituteService(ExistingService.Id, ExistingService.Description, ExistingService.Hours, ExistingService.PricePerHour, 2), CreateSubstituteService(ExistingService2.Id, ExistingService2.Description, ExistingService2.Hours, ExistingService2.PricePerHour, 4)], [CreateSubstitutePart(ExistingPart.Id, ExistingPart.Name, ExistingPart.Brand, ExistingPart.Price, 4, 0), CreateSubstitutePart(ExistingPart2.Id, ExistingPart2.Name, ExistingPart2.Brand, ExistingPart2.Price, 1, 0)], 0.0m, WorkOrderStatus.InDiagnosis);
 
             Repository = Substitute.For<IOrdersRepository>();
 
@@ -131,7 +131,7 @@ namespace ServiceTests
 
                 if (order.Id == ExistingOrderInDiagnosisId)
                 {
-                    if (order.Status == WorkOrderStatus.WaitingForApproval && order.Budget != 0.0)
+                    if (order.Status == WorkOrderStatus.WaitingForApproval && order.Budget != 0.0m)
                         return 1;
 
                     if (order.Status == WorkOrderStatus.InExecution || order.Status == WorkOrderStatus.Delivered)
@@ -1132,14 +1132,14 @@ namespace ServiceTests
             return vehicle;
         }
 
-        private static IMechanicalService CreateSubstituteService(Guid id, string description, float hours, double pricePerHour, int amount)
+        private static IMechanicalService CreateSubstituteService(Guid id, string description, float hours, decimal pricePerHour, int amount)
         {
             var service = Substitute.For<IMechanicalService>();
             service.Id.Returns(id);
             service.Description.Returns(description);
             service.Hours.Returns(hours);
             service.PricePerHour.Returns(pricePerHour);
-            service.Price.Returns(hours * pricePerHour);
+            service.Price.Returns((decimal)hours * pricePerHour);
             service.Amount.Returns(amount);
 
             service.When(x => x.AddServiceAmount(Arg.Any<int>())).Do(callInfo =>
@@ -1159,7 +1159,7 @@ namespace ServiceTests
             return service;
         }
 
-        private static IMaterial CreateSubstitutePart(Guid id, string name, string brand, double price, int amount, int reservedAmount)
+        private static IMaterial CreateSubstitutePart(Guid id, string name, string brand, decimal price, int amount, int reservedAmount)
         {
             var part = Substitute.For<IMaterial>();
             part.Id.Returns(id);
@@ -1186,7 +1186,7 @@ namespace ServiceTests
             return part;
         }
 
-        private static IOrder CreateSubstituteOrder(Guid id, List<IMechanicalService> services, List<IMaterial> parts, double budget, WorkOrderStatus status)
+        private static IOrder CreateSubstituteOrder(Guid id, List<IMechanicalService> services, List<IMaterial> parts, decimal budget, WorkOrderStatus status)
         {
             var order = Substitute.For<IOrder>();
             order.Id.Returns(id);
@@ -1209,7 +1209,7 @@ namespace ServiceTests
                 order.Status.Returns(WorkOrderStatus.WaitingForApproval);
 
                 if (order.Id != ExistingTestOrder.Id)
-                    order.Budget.Returns(1.0);
+                    order.Budget.Returns(1.0m);
             });
 
             order.When(x => x.ApproveService(Arg.Any<bool>())).Do(callInfo =>
@@ -1224,7 +1224,7 @@ namespace ServiceTests
 
             order.When(x => x.StartService()).Do(_ => order.Status.Returns(WorkOrderStatus.InExecution));
 
-            order.When(x => x.CompleteService()).Do(_ =>
+            order.When(x => x.CompleteService(Arg.Any<DateTime>())).Do(_ =>
             {
                 order.Status.Returns(WorkOrderStatus.Finished);
                 order.Duration.Returns(TimeSpan.FromHours(6));

@@ -1,10 +1,10 @@
-﻿namespace Domain.Interface.Stock
+namespace Domain.Interface.Stock
 {
     public interface IMaterial : IEntity
     {
         string Name { get; }
         string Brand { get; }
-        double Price { get; }
+        decimal Price { get; }
         int Amount { get; }
         int ReservedAmount { get; }
         void AddAmount(int amount);
@@ -12,6 +12,6 @@
         void ReserveAmount(int amount);
         void RestoreAmount(int amount);
         void ConsumeReservedAmount(int amount);
-        void UpdatePrice(double price);
+        void UpdatePrice(decimal price);
     }
 }

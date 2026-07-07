@@ -1,4 +1,4 @@
-using GerenciamentoMecanicaSistema.Contracts.Requests.Catalog;
+﻿using GerenciamentoMecanicaSistema.Contracts.Requests.Catalog;
 using GerenciamentoMecanicaSistema.Contracts.Responses.Catalog;
 using NSubstitute;
 using Service.Interface;
@@ -14,7 +14,7 @@ namespace ControllerTests
         private ICatalogService CatalogService { get; set; }
 
         private static readonly CreateServiceRequest ServiceToRegister = new("Troca de Óleo", 2, 100, 1);
-        private static Guid ExistingServiceId = Guid.NewGuid();
+        private static readonly Guid ExistingServiceId = Guid.NewGuid();
         private static readonly ServiceResult ExistingService = new(ExistingServiceId, "Revisão", 6, 150, 1);
         private static readonly CreateServiceRequest ServiceToUpdate = new("Revisão Veicular", 4, 220, 1);
 

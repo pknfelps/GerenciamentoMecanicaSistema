@@ -13,7 +13,7 @@ namespace Repository.PersistenceModels
         [JsonPropertyName("brand")]
         public string Brand { get; init; } = "";
         [JsonPropertyName("price")]
-        public double Price { get; init; } = 0.0;
+        public decimal Price { get; init; } = 0.0m;
         [JsonPropertyName("amount")]
         public int Amount { get; init; } = 0;
         [JsonPropertyName("reserved_amount")]

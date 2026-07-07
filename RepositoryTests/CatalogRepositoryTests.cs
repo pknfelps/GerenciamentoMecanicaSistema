@@ -63,7 +63,7 @@ namespace RepositoryTests
                 id UUID PRIMARY KEY,
                 description VARCHAR(255) NOT NULL,
                 hours FLOAT NOT NULL,
-                price_per_hour DOUBLE PRECISION NOT NULL);
+                price_per_hour NUMERIC NOT NULL);
                 """);
 
             Repository = new CatalogRepository(Connection);

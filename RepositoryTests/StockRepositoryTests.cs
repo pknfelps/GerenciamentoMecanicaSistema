@@ -34,7 +34,7 @@ namespace RepositoryTests
                 part.Id.Returns(ExistingPartId);
                 part.Name.Returns("Vela de ignição");
                 part.Brand.Returns("Bosch");
-                part.Price.Returns(6.00);
+                part.Price.Returns(6.00m);
                 part.Amount.Returns(20);
                 part.ReservedAmount.Returns(5);
                 return part;
@@ -49,7 +49,7 @@ namespace RepositoryTests
                 part.Id.Returns(ExistingPartId);
                 part.Name.Returns("Vela de ignição");
                 part.Brand.Returns("Bosch");
-                part.Price.Returns(10.00);
+                part.Price.Returns(10.00m);
                 part.Amount.Returns(20);
                 part.ReservedAmount.Returns(5);
                 return part;
@@ -64,7 +64,7 @@ namespace RepositoryTests
                 part.Id.Returns(ExistingPartId);
                 part.Name.Returns("Vela de ignição");
                 part.Brand.Returns("Bosch");
-                part.Price.Returns(6.00);
+                part.Price.Returns(6.00m);
                 part.Amount.Returns(15);
                 part.ReservedAmount.Returns(10);
                 return part;
@@ -78,7 +78,7 @@ namespace RepositoryTests
                 id UUID PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
                 brand VARCHAR(255) NOT NULL,
-                price DOUBLE PRECISION NOT NULL,
+                price NUMERIC NOT NULL,
                 amount INT NOT NULL,
                 reserved_amount INT NOT NULL DEFAULT 0);
                 """);

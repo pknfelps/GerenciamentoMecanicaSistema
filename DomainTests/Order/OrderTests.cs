@@ -15,8 +15,8 @@ namespace DomainTests.Order
         [SetUp]
         public void SetUp()
         {
-            ReceivedOrder = new Domain.WorkOrder.Order(Document, LicensePlate);
-            OrderInExecution = new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate, [], [], 10.0, WorkOrderStatus.InExecution, DateTime.Now, DateTime.MinValue);
+            ReceivedOrder = new Domain.WorkOrder.Order(Document, LicensePlate, DateTime.Now);
+            OrderInExecution = new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate, [], [], 10.0m, WorkOrderStatus.InExecution, DateTime.Now, DateTime.MinValue);
         }
 
         [Test]
@@ -31,7 +31,7 @@ namespace DomainTests.Order
                 Assert.That(ReceivedOrder.VehicleLicensePlate, Is.Not.Null);
                 Assert.That(ReceivedOrder.Services, Is.Empty);
                 Assert.That(ReceivedOrder.Materials, Is.Empty);
-                Assert.That(ReceivedOrder.Budget, Is.EqualTo(0.0));
+                Assert.That(ReceivedOrder.Budget, Is.EqualTo(0.0m));
                 Assert.That(ReceivedOrder.Status, Is.EqualTo(WorkOrderStatus.Received));
                 Assert.That(ReceivedOrder.DateCreated, Is.Not.EqualTo(DateTime.MinValue));
                 Assert.That(ReceivedOrder.DateFinished, Is.EqualTo(DateTime.MinValue));
@@ -42,25 +42,25 @@ namespace DomainTests.Order
         [Test]
         public void MustNotCreateWorkOrderIfIdIsEmpty()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.WorkOrder.Order(Guid.Empty, Document, LicensePlate, [], [], 0.0, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue));
+            Assert.Throws<ArgumentException>(() => new Domain.WorkOrder.Order(Guid.Empty, Document, LicensePlate, [], [], 0.0m, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue));
         }
 
         [Test]
         public void MustNotCreateWorkOrderIfClientIsNull()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.WorkOrder.Order("", LicensePlate));
+            Assert.Throws<ArgumentException>(() => new Domain.WorkOrder.Order("", LicensePlate, DateTime.Now));
         }
 
         [Test]
         public void MustNotCreateWorkOrderIfVehicleIsNull()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.WorkOrder.Order(Document, ""));
+            Assert.Throws<ArgumentException>(() => new Domain.WorkOrder.Order(Document, "", DateTime.Now));
         }
 
         [Test]
         public void MustNotCreateWorkOrderIfBudgetIsLowerThan0()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate, [], [], -1.0, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue));
+            Assert.Throws<ArgumentException>(() => new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate, [], [], -1.0m, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue));
         }
 
         [Test]
@@ -106,7 +106,7 @@ namespace DomainTests.Order
             ReceivedOrder.AddService(service);
 
             Assert.That(ReceivedOrder.Services, Has.Count.EqualTo(1));
-            Assert.That(ReceivedOrder.Services[0].Amount, Is.EqualTo(2));
+            Assert.That(ReceivedOrder.Services.ElementAt(0).Amount, Is.EqualTo(2));
         }
 
         [Test]
@@ -159,7 +159,7 @@ namespace DomainTests.Order
             ReceivedOrder.RemoveService(serviceToRemove);
 
             Assert.That(ReceivedOrder.Services, Has.Count.EqualTo(1));
-            Assert.That(ReceivedOrder.Services[0].Amount, Is.EqualTo(4));
+            Assert.That(ReceivedOrder.Services.ElementAt(0).Amount, Is.EqualTo(4));
         }
 
         [Test]
@@ -199,7 +199,7 @@ namespace DomainTests.Order
             ReceivedOrder.AddMaterial(part);
 
             Assert.That(ReceivedOrder.Materials, Has.Count.EqualTo(1));
-            Assert.That(ReceivedOrder.Materials[0].Amount, Is.EqualTo(2));
+            Assert.That(ReceivedOrder.Materials.ElementAt(0).Amount, Is.EqualTo(2));
         }
 
         [Test]
@@ -252,7 +252,7 @@ namespace DomainTests.Order
             ReceivedOrder.RemoveMaterial(partToRemove);
 
             Assert.That(ReceivedOrder.Materials, Has.Count.EqualTo(1));
-            Assert.That(ReceivedOrder.Materials[0].Amount, Is.EqualTo(4));
+            Assert.That(ReceivedOrder.Materials.ElementAt(0).Amount, Is.EqualTo(4));
         }
 
         [Test]
@@ -374,7 +374,7 @@ namespace DomainTests.Order
 
             ReceivedOrder.StartService();
 
-            ReceivedOrder.CompleteService();
+            ReceivedOrder.CompleteService(DateTime.Now);
 
             Assert.That(ReceivedOrder.Status, Is.EqualTo(WorkOrderStatus.Finished));
             Assert.That(ReceivedOrder.Duration, Is.Not.EqualTo(TimeSpan.Zero));
@@ -383,7 +383,7 @@ namespace DomainTests.Order
         [Test]
         public void MustNotCompleteServiceIfNotInAValidState()
         {
-            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.CompleteService());
+            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.CompleteService(DateTime.Now));
         }
 
         [Test]
@@ -399,7 +399,7 @@ namespace DomainTests.Order
 
             ReceivedOrder.StartService();
 
-            ReceivedOrder.CompleteService();
+            ReceivedOrder.CompleteService(DateTime.Now);
 
             ReceivedOrder.DeliverVehicle();
 

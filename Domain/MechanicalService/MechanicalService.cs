@@ -7,15 +7,15 @@ namespace Domain.MechanicalService
         public Guid Id { get; private set; }
         public string Description { get; private set; }
         public float Hours { get; private set; }
-        public double PricePerHour { get; private set; }
+        public decimal PricePerHour { get; private set; }
         public int Amount { get; private set; }
-        public double Price => Hours * PricePerHour;
+        public decimal Price => (decimal)Hours * PricePerHour;
 
-        public MechanicalService(string description, float hours, double pricePerHour) : this(Guid.NewGuid(), description, hours, pricePerHour, 1) { }
+        public MechanicalService(string description, float hours, decimal pricePerHour) : this(Guid.NewGuid(), description, hours, pricePerHour, 1) { }
 
-        public MechanicalService(string description, float hours, double pricePerHour, int amount) : this(Guid.NewGuid(), description, hours, pricePerHour, amount) { }
+        public MechanicalService(string description, float hours, decimal pricePerHour, int amount) : this(Guid.NewGuid(), description, hours, pricePerHour, amount) { }
 
-        public MechanicalService(Guid id, string description, float hours, double pricePerHour, int amount)
+        public MechanicalService(Guid id, string description, float hours, decimal pricePerHour, int amount)
         {
             if (id == Guid.Empty)
                 throw new ArgumentException("Id do serviço não pode ser vazio");
@@ -53,7 +53,7 @@ namespace Domain.MechanicalService
             Hours = newHours;
         }
 
-        public void UpdatePricePerHour(double newPricePerHour)
+        public void UpdatePricePerHour(decimal newPricePerHour)
         {
             if (newPricePerHour <= 0)
                 throw new ArgumentException("Preço por hora do serviço não pode ser menor ou igual a 0");

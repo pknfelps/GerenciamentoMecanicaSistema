@@ -70,7 +70,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> UpdateMaterialPrice([FromRoute, GuidValidation] Guid id, ValueUpdateRequest<double> value)
+        public async Task<IActionResult> UpdateMaterialPrice([FromRoute, GuidValidation] Guid id, ValueUpdateRequest<decimal> value)
         {
             await StockService.UpdateMaterialPrice(id, value.Value);
 

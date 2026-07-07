@@ -1,4 +1,4 @@
-using Domain.Interface.Stock;
+﻿using Domain.Interface.Stock;
 using Domain.Stock;
 using Repository.Interface;
 using Service.Interface;
@@ -87,7 +87,7 @@ namespace Service
             await UpdateItemAmount(materialDb);
         }
 
-        public async Task UpdateMaterialPrice(Guid id, double value)
+        public async Task UpdateMaterialPrice(Guid id, decimal value)
         {
             var materialDb = await Repository.GetMaterial(id) ?? throw new InvalidOperationException("Item ainda não cadastrado");
 

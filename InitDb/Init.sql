@@ -1,4 +1,4 @@
-CREATE TABLE users (
+﻿CREATE TABLE users (
     id UUID PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     password VARCHAR(100) NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE orders (
     id UUID PRIMARY KEY,
     customer_document VARCHAR(100) NOT NULL REFERENCES customers(document),
     vehicle_license_plate VARCHAR(100) NOT NULL REFERENCES vehicles(license_plate),
-    budget DOUBLE PRECISION NOT NULL,
+    budget NUMERIC NOT NULL,
     status VARCHAR(50) NOT NULL,
     date_created TIMESTAMP NOT NULL DEFAULT NOW(),
     date_finished TIMESTAMP NOT NULL,
@@ -46,30 +46,30 @@ CREATE TABLE stock (
     id UUID PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     brand VARCHAR(255) NOT NULL,
-    price DOUBLE PRECISION NOT NULL,
+    price NUMERIC NOT NULL,
     amount INT NOT NULL,
     reserved_amount INT NOT NULL DEFAULT 0
 );
 
 INSERT INTO stock(id, name, brand, price, amount, reserved_amount)
-VALUES ('b03ae302-a3dc-40ba-a7ce-2430a7f0ee5d', 'Óleo de motor', 'Lubrax', 10.99, 10, 0);
+VALUES ('b03ae302-a3dc-40ba-a7ce-2430a7f0ee5d', 'Ã“leo de motor', 'Lubrax', 10.99, 10, 0);
 
 CREATE TABLE catalog (
     id UUID PRIMARY KEY,
     description VARCHAR(255) NOT NULL,
     hours FLOAT NOT NULL,
-    price_per_hour DOUBLE PRECISION NOT NULL
+    price_per_hour NUMERIC NOT NULL
 );
 
 INSERT INTO catalog(id, description, hours, price_per_hour)
-VALUES ('8dcc551f-5c3a-4746-8f51-a18be6107a2f', 'Troca de Óleo', 1, 20);
+VALUES ('8dcc551f-5c3a-4746-8f51-a18be6107a2f', 'Troca de Ã“leo', 1, 20);
 
 CREATE TABLE order_materials (
     id UUID NOT NULL REFERENCES stock(id),
     order_id UUID NOT NULL REFERENCES orders(id),
     name VARCHAR(255) NOT NULL,
     brand VARCHAR(255) NOT NULL,
-    price DOUBLE PRECISION NOT NULL,
+    price NUMERIC NOT NULL,
     amount INT NOT NULL
 );
 
@@ -78,6 +78,6 @@ CREATE TABLE order_services (
     order_id UUID NOT NULL REFERENCES orders(id),
     description VARCHAR(255) NOT NULL,
     hours FLOAT NOT NULL,
-    price_per_hour DOUBLE PRECISION NOT NULL,
+    price_per_hour NUMERIC NOT NULL,
     amount INT NOT NULL
 );

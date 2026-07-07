@@ -30,7 +30,7 @@ namespace Service
 
             var vehicle = await DependenciesGateway.GetVehicleByLicensePlate(vehicleLicensePlate) ?? throw new InvalidOperationException("Documento não cadastrado. Realize o cadastro antes de criar a ordem de serviço");
 
-            var order = new Order(customer.Document.Id, vehicle.LicensePlate.License);
+            var order = new Order(customer.Document.Id, vehicle.LicensePlate.License, DateTime.Now);
 
             var registry = await Repository.CreateOrder(order);
 
@@ -250,7 +250,7 @@ namespace Service
         {
             var order = await Repository.GetOrder(orderId) ?? throw new InvalidOperationException($"Ordem com id \"{orderId}\" não encontrada");
 
-            order.CompleteService();
+            order.CompleteService(DateTime.Now);
 
             await TransactionManager.ExecuteInTransaction(async () =>
             {

@@ -1,4 +1,4 @@
-using Domain.Interface.Stock;
+﻿using Domain.Interface.Stock;
 using NSubstitute;
 using Repository.Interface;
 using Service;
@@ -13,7 +13,7 @@ namespace ServiceTests
         private IStockService Service { get; set; }
         private IStockRepository Repository { get; set; }
 
-        private static CreateMaterialCommand PartToRegister { get; } = new("Óleo de motor", "Lubrax", 41.90, 5);
+        private static CreateMaterialCommand PartToRegister { get; } = new("Óleo de motor", "Lubrax", 41.90m, 5);
         private static CreateMaterialCommand PartToFailRegister { get; } = new("Teste", "Testando", 15, 1);
 
         private static readonly Guid ExistingPartId = Guid.NewGuid();
@@ -23,9 +23,8 @@ namespace ServiceTests
             {
                 var part = Substitute.For<IMaterial>();
                 part.Id.Returns(ExistingPartId);
-                part.Name.Returns("Vela de ignição");
                 part.Brand.Returns("Bosch");
-                part.Price.Returns(6.00);
+                part.Price.Returns(6.00m);
                 part.Amount.Returns(20);
                 part.ReservedAmount.Returns(5);
                 return part;
@@ -41,22 +40,22 @@ namespace ServiceTests
                 part.Id.Returns(ExistingPart2Id);
                 part.Name.Returns("Flúido para radiador");
                 part.Brand.Returns("Gitanes");
-                part.Price.Returns(30.00);
+                part.Price.Returns(30.00m);
                 part.Amount.Returns(5);
                 part.ReservedAmount.Returns(0);
                 return part;
             }
         }
 
-        private static MaterialResult ExistingPartResult { get; } = new(ExistingPartId, "Vela de ignição", "Bosch", 6.00, 20, 5);
-        private static MaterialResult ExistingPart2Result { get; } = new(ExistingPart2Id, "Flúido para radiador", "Gitanes", 30.00, 5, 0);
-        private static CreateMaterialCommand ExistingPartCommand { get; } = new("Vela de ignição", "Bosch", 6.00, 20);
+        private static MaterialResult ExistingPartResult { get; } = new(ExistingPartId, "Vela de ignição", "Bosch", 6.00m, 20, 5);
+        private static MaterialResult ExistingPart2Result { get; } = new(ExistingPart2Id, "Flúido para radiador", "Gitanes", 30.00m, 5, 0);
+        private static CreateMaterialCommand ExistingPartCommand { get; } = new("Vela de ignição", "Bosch", 6.00m, 20);
         private static (Guid Id, int Value) PartToFailIntOperations { get; } = new(Guid.NewGuid(), 5);
-        private static (Guid Id, double Value) PartToFailDoubleOperations { get; } = new(Guid.NewGuid(), 10.00);
+        private static (Guid Id, decimal Value) PartToFailDecimalOperations { get; } = new(Guid.NewGuid(), 10.00m);
         private static (Guid Id, int Value) PartToAddAmount { get; } = new(ExistingPartId, 5);
         private static (Guid Id, int Value) PartToFailAddAmount { get; } = new(ExistingPart2Id, 5);
-        private static (Guid Id, double Value) PartToUpdatePrice { get; } = new(ExistingPartId, 10.00);
-        private static (Guid Id, double Value) PartToFailUpdatePrice { get; } = new(ExistingPart2Id, 35.00);
+        private static (Guid Id, decimal Value) PartToUpdatePrice { get; } = new(ExistingPartId, 10.00m);
+        private static (Guid Id, decimal Value) PartToFailUpdatePrice { get; } = new(ExistingPart2Id, 35.00m);
 
         [SetUp]
         public void SetUp()
@@ -322,9 +321,9 @@ namespace ServiceTests
         [Test]
         public async Task MustNotUpdatePartPriceIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdateMaterialPrice(PartToFailDoubleOperations.Id, PartToFailDoubleOperations.Value));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdateMaterialPrice(PartToFailDecimalOperations.Id, PartToFailDecimalOperations.Value));
 
-            await Repository.Received(1).GetMaterial(PartToFailDoubleOperations.Id);
+            await Repository.Received(1).GetMaterial(PartToFailDecimalOperations.Id);
             await Repository.Received(0).UpdateMaterialPrice(Arg.Any<IMaterial>());
         }
 

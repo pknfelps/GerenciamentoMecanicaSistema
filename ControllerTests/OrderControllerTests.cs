@@ -14,7 +14,7 @@ namespace ControllerTests
         private IOrdersService OrderService { get; set; }
 
         private static readonly CreateOrderRequest OrderToCreate = new("123.456.789-12", "TST1234");
-        private static readonly DetailedWorkOrderResult ExistingOrder = new(Guid.NewGuid(), "123.456.789-12", "TST1234", 0.0, "Received", DateTime.Now, DateTime.MinValue, [], [], TimeSpan.Zero);
+        private static readonly DetailedWorkOrderResult ExistingOrder = new(Guid.NewGuid(), "123.456.789-12", "TST1234", 0.0m, "Received", DateTime.Now, DateTime.MinValue, [], [], TimeSpan.Zero);
         private static readonly UpdateOrderItemRequest<int> OrderUpdate = new(Guid.NewGuid(), 1);
 
         protected override void MockService()

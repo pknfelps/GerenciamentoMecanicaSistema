@@ -13,17 +13,20 @@ namespace Domain.WorkOrder
         public Guid Id { get; private set; }
         public IDocument CustomerDocument { get; private set; }
         public ILicensePlate VehicleLicensePlate { get; private set; }
-        public List<IMechanicalService> Services { get; private set; }
-        public List<IMaterial> Materials { get; private set; }
-        public double Budget { get; private set; } = 0.0;
+        public IReadOnlyCollection<IMechanicalService> Services => services.AsReadOnly();
+        public IReadOnlyCollection<IMaterial> Materials => materials.AsReadOnly();
+        public decimal Budget { get; private set; } = 0.0m;
         public WorkOrderStatus Status { get; private set; }
         public DateTime DateCreated { get; private set; }
         public DateTime DateFinished { get; private set; }
         public TimeSpan Duration => DateFinished != DateTime.MinValue ? DateFinished.Subtract(DateCreated) : TimeSpan.Zero;
 
-        public Order(string customerDocument, string vehicleLicensePlate) : this(Guid.NewGuid(), customerDocument, vehicleLicensePlate, [], [], 0.0, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue) { }
+        private readonly List<IMechanicalService> services;
+        private readonly List<IMaterial> materials;
 
-        public Order(Guid id, string customerDocument, string vehicleLicensePlate, List<IMechanicalService> services, List<IMaterial> materialsAndSupplies, double budget, WorkOrderStatus status, DateTime dateCreated, DateTime dateFinished)
+        public Order(string customerDocument, string vehicleLicensePlate, DateTime dateCreated) : this(Guid.NewGuid(), customerDocument, vehicleLicensePlate, [], [], 0.0m, WorkOrderStatus.Received, dateCreated, DateTime.MinValue) { }
+
+        public Order(Guid id, string customerDocument, string vehicleLicensePlate, List<IMechanicalService> services, List<IMaterial> materials, decimal budget, WorkOrderStatus status, DateTime dateCreated, DateTime dateFinished)
         {
             if (id == Guid.Empty)
                 throw new ArgumentException("Id não pode ser vazio");
@@ -31,14 +34,14 @@ namespace Domain.WorkOrder
             ArgumentException.ThrowIfNullOrEmpty(customerDocument);
             ArgumentException.ThrowIfNullOrEmpty(vehicleLicensePlate);
 
-            if (budget < 0.0)
+            if (budget < 0.0m)
                 throw new ArgumentException("Orçamento não pode ser negativo");
 
             Id = id;
             CustomerDocument = DocumentWrapper.CreateDocument(customerDocument);
             VehicleLicensePlate = LicensePlateWrapper.CreateLicensePlate(vehicleLicensePlate);
-            Services = services;
-            Materials = materialsAndSupplies;
+            this.services = services;
+            this.materials = materials;
             Budget = budget;
             Status = status;
             DateCreated = dateCreated;
@@ -61,11 +64,11 @@ namespace Domain.WorkOrder
             if (Status is WorkOrderStatus.InExecution or WorkOrderStatus.Finished or WorkOrderStatus.Delivered)
                 throw new InvalidOperationException("Não é possível adicionar serviços após o inicio do serviço");
 
-            var service = Services.FirstOrDefault(s => s.Id == serviceToAdd.Id);
+            var service = services.FirstOrDefault(s => s.Id == serviceToAdd.Id);
 
             if (service == null)
             {
-                Services.Add(serviceToAdd);
+                services.Add(serviceToAdd);
 
                 return serviceToAdd;
             }
@@ -85,12 +88,12 @@ namespace Domain.WorkOrder
             if (Status is WorkOrderStatus.InExecution or WorkOrderStatus.Finished or WorkOrderStatus.Delivered)
                 throw new InvalidOperationException("Não é possível adicionar serviços após o inicio do serviço");
 
-            var service = Services.First(x => x.Id == serviceToRemove.Id);
+            var service = services.First(x => x.Id == serviceToRemove.Id);
 
             service.RemoveServiceAmount(serviceToRemove.Amount);
 
             if (service.Amount == 0)
-                Services.Remove(serviceToRemove);
+                services.Remove(serviceToRemove);
 
             return service;
         }
@@ -103,11 +106,11 @@ namespace Domain.WorkOrder
             if (Status is WorkOrderStatus.InExecution or WorkOrderStatus.Finished or WorkOrderStatus.Delivered)
                 throw new InvalidOperationException("Não é possível adicionar peças ou insumos após o inicio do serviço");
 
-            var material = Materials.FirstOrDefault(x => x.Id == materialToAdd.Id);
+            var material = materials.FirstOrDefault(x => x.Id == materialToAdd.Id);
 
             if (material == null)
             {
-                Materials.Add(materialToAdd);
+                materials.Add(materialToAdd);
 
                 return materialToAdd;
             }
@@ -127,12 +130,12 @@ namespace Domain.WorkOrder
             if (Status is WorkOrderStatus.InExecution or WorkOrderStatus.Finished or WorkOrderStatus.Delivered)
                 throw new InvalidOperationException("Não é possível remover peças ou insumos após o inicio do serviço");
 
-            var material = Materials.First(x => x.Id == materialToRemove.Id);
+            var material = materials.First(x => x.Id == materialToRemove.Id);
 
             material.RemoveAmount(materialToRemove.Amount);
 
             if (material.Amount == 0)
-                Materials.Remove(material);
+                materials.Remove(material);
 
             return material;
         }
@@ -142,7 +145,7 @@ namespace Domain.WorkOrder
             if (Status is not WorkOrderStatus.InDiagnosis)
                 throw new InvalidOperationException("Só é possível finalizar o diagnóstico enquanto a ordem Em Diagnósotico");
 
-            if (Services.Count <= 0)
+            if (services.Count <= 0)
                 throw new InvalidOperationException("Não é possível finalizar o diagnóstico sem serviços");
 
             CalculateBudget();
@@ -165,12 +168,12 @@ namespace Domain.WorkOrder
             Status = WorkOrderStatus.InExecution;
         }
 
-        public void CompleteService()
+        public void CompleteService(DateTime dateFinished)
         {
             if (Status is not WorkOrderStatus.InExecution)
                 throw new InvalidOperationException("Não é possível finalizar o serviço enquanto não estiver em execução");
 
-            DateFinished = DateTime.Now;
+            DateFinished = dateFinished;
             Status = WorkOrderStatus.Finished;
         }
 
@@ -184,12 +187,12 @@ namespace Domain.WorkOrder
 
         private void CalculateBudget()
         {
-            double value = 0.0;
+            decimal value = 0.0m;
 
-            foreach (var service in Services)
+            foreach (var service in services)
                 value += service.Price * service.Amount;
 
-            foreach (var material in Materials)
+            foreach (var material in materials)
                 value += material.Price * material.Amount;
 
             Budget = value;

@@ -1,4 +1,4 @@
-using GerenciamentoMecanicaSistema.Contracts.Requests.Stock;
+﻿using GerenciamentoMecanicaSistema.Contracts.Requests.Stock;
 using GerenciamentoMecanicaSistema.Contracts.Responses.Stock;
 using NSubstitute;
 using Service.Interface;
@@ -13,23 +13,23 @@ namespace ControllerTests
     {
         private IStockService StockService { get; set; }
 
-        private static readonly CreateMaterialRequest MaterialToRegister = new("Óleo de motor", "Lubrax", 41.90, 5);
-        private static readonly CreateMaterialRequest InvalidMaterialToRegister = new("", "", 0.00, 0);
+        private static readonly CreateMaterialRequest MaterialToRegister = new("Óleo de motor", "Lubrax", 41.90m, 5);
+        private static readonly CreateMaterialRequest InvalidMaterialToRegister = new("", "", 0.00m, 0);
         private static readonly CreateMaterialRequest MaterialToFailRegister = new("Teste", "Testando", 15, 1);
         private static readonly ValueUpdateRequest<int> MaterialToFailIntOperations = new(5);
-        private static readonly ValueUpdateRequest<double> MaterialToFailDoubleOperations = new(10.00);
+        private static readonly ValueUpdateRequest<decimal> MaterialToFailDecimalOperations = new(10.00m);
         private static readonly ValueUpdateRequest<int> InvalidIntMaterialUpdate = new(0);
-        private static readonly ValueUpdateRequest<double> InvalidDoubleMaterialUpdate = new(0);
+        private static readonly ValueUpdateRequest<decimal> InvalidDecimalMaterialUpdate = new(0);
 
         private static readonly List<MaterialResult> StockMaterials =
         [
-            new (Guid.NewGuid(), "Vela de ignição", "Bosch", 6.00, 20, 5),
-            new (Guid.NewGuid(), "Flúido para radiador", "Gitanes", 30.00, 5, 0)
+            new (Guid.NewGuid(), "Vela de ignição", "Bosch", 6.00m, 20, 5),
+            new (Guid.NewGuid(), "Flúido para radiador", "Gitanes", 30.00m, 5, 0)
         ];
 
         private static readonly ValueUpdateRequest<int> IntMaterialUpdate = new(5);
 
-        private static readonly ValueUpdateRequest<double> DoubleMaterialToUpdate = new(8.45);
+        private static readonly ValueUpdateRequest<decimal> DecimalMaterialToUpdate = new(8.45m);
 
         protected override void MockService()
         {
@@ -96,7 +96,7 @@ namespace ControllerTests
                 throw new InvalidOperationException();
             });
 
-            StockService.UpdateMaterialPrice(Arg.Any<Guid>(), Arg.Any<double>()).Returns(callInfo =>
+            StockService.UpdateMaterialPrice(Arg.Any<Guid>(), Arg.Any<decimal>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
@@ -248,31 +248,31 @@ namespace ControllerTests
         [Test]
         public async Task MustUpdateMaterialPrice()
         {
-            var response = await TestClient.PatchAsJsonAsync($"stock/price/{StockMaterials[0].Id}", DoubleMaterialToUpdate);
+            var response = await TestClient.PatchAsJsonAsync($"stock/price/{StockMaterials[0].Id}", DecimalMaterialToUpdate);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
 
-            await StockService.Received(1).UpdateMaterialPrice(Arg.Any<Guid>(), Arg.Any<double>());
+            await StockService.Received(1).UpdateMaterialPrice(Arg.Any<Guid>(), Arg.Any<decimal>());
         }
 
         [Test]
         public async Task MustReturnInternalServerErrorIfTryUpdatePriceWithNoExistingMaterial()
         {
-            var response = await TestClient.PatchAsJsonAsync($"stock/price/{Guid.NewGuid()}", MaterialToFailDoubleOperations);
+            var response = await TestClient.PatchAsJsonAsync($"stock/price/{Guid.NewGuid()}", MaterialToFailDecimalOperations);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await StockService.Received(1).UpdateMaterialPrice(Arg.Any<Guid>(), Arg.Any<double>());
+            await StockService.Received(1).UpdateMaterialPrice(Arg.Any<Guid>(), Arg.Any<decimal>());
         }
 
         [Test]
         public async Task MustReturnBadRequestIfTryUpdateMaterialPriceWithInvalidModel()
         {
-            var response = await TestClient.PatchAsJsonAsync($"stock/price/0000", InvalidDoubleMaterialUpdate.Value);
+            var response = await TestClient.PatchAsJsonAsync($"stock/price/0000", InvalidDecimalMaterialUpdate.Value);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await StockService.Received(0).UpdateMaterialPrice(Arg.Any<Guid>(), Arg.Any<double>());
+            await StockService.Received(0).UpdateMaterialPrice(Arg.Any<Guid>(), Arg.Any<decimal>());
         }
 
         [Test]

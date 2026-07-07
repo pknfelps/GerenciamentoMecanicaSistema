@@ -1,5 +1,4 @@
 using DependencyInjection;
-using Infrastructure.Email;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -32,8 +31,6 @@ namespace GerenciamentoMecanicaSistema
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
                 };
             });
-
-            builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
             RepositoryDependencyInjection.Register(builder.Services, builder.Configuration);
             ServiceDependencyInjection.Register(builder.Services);

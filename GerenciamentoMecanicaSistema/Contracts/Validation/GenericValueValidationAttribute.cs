@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace GerenciamentoMecanicaSistema.Contracts.Validation
 {
@@ -18,8 +18,8 @@ namespace GerenciamentoMecanicaSistema.Contracts.Validation
             if (value is float floatValue)
                 return floatValue > 0.1;
 
-            if (value is double doubleValue)
-                return doubleValue > 0.1;
+            if (value is decimal decimalValue)
+                return decimalValue > 0.1m;
 
             return false;
         }

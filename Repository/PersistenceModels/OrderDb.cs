@@ -20,7 +20,7 @@ namespace Repository.PersistenceModels
         [JsonPropertyName("parts")]
         public List<MaterialDb> Materials { get; private set; }
         [JsonPropertyName("budget")]
-        public double Budget { get; private set; }
+        public decimal Budget { get; private set; }
         [JsonPropertyName("status")]
         public string Status { get; private set; }
         [JsonPropertyName("date_created")]
@@ -31,7 +31,7 @@ namespace Repository.PersistenceModels
         public TimeSpan Duration { get; private set; }
 
         // Used by GetOrders or GetCustomerOrders that returns the detailed order
-        public OrderDb(Guid id, string customerDocument, string vehicleLicensePlate, string services, string materials, double budget, string status, DateTime dateCreated, DateTime dateFinished)
+        public OrderDb(Guid id, string customerDocument, string vehicleLicensePlate, string services, string materials, decimal budget, string status, DateTime dateCreated, DateTime dateFinished)
         {
             Id = id;
             CustomerDocument = customerDocument;
@@ -44,7 +44,7 @@ namespace Repository.PersistenceModels
             DateFinished = dateFinished;
         }
 
-        public OrderDb(Guid id, string customerDocument, string vehicleLicensePlate, List<MechanicalServiceDb> services, List<MaterialDb> materials, double budget, string status, DateTime dateCreated, DateTime dateFinished, TimeSpan duration)
+        public OrderDb(Guid id, string customerDocument, string vehicleLicensePlate, List<MechanicalServiceDb> services, List<MaterialDb> materials, decimal budget, string status, DateTime dateCreated, DateTime dateFinished, TimeSpan duration)
         {
             Id = id;
             CustomerDocument = customerDocument;

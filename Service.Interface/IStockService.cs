@@ -13,7 +13,7 @@ namespace Service.Interface
         Task ReserveMaterialAmount(Guid id, int value);
         Task RestoreMaterialAmount(Guid id, int value);
         Task ConsumeReservedAmount(Guid id, int value);
-        Task UpdateMaterialPrice(Guid id, double value);
+        Task UpdateMaterialPrice(Guid id, decimal value);
         Task DeleteMaterial(Guid id);
     }
 }

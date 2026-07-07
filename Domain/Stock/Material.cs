@@ -1,4 +1,4 @@
-﻿using Domain.Interface.Stock;
+using Domain.Interface.Stock;
 
 namespace Domain.Stock
 {
@@ -7,13 +7,13 @@ namespace Domain.Stock
         public Guid Id { get; private set; }
         public string Name { get; private set; }
         public string Brand { get; private set; }
-        public double Price { get; private set; }
+        public decimal Price { get; private set; }
         public int Amount { get; private set; }
         public int ReservedAmount { get; private set; }
 
-        public Material(string name, string brand, double price, int amount) : this(Guid.NewGuid(), name, brand, price, amount) { }
+        public Material(string name, string brand, decimal price, int amount) : this(Guid.NewGuid(), name, brand, price, amount) { }
 
-        public Material(Guid id, string name, string brand, double price, int amount, int reservedAmount = 0)
+        public Material(Guid id, string name, string brand, decimal price, int amount, int reservedAmount = 0)
         {
             ArgumentException.ThrowIfNullOrEmpty(name);
             ArgumentException.ThrowIfNullOrEmpty(brand);
@@ -71,7 +71,7 @@ namespace Domain.Stock
             ReservedAmount -= amount;
         }
 
-        public void UpdatePrice(double price)
+        public void UpdatePrice(decimal price)
         {
             if (price <= 0)
                 throw new InvalidOperationException("Preço não pode ser menor ou igual a 0");

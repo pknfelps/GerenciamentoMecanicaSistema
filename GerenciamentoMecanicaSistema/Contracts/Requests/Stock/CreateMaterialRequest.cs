@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace GerenciamentoMecanicaSistema.Contracts.Requests.Stock
 {
-    public class CreateMaterialRequest(string name, string brand, double price, int amount)
+    public class CreateMaterialRequest(string name, string brand, decimal price, int amount)
     {
         [Description("Nome do item")]
         [Required, RegularNonEmptyStringExpression]
@@ -17,7 +17,7 @@ namespace GerenciamentoMecanicaSistema.Contracts.Requests.Stock
 
         [Description("Preço do item")]
         [Required, GenericValueValidation]
-        public double Price { get; set; } = price;
+        public decimal Price { get; set; } = price;
 
         [Description("Quantidade do item")]
         [Required, GenericValueValidation]

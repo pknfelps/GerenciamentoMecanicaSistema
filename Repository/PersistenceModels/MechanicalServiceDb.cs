@@ -13,7 +13,7 @@ namespace Repository.PersistenceModels
         [JsonPropertyName("hours")]
         public float Hours { get; init; } = 0f;
         [JsonPropertyName("price_per_hour")]
-        public double PricePerHour { get; init; } = 0.0;
+        public decimal PricePerHour { get; init; } = 0.0m;
         [JsonPropertyName("amount")]
         public int Amount { get; init; } = 0;
 
