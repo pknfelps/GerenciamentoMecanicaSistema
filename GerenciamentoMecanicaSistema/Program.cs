@@ -1,4 +1,5 @@
 using DependencyInjection;
+using GerenciamentoMecanicaSistema.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -36,6 +37,8 @@ namespace GerenciamentoMecanicaSistema
             ServiceDependencyInjection.Register(builder.Services);
 
             var app = builder.Build();
+
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
 
             if (app.Environment.IsDevelopment())
             {
