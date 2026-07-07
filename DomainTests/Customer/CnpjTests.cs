@@ -1,4 +1,5 @@
-﻿using Domain.Customer;
+﻿using Domain.Interface.Exceptions;
+using Domain.Customer;
 
 namespace DomainTests.Customer
 {
@@ -7,32 +8,32 @@ namespace DomainTests.Customer
         [Test]
         public void MustNotCreateCnpjIfNullOrWhiteSpace()
         {
-            Assert.Catch<ArgumentNullException>(() => new Cnpj(""));
-            Assert.Catch<ArgumentNullException>(() => new Cnpj(" "));
+            Assert.Catch<DomainValidationException>(() => new Cnpj(""));
+            Assert.Catch<DomainValidationException>(() => new Cnpj(" "));
         }
 
         [Test]
         public void MustNotCreateCnpjIfContainsWhiteSpace()
         {
-            Assert.Catch<ArgumentNullException>(() => new Cnpj("12 345 678 0001 01"));
+            Assert.Catch<DomainValidationException>(() => new Cnpj("12 345 678 0001 01"));
         }
 
         [Test]
         public void MustNotCreateCnpjIfContainsAnyLetter()
         {
-            Assert.Catch<ArgumentException>(() => new Cnpj("12345678O00101"));
+            Assert.Catch<DomainValidationException>(() => new Cnpj("12345678O00101"));
         }
 
         [Test]
         public void MustNotCreateCnpjIfLessThan14Digits()
         {
-            Assert.Catch<ArgumentException>(() => new Cnpj("1234567800010"));
+            Assert.Catch<DomainValidationException>(() => new Cnpj("1234567800010"));
         }
 
         [Test]
         public void MustNotCreateCnpjIfItIsInvalid()
         {
-            Assert.Catch<ArgumentException>(() => new Cnpj("12123456000100"));
+            Assert.Catch<DomainValidationException>(() => new Cnpj("12123456000100"));
         }
 
         [Test]
@@ -55,3 +56,4 @@ namespace DomainTests.Customer
         }
     }
 }
+

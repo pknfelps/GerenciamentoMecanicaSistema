@@ -1,4 +1,5 @@
-﻿using Domain.Interface.Order;
+﻿using Domain.Interface.Exceptions;
+using Domain.Interface.Order;
 using Domain.Interface.Service;
 using Domain.Interface.Stock;
 using NSubstitute;
@@ -42,25 +43,25 @@ namespace DomainTests.Order
         [Test]
         public void MustNotCreateWorkOrderIfIdIsEmpty()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.WorkOrder.Order(Guid.Empty, Document, LicensePlate, [], [], 0.0m, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue));
+            Assert.Catch<DomainValidationException>(() => new Domain.WorkOrder.Order(Guid.Empty, Document, LicensePlate, [], [], 0.0m, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue));
         }
 
         [Test]
         public void MustNotCreateWorkOrderIfClientIsNull()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.WorkOrder.Order("", LicensePlate, DateTime.Now));
+            Assert.Catch<DomainValidationException>(() => new Domain.WorkOrder.Order("", LicensePlate, DateTime.Now));
         }
 
         [Test]
         public void MustNotCreateWorkOrderIfVehicleIsNull()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.WorkOrder.Order(Document, "", DateTime.Now));
+            Assert.Catch<DomainValidationException>(() => new Domain.WorkOrder.Order(Document, "", DateTime.Now));
         }
 
         [Test]
         public void MustNotCreateWorkOrderIfBudgetIsLowerThan0()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate, [], [], -1.0m, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue));
+            Assert.Catch<DomainValidationException>(() => new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate, [], [], -1.0m, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue));
         }
 
         [Test]
@@ -78,7 +79,7 @@ namespace DomainTests.Order
 
             Assert.That(ReceivedOrder.Status, Is.EqualTo(WorkOrderStatus.InDiagnosis));
 
-            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.StartDiagnosis());
+            Assert.Catch<DomainBusinessRuleException>(() => ReceivedOrder.StartDiagnosis());
         }
 
         [Test]
@@ -112,13 +113,13 @@ namespace DomainTests.Order
         [Test]
         public void MustNotAddServiceIfStatusIsReceived()
         {
-            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.AddService(Substitute.For<IMechanicalService>()));
+            Assert.Catch<DomainBusinessRuleException>(() => ReceivedOrder.AddService(Substitute.For<IMechanicalService>()));
         }
 
         [Test]
         public void MustNotAddServiceIfServiceAlreadyStarted()
         {
-            Assert.Throws<InvalidOperationException>(() => OrderInExecution.AddService(Substitute.For<IMechanicalService>()));
+            Assert.Catch<DomainBusinessRuleException>(() => OrderInExecution.AddService(Substitute.For<IMechanicalService>()));
         }
 
         [Test]
@@ -165,13 +166,13 @@ namespace DomainTests.Order
         [Test]
         public void MustNotRemoveServiceIfStatusIsReceived()
         {
-            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.RemoveService(Substitute.For<IMechanicalService>()));
+            Assert.Catch<DomainBusinessRuleException>(() => ReceivedOrder.RemoveService(Substitute.For<IMechanicalService>()));
         }
 
         [Test]
         public void MustNotRemoveServiceIfStatusIsServiceAlreadyStarted()
         {
-            Assert.Throws<InvalidOperationException>(() => OrderInExecution.RemoveService(Substitute.For<IMechanicalService>()));
+            Assert.Catch<DomainBusinessRuleException>(() => OrderInExecution.RemoveService(Substitute.For<IMechanicalService>()));
         }
 
         [Test]
@@ -205,13 +206,13 @@ namespace DomainTests.Order
         [Test]
         public void MustNotAddPartOrSupplieIfStatusIsReceived()
         {
-            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.AddMaterial(Substitute.For<IMaterial>()));
+            Assert.Catch<DomainBusinessRuleException>(() => ReceivedOrder.AddMaterial(Substitute.For<IMaterial>()));
         }
 
         [Test]
         public void MustNotAddPartOrSupplieIfServiceAlreadyStarted()
         {
-            Assert.Throws<InvalidOperationException>(() => OrderInExecution.AddMaterial(Substitute.For<IMaterial>()));
+            Assert.Catch<DomainBusinessRuleException>(() => OrderInExecution.AddMaterial(Substitute.For<IMaterial>()));
         }
 
         [Test]
@@ -258,13 +259,13 @@ namespace DomainTests.Order
         [Test]
         public void MustNotRemovePartOrSupplieIfStatusIsReceived()
         {
-            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.RemoveMaterial(Substitute.For<IMaterial>()));
+            Assert.Catch<DomainBusinessRuleException>(() => ReceivedOrder.RemoveMaterial(Substitute.For<IMaterial>()));
         }
 
         [Test]
         public void MustNotRemovePartOrSupplieIfServiceAlreadyStarted()
         {
-            Assert.Throws<InvalidOperationException>(() => OrderInExecution.RemoveMaterial(Substitute.For<IMaterial>()));
+            Assert.Catch<DomainBusinessRuleException>(() => OrderInExecution.RemoveMaterial(Substitute.For<IMaterial>()));
         }
 
         [Test]
@@ -294,7 +295,7 @@ namespace DomainTests.Order
         [Test]
         public void MustNotFinalizeDiagnosisIfNotInAValidState()
         {
-            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.FinalizeDiagnosis());
+            Assert.Catch<DomainBusinessRuleException>(() => ReceivedOrder.FinalizeDiagnosis());
         }
 
         [Test]
@@ -302,7 +303,7 @@ namespace DomainTests.Order
         {
             ReceivedOrder.StartDiagnosis();
 
-            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.FinalizeDiagnosis());
+            Assert.Catch<DomainBusinessRuleException>(() => ReceivedOrder.FinalizeDiagnosis());
         }
 
         [Test]
@@ -336,7 +337,7 @@ namespace DomainTests.Order
         [Test]
         public void MustNotApproveServiceIfNotInAValidState()
         {
-            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.ApproveService(true));
+            Assert.Catch<DomainBusinessRuleException>(() => ReceivedOrder.ApproveService(true));
         }
 
         [Test]
@@ -358,7 +359,7 @@ namespace DomainTests.Order
         [Test]
         public void MustNotStartServiceIfNotInAValidState()
         {
-            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.StartService());
+            Assert.Catch<DomainBusinessRuleException>(() => ReceivedOrder.StartService());
         }
 
         [Test]
@@ -383,7 +384,7 @@ namespace DomainTests.Order
         [Test]
         public void MustNotCompleteServiceIfNotInAValidState()
         {
-            Assert.Throws<InvalidOperationException>(() => ReceivedOrder.CompleteService(DateTime.Now));
+            Assert.Catch<DomainBusinessRuleException>(() => ReceivedOrder.CompleteService(DateTime.Now));
         }
 
         [Test]
@@ -409,7 +410,8 @@ namespace DomainTests.Order
         [Test]
         public void MustNotFinalizeServiceByDeliveringCarIfNotInAValidState()
         {
-            Assert.Throws<InvalidOperationException>(ReceivedOrder.DeliverVehicle);
+            Assert.Catch<DomainBusinessRuleException>(ReceivedOrder.DeliverVehicle);
         }
     }
 }
+

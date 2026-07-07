@@ -1,4 +1,5 @@
-﻿namespace Domain.Vehicle
+﻿using Domain.Interface.Exceptions;
+namespace Domain.Vehicle
 {
     public static class LicensePlateWrapper
     {
@@ -13,7 +14,7 @@
             if (letters == OldBrazilLicensePlate.LettersCount && numbers == OldBrazilLicensePlate.NumbersCount)
                 return new OldBrazilLicensePlate(license);
 
-            throw new ArgumentException("Placa inválida");
+            throw new DomainValidationException("Placa inválida");
         }
     }
 }

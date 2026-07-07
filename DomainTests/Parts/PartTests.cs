@@ -1,4 +1,5 @@
-﻿using Domain.Stock;
+﻿using Domain.Interface.Exceptions;
+using Domain.Stock;
 
 namespace DomainTests.Parts
 {
@@ -24,32 +25,32 @@ namespace DomainTests.Parts
         [Test]
         public void MustNotCreatePartIfNameIsEmpty()
         {
-            Assert.Throws<ArgumentException>(() => new Material("", "Lubrax", 41.90m, 25));
+            Assert.Catch<DomainValidationException>(() => new Material("", "Lubrax", 41.90m, 25));
         }
 
         [Test]
         public void MustNotCreatePartIfBrandIsEmpty()
         {
-            Assert.Throws<ArgumentException>(() => new Material("Óleo de motor", "", 41.90m, 25));
+            Assert.Catch<DomainValidationException>(() => new Material("Óleo de motor", "", 41.90m, 25));
         }
 
         [Test]
         public void MustNotCreatePartIfPriceIsEqualOrLowerThan0()
         {
-            Assert.Throws<ArgumentException>(() => new Material("Óleo de motor", "Lubrax", 0, 25));
-            Assert.Throws<ArgumentException>(() => new Material("Óleo de motor", "Lubrax", -1, 25));
+            Assert.Catch<DomainValidationException>(() => new Material("Óleo de motor", "Lubrax", 0, 25));
+            Assert.Catch<DomainValidationException>(() => new Material("Óleo de motor", "Lubrax", -1, 25));
         }
 
         [Test]
         public void MustNotCreatePartIfAmountIsLowerThan0()
         {
-            Assert.Throws<ArgumentException>(() => new Material("Óleo de motor", "Lubrax", 41.90m, -1));
+            Assert.Catch<DomainValidationException>(() => new Material("Óleo de motor", "Lubrax", 41.90m, -1));
         }
 
         [Test]
         public void MustNotCreatePartIfReservedAmountIsLowerThan0()
         {
-            Assert.Throws<ArgumentException>(() => new Material(Guid.NewGuid(), "Óleo de motor", "Lubrax", 41.90m, 5, -1));
+            Assert.Catch<DomainValidationException>(() => new Material(Guid.NewGuid(), "Óleo de motor", "Lubrax", 41.90m, 5, -1));
         }
 
         [Test]
@@ -77,7 +78,7 @@ namespace DomainTests.Parts
         {
             var item = new Material(Guid.NewGuid(), "Óleo de motor", "Lubrax", 41.90m, 25, 5);
 
-            Assert.Throws<InvalidOperationException>(() => item.RemoveAmount(30));
+            Assert.Catch<DomainBusinessRuleException>(() => item.RemoveAmount(30));
 
             Assert.That(item.Amount, Is.EqualTo(25));
         }
@@ -101,7 +102,7 @@ namespace DomainTests.Parts
         {
             var item = new Material(Guid.NewGuid(), "Óleo de motor", "Lubrax", 41.90m, 25, 5);
 
-            Assert.Throws<InvalidOperationException>(() => item.ReserveAmount(30));
+            Assert.Catch<DomainBusinessRuleException>(() => item.ReserveAmount(30));
 
             Assert.Multiple(() =>
             {
@@ -129,7 +130,7 @@ namespace DomainTests.Parts
         {
             var item = new Material(Guid.NewGuid(), "Óleo de motor", "Lubrax", 41.90m, 25, 5);
 
-            Assert.Throws<InvalidOperationException>(() => item.RestoreAmount(10));
+            Assert.Catch<DomainBusinessRuleException>(() => item.RestoreAmount(10));
 
             Assert.Multiple(() =>
             {
@@ -157,7 +158,7 @@ namespace DomainTests.Parts
         {
             var item = new Material(Guid.NewGuid(), "Óleo de motor", "Lubrax", 41.90m, 25, 5);
 
-            Assert.Throws<InvalidOperationException>(() => item.ConsumeReservedAmount(10));
+            Assert.Catch<DomainBusinessRuleException>(() => item.ConsumeReservedAmount(10));
         }
 
         [Test]
@@ -175,8 +176,9 @@ namespace DomainTests.Parts
         {
             var item = new Material("Óleo de motor", "Lubrax", 41.90m, 25);
 
-            Assert.Throws<InvalidOperationException>(() => item.UpdatePrice(0));
-            Assert.Throws<InvalidOperationException>(() => item.UpdatePrice(-1));
+            Assert.Catch<DomainBusinessRuleException>(() => item.UpdatePrice(0));
+            Assert.Catch<DomainBusinessRuleException>(() => item.UpdatePrice(-1));
         }
     }
 }
+

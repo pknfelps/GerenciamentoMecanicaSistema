@@ -1,4 +1,5 @@
-﻿namespace DomainTests.Customer
+﻿using Domain.Interface.Exceptions;
+namespace DomainTests.Customer
 {
     public class CustomerTests
     {
@@ -75,14 +76,15 @@
         [Test]
         public void MustNotCreateCustomerWithEmptyId()
         {
-            Assert.Throws<ArgumentNullException>(() => new Domain.Customer.Customer(Guid.Empty, "Fulano", "662.119.730-63", "11 91234-5678", "fulano@gmail.com"));
+            Assert.Catch<DomainValidationException>(() => new Domain.Customer.Customer(Guid.Empty, "Fulano", "662.119.730-63", "11 91234-5678", "fulano@gmail.com"));
         }
 
         [Test]
         public void MustNotCreateCustomerIfNomeIsEmpty()
         {
-            Assert.Throws<ArgumentNullException>(() => new Domain.Customer.Customer("", "123.456.789-12", "11 91234-5678", "fulano@gmail.com"));
-            Assert.Throws<ArgumentNullException>(() => new Domain.Customer.Customer(" ", "123.456.789-12", "11 91234-5678", "fulano@gmail.com"));
+            Assert.Catch<DomainValidationException>(() => new Domain.Customer.Customer("", "123.456.789-12", "11 91234-5678", "fulano@gmail.com"));
+            Assert.Catch<DomainValidationException>(() => new Domain.Customer.Customer(" ", "123.456.789-12", "11 91234-5678", "fulano@gmail.com"));
         }
     }
 }
+

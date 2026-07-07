@@ -1,4 +1,5 @@
-﻿using Domain.Customer;
+﻿using Domain.Interface.Exceptions;
+using Domain.Customer;
 
 namespace DomainTests.Customer
 {
@@ -7,7 +8,7 @@ namespace DomainTests.Customer
         [Test]
         public void MustNoCreateDocumentIfNotValid()
         {
-            Assert.Catch<ArgumentException>(() => DocumentWrapper.CreateDocument("1234"));
+            Assert.Catch<DomainValidationException>(() => DocumentWrapper.CreateDocument("1234"));
         }
 
         [Test]
@@ -29,3 +30,4 @@ namespace DomainTests.Customer
         }
     }
 }
+

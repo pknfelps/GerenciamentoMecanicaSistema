@@ -1,4 +1,5 @@
-﻿using Domain.MechanicalService;
+﻿using Domain.Interface.Exceptions;
+using Domain.MechanicalService;
 
 namespace DomainTests.Service
 {
@@ -67,34 +68,34 @@ namespace DomainTests.Service
         [Test]
         public void MustNotCreateServiceIfIdIsEmpty()
         {
-            Assert.Throws<ArgumentException>(() => new MechanicalService(Guid.Empty, "Troca de Óleo", 1, 50, 5));
+            Assert.Catch<DomainValidationException>(() => new MechanicalService(Guid.Empty, "Troca de Óleo", 1, 50, 5));
         }
 
         [Test]
         public void MustNotCreateServiceIfDescriptionIsEmpty()
         {
-            Assert.Throws<ArgumentException>(() => new MechanicalService(Guid.NewGuid(), "", 1, 50, 5));
+            Assert.Catch<DomainValidationException>(() => new MechanicalService(Guid.NewGuid(), "", 1, 50, 5));
         }
 
         [Test]
         public void MustNotCreateServiceIfHoursIsLowerOrEqualTo0()
         {
-            Assert.Throws<ArgumentException>(() => new MechanicalService(Guid.NewGuid(), "Troca de Óleo", 0, 50, 5));
-            Assert.Throws<ArgumentException>(() => new MechanicalService(Guid.NewGuid(), "Troca de Óleo", -1, 50, 5));
+            Assert.Catch<DomainValidationException>(() => new MechanicalService(Guid.NewGuid(), "Troca de Óleo", 0, 50, 5));
+            Assert.Catch<DomainValidationException>(() => new MechanicalService(Guid.NewGuid(), "Troca de Óleo", -1, 50, 5));
         }
 
         [Test]
         public void MustNotCreateServiceIfPricePerHourIsLowerOrEqualTo0()
         {
-            Assert.Throws<ArgumentException>(() => new MechanicalService(Guid.NewGuid(), "Troca de Óleo", 1, 0, 5));
-            Assert.Throws<ArgumentException>(() => new MechanicalService(Guid.NewGuid(), "Troca de Óleo", 1, -1, 5));
+            Assert.Catch<DomainValidationException>(() => new MechanicalService(Guid.NewGuid(), "Troca de Óleo", 1, 0, 5));
+            Assert.Catch<DomainValidationException>(() => new MechanicalService(Guid.NewGuid(), "Troca de Óleo", 1, -1, 5));
         }
 
         [Test]
         public void MustNotCreateServiceIfAmountIsLowerOrEqualTo0()
         {
-            Assert.Throws<ArgumentException>(() => new MechanicalService(Guid.NewGuid(), "Troca de Óleo", 1, 50, 0));
-            Assert.Throws<ArgumentException>(() => new MechanicalService(Guid.NewGuid(), "Troca de Óleo", 1, 50, -1));
+            Assert.Catch<DomainValidationException>(() => new MechanicalService(Guid.NewGuid(), "Troca de Óleo", 1, 50, 0));
+            Assert.Catch<DomainValidationException>(() => new MechanicalService(Guid.NewGuid(), "Troca de Óleo", 1, 50, -1));
         }
 
         [Test]
@@ -108,7 +109,7 @@ namespace DomainTests.Service
         [Test]
         public void MustNotUpdateDescriptionIfIsEmpty()
         {
-            Assert.Throws<ArgumentException>(() => Service.UpdateDescriptrion(""));
+            Assert.Catch<DomainValidationException>(() => Service.UpdateDescriptrion(""));
         }
 
         [Test]
@@ -123,8 +124,8 @@ namespace DomainTests.Service
         [Test]
         public void MustNotUpdateHoursIfIsLowerOrEqualTo0()
         {
-            Assert.Throws<ArgumentException>(() => Service.UpdateHours(0));
-            Assert.Throws<ArgumentException>(() => Service.UpdateHours(-1));
+            Assert.Catch<DomainValidationException>(() => Service.UpdateHours(0));
+            Assert.Catch<DomainValidationException>(() => Service.UpdateHours(-1));
         }
 
         [Test]
@@ -139,8 +140,8 @@ namespace DomainTests.Service
         [Test]
         public void MustNotUpdatePricePerHourIfIsLowerOrEqualTo0()
         {
-            Assert.Throws<ArgumentException>(() => Service.UpdatePricePerHour(0));
-            Assert.Throws<ArgumentException>(() => Service.UpdatePricePerHour(-1));
+            Assert.Catch<DomainValidationException>(() => Service.UpdatePricePerHour(0));
+            Assert.Catch<DomainValidationException>(() => Service.UpdatePricePerHour(-1));
         }
 
         [Test]
@@ -162,7 +163,8 @@ namespace DomainTests.Service
         [Test]
         public void MustNotRemoveServiceAmountIfTryRemoveMoreThanExists()
         {
-            Assert.Throws<InvalidOperationException>(() => Service.RemoveServiceAmount(2));
+            Assert.Catch<DomainBusinessRuleException>(() => Service.RemoveServiceAmount(2));
         }
     }
 }
+

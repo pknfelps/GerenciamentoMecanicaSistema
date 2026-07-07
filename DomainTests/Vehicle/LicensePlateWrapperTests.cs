@@ -1,4 +1,5 @@
-﻿using Domain.Vehicle;
+﻿using Domain.Interface.Exceptions;
+using Domain.Vehicle;
 
 namespace DomainTests.Vehicle
 {
@@ -7,7 +8,7 @@ namespace DomainTests.Vehicle
         [Test]
         public void MustNotCreateLicensePlateIfNotValid()
         {
-            Assert.Throws<ArgumentException>(() => LicensePlateWrapper.CreateLicensePlate("PL123"));
+            Assert.Catch<DomainValidationException>(() => LicensePlateWrapper.CreateLicensePlate("PL123"));
         }
 
         [Test]
@@ -31,3 +32,4 @@ namespace DomainTests.Vehicle
         }
     }
 }
+

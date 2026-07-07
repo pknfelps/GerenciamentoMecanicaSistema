@@ -1,4 +1,5 @@
-﻿using Domain.Customer;
+﻿using Domain.Interface.Exceptions;
+using Domain.Customer;
 
 namespace DomainTests.Customer
 {
@@ -7,20 +8,20 @@ namespace DomainTests.Customer
         [Test]
         public void MustNotCreatePhoneIfNumberIsNullOrWhiteSpace()
         {
-            Assert.Catch<ArgumentNullException>(() => new Phone(""));
-            Assert.Catch<ArgumentNullException>(() => new Phone(" "));
+            Assert.Catch<DomainValidationException>(() => new Phone(""));
+            Assert.Catch<DomainValidationException>(() => new Phone(" "));
         }
 
         [Test]
         public void MustNotCreatePhoneIfNumberContainsLetters()
         {
-            Assert.Catch<ArgumentException>(() => new Phone("1191234567a"));
+            Assert.Catch<DomainValidationException>(() => new Phone("1191234567a"));
         }
 
         [Test]
         public void MustNotCreatePhoneWithLessThan11Digits()
         {
-            Assert.Catch<ArgumentException>(() => new Phone("1191234567"));
+            Assert.Catch<DomainValidationException>(() => new Phone("1191234567"));
         }
 
         [Test]
@@ -43,3 +44,4 @@ namespace DomainTests.Customer
         }
     }
 }
+

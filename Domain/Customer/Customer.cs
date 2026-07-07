@@ -1,4 +1,5 @@
-﻿using Domain.Interface.Custumer;
+﻿using Domain.Interface.Exceptions;
+using Domain.Interface.Custumer;
 
 namespace Domain.Customer
 {
@@ -15,10 +16,10 @@ namespace Domain.Customer
         public Customer(Guid id, string name, string document, string phone, string email)
         {
             if (id == Guid.Empty)
-                throw new ArgumentNullException(nameof(id), $"{nameof(id)} deve ser preenchido");
+                throw new DomainValidationException($"{nameof(id)} deve ser preenchido");
 
             if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentNullException(nameof(name), $"{nameof(name)} deve ser preenchido");
+                throw new DomainValidationException($"{nameof(name)} deve ser preenchido");
 
             Id = id;
             Name = name;

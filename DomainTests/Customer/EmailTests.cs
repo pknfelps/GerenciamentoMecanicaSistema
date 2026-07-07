@@ -1,4 +1,5 @@
-﻿using Domain.Customer;
+﻿using Domain.Interface.Exceptions;
+using Domain.Customer;
 
 namespace DomainTests.Customer
 {
@@ -7,20 +8,20 @@ namespace DomainTests.Customer
         [Test]
         public void MustNotCreateEmailIfNullOrWhiteSpace()
         {
-            Assert.Catch<ArgumentNullException>(() => new Email(""));
-            Assert.Catch<ArgumentNullException>(() => new Email(" "));
+            Assert.Catch<DomainValidationException>(() => new Email(""));
+            Assert.Catch<DomainValidationException>(() => new Email(" "));
         }
 
         [Test]
         public void MustNotCreateEmailIfConotainsWhiteSpace()
         {
-            Assert.Catch<ArgumentNullException>(() => new Email("teste email@gmail.com"));
+            Assert.Catch<DomainValidationException>(() => new Email("teste email@gmail.com"));
         }
 
         [Test]
         public void MustNotCreateEmailIfIsNotValid()
         {
-            Assert.Catch<ArgumentException>(() => new Email("testeemail"));
+            Assert.Catch<DomainValidationException>(() => new Email("testeemail"));
         }
 
         [Test]
@@ -33,3 +34,4 @@ namespace DomainTests.Customer
         }
     }
 }
+

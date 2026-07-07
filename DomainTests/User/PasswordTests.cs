@@ -1,4 +1,5 @@
-﻿using Domain.User;
+﻿using Domain.Interface.Exceptions;
+using Domain.User;
 
 namespace DomainTests.User
 {
@@ -15,34 +16,35 @@ namespace DomainTests.User
         [Test]
         public void MustNotCreatePasswordIfEmpty()
         {
-            Assert.Throws<ArgumentException>(() => new Password(""));
+            Assert.Catch<DomainValidationException>(() => new Password(""));
         }
 
         [Test]
         public void MustNotCreatePasswordIfContainsWhiteSpaces()
         {
-            Assert.Throws<ArgumentException>(() => new Password("Pass word@123"));
+            Assert.Catch<DomainValidationException>(() => new Password("Pass word@123"));
         }
 
         [Test]
         public void MustNotCreatePasswordIfLessThanMinLenght()
         {
-            Assert.Throws<ArgumentException>(() => new Password("Pas@1"));
+            Assert.Catch<DomainValidationException>(() => new Password("Pas@1"));
         }
 
         [Test]
         public void MustNotCreatePasswordIfNotContainsLetterNumberAndSymbol()
         {
-            Assert.Throws<ArgumentException>(() => new Password("123@123"));
-            Assert.Throws<ArgumentException>(() => new Password("Password@"));
-            Assert.Throws<ArgumentException>(() => new Password("Password123"));
+            Assert.Catch<DomainValidationException>(() => new Password("123@123"));
+            Assert.Catch<DomainValidationException>(() => new Password("Password@"));
+            Assert.Catch<DomainValidationException>(() => new Password("Password123"));
         }
 
         [Test]
         public void MustNotCreatePasswordIfNotContainsUpperAndLowercaseLetters()
         {
-            Assert.Throws<ArgumentException>(() => new Password("password@123"));
-            Assert.Throws<ArgumentException>(() => new Password("PASSWORD@123"));
+            Assert.Catch<DomainValidationException>(() => new Password("password@123"));
+            Assert.Catch<DomainValidationException>(() => new Password("PASSWORD@123"));
         }
     }
 }
+
