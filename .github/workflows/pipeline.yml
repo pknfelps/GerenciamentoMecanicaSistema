@@ -6,18 +6,7 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Run Unit Tests
-        run: dotnet test
-
-  code-analysis:
-    runs-on: ubuntu-latest
-    needs: unit-tests
-    steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -26,8 +15,59 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.slnx') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
       - name: Install dotnet-coverage
-        run: dotnet tool install --global dotnet-coverage
+        run: dotnet tool install dotnet-coverage --tool-path ${{ runner.temp }}/tools
+
+      - name: Restore dependencies
+        run: dotnet restore GerenciamentoMecanicaSistema.slnx
+
+      - name: Build
+        run: dotnet build GerenciamentoMecanicaSistema.slnx --no-restore
+
+      - name: Run Unit Tests
+        run: ${{ runner.temp }}/tools/dotnet-coverage collect "dotnet test GerenciamentoMecanicaSistema.slnx --no-build --no-restore" -f xml -o coverage.xml
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  code-analysis:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.slnx') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore GerenciamentoMecanicaSistema.slnx
+
+      - name: Download coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          path: .
 
       - name: Cache SonarQube Cloud Packages
         uses: actions/cache@v4
@@ -40,7 +80,7 @@ jobs:
         id: cache-sonar-scanner
         uses: actions/cache@v4
         with:
-          path: ${{ runner.temp }}\scanner
+          path: ${{ runner.temp }}/scanner
           key: ${{ runner.os }}-sonar-scanner
           restore-keys: ${{ runner.os }}-sonar-scanner
 
@@ -55,23 +95,5 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           ${{ runner.temp }}/scanner/dotnet-sonarscanner begin /k:"pknfelps_GerenciamentoMecanicaSistema" /o:"pknfelps" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.vscoveragexml.reportsPaths="coverage.xml"
-          dotnet build
-          dotnet-coverage collect "dotnet test --no-build" -f xml -o coverage.xml
+          dotnet build GerenciamentoMecanicaSistema.slnx --no-restore
           ${{ runner.temp }}/scanner/dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
-          
-  build:
-    runs-on: ubuntu-latest
-    needs: code-analysis
-    if: github.ref == 'refs/heads/main'
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-
-    - name: Install .NET Core
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 10.0.x
-      
-    - name: Build
-      run: dotnet build
