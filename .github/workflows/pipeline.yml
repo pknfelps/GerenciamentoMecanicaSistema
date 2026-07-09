@@ -10,8 +10,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run unit tests
-        run: dotnet test
+      - name: Run Unit Tests
+        run: dotnet test --collect:"coverage.xml"
+
+      - name: Upload Coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
 
   code-analysis:
     runs-on: ubuntu-latest
@@ -42,11 +48,16 @@ jobs:
           mkdir -p ${{ runner.temp }}/scanner
           dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}/scanner
 
-      - name: SonarCloud Scan
+      - name: Download coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage
+
+      - name: Sonar Cloud Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          ${{ runner.temp }}/scanner/dotnet-sonarscanner begin /k:"pknfelps_GerenciamentoMecanicaSistema" /o:"pknfelps" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
+          ${{ runner.temp }}/scanner/dotnet-sonarscanner begin /k:"pknfelps_GerenciamentoMecanicaSistema" /o:"pknfelps" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.vscoveragexml.reportsPaths="coverage.xml"
           dotnet build
           ${{ runner.temp }}/scanner/dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
           
