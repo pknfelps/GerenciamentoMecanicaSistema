@@ -4,7 +4,7 @@ on:
 
 jobs:
   unit-tests:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
@@ -14,7 +14,7 @@ jobs:
         run: dotnet test
 
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: unit-tests
     if: github.ref == 'refs/heads/main'
     steps:
