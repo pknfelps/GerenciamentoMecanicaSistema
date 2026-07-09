@@ -1,0 +1,30 @@
+name: pipeline
+on:
+  push: 
+
+jobs:
+  unit-tests:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Run unit tests
+        run: dotnet test
+
+  build:
+    runs-on: windows-latest
+    needs: unit-tests
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+      
+    - name: Build
+      run: dotnet build
