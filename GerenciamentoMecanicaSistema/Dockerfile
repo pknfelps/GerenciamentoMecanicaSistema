@@ -12,7 +12,7 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["GerenciamentoMecanicaSistema.csproj", "GerenciamentoMecanicaSistema/"]
+COPY ["GerenciamentoMecanicaSistema/GerenciamentoMecanicaSistema.csproj", "GerenciamentoMecanicaSistema/"]
 RUN dotnet restore "./GerenciamentoMecanicaSistema/GerenciamentoMecanicaSistema.csproj"
 COPY . .
 WORKDIR "/src/GerenciamentoMecanicaSistema"
