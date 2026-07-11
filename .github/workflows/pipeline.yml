@@ -115,10 +115,7 @@ jobs:
           password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Build Docker image
-        run: docker build --file ./GerenciamentoMecanicaSistema/Dockerfile --tag gerenciamento-mecanica:latest .
-
-      - name: Tag Image
-        run: docker image tag gerenciamentomecanicasistema:latest felipejesusoliveira/gerenciamentomecanicasistema:latest
+        run: docker build --file ./GerenciamentoMecanicaSistema/Dockerfile --tag felipejesusoliveira/gerenciamentomecanicasistema:latest .
 
       - name: Publish Image
         run: docker push felipejesusoliveira/gerenciamentomecanicasistema:latest
