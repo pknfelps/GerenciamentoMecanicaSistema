@@ -97,3 +97,22 @@ jobs:
           ${{ runner.temp }}/scanner/dotnet-sonarscanner begin /k:"pknfelps_GerenciamentoMecanicaSistema" /o:"pknfelps" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.vscoveragexml.reportsPaths="coverage.xml"
           dotnet build GerenciamentoMecanicaSistema.slnx --no-restore
           ${{ runner.temp }}/scanner/dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
+  build-and-publish:
+    runs-on: ubuntu-latest
+    needs: code-analysis
+    steps:
+      - name: Docker Login
+        uses: docker/login-action@v4.4.0
+        with:
+          username: 'felipejesusoliveira'
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build Image
+        run: docker build -t gerenciamentomecanicasistema:latest -f .\GerenciamentoMecanicaSistema\Dockerfile .
+
+      - name: Tag Image
+        run: docker image tag gerenciamentomecanicasistema:latest felipejesusoliveira/gerenciamentomecanicasistema:latest
+
+      - name: Publish Image
+        run: docker push felipejesusoliveira/gerenciamentomecanicasistema:latest
