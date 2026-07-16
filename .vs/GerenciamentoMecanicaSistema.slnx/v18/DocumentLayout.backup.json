@@ -3,44 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{5836563F-AA04-4AD3-8859-8F85ADE92148}|RepositoryTests\\RepositoryTests.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\repositorytests\\ordersrepositorytests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{5836563F-AA04-4AD3-8859-8F85ADE92148}|RepositoryTests\\RepositoryTests.csproj|solutionrelative:repositorytests\\ordersrepositorytests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{E528BBC3-1C26-8C35-F682-23718816ADCD}|Domain\\Domain.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\domain\\customer\\document.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E528BBC3-1C26-8C35-F682-23718816ADCD}|Domain\\Domain.csproj|solutionrelative:domain\\customer\\document.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{4476BFA7-17F3-D360-697F-9CCB7D9B2FCE}|DomainTests\\DomainTests.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\domaintests\\customer\\customertests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4476BFA7-17F3-D360-697F-9CCB7D9B2FCE}|DomainTests\\DomainTests.csproj|solutionrelative:domaintests\\customer\\customertests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{E528BBC3-1C26-8C35-F682-23718816ADCD}|Domain\\Domain.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\domain\\customer\\customer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E528BBC3-1C26-8C35-F682-23718816ADCD}|Domain\\Domain.csproj|solutionrelative:domain\\customer\\customer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{4476BFA7-17F3-D360-697F-9CCB7D9B2FCE}|DomainTests\\DomainTests.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\domaintests\\customer\\phonetests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4476BFA7-17F3-D360-697F-9CCB7D9B2FCE}|DomainTests\\DomainTests.csproj|solutionrelative:domaintests\\customer\\phonetests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{E528BBC3-1C26-8C35-F682-23718816ADCD}|Domain\\Domain.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\domain\\stock\\material.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E528BBC3-1C26-8C35-F682-23718816ADCD}|Domain\\Domain.csproj|solutionrelative:domain\\stock\\material.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{4476BFA7-17F3-D360-697F-9CCB7D9B2FCE}|DomainTests\\DomainTests.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\domaintests\\customer\\emailtests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4476BFA7-17F3-D360-697F-9CCB7D9B2FCE}|DomainTests\\DomainTests.csproj|solutionrelative:domaintests\\customer\\emailtests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{4476BFA7-17F3-D360-697F-9CCB7D9B2FCE}|DomainTests\\DomainTests.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\domaintests\\customer\\documentwrappertests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4476BFA7-17F3-D360-697F-9CCB7D9B2FCE}|DomainTests\\DomainTests.csproj|solutionrelative:domaintests\\customer\\documentwrappertests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{4476BFA7-17F3-D360-697F-9CCB7D9B2FCE}|DomainTests\\DomainTests.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\domaintests\\customer\\cpftests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4476BFA7-17F3-D360-697F-9CCB7D9B2FCE}|DomainTests\\DomainTests.csproj|solutionrelative:domaintests\\customer\\cpftests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{4476BFA7-17F3-D360-697F-9CCB7D9B2FCE}|DomainTests\\DomainTests.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\domaintests\\customer\\cnpjtests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4476BFA7-17F3-D360-697F-9CCB7D9B2FCE}|DomainTests\\DomainTests.csproj|solutionrelative:domaintests\\customer\\cnpjtests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E528BBC3-1C26-8C35-F682-23718816ADCD}|Domain\\Domain.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\domain\\workorder\\order.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E528BBC3-1C26-8C35-F682-23718816ADCD}|Domain\\Domain.csproj|solutionrelative:domain\\workorder\\order.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{06E54496-48AF-4245-97FB-08A74E695175}|ServiceTests\\ServiceTests.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\servicetests\\ordersservicetests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{06E54496-48AF-4245-97FB-08A74E695175}|ServiceTests\\ServiceTests.csproj|solutionrelative:servicetests\\ordersservicetests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{02B79BC5-153E-2FD9-CAE3-8149E0D9044F}|Service\\Service.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\service\\ordersservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{02B79BC5-153E-2FD9-CAE3-8149E0D9044F}|Service\\Service.csproj|solutionrelative:service\\ordersservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|c:\\users\\felip\\source\\repos\\gerenciamentomecanicasistema\\gerenciamentomecanicasistema\\middleware\\exceptionhandlingmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AADDFD2E-D1F3-36A9-C3A4-07F99ED49777}|GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema.csproj|solutionrelative:gerenciamentomecanicasistema\\middleware\\exceptionhandlingmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -59,131 +35,53 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "OrdersRepositoryTests.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests\\OrdersRepositoryTests.cs",
-              "RelativeDocumentMoniker": "RepositoryTests\\OrdersRepositoryTests.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\RepositoryTests\\OrdersRepositoryTests.cs",
-              "RelativeToolTip": "RepositoryTests\\OrdersRepositoryTests.cs",
-              "ViewState": "AgIAAIIBAAAAAAAAAAAAAJABAAA4AAAAAAAAAA==",
+              "Title": "Document.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Customer\\Document.cs",
+              "RelativeDocumentMoniker": "Domain\\Customer\\Document.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Customer\\Document.cs",
+              "RelativeToolTip": "Domain\\Customer\\Document.cs",
+              "ViewState": "AgIAAEEAAAAAAAAAAAAAAEYAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-27T16:54:33.042Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "PhoneTests.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Customer\\PhoneTests.cs",
-              "RelativeDocumentMoniker": "DomainTests\\Customer\\PhoneTests.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Customer\\PhoneTests.cs",
-              "RelativeToolTip": "DomainTests\\Customer\\PhoneTests.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAMAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-27T16:50:46.838Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "EmailTests.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Customer\\EmailTests.cs",
-              "RelativeDocumentMoniker": "DomainTests\\Customer\\EmailTests.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Customer\\EmailTests.cs",
-              "RelativeToolTip": "DomainTests\\Customer\\EmailTests.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAALAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-27T16:50:42.595Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "DocumentWrapperTests.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Customer\\DocumentWrapperTests.cs",
-              "RelativeDocumentMoniker": "DomainTests\\Customer\\DocumentWrapperTests.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Customer\\DocumentWrapperTests.cs",
-              "RelativeToolTip": "DomainTests\\Customer\\DocumentWrapperTests.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAMAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-27T16:50:37.086Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "CnpjTests.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Customer\\CnpjTests.cs",
-              "RelativeDocumentMoniker": "DomainTests\\Customer\\CnpjTests.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Customer\\CnpjTests.cs",
-              "RelativeToolTip": "DomainTests\\Customer\\CnpjTests.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAMAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-27T16:50:04.529Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "CpfTests.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Customer\\CpfTests.cs",
-              "RelativeDocumentMoniker": "DomainTests\\Customer\\CpfTests.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Customer\\CpfTests.cs",
-              "RelativeToolTip": "DomainTests\\Customer\\CpfTests.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAMAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-27T16:50:01.381Z",
+              "WhenOpened": "2026-07-07T12:16:39.291Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "CustomerTests.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Customer\\CustomerTests.cs",
-              "RelativeDocumentMoniker": "DomainTests\\Customer\\CustomerTests.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\DomainTests\\Customer\\CustomerTests.cs",
-              "RelativeToolTip": "DomainTests\\Customer\\CustomerTests.cs",
-              "ViewState": "AgIAAEcAAAAAAAAAAAAowE0AAACiAAAAAAAAAA==",
+              "Title": "Customer.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Customer\\Customer.cs",
+              "RelativeDocumentMoniker": "Domain\\Customer\\Customer.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Customer\\Customer.cs",
+              "RelativeToolTip": "Domain\\Customer\\Customer.cs",
+              "ViewState": "AgIAABYAAAAAAAAAAAAAAB4AAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-27T16:49:56.511Z",
+              "WhenOpened": "2026-07-07T12:16:35.076Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "Order.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\WorkOrder\\Order.cs",
-              "RelativeDocumentMoniker": "Domain\\WorkOrder\\Order.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\WorkOrder\\Order.cs",
-              "RelativeToolTip": "Domain\\WorkOrder\\Order.cs",
-              "ViewState": "AgIAABIAAAAAAAAAAAAowBoAAAAJAAAAAAAAAA==",
+              "DocumentIndex": 2,
+              "Title": "Material.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Stock\\Material.cs",
+              "RelativeDocumentMoniker": "Domain\\Stock\\Material.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Domain\\Stock\\Material.cs",
+              "RelativeToolTip": "Domain\\Stock\\Material.cs",
+              "ViewState": "AgIAAEoAAAAAAAAAAAAqwFUAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-27T16:10:30.128Z",
+              "WhenOpened": "2026-07-07T12:14:05.865Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "OrdersService.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\OrdersService.cs",
-              "RelativeDocumentMoniker": "Service\\OrdersService.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\Service\\OrdersService.cs",
-              "RelativeToolTip": "Service\\OrdersService.cs",
-              "ViewState": "AgIAAPQAAAAAAAAAAIA9wP4AAAAMAAAAAAAAAA==",
+              "DocumentIndex": 3,
+              "Title": "ExceptionHandlingMiddleware.cs",
+              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Middleware\\ExceptionHandlingMiddleware.cs",
+              "RelativeDocumentMoniker": "GerenciamentoMecanicaSistema\\Middleware\\ExceptionHandlingMiddleware.cs",
+              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\GerenciamentoMecanicaSistema\\Middleware\\ExceptionHandlingMiddleware.cs",
+              "RelativeToolTip": "GerenciamentoMecanicaSistema\\Middleware\\ExceptionHandlingMiddleware.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAUAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-27T16:03:40.377Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "OrdersServiceTests.cs",
-              "DocumentMoniker": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ServiceTests\\OrdersServiceTests.cs",
-              "RelativeDocumentMoniker": "ServiceTests\\OrdersServiceTests.cs",
-              "ToolTip": "C:\\Users\\felip\\source\\repos\\GerenciamentoMecanicaSistema\\ServiceTests\\OrdersServiceTests.cs",
-              "RelativeToolTip": "ServiceTests\\OrdersServiceTests.cs",
-              "ViewState": "AgIAAKcDAAAAAAAAAAA9wLIDAAAdAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-27T16:01:45.873Z",
+              "WhenOpened": "2026-07-07T12:03:26.613Z",
               "EditorCaption": ""
             }
           ]

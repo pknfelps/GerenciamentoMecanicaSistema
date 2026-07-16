@@ -1,7 +1,10 @@
-﻿using NSubstitute;
+﻿using GerenciamentoMecanicaSistema.Contracts.Requests.Stock;
+using GerenciamentoMecanicaSistema.Contracts.Responses.Stock;
+using NSubstitute;
 using Service.Interface;
-using Service.Interface.Dto;
-using Service.Interface.Dto.Stock;
+using Service.Interface.Exceptions;
+using Service.Interface.Commands.Stock;
+using Service.Interface.Results.Stock;
 using System.Net;
 using System.Net.Http.Json;
 
@@ -11,36 +14,36 @@ namespace ControllerTests
     {
         private IStockService StockService { get; set; }
 
-        private static readonly CreateMaterialDto MaterialToRegister = new("Óleo de motor", "Lubrax", 41.90, 5);
-        private static readonly CreateMaterialDto InvalidMaterialToRegister = new("", "", 0.00, 0);
-        private static readonly CreateMaterialDto MaterialToFailRegister = new("Teste", "Testando", 15, 1);
-        private static readonly ValueUpdateDto<int> MaterialToFailIntOperations = new(5);
-        private static readonly ValueUpdateDto<double> MaterialToFailDoubleOperations = new(10.00);
-        private static readonly ValueUpdateDto<int> InvalidIntMaterialUpdate = new(0);
-        private static readonly ValueUpdateDto<double> InvalidDoubleMaterialUpdate = new(0);
+        private static readonly CreateMaterialRequest MaterialToRegister = new("Óleo de motor", "Lubrax", 41.90m, 5);
+        private static readonly CreateMaterialRequest InvalidMaterialToRegister = new("", "", 0.00m, 0);
+        private static readonly CreateMaterialRequest MaterialToFailRegister = new("Teste", "Testando", 15, 1);
+        private static readonly ValueUpdateRequest<int> MaterialToFailIntOperations = new(5);
+        private static readonly ValueUpdateRequest<decimal> MaterialToFailDecimalOperations = new(10.00m);
+        private static readonly ValueUpdateRequest<int> InvalidIntMaterialUpdate = new(0);
+        private static readonly ValueUpdateRequest<decimal> InvalidDecimalMaterialUpdate = new(0);
 
-        private static readonly List<MaterialDto> StockMaterials =
+        private static readonly List<MaterialResult> StockMaterials =
         [
-            new (Guid.NewGuid(), "Vela de ignição", "Bosch", 6.00, 20, 5),
-            new (Guid.NewGuid(), "Flúido para radiador", "Gitanes", 30.00, 5, 0)
+            new (Guid.NewGuid(), "Vela de ignição", "Bosch", 6.00m, 20, 5),
+            new (Guid.NewGuid(), "Flúido para radiador", "Gitanes", 30.00m, 5, 0)
         ];
 
-        private static readonly ValueUpdateDto<int> IntMaterialUpdate = new(5);
+        private static readonly ValueUpdateRequest<int> IntMaterialUpdate = new(5);
 
-        private static readonly ValueUpdateDto<double> DoubleMaterialToUpdate = new(8.45);
+        private static readonly ValueUpdateRequest<decimal> DecimalMaterialToUpdate = new(8.45m);
 
         protected override void MockService()
         {
             StockService = TestWebAppFactory.StockServiceMock;
 
-            StockService.RegisterNewMaterial(Arg.Any<CreateMaterialDto>()).Returns(callInfo =>
+            StockService.RegisterNewMaterial(Arg.Any<CreateMaterialCommand>()).Returns(callInfo =>
             {
-                var material = callInfo.ArgAt<CreateMaterialDto>(0);
+                var material = callInfo.ArgAt<CreateMaterialCommand>(0);
 
-                if (material.Equals(MaterialToRegister))
+                if (material.Equals(MaterialToRegister.ToCommand()))
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new ApplicationFailureException("Falha interna");
             });
 
             StockService.GetMaterials(name: Arg.Any<string>(), brand: Arg.Any<string>()).Returns(callInfo =>
@@ -61,7 +64,7 @@ namespace ControllerTests
                 if (StockMaterials.FirstOrDefault(x => x.Id == id) != default)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
             StockService.RemoveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>()).Returns(callInfo =>
@@ -71,7 +74,7 @@ namespace ControllerTests
                 if (StockMaterials.FirstOrDefault(x => x.Id == id) != default)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
             StockService.ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>()).Returns(callInfo =>
@@ -81,7 +84,7 @@ namespace ControllerTests
                 if (StockMaterials.FirstOrDefault(x => x.Id == id) != default)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
             StockService.RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>()).Returns(callInfo =>
@@ -91,17 +94,17 @@ namespace ControllerTests
                 if (StockMaterials.FirstOrDefault(x => x.Id == id) != default)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
-            StockService.UpdateMaterialPrice(Arg.Any<Guid>(), Arg.Any<double>()).Returns(callInfo =>
+            StockService.UpdateMaterialPrice(Arg.Any<Guid>(), Arg.Any<decimal>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
                 if (StockMaterials.FirstOrDefault(x => x.Id == id) != default)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
             StockService.DeleteMaterial(Arg.Any<Guid>()).Returns(callInfo =>
@@ -111,7 +114,7 @@ namespace ControllerTests
                 if (StockMaterials.FirstOrDefault(x => x.Id == id) != default)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
         }
 
@@ -122,7 +125,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
 
-            await StockService.Received(1).RegisterNewMaterial(MaterialToRegister);
+            await StockService.Received(1).RegisterNewMaterial(MaterialToRegister.ToCommand());
         }
 
         [Test]
@@ -132,7 +135,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await StockService.Received(0).RegisterNewMaterial(Arg.Any<MaterialDto>());
+            await StockService.Received(0).RegisterNewMaterial(Arg.Any<CreateMaterialCommand>());
         }
 
         [Test]
@@ -142,7 +145,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
 
-            await StockService.Received(1).RegisterNewMaterial(MaterialToFailRegister);
+            await StockService.Received(1).RegisterNewMaterial(MaterialToFailRegister.ToCommand());
         }
 
         [Test]
@@ -152,7 +155,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            var result = await response.Content.ReadFromJsonAsync<IEnumerable<MaterialDto>>();
+            var result = await response.Content.ReadFromJsonAsync<IEnumerable<MaterialResponse>>();
             var intems = result.ToList();
 
             await StockService.Received(1).GetMaterials();
@@ -161,8 +164,8 @@ namespace ControllerTests
 
             Assert.Multiple(() =>
             {
-                Assert.That(intems[0].Equals(StockMaterials[0]), Is.True);
-                Assert.That(intems[1].Equals(StockMaterials[1]), Is.True);
+                Assert.That(intems[0].Id, Is.EqualTo(StockMaterials[0].Id));
+                Assert.That(intems[1].Id, Is.EqualTo(StockMaterials[1].Id));
             });
         }
 
@@ -173,14 +176,14 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            var materials = await response.Content.ReadFromJsonAsync<List<MaterialDto>>();
+            var materials = await response.Content.ReadFromJsonAsync<List<MaterialResponse>>();
 
             await StockService.Received(1).GetMaterials(name: StockMaterials[0].Name, brand: StockMaterials[0].Brand);
             Assert.That(materials, Has.Count.EqualTo(1));
 
             var material = materials[0];
             Assert.That(material, Is.Not.Null);
-            Assert.That(material.Equals(StockMaterials[0]), Is.True);
+            Assert.That(material.Id, Is.EqualTo(StockMaterials[0].Id));
         }
 
         [Test]
@@ -194,11 +197,11 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfTryAddMaterialAmountWithNotExistingMaterial()
+        public async Task MustReturnNotFoundIfTryAddMaterialAmountWithNotExistingMaterial()
         {
             var response = await TestClient.PostAsJsonAsync($"stock/amount/{Guid.NewGuid()}", MaterialToFailIntOperations);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
 
             await StockService.Received(1).AddMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
@@ -224,11 +227,11 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfTryRemoveMaterialAmountWithNotExistingMaterial()
+        public async Task MustReturnNotFoundIfTryRemoveMaterialAmountWithNotExistingMaterial()
         {
             var response = await TestClient.PatchAsJsonAsync($"stock/amount/{Guid.NewGuid()}", MaterialToFailIntOperations);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
 
             await StockService.Received(1).RemoveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
@@ -246,31 +249,31 @@ namespace ControllerTests
         [Test]
         public async Task MustUpdateMaterialPrice()
         {
-            var response = await TestClient.PatchAsJsonAsync($"stock/price/{StockMaterials[0].Id}", DoubleMaterialToUpdate);
+            var response = await TestClient.PatchAsJsonAsync($"stock/price/{StockMaterials[0].Id}", DecimalMaterialToUpdate);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
 
-            await StockService.Received(1).UpdateMaterialPrice(Arg.Any<Guid>(), Arg.Any<double>());
+            await StockService.Received(1).UpdateMaterialPrice(Arg.Any<Guid>(), Arg.Any<decimal>());
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfTryUpdatePriceWithNoExistingMaterial()
+        public async Task MustReturnNotFoundIfTryUpdatePriceWithNoExistingMaterial()
         {
-            var response = await TestClient.PatchAsJsonAsync($"stock/price/{Guid.NewGuid()}", MaterialToFailDoubleOperations);
+            var response = await TestClient.PatchAsJsonAsync($"stock/price/{Guid.NewGuid()}", MaterialToFailDecimalOperations);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
 
-            await StockService.Received(1).UpdateMaterialPrice(Arg.Any<Guid>(), Arg.Any<double>());
+            await StockService.Received(1).UpdateMaterialPrice(Arg.Any<Guid>(), Arg.Any<decimal>());
         }
 
         [Test]
         public async Task MustReturnBadRequestIfTryUpdateMaterialPriceWithInvalidModel()
         {
-            var response = await TestClient.PatchAsJsonAsync($"stock/price/0000", InvalidDoubleMaterialUpdate.Value);
+            var response = await TestClient.PatchAsJsonAsync($"stock/price/0000", InvalidDecimalMaterialUpdate.Value);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await StockService.Received(0).UpdateMaterialPrice(Arg.Any<Guid>(), Arg.Any<double>());
+            await StockService.Received(0).UpdateMaterialPrice(Arg.Any<Guid>(), Arg.Any<decimal>());
         }
 
         [Test]
@@ -284,11 +287,11 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfTryDeleteMaterialWithNoExistingMaterial()
+        public async Task MustReturnNotFoundIfTryDeleteMaterialWithNoExistingMaterial()
         {
             var response = await TestClient.DeleteAsync($"stock/{Guid.NewGuid()}");
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
 
             await StockService.Received(1).DeleteMaterial(Arg.Any<Guid>());
         }

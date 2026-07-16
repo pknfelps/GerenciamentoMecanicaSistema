@@ -1,9 +1,10 @@
-﻿using NSubstitute;
-using NSubstitute.Core.Arguments;
-using NSubstitute.ExceptionExtensions;
-using NUnit.Framework.Internal;
+﻿using GerenciamentoMecanicaSistema.Contracts.Requests.Customer;
+using GerenciamentoMecanicaSistema.Contracts.Responses.Customer;
+using NSubstitute;
 using Service.Interface;
-using Service.Interface.Dto.Customer;
+using Service.Interface.Exceptions;
+using Service.Interface.Commands.Customer;
+using Service.Interface.Results.Customer;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
@@ -14,30 +15,30 @@ namespace ControllerTests
     {
         private ICustomerService CustomerService { get; set; }
 
-        private readonly CreateCustomerDto CustomerToRegister = new("Fulano", "12345678912", "11912345678", "fulano@gmail.com");
+        private readonly CreateCustomerRequest CustomerToRegister = new("Fulano", "12345678912", "11912345678", "fulano@gmail.com");
 
         private static Guid ExistingCustomerId = Guid.NewGuid();
 
-        private readonly List<CustomerDto> ExistingCustomers =
+        private readonly List<CustomerResult> ExistingCustomers =
         [
-            new CustomerDto(ExistingCustomerId, "Ciclano", "12.123.456/0001-12", "(11) 91234-5678", "ciclano@gmail.com"),
-            new CustomerDto(Guid.NewGuid(), "Beltrano", "12.123.456/0001-15", "(11) 93214-6578", "beltrano@gmail.com"),
+            new CustomerResult(ExistingCustomerId, "Ciclano", "12.123.456/0001-12", "(11) 91234-5678", "ciclano@gmail.com"),
+            new CustomerResult(Guid.NewGuid(), "Beltrano", "12.123.456/0001-15", "(11) 93214-6578", "beltrano@gmail.com"),
         ];
 
-        private readonly CreateCustomerDto CustomerToUpdate = new("Ciclano", "12.123.456/0001-12", "(11) 94321-8765", "ciclano.company@gmail.com");
+        private readonly CreateCustomerRequest CustomerToUpdate = new("Ciclano", "12.123.456/0001-12", "(11) 94321-8765", "ciclano.company@gmail.com");
 
         protected override void MockService()
         {
             CustomerService = TestWebAppFactory.CustomerServiceMock;
 
-            CustomerService.RegisterCustomer(Arg.Any<CreateCustomerDto>()).Returns(callInfo =>
+            CustomerService.RegisterCustomer(Arg.Any<CreateCustomerCommand>()).Returns(callInfo =>
             {
-                var customer = callInfo.ArgAt<CreateCustomerDto>(0);
+                var customer = callInfo.ArgAt<CreateCustomerCommand>(0);
 
-                if (customer.Equals(CustomerToRegister))
+                if (customer.Equals(CustomerToRegister.ToCommand()))
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new ConflictException("Conflito");
             });
 
             CustomerService.GetCustomers(document: Arg.Any<string>()).Returns(callInfo =>
@@ -57,14 +58,14 @@ namespace ControllerTests
                 return ExistingCustomers.FirstOrDefault(x => RegexRemovePunctuation().Replace(x.Document, "") == documento);
             });
 
-            CustomerService.UpdateCustomer(Arg.Any<Guid>(), Arg.Any<CreateCustomerDto>()).Returns(callInfo =>
+            CustomerService.UpdateCustomer(Arg.Any<Guid>(), Arg.Any<CreateCustomerCommand>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
                 if (id == ExistingCustomers[0].Id)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
             CustomerService.DeleteCustomer(Arg.Any<Guid>()).Returns(callInfo =>
@@ -74,7 +75,7 @@ namespace ControllerTests
                 if (id == ExistingCustomers[0].Id)
                     return Task.CompletedTask;
 
-                throw new InvalidCastException();
+                throw new NotFoundException("Recurso não encontrado");
             });
         }
 
@@ -85,7 +86,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
 
-            await CustomerService.Received(1).RegisterCustomer(CustomerToRegister);
+            await CustomerService.Received(1).RegisterCustomer(CustomerToRegister.ToCommand());
         }
 
         [Test]
@@ -95,19 +96,19 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await CustomerService.ReceivedWithAnyArgs(0).RegisterCustomer(Arg.Any<CustomerDto>());
+            await CustomerService.ReceivedWithAnyArgs(0).RegisterCustomer(Arg.Any<CreateCustomerCommand>());
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfTryCreateACustomerThatAlreadyExists()
+        public async Task MustReturnConflictIfTryCreateACustomerThatAlreadyExists()
         {
-            var existingCustomerDto = new CreateCustomerDto(ExistingCustomers[0].Name, ExistingCustomers[0].Document, ExistingCustomers[0].Phone, ExistingCustomers[0].Email);
+            var existingCustomer = new CreateCustomerRequest(ExistingCustomers[0].Name, ExistingCustomers[0].Document, ExistingCustomers[0].Phone, ExistingCustomers[0].Email);
 
-            var response = await TestClient.PostAsJsonAsync("/customers", existingCustomerDto);
+            var response = await TestClient.PostAsJsonAsync("/customers", existingCustomer);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
 
-            await CustomerService.Received(1).RegisterCustomer(existingCustomerDto);
+            await CustomerService.Received(1).RegisterCustomer(existingCustomer.ToCommand());
         }
 
         [Test]
@@ -117,18 +118,15 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            var result = await response.Content.ReadFromJsonAsync<IEnumerable<CustomerDto>>();
-            var Customers = result?.ToList();
+            var result = await response.Content.ReadFromJsonAsync<IEnumerable<CustomerResponse>>();
+            var customers = result?.ToList();
 
             await CustomerService.Received(1).GetCustomers();
 
-            Assert.That(Customers, Has.Count.EqualTo(2));
+            Assert.That(customers, Has.Count.EqualTo(2));
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(Customers[0].Equals(ExistingCustomers[0]), Is.True);
-                Assert.That(Customers[1].Equals(ExistingCustomers[1]), Is.True);
-            });
+            AssertCustomer(customers[0], ExistingCustomers[0]);
+            AssertCustomer(customers[1], ExistingCustomers[1]);
         }
 
         [Test]
@@ -138,7 +136,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-            var customers = await response.Content.ReadFromJsonAsync<List<CustomerDto>>();
+            var customers = await response.Content.ReadFromJsonAsync<List<CustomerResponse>>();
 
             await CustomerService.Received(1).GetCustomers(document: ExistingCustomers[0].Document);
 
@@ -146,7 +144,7 @@ namespace ControllerTests
 
             var customer = customers[0];
             Assert.That(customer, Is.Not.Null);
-            Assert.That(customer.Equals(ExistingCustomers[0]), Is.True);
+            AssertCustomer(customer, ExistingCustomers[0]);
         }
 
         [Test]
@@ -154,7 +152,7 @@ namespace ControllerTests
         {
             var response = await TestClient.GetAsync($"/customers?document=teste");
 
-            var result = await response.Content.ReadFromJsonAsync<IEnumerable<CustomerDto>>();
+            var result = await response.Content.ReadFromJsonAsync<IEnumerable<CustomerResponse>>();
             var customers = result?.ToList();
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
@@ -171,7 +169,7 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
 
-            await CustomerService.Received(1).UpdateCustomer(ExistingCustomerId, CustomerToUpdate);
+            await CustomerService.Received(1).UpdateCustomer(ExistingCustomerId, CustomerToUpdate.ToCommand());
         }
 
         [Test]
@@ -181,19 +179,19 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            await CustomerService.ReceivedWithAnyArgs(0).UpdateCustomer(Arg.Any<Guid>(), Arg.Any<CustomerDto>());
+            await CustomerService.ReceivedWithAnyArgs(0).UpdateCustomer(Arg.Any<Guid>(), Arg.Any<CreateCustomerCommand>());
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfTryUpdateACustomerThatNotExists()
+        public async Task MustReturnNotFoundIfTryUpdateACustomerThatNotExists()
         {
-            var customerToFail = new CreateCustomerDto("Nome", "000.000.000-12", "(11) 00000-0000", "nome@gmai.com");
+            var customerToFail = new CreateCustomerRequest("Nome", "000.000.000-12", "(11) 00000-0000", "nome@gmai.com");
 
             var response = await TestClient.PatchAsJsonAsync($"/customers/{Guid.NewGuid()}", customerToFail);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
 
-            await CustomerService.Received(1).UpdateCustomer(Arg.Any<Guid>(), customerToFail);
+            await CustomerService.Received(1).UpdateCustomer(Arg.Any<Guid>(), customerToFail.ToCommand());
         }
 
         [Test]
@@ -217,16 +215,28 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfTryDeleteACustomerThatNotExists()
+        public async Task MustReturnNotFoundIfTryDeleteACustomerThatNotExists()
         {
             var response = await TestClient.DeleteAsync($"/customers/{Guid.NewGuid()}");
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
 
             await CustomerService.Received(1).DeleteCustomer(Arg.Any<Guid>());
         }
 
         [GeneratedRegex(@"\p{P}")]
         private static partial Regex RegexRemovePunctuation();
+
+        private static void AssertCustomer(CustomerResponse response, CustomerResult result)
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(response.Id, Is.EqualTo(result.Id));
+                Assert.That(response.Name, Is.EqualTo(result.Name));
+                Assert.That(response.Document, Is.EqualTo(result.Document));
+                Assert.That(response.Phone, Is.EqualTo(result.Phone));
+                Assert.That(response.Email, Is.EqualTo(result.Email));
+            });
+        }
     }
 }

@@ -2,37 +2,44 @@
 using Domain.Interface.Order;
 using Domain.Vehicle;
 using Domain.WorkOrder;
+using Microsoft.Extensions.Logging;
 using Repository.Interface;
 using Service.Interface;
-using Service.Interface.Dto;
-using Service.Interface.Dto.Order;
+using Service.Interface.Exceptions;
+using Service.Interface.Commands.Order;
+using Service.Interface.Events;
+using Service.Interface.Events.Order;
+using Service.Interface.Results.Order;
 
 namespace Service
 {
-    public class OrdersService(IOrdersRepository repository, ICustomerService customerService, IVehicleService vehicleService, IStockService stockService, ICatalogService mechanicalServiceService, IEmailService emailService) : IOrdersService
+    public class OrdersService(IOrdersRepository repository, IOrderDependenciesGateway dependenciesGateway, IStockService stockService, ITransactionManager transactionManager, IApplicationEventDispatcher eventDispatcher, ILogger<OrdersService> logger) : IOrdersService
     {
         private IOrdersRepository Repository { get; set; } = repository;
-        private ICustomerService CustomerService { get; set; } = customerService;
-        private IVehicleService VehicleService { get; set; } = vehicleService;
+        private IOrderDependenciesGateway DependenciesGateway { get; set; } = dependenciesGateway;
         private IStockService StockService { get; set; } = stockService;
-        private ICatalogService CatalogService { get; set; } = mechanicalServiceService;
-        private IEmailService EmailService { get; set; } = emailService;
+        private ITransactionManager TransactionManager { get; set; } = transactionManager;
+        private IApplicationEventDispatcher EventDispatcher { get; set; } = eventDispatcher;
+        private ILogger<OrdersService> Logger { get; set; } = logger;
 
-        public async Task CreateServiceOrder(CreateOrderDto orderToCreate)
+        public async Task CreateServiceOrder(CreateOrderCommand orderToCreate)
         {
-            var customer = await CustomerService.GetCustomer(document: DocumentWrapper.CreateDocument(orderToCreate.CustomerDocument).Id) ?? throw new InvalidOperationException("Cliente não cadastrado. Realize o cadastro antes de criar a ordem de serviço");
+            var customerDocument = DocumentWrapper.CreateDocument(orderToCreate.CustomerDocument).Id;
+            var vehicleLicensePlate = LicensePlateWrapper.CreateLicensePlate(orderToCreate.VehicleLicensePlate).License;
 
-            var vehicle = await VehicleService.GetVehicle(licensePlate: orderToCreate.VehicleLicensePlate) ?? throw new InvalidOperationException("Documento não cadastrado. Realize o cadastro antes de criar a ordem de serviço");
+            var customer = await DependenciesGateway.GetCustomerByDocument(customerDocument) ?? throw new NotFoundException("Cliente não cadastrado. Realize o cadastro antes de criar a ordem de serviço");
 
-            var order = new Order(customer.Document, vehicle.LicensePlate);
+            var vehicle = await DependenciesGateway.GetVehicleByLicensePlate(vehicleLicensePlate) ?? throw new NotFoundException("Veículo não cadastrado. Realize o cadastro antes de criar a ordem de serviço");
+
+            var order = new Order(customer.Document.Id, vehicle.LicensePlate.License, DateTime.Now);
 
             var registry = await Repository.CreateOrder(order);
 
             if (registry == 0)
-                throw new InvalidOperationException("Erro ao salvar ordem");
+                throw new ApplicationFailureException("Erro ao salvar ordem");
         }
 
-        public async Task<IEnumerable<DetailedWorkOrderDto>> GetOrders(Guid? id = null, string customerDocument = "", string vehicleLicensePlate = "")
+        public async Task<IEnumerable<DetailedWorkOrderResult>> GetOrders(Guid? id = null, string customerDocument = "", string vehicleLicensePlate = "")
         {
             if (!string.IsNullOrEmpty(customerDocument))
                 customerDocument = DocumentWrapper.CreateDocument(customerDocument).Id;
@@ -42,13 +49,13 @@ namespace Service
 
             var orders = await Repository.GetOrders(id, customerDocument, vehicleLicensePlate);
 
-            return orders.Select(DetailedWorkOrderDto.Create);
+            return orders.Select(DetailedWorkOrderResult.Create);
         }
 
-        public async Task<DetailedWorkOrderDto?> GetOrder(Guid? id = null, string customerDocument = "", string vehicleLicensePlate = "")
+        public async Task<DetailedWorkOrderResult?> GetOrder(Guid? id = null, string customerDocument = "", string vehicleLicensePlate = "")
         {
             if (id == null && string.IsNullOrEmpty(customerDocument) && string.IsNullOrEmpty(vehicleLicensePlate))
-                throw new InvalidOperationException("Falha ao pegar ordem. Nenhum argumento fornecido");
+                throw new InvalidRequestException("Falha ao pegar ordem. Nenhum argumento fornecido");
 
             if (!string.IsNullOrEmpty(customerDocument))
                 customerDocument = DocumentWrapper.CreateDocument(customerDocument).Id;
@@ -61,84 +68,84 @@ namespace Service
             if (order == null)
                 return null;
 
-            return DetailedWorkOrderDto.Create(order);
+            return DetailedWorkOrderResult.Create(order);
         }
 
         public async Task StartDiagnosis(Guid orderId)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new InvalidOperationException("Serviço não encontrado");
+            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException("Serviço não encontrado");
 
             order.StartDiagnosis();
 
             var registry = await Repository.UpdateOrder(order);
 
             if (registry == 0)
-                throw new InvalidOperationException("Falha ao atualizar a ordem");
+                throw new ApplicationFailureException("Falha ao atualizar a ordem");
         }
 
-        public async Task AddServiceToOrder(Guid orderId, UpdateItemDto<int> serviceDto)
+        public async Task AddServiceToOrder(Guid orderId, UpdateOrderItemCommand<int> service)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new InvalidOperationException("Ordem não encontrada");
+            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException("Ordem não encontrada");
 
-            var orderService = order.Services.FirstOrDefault(x => x.Id == serviceDto.Id);
+            var orderService = order.Services.FirstOrDefault(x => x.Id == service.Id);
 
             int registry = 0;
 
             if (orderService == null)
             {
-                var service = await CatalogService.GetService(serviceDto.Id) ?? throw new InvalidOperationException($"Serviço com id \"{serviceDto.Id}\" não encontrado");
+                var serviceToAdd = await DependenciesGateway.GetServiceById(service.Id) ?? throw new NotFoundException($"Serviço com id \"{service.Id}\" não encontrado");
 
-                order.AddService(service.ToDomain());
+                order.AddService(serviceToAdd);
 
-                registry = await Repository.AddServiceToOrder(orderId, service.ToDomain());
+                registry = await Repository.AddServiceToOrder(orderId, serviceToAdd);
             }
             else
             {
-                orderService.AddServiceAmount(serviceDto.Value);
+                orderService.AddServiceAmount(service.Value);
 
                 registry = await Repository.UpdateServiceOfOrder(orderId, orderService);
             }
 
             if (registry == 0)
-                throw new InvalidOperationException("Erro ao salvar serviço");
+                throw new ApplicationFailureException("Erro ao salvar serviço");
         }
 
-        public async Task RemoveServiceOfOrder(Guid orderId, UpdateItemDto<int> serviceDto)
+        public async Task RemoveServiceOfOrder(Guid orderId, UpdateOrderItemCommand<int> service)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new InvalidOperationException("Ordem não encontrada");
+            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException("Ordem não encontrada");
 
-            var service = order.Services.First(x => x.Id == serviceDto.Id);
+            var orderService = order.Services.FirstOrDefault(x => x.Id == service.Id) ?? throw new NotFoundException("Serviço não encontrado na ordem");
 
-            service.RemoveServiceAmount(serviceDto.Value);
+            orderService.RemoveServiceAmount(service.Value);
 
             int registry;
 
-            if (service.Amount == 0)
-                registry = await Repository.RemoveServiceFromOrder(orderId, serviceDto.Id);
+            if (orderService.Amount == 0)
+                registry = await Repository.RemoveServiceFromOrder(orderId, service.Id);
             else
-                registry = await Repository.UpdateServiceOfOrder(orderId, service);
+                registry = await Repository.UpdateServiceOfOrder(orderId, orderService);
 
             if (registry == 0)
-                throw new InvalidOperationException("Erro ao salvar serviço");
+                throw new ApplicationFailureException("Erro ao salvar serviço");
         }
 
-        public async Task AddMaterialToOrder(Guid orderId, UpdateItemDto<int> orderItem)
+        public async Task AddMaterialToOrder(Guid orderId, UpdateOrderItemCommand<int> orderItem)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new InvalidOperationException("Ordem não encontrada");
-
-            await StockService.ReserveMaterialAmount(orderItem.Id, orderItem.Value);
+            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException("Ordem não encontrada");
 
             var material = order.Materials.FirstOrDefault(x => x.Id == orderItem.Id);
 
-            try
+            await TransactionManager.ExecuteInTransaction(async () =>
             {
+                await StockService.ReserveMaterialAmount(orderItem.Id, orderItem.Value);
+
                 int registry;
 
                 if (material == null)
                 {
-                    var stockItem = await StockService.GetMaterial(orderItem.Id) ?? throw new InvalidOperationException("Item não encontrado no estoque");
+                    var stockItem = await DependenciesGateway.GetMaterialById(orderItem.Id) ?? throw new NotFoundException("Item não encontrado no estoque");
 
-                    var itemAdded = order.AddMaterial(stockItem.ToDomain());
+                    var itemAdded = order.AddMaterial(stockItem);
 
                     registry = await Repository.AddMaterialToOrder(orderId, itemAdded);
                 }
@@ -150,25 +157,19 @@ namespace Service
                 }
 
                 if (registry == 0)
-                    throw new InvalidOperationException("Erro ao salvar serviço");
-            }
-            catch
+                    throw new ApplicationFailureException("Erro ao salvar serviço");
+            });
+        }
+
+        public async Task RemoveMaterialFromOrder(Guid orderId, UpdateOrderItemCommand<int> orderItem)
+        {
+            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException("Ordem não encontrada");
+
+            await TransactionManager.ExecuteInTransaction(async () =>
             {
                 await StockService.RestoreMaterialAmount(orderItem.Id, orderItem.Value);
 
-                throw;
-            }
-        }
-
-        public async Task RemoveMaterialFromOrder(Guid orderId, UpdateItemDto<int> orderItem)
-        {
-            var order = await Repository.GetOrder(orderId) ?? throw new InvalidOperationException("Ordem não encontrada");
-
-            await StockService.RestoreMaterialAmount(orderItem.Id, orderItem.Value);
-
-            try
-            {
-                var material = order.Materials.First(x => x.Id == orderItem.Id);
+                var material = order.Materials.FirstOrDefault(x => x.Id == orderItem.Id) ?? throw new NotFoundException("Material não encontrado na ordem");
 
                 material.RemoveAmount(orderItem.Value);
                 int registry;
@@ -179,120 +180,131 @@ namespace Service
                     registry = await Repository.UpdateMaterialFromOrder(orderId, material);
 
                 if (registry == 0)
-                    throw new InvalidOperationException("Erro ao salvar serviço");
-            }
-            catch
-            {
-                await StockService.ReserveMaterialAmount(orderItem.Id, orderItem.Value);
-
-                throw;
-            }
+                    throw new ApplicationFailureException("Erro ao salvar serviço");
+            });
         }
 
         public async Task CompleteDiagnosis(Guid orderId)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new InvalidOperationException("Ordem não encontrada");
+            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException("Ordem não encontrada");
 
             order.FinalizeDiagnosis();
 
             var registry = await Repository.UpdateOrder(order);
 
             if (registry == 0)
-                throw new InvalidOperationException("Falha ao atualizar ordem");
+                throw new ApplicationFailureException("Falha ao atualizar ordem");
 
-            try
-            {
-                await NotifyOrderCompleted(order);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Falha ao enviar email para o cliente. {e}");
-            }
+            Logger.LogInformation(
+                "Diagnóstico concluído e evento de orçamento disponível será publicado. OrderId: {OrderId}. Status: {Status}. Budget: {Budget}",
+                order.Id,
+                order.Status,
+                order.Budget);
+
+            await EventDispatcher.Publish(new BudgetAvailableEvent(order));
         }
 
-        public async Task ApproveBudget(Guid orderId, ApproveOrderDto approve)
+        public async Task ApproveBudget(Guid orderId, ApproveOrderCommand approve)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new InvalidOperationException($"Ordem com id \"{orderId}\" não encontrada");
+            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com id \"{orderId}\" não encontrada");
 
             if (order.CustomerDocument.Id != approve.CustomerDocument)
-                throw new InvalidOperationException("Documento de aprovação não está de acordo com o documento do cliente da ordem");
+                throw new BusinessRuleException("Documento de aprovação não está de acordo com o documento do cliente da ordem");
 
             order.ApproveService(approve.Approved);
 
             if (!approve.Approved)
             {
-                foreach (var item in order.Materials)
-                    await StockService.RestoreMaterialAmount(item.Id, item.Amount);
+                await TransactionManager.ExecuteInTransaction(async () =>
+                {
+                    foreach (var item in order.Materials)
+                        await StockService.RestoreMaterialAmount(item.Id, item.Amount);
+
+                    var registry = await Repository.UpdateOrder(order);
+
+                    if (registry == 0)
+                        throw new ApplicationFailureException("Falha ao aprovar ou recusar o orçamento");
+                });
+
+                return;
             }
 
             var registry = await Repository.UpdateOrder(order);
 
             if (registry == 0)
-                throw new InvalidOperationException("Falha ao aprovar ou recusar o orçamento");
+                throw new ApplicationFailureException("Falha ao aprovar ou recusar o orçamento");
         }
 
         public async Task StartExecution(Guid orderId)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new InvalidOperationException($"Ordem com id \"{orderId}\" não encontrada");
+            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com id \"{orderId}\" não encontrada");
 
             order.StartService();
 
             var registry = await Repository.UpdateOrder(order);
 
             if (registry == 0)
-                throw new InvalidOperationException("Falha ao inicar execução");
+                throw new ApplicationFailureException("Falha ao inicar execução");
         }
 
         public async Task CompleteExecution(Guid orderId)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new InvalidOperationException($"Ordem com id \"{orderId}\" não encontrada");
+            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com id \"{orderId}\" não encontrada");
 
-            order.CompleteService();
+            order.CompleteService(DateTime.Now);
 
-            foreach (var item in order.Materials)
-                await StockService.ConsumeReservedAmount(item.Id, item.Amount);
+            await TransactionManager.ExecuteInTransaction(async () =>
+            {
+                foreach (var item in order.Materials)
+                    await StockService.ConsumeReservedAmount(item.Id, item.Amount);
 
-            var registry = await Repository.UpdateOrder(order);
+                var registry = await Repository.UpdateOrder(order);
 
-            if (registry == 0)
-                throw new InvalidOperationException("Falha ao completar execução");
+                if (registry == 0)
+                    throw new ApplicationFailureException("Falha ao completar execução");
+            });
         }
 
         public async Task DeliverVehicle(Guid orderId)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new InvalidOperationException($"Ordem com id \"{orderId}\" não encontrada");
+            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com id \"{orderId}\" não encontrada");
 
             order.DeliverVehicle();
 
             var registry = await Repository.UpdateOrder(order);
 
             if (registry == 0)
-                throw new InvalidOperationException("Falha ao inicar execução");
+                throw new ApplicationFailureException("Falha ao inicar execução");
         }
 
         public async Task DeleteOrder(Guid orderId)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new InvalidOperationException("Ordem não encontrada");
+            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException("Ordem não encontrada");
 
             if (order.Status is not WorkOrderStatus.Finished and not WorkOrderStatus.Delivered)
             {
-                foreach (var item in order.Materials)
-                    await StockService.RestoreMaterialAmount(item.Id, item.Amount);
+                await TransactionManager.ExecuteInTransaction(async () =>
+                {
+                    foreach (var item in order.Materials)
+                        await StockService.RestoreMaterialAmount(item.Id, item.Amount);
+
+                    var registry = await Repository.DeleteOrder(orderId);
+
+                    if (registry == 0)
+                        throw new ApplicationFailureException("Falha ao deletar ordem");
+                });
+
+                return;
             }
 
             var registry = await Repository.DeleteOrder(orderId);
 
             if (registry == 0)
-                throw new InvalidOperationException("Falha ao deletar ordem");
+                throw new ApplicationFailureException("Falha ao deletar ordem");
         }
 
-        private async Task NotifyOrderCompleted(IOrder workOrder)
-        {
-            var customer = await CustomerService.GetCustomer(document: workOrder.CustomerDocument.Id) ?? throw new InvalidOperationException("Falha ao notificar o cliente. Cliente não encontrado");
-
-            var vehicle = await VehicleService.GetVehicle(licensePlate: workOrder.VehicleLicensePlate.License) ?? throw new InvalidOperationException("Falha ao notificar o cliente. Veículo não encontrado");
-
-            await EmailService.NotifyBudget(customer.ToDomain(), vehicle.ToDomain(), workOrder);
-        }
     }
 }
+
+
+

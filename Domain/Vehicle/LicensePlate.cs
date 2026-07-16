@@ -1,4 +1,5 @@
-﻿using Domain.Interface.Vehicle;
+﻿using Domain.Interface.Exceptions;
+using Domain.Interface.Vehicle;
 
 namespace Domain.Vehicle
 {
@@ -15,14 +16,14 @@ namespace Domain.Vehicle
             license = license.ToLower();
 
             if (license.Length != ValidLicensePlateLenght)
-                throw new ArgumentException("Placa inválida");
+                throw new DomainValidationException("Placa inválida");
 
             if (license.FirstOrDefault(x => char.IsPunctuation(x) || char.IsSymbol(x)) != default)
-                throw new ArgumentException("Placa não deve conter símbolos ou pontuação");
+                throw new DomainValidationException("Placa não deve conter símbolos ou pontuação");
 
             for (int i = 0; i < ValidLicensePlateLenght; i++)
                 if (char.GetUnicodeCategory(license[i]) != char.GetUnicodeCategory(ValidLicensePlateModel[i]))
-                    throw new ArgumentException("Placa fora do modelo permitido");
+                    throw new DomainValidationException("Placa fora do modelo permitido");
 
             License = license.ToUpper();
         }

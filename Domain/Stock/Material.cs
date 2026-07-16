@@ -1,4 +1,5 @@
-﻿using Domain.Interface.Stock;
+﻿using Domain.Interface.Exceptions;
+using Domain.Interface.Stock;
 
 namespace Domain.Stock
 {
@@ -7,25 +8,28 @@ namespace Domain.Stock
         public Guid Id { get; private set; }
         public string Name { get; private set; }
         public string Brand { get; private set; }
-        public double Price { get; private set; }
+        public decimal Price { get; private set; }
         public int Amount { get; private set; }
         public int ReservedAmount { get; private set; }
 
-        public Material(string name, string brand, double price, int amount) : this(Guid.NewGuid(), name, brand, price, amount) { }
+        public Material(string name, string brand, decimal price, int amount) : this(Guid.NewGuid(), name, brand, price, amount) { }
 
-        public Material(Guid id, string name, string brand, double price, int amount, int reservedAmount = 0)
+        public Material(Guid id, string name, string brand, decimal price, int amount, int reservedAmount = 0)
         {
-            ArgumentException.ThrowIfNullOrEmpty(name);
-            ArgumentException.ThrowIfNullOrEmpty(brand);
+            if (string.IsNullOrEmpty(name))
+                throw new DomainValidationException("Nome deve ser preenchido");
+
+            if (string.IsNullOrEmpty(brand))
+                throw new DomainValidationException("Marca deve ser preenchido");
 
             if (price <= 0)
-                throw new ArgumentException($"Preço não pode ser menor ou igual a 0");
+                throw new DomainValidationException($"Preço não pode ser menor ou igual a 0");
 
             if (amount < 0)
-                throw new ArgumentException($"Quantidade não pode ser menor ou igual a 0");
+                throw new DomainValidationException($"Quantidade não pode ser menor ou igual a 0");
 
             if (reservedAmount < 0)
-                throw new ArgumentException($"Quantidade reservada não pode ser menor ou igual a 0");
+                throw new DomainValidationException($"Quantidade reservada não pode ser menor ou igual a 0");
 
             Id = id;
             Name = name;
@@ -40,7 +44,7 @@ namespace Domain.Stock
         public void RemoveAmount(int amount)
         {
             if (amount > Amount)
-                throw new InvalidOperationException("Não é possível remover mais do que a quantidade em estoque");
+                throw new DomainBusinessRuleException("Não é possível remover mais do que a quantidade em estoque");
 
             Amount -= amount;
         }
@@ -48,7 +52,7 @@ namespace Domain.Stock
         public void ReserveAmount(int amount)
         {
             if (amount > Amount)
-                throw new InvalidOperationException("Não é possível reservar mais do que a quantidade em estoque");
+                throw new DomainBusinessRuleException("Não é possível reservar mais do que a quantidade em estoque");
 
             Amount -= amount;
             ReservedAmount += amount;
@@ -57,7 +61,7 @@ namespace Domain.Stock
         public void RestoreAmount(int amount)
         {
             if (amount > ReservedAmount)
-                throw new InvalidOperationException("Não é possível restaurar mais do que a quantidade em reserva");
+                throw new DomainBusinessRuleException("Não é possível restaurar mais do que a quantidade em reserva");
 
             ReservedAmount -= amount;
             Amount += amount;
@@ -66,15 +70,15 @@ namespace Domain.Stock
         public void ConsumeReservedAmount(int amount)
         {
             if (amount > ReservedAmount)
-                throw new InvalidOperationException("Não é possível consumir mais do que a quantidade em reserva");
+                throw new DomainBusinessRuleException("Não é possível consumir mais do que a quantidade em reserva");
 
             ReservedAmount -= amount;
         }
 
-        public void UpdatePrice(double price)
+        public void UpdatePrice(decimal price)
         {
             if (price <= 0)
-                throw new InvalidOperationException("Preço não pode ser menor ou igual a 0");
+                throw new DomainBusinessRuleException("Preço não pode ser menor ou igual a 0");
 
             Price = price;
         }

@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using GerenciamentoMecanicaSistema.Contracts.Requests.Vehicle;
+using GerenciamentoMecanicaSistema.Contracts.Responses.Vehicle;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interface;
-using Service.Interface.Dto.CustomAttributes;
-using Service.Interface.Dto.Vehicle;
+using GerenciamentoMecanicaSistema.Contracts.Validation;
 
 namespace GerenciamentoMecanicaSistema.Controllers
 {
@@ -19,22 +20,22 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> RegisterVehicle([FromBody] CreateVehicleDto vehicleDto)
+        public async Task<IActionResult> RegisterVehicle([FromBody] CreateVehicleRequest vehicle)
         {
-            await VehicleService.RegisterVehicle(vehicleDto);
+            await VehicleService.RegisterVehicle(vehicle.ToCommand());
 
             return Created();
         }
 
         [HttpGet()]
         [EndpointDescription("Endpoint para listar os veículos")]
-        [ProducesResponseType(typeof(IEnumerable<VehicleDto>), StatusCodes.Status200OK, Description = "Retorna a lista de veículos")]
+        [ProducesResponseType(typeof(IEnumerable<VehicleResponse>), StatusCodes.Status200OK, Description = "Retorna a lista de veículos")]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         public async Task<IActionResult> GetVehicles([FromQuery] Guid? id = null, [FromQuery] string licensePlate = "")
         {
             var vehicles = await VehicleService.GetVehicles(id, licensePlate);
 
-            return Ok(vehicles);
+            return Ok(vehicles.Select(VehicleResponse.Create));
         }
 
         [HttpPatch("{id}")]
@@ -43,9 +44,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> UpdateVehicle([FromRoute, GuidValidation] Guid id, [FromBody] CreateVehicleDto vehicleDto)
+        public async Task<IActionResult> UpdateVehicle([FromRoute, GuidValidation] Guid id, [FromBody] CreateVehicleRequest vehicle)
         {
-            await VehicleService.UpdateVehicle(id, vehicleDto);
+            await VehicleService.UpdateVehicle(id, vehicle.ToCommand());
 
             return NoContent();
         }

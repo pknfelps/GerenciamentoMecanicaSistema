@@ -1,10 +1,11 @@
-﻿using Service.Interface.Dto.User;
+using Service.Interface.Commands.User;
+using Service.Interface.Results.User;
 
 namespace Service.Interface
 {
     public interface IUserService
     {
-        Task RegisterUser(CreateUserDto userDto);
-        Task<UserDto?> GetUser(CreateUserDto userDto);
+        Task RegisterUser(CreateUserCommand user);
+        Task<UserResult?> GetUser(string name = "", string role = "");
     }
 }

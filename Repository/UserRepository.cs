@@ -1,13 +1,13 @@
-﻿using Dapper;
+using Dapper;
 using Domain.Interface.User;
 using Domain.User;
-using Repository.Dto;
+using Repository.PersistenceModels;
 using Repository.Interface;
 using System.Data;
 
 namespace Repository
 {
-    public class UserRepository(IDbConnection connection) : BaseRepository(connection), IUserRepository
+    public class UserRepository(IDbConnection connection, DbTransactionContext? transactionContext = null) : BaseRepository(connection, transactionContext), IUserRepository
     {
         public static string RegisterUserSql { get; private set; } = """
                 INSERT INTO users(id, name, password, role)
@@ -22,12 +22,12 @@ namespace Repository
 
         public async Task<int> RegisterUser(IUser user)
         {
-            return await Connection.ExecuteAsync(RegisterUserSql, UserDb.Create(user));
+            return await Connection.ExecuteAsync(RegisterUserSql, UserDb.Create(user), Transaction);
         }
 
         public async Task<IUser?> GetUser(string name, string role)
         {
-            var usuario = await Connection.QuerySingleOrDefaultAsync<UserDb?>(GetUserSql, new { Name = name, Role = role });
+            var usuario = await Connection.QuerySingleOrDefaultAsync<UserDb?>(GetUserSql, new { Name = name, Role = role }, Transaction);
 
             if (usuario == null)
                 return null;

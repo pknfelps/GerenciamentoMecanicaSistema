@@ -1,4 +1,5 @@
-﻿using Domain.Interface.User;
+﻿using Domain.Interface.Exceptions;
+using Domain.Interface.User;
 
 namespace Domain.User
 {
@@ -10,19 +11,20 @@ namespace Domain.User
 
         public Password(string password)
         {
-            ArgumentException.ThrowIfNullOrEmpty(password);
+            if (string.IsNullOrEmpty(password))
+                throw new DomainValidationException("Senha deve ser preenchida");
 
             if (password.Contains(' '))
-                throw new ArgumentException("Senha não deve conter espaços em branco");
+                throw new DomainValidationException("Senha não deve conter espaços em branco");
 
             if (password.Length < MinPasswordLenght)
-                throw new ArgumentException("Senha deve conter mais de 4 caracteres");
+                throw new DomainValidationException("Senha deve conter mais de 4 caracteres");
 
             if (password.FirstOrDefault(char.IsLetter) == default || password.FirstOrDefault(char.IsNumber) == default || (password.FirstOrDefault(x => char.IsSymbol(x) || char.IsPunctuation(x)) == default))
-                throw new ArgumentException("Senha deve conter letras, números e símbolos");
+                throw new DomainValidationException("Senha deve conter letras, números e símbolos");
 
             if (password.FirstOrDefault(x => char.IsLetter(x) && char.IsUpper(x)) == default || password.FirstOrDefault(x => char.IsLetter(x) && char.IsLower(x)) == default)
-                throw new ArgumentException("Senha deve conter letras maiúsculas e minúsculas");
+                throw new DomainValidationException("Senha deve conter letras maiúsculas e minúsculas");
 
             Secret = password;
         }

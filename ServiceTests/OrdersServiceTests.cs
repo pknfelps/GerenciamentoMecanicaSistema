@@ -3,16 +3,18 @@ using Domain.Interface.Order;
 using Domain.Interface.Service;
 using Domain.Interface.Stock;
 using Domain.Interface.Vehicle;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Repository.Interface;
 using Service;
 using Service.Interface;
-using Service.Interface.Dto;
-using Service.Interface.Dto.Customer;
-using Service.Interface.Dto.Order;
-using Service.Interface.Dto.Service;
-using Service.Interface.Dto.Stock;
-using Service.Interface.Dto.Vehicle;
+using Service.Interface.Exceptions;
+using Service.Interface.Commands.Order;
+using Service.Interface.Events;
+using Service.Interface.Events.Order;
+using Service.Interface.Results.Order;
+using Service.Interface.Results.Customer;
+using Service.Interface.Results.Vehicle;
 
 namespace ServiceTests
 {
@@ -20,37 +22,35 @@ namespace ServiceTests
     {
         private IOrdersService Service { get; set; }
         private IOrdersRepository Repository { get; set; }
-        private ICustomerService CustomerService { get; set; }
-        private IVehicleService VehicleService { get; set; }
+        private IOrderDependenciesGateway DependenciesGateway { get; set; }
         private IStockService StockService { get; set; }
-        private ICatalogService MechanicalService { get; set; }
-        private IEmailService EmailService { get; set; }
+        private ITransactionManager TransactionManager { get; set; }
+        private IApplicationEventDispatcher EventDispatcher { get; set; }
 
-        private static CustomerDto ExistingCustomer { get; } = new(Guid.NewGuid(), "Teste", "417.384.220-11", "(11) 91234-5678", "teste@gmail.com");
+        private static CustomerResult ExistingCustomer { get; } = new(Guid.NewGuid(), "Teste", "417.384.220-11", "(11) 91234-5678", "teste@gmail.com");
+        private static ICustomer ExistingCustomerDomain { get; } = CreateSubstituteCustomer(ExistingCustomer.Id, ExistingCustomer.Name, ExistingCustomer.Document);
 
-        private static CustomerDto ExistingFailCustomer { get; } = new(Guid.NewGuid(), "Teste", "662.119.730-63", "(11) 91234-5678", "teste@gmail.com");
+        private static CustomerResult ExistingFailCustomer { get; } = new(Guid.NewGuid(), "Teste", "662.119.730-63", "(11) 91234-5678", "teste@gmail.com");
+        private static ICustomer ExistingFailCustomerDomain { get; } = CreateSubstituteCustomer(ExistingFailCustomer.Id, ExistingFailCustomer.Name, ExistingFailCustomer.Document);
 
-        private static VehicleDto ExistingVehicle { get; } = new(Guid.NewGuid(), ExistingCustomer.Document, "Honda", "Civic", 2026, "CVC2026");
+        private static VehicleResult ExistingVehicle { get; } = new(Guid.NewGuid(), ExistingCustomer.Document, "Honda", "Civic", 2026, "CVC2026");
+        private static IVehicle ExistingVehicleDomain { get; } = CreateSubstituteVehicle(ExistingVehicle.Id, ExistingVehicle.CustomerDocument, ExistingVehicle.LicensePlate);
 
-        private static CreateOrderDto OrderToCreate { get; } = new(ExistingCustomer.Document, ExistingVehicle.LicensePlate);
+        private static CreateOrderCommand OrderToCreate { get; } = new(ExistingCustomer.Document, ExistingVehicle.LicensePlate);
 
         private static IMechanicalService ExistingService { get; } = CreateSubstituteService(Guid.NewGuid(), "Revisão", 6, 100, 1);
-        private static ServiceDto ExistingServiceDto { get; } = new(ExistingService.Id, "Revisão", 6, 100, 1);
         private static IMechanicalService ExistingService2 { get; } = CreateSubstituteService(Guid.NewGuid(), "Troca de Pneu", 2, 150, 1);
-        private static ServiceDto ExistingService2Dto { get; } = new(ExistingService2.Id, "Troca de Pneu", 2, 150, 1);
         private static IMaterial ExistingPart { get; } = CreateSubstitutePart(Guid.NewGuid(), "Pneu", "Michelin", 600, 10, 4);
-        private static MaterialDto ExistingPartDto { get; } = new(ExistingPart.Id, ExistingPart.Name, ExistingPart.Brand, ExistingPart.Price, ExistingPart.Amount, ExistingPart.ReservedAmount);
         private static IMaterial ExistingPart2 { get; } = CreateSubstitutePart(Guid.NewGuid(), "Óleo de Motor", "Lubrax", 35, 20, 0);
-        private static MaterialDto ExistingPart2Dto { get; } = new(ExistingPart2.Id, ExistingPart2.Name, ExistingPart2.Brand, ExistingPart2.Price, ExistingPart2.Amount, ExistingPart2.ReservedAmount);
-        private static IOrder ExistingReceivedOrder { get; } = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0, WorkOrderStatus.Received);
-        private static IOrder ExistingTestOrder { get; set; } = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0, WorkOrderStatus.Received);
+        private static IOrder ExistingReceivedOrder { get; } = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0m, WorkOrderStatus.Received);
+        private static IOrder ExistingTestOrder { get; set; } = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0m, WorkOrderStatus.Received);
         private static readonly Guid ExistingOrderInDiagnosisId = Guid.NewGuid();
         private static IOrder ExistingOrderInDiagnosis { get; set; }
 
         [SetUp]
         public async Task SetUp()
         {
-            ExistingOrderInDiagnosis = CreateSubstituteOrder(ExistingOrderInDiagnosisId, [CreateSubstituteService(ExistingService.Id, ExistingService.Description, ExistingService.Hours, ExistingService.PricePerHour, 2), CreateSubstituteService(ExistingService2.Id, ExistingService2.Description, ExistingService2.Hours, ExistingService2.PricePerHour, 4)], [CreateSubstitutePart(ExistingPart.Id, ExistingPart.Name, ExistingPart.Brand, ExistingPart.Price, 4, 0), CreateSubstitutePart(ExistingPart2.Id, ExistingPart2.Name, ExistingPart2.Brand, ExistingPart2.Price, 1, 0)], 0.0, WorkOrderStatus.InDiagnosis);
+            ExistingOrderInDiagnosis = CreateSubstituteOrder(ExistingOrderInDiagnosisId, [CreateSubstituteService(ExistingService.Id, ExistingService.Description, ExistingService.Hours, ExistingService.PricePerHour, 2), CreateSubstituteService(ExistingService2.Id, ExistingService2.Description, ExistingService2.Hours, ExistingService2.PricePerHour, 4)], [CreateSubstitutePart(ExistingPart.Id, ExistingPart.Name, ExistingPart.Brand, ExistingPart.Price, 4, 0), CreateSubstitutePart(ExistingPart2.Id, ExistingPart2.Name, ExistingPart2.Brand, ExistingPart2.Price, 1, 0)], 0.0m, WorkOrderStatus.InDiagnosis);
 
             Repository = Substitute.For<IOrdersRepository>();
 
@@ -132,7 +132,7 @@ namespace ServiceTests
 
                 if (order.Id == ExistingOrderInDiagnosisId)
                 {
-                    if (order.Status == WorkOrderStatus.WaitingForApproval && order.Budget != 0.0)
+                    if (order.Status == WorkOrderStatus.WaitingForApproval && order.Budget != 0.0m)
                         return 1;
 
                     if (order.Status == WorkOrderStatus.InExecution || order.Status == WorkOrderStatus.Delivered)
@@ -224,40 +224,38 @@ namespace ServiceTests
                 return 0;
             });
 
-            CustomerService = Substitute.For<ICustomerService>();
+            DependenciesGateway = Substitute.For<IOrderDependenciesGateway>();
 
-            List<CustomerDto> customers = [ExistingCustomer, ExistingFailCustomer];
+            List<ICustomer> customers = [ExistingCustomerDomain, ExistingFailCustomerDomain];
 
-            CustomerService.GetCustomer(document: Arg.Any<string>()).Returns(callInfo =>
+            DependenciesGateway.GetCustomerByDocument(Arg.Any<string>()).Returns(callInfo =>
             {
-                var document = callInfo.ArgAt<string>(2);
+                var document = callInfo.ArgAt<string>(0);
 
-                return customers.FirstOrDefault(x => x.Document == document);
+                return customers.FirstOrDefault(x => x.Document.Id == document);
             });
 
-            VehicleService = Substitute.For<IVehicleService>();
-
-            VehicleService.GetVehicle(licensePlate: Arg.Any<string>()).Returns(callInfo =>
+            DependenciesGateway.GetVehicleByLicensePlate(Arg.Any<string>()).Returns(callInfo =>
             {
-                var license = callInfo.ArgAt<string>(1);
+                var license = callInfo.ArgAt<string>(0);
 
                 if (license == ExistingVehicle.LicensePlate)
-                    return ExistingVehicle;
+                    return ExistingVehicleDomain;
 
                 return null;
             });
 
             StockService = Substitute.For<IStockService>();
 
-            StockService.GetMaterial(Arg.Any<Guid>()).Returns(callInfo =>
+            DependenciesGateway.GetMaterialById(Arg.Any<Guid>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
                 if (id == ExistingPart.Id)
-                    return ExistingPartDto;
+                    return ExistingPart;
 
                 if (id == ExistingPart2.Id)
-                    return ExistingPart2Dto;
+                    return ExistingPart2;
 
                 return null;
             });
@@ -265,26 +263,26 @@ namespace ServiceTests
             StockService.ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>()).Returns(Task.CompletedTask);
             StockService.RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>()).Returns(Task.CompletedTask);
 
-            MechanicalService = Substitute.For<ICatalogService>();
-
-            MechanicalService.GetService(Arg.Any<Guid>()).Returns(callInfo =>
+            DependenciesGateway.GetServiceById(Arg.Any<Guid>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
                 if (id == ExistingService.Id)
-                    return ExistingServiceDto;
+                    return ExistingService;
 
                 if (id == ExistingService2.Id)
-                    return ExistingService2Dto;
+                    return ExistingService2;
 
                 return null;
             });
 
-            EmailService = Substitute.For<IEmailService>();
+            TransactionManager = Substitute.For<ITransactionManager>();
+            TransactionManager.ExecuteInTransaction(Arg.Any<Func<Task>>()).Returns(callInfo => callInfo.Arg<Func<Task>>()());
 
-            EmailService.NotifyBudget(Arg.Any<ICustomer>(), Arg.Any<IVehicle>(), Arg.Any<IOrder>()).Returns(Task.CompletedTask);
+            EventDispatcher = Substitute.For<IApplicationEventDispatcher>();
+            EventDispatcher.Publish(Arg.Any<IApplicationEvent>()).Returns(Task.CompletedTask);
 
-            Service = new OrdersService(Repository, CustomerService, VehicleService, StockService, MechanicalService, EmailService);
+            Service = new OrdersService(Repository, DependenciesGateway, StockService, TransactionManager, EventDispatcher, Substitute.For<ILogger<OrdersService>>());
         }
 
         [Test]
@@ -292,44 +290,44 @@ namespace ServiceTests
         {
             await Service.CreateServiceOrder(OrderToCreate);
 
-            await CustomerService.Received(1).GetCustomer(document: ExistingCustomer.Document);
-            await VehicleService.Received(1).GetVehicle(licensePlate: ExistingVehicle.LicensePlate);
+            await DependenciesGateway.Received(1).GetCustomerByDocument(ExistingCustomer.Document);
+            await DependenciesGateway.Received(1).GetVehicleByLicensePlate(ExistingVehicle.LicensePlate);
             await Repository.ReceivedWithAnyArgs(1).CreateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
         public async Task MustNotCreateOrderIfCustomerNotExists()
         {
-            var order = new CreateOrderDto("000.000.000-00", ExistingVehicle.LicensePlate);
+            var order = new CreateOrderCommand("000.000.000-00", ExistingVehicle.LicensePlate);
 
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CreateServiceOrder(order));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.CreateServiceOrder(order));
 
-            await CustomerService.Received(1).GetCustomer(document: order.CustomerDocument);
-            await VehicleService.ReceivedWithAnyArgs(0).GetVehicle();
+            await DependenciesGateway.Received(1).GetCustomerByDocument(order.CustomerDocument);
+            await DependenciesGateway.ReceivedWithAnyArgs(0).GetVehicleByLicensePlate(default!);
             await Repository.ReceivedWithAnyArgs(0).CreateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
         public async Task MustNotCreateOrderIfVehicleNotExists()
         {
-            var order = new CreateOrderDto(ExistingCustomer.Document, "AAA0000");
+            var order = new CreateOrderCommand(ExistingCustomer.Document, "AAA0000");
 
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CreateServiceOrder(order));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.CreateServiceOrder(order));
 
-            await CustomerService.Received(1).GetCustomer(document: ExistingCustomer.Document);
-            await VehicleService.Received(1).GetVehicle(licensePlate: order.VehicleLicensePlate);
+            await DependenciesGateway.Received(1).GetCustomerByDocument(ExistingCustomer.Document);
+            await DependenciesGateway.Received(1).GetVehicleByLicensePlate(order.VehicleLicensePlate);
             await Repository.ReceivedWithAnyArgs(0).CreateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
         public async Task MustFailToCreateOrder()
         {
-            var order = new CreateOrderDto(ExistingFailCustomer.Document, ExistingVehicle.LicensePlate);
+            var order = new CreateOrderCommand(ExistingFailCustomer.Document, ExistingVehicle.LicensePlate);
 
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CreateServiceOrder(order));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.CreateServiceOrder(order));
 
-            await CustomerService.Received(1).GetCustomer(document: ExistingFailCustomer.Document);
-            await VehicleService.Received(1).GetVehicle(licensePlate: ExistingVehicle.LicensePlate);
+            await DependenciesGateway.Received(1).GetCustomerByDocument(ExistingFailCustomer.Document);
+            await DependenciesGateway.Received(1).GetVehicleByLicensePlate(ExistingVehicle.LicensePlate);
             await Repository.ReceivedWithAnyArgs(1).CreateOrder(Arg.Any<IOrder>());
         }
 
@@ -471,7 +469,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotGetOrderIfNoParameterWasGiven()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.GetOrder());
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.GetOrder());
         }
 
         [Test]
@@ -642,7 +640,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotStartDiagnosisIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.StartDiagnosis(Guid.NewGuid()));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.StartDiagnosis(Guid.NewGuid()));
 
             await Repository.Received(1).GetOrder(Arg.Any<Guid>());
             await Repository.Received(0).UpdateOrder(Arg.Any<IOrder>());
@@ -651,7 +649,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToStartDiagnosis()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.StartDiagnosis(ExistingOrderInDiagnosis.Id));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.StartDiagnosis(ExistingOrderInDiagnosis.Id));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosis.Id);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
@@ -663,7 +661,7 @@ namespace ServiceTests
             await Service.AddServiceToOrder(ExistingReceivedOrder.Id, new(ExistingService.Id, 1));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
-            await MechanicalService.Received(1).GetService(ExistingService.Id);
+            await DependenciesGateway.Received(1).GetServiceById(ExistingService.Id);
             await Repository.Received(1).AddServiceToOrder(ExistingReceivedOrder.Id, Arg.Any<IMechanicalService>());
             await Repository.ReceivedWithAnyArgs(0).UpdateServiceOfOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
         }
@@ -674,7 +672,7 @@ namespace ServiceTests
             await Service.AddServiceToOrder(ExistingOrderInDiagnosis.Id, new(ExistingService.Id, 1));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosis.Id);
-            await MechanicalService.ReceivedWithAnyArgs(0).GetService(Arg.Any<Guid>());
+            await DependenciesGateway.ReceivedWithAnyArgs(0).GetServiceById(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
             await Repository.Received(1).UpdateServiceOfOrder(ExistingOrderInDiagnosis.Id, Arg.Any<IMechanicalService>());
         }
@@ -682,10 +680,10 @@ namespace ServiceTests
         [Test]
         public async Task MustNotAddServiceIfOrderNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddServiceToOrder(Guid.NewGuid(), new UpdateItemDto<int>(ExistingService.Id, 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddServiceToOrder(Guid.NewGuid(), new UpdateOrderItemCommand<int>(ExistingService.Id, 1)));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
-            await MechanicalService.ReceivedWithAnyArgs(0).GetService(Arg.Any<Guid>());
+            await DependenciesGateway.ReceivedWithAnyArgs(0).GetServiceById(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
             await Repository.ReceivedWithAnyArgs(0).UpdateServiceOfOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
         }
@@ -693,10 +691,10 @@ namespace ServiceTests
         [Test]
         public async Task MustNotAddServiceIfServiceNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddServiceToOrder(ExistingReceivedOrder.Id, new UpdateItemDto<int>(Guid.NewGuid(), 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddServiceToOrder(ExistingReceivedOrder.Id, new UpdateOrderItemCommand<int>(Guid.NewGuid(), 1)));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
-            await MechanicalService.ReceivedWithAnyArgs(1).GetService(Arg.Any<Guid>());
+            await DependenciesGateway.ReceivedWithAnyArgs(1).GetServiceById(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
             await Repository.ReceivedWithAnyArgs(0).UpdateServiceOfOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
         }
@@ -704,10 +702,10 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToAddServiceToOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddServiceToOrder(ExistingReceivedOrder.Id, new UpdateItemDto<int>(ExistingService2.Id, 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddServiceToOrder(ExistingReceivedOrder.Id, new UpdateOrderItemCommand<int>(ExistingService2.Id, 1)));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
-            await MechanicalService.Received(1).GetService(ExistingService2.Id);
+            await DependenciesGateway.Received(1).GetServiceById(ExistingService2.Id);
             await Repository.ReceivedWithAnyArgs(1).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
             await Repository.ReceivedWithAnyArgs(0).UpdateServiceOfOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
         }
@@ -715,10 +713,10 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToAddServiceAmountToOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddServiceToOrder(ExistingOrderInDiagnosis.Id, new UpdateItemDto<int>(ExistingService2.Id, 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddServiceToOrder(ExistingOrderInDiagnosis.Id, new UpdateOrderItemCommand<int>(ExistingService2.Id, 1)));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosis.Id);
-            await MechanicalService.ReceivedWithAnyArgs(0).GetService(Arg.Any<Guid>());
+            await DependenciesGateway.ReceivedWithAnyArgs(0).GetServiceById(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
             await Repository.ReceivedWithAnyArgs(1).UpdateServiceOfOrder(Arg.Any<Guid>(), Arg.Any<IMechanicalService>());
         }
@@ -746,7 +744,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotRemoveServiceIfOrderNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveServiceOfOrder(Guid.NewGuid(), new UpdateItemDto<int>(ExistingService.Id, 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RemoveServiceOfOrder(Guid.NewGuid(), new UpdateOrderItemCommand<int>(ExistingService.Id, 1)));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).RemoveServiceFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>());
@@ -756,7 +754,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToRemoveServiceOfOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveServiceOfOrder(ExistingOrderInDiagnosis.Id, new UpdateItemDto<int>(ExistingService2.Id, 4)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RemoveServiceOfOrder(ExistingOrderInDiagnosis.Id, new UpdateOrderItemCommand<int>(ExistingService2.Id, 4)));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosis.Id);
             await Repository.Received(1).RemoveServiceFromOrder(ExistingOrderInDiagnosis.Id, ExistingService2.Id);
@@ -766,7 +764,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToRemoveServiceAmountToOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveServiceOfOrder(ExistingOrderInDiagnosis.Id, new UpdateItemDto<int>(ExistingService2.Id, 2)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RemoveServiceOfOrder(ExistingOrderInDiagnosis.Id, new UpdateOrderItemCommand<int>(ExistingService2.Id, 2)));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosis.Id);
             await Repository.ReceivedWithAnyArgs(0).RemoveServiceFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>());
@@ -800,7 +798,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotAddPartToOrderIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddMaterialToOrder(Guid.NewGuid(), new(ExistingPart.Id, 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddMaterialToOrder(Guid.NewGuid(), new(ExistingPart.Id, 1)));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await StockService.ReceivedWithAnyArgs(0).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -812,37 +810,37 @@ namespace ServiceTests
         [Test]
         public async Task MustNotAddPartToOrderIfPartNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddMaterialToOrder(ExistingReceivedOrder.Id, new(Guid.NewGuid(), 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddMaterialToOrder(ExistingReceivedOrder.Id, new(Guid.NewGuid(), 1)));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
             await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(0).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
             await Repository.ReceivedWithAnyArgs(0).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
-            await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustFailToAddPartToOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddMaterialToOrder(ExistingReceivedOrder.Id, new(ExistingPart2.Id, 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddMaterialToOrder(ExistingReceivedOrder.Id, new(ExistingPart2.Id, 1)));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
             await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(1).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
             await Repository.ReceivedWithAnyArgs(0).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
-            await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
         public async Task MustFailToAddPartAmountToOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddMaterialToOrder(ExistingOrderInDiagnosis.Id, new(ExistingPart2.Id, 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddMaterialToOrder(ExistingOrderInDiagnosis.Id, new(ExistingPart2.Id, 1)));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosis.Id);
             await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(0).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
             await Repository.ReceivedWithAnyArgs(1).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
-            await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
@@ -872,7 +870,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotRemovePartFromOrderIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveMaterialFromOrder(Guid.NewGuid(), new(ExistingPart.Id, 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RemoveMaterialFromOrder(Guid.NewGuid(), new(ExistingPart.Id, 1)));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await StockService.ReceivedWithAnyArgs(0).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -884,10 +882,10 @@ namespace ServiceTests
         [Test]
         public async Task MustNotRemovePartFromOrderIfPartNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveMaterialFromOrder(ExistingReceivedOrder.Id, new(Guid.NewGuid(), 1)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RemoveMaterialFromOrder(ExistingReceivedOrder.Id, new(Guid.NewGuid(), 1)));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
-            await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(0).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
             await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -896,10 +894,10 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToRemovePartFromOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveMaterialFromOrder(ExistingOrderInDiagnosisId, new(ExistingPart.Id, 4)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RemoveMaterialFromOrder(ExistingOrderInDiagnosisId, new(ExistingPart.Id, 4)));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
-            await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(1).RemoveMaterialFromOrder(ExistingOrderInDiagnosisId, ExistingPart.Id);
             await Repository.ReceivedWithAnyArgs(0).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
             await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -908,13 +906,13 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToRemovePartAmountFromOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddMaterialToOrder(ExistingOrderInDiagnosis.Id, new(ExistingPart2.Id, 0)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddMaterialToOrder(ExistingOrderInDiagnosis.Id, new(ExistingPart2.Id, 0)));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosis.Id);
             await StockService.ReceivedWithAnyArgs(1).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(0).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(1).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
-            await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
@@ -924,27 +922,27 @@ namespace ServiceTests
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
-            await EmailService.ReceivedWithAnyArgs(1).NotifyBudget(Arg.Any<ICustomer>(), Arg.Any<IVehicle>(), Arg.Any<IOrder>());
+            await EventDispatcher.Received(1).Publish(Arg.Is<BudgetAvailableEvent>(notification => notification.Order == ExistingOrderInDiagnosis));
         }
 
         [Test]
         public async Task MustNotCompleteDiagnosisIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CompleteDiagnosis(Guid.NewGuid()));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.CompleteDiagnosis(Guid.NewGuid()));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await Repository.Received(0).UpdateOrder(Arg.Any<IOrder>());
-            await EmailService.ReceivedWithAnyArgs(0).NotifyBudget(Arg.Any<ICustomer>(), Arg.Any<IVehicle>(), Arg.Any<IOrder>());
+            await EventDispatcher.ReceivedWithAnyArgs(0).Publish(Arg.Any<IApplicationEvent>());
         }
 
         [Test]
         public async Task MustFailToCompleteDiagnosis()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CompleteDiagnosis(ExistingReceivedOrder.Id));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.CompleteDiagnosis(ExistingReceivedOrder.Id));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
-            await EmailService.ReceivedWithAnyArgs(0).NotifyBudget(Arg.Any<ICustomer>(), Arg.Any<IVehicle>(), Arg.Any<IOrder>());
+            await EventDispatcher.ReceivedWithAnyArgs(0).Publish(Arg.Any<IApplicationEvent>());
         }
 
         [Test]
@@ -980,7 +978,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotApproveOrRefuseBudgetIfOrderNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ApproveBudget(Guid.NewGuid(), new("681.487.685-11", false)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(Guid.NewGuid(), new("681.487.685-11", false)));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -990,7 +988,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotApproveOrRefuseBudgetWithWrongDocument()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ApproveBudget(ExistingOrderInDiagnosisId, new("000.000.000-00", false)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(ExistingOrderInDiagnosisId, new("000.000.000-00", false)));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -1000,7 +998,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToApproveOrRefuseBudget()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ApproveBudget(ExistingTestOrder.Id, new(ExistingTestOrder.CustomerDocument.Id, false)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(ExistingTestOrder.Id, new(ExistingTestOrder.CustomerDocument.Id, false)));
 
             await Repository.Received(1).GetOrder(ExistingTestOrder.Id);
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -1019,7 +1017,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotStartExecutionIfOrderNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.StartExecution(Guid.NewGuid()));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.StartExecution(Guid.NewGuid()));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).UpdateOrder(Arg.Any<IOrder>());
@@ -1028,7 +1026,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToStartExecution()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.StartExecution(ExistingReceivedOrder.Id));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.StartExecution(ExistingReceivedOrder.Id));
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
@@ -1046,7 +1044,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotCompleteExecutionIfOrderNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CompleteExecution(Guid.NewGuid()));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.CompleteExecution(Guid.NewGuid()));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).UpdateOrder(Arg.Any<IOrder>());
@@ -1055,7 +1053,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToCompleteExecution()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.CompleteExecution(ExistingTestOrder.Id));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.CompleteExecution(ExistingTestOrder.Id));
 
             await Repository.Received(1).GetOrder(ExistingTestOrder.Id);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
@@ -1073,7 +1071,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotDeliverVehicleIfOrderNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeliverVehicle(Guid.NewGuid()));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.DeliverVehicle(Guid.NewGuid()));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).UpdateOrder(Arg.Any<IOrder>());
@@ -1082,7 +1080,7 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToDeliverVehicle()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeliverVehicle(ExistingTestOrder.Id));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.DeliverVehicle(ExistingTestOrder.Id));
 
             await Repository.Received(1).GetOrder(ExistingTestOrder.Id);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
@@ -1100,7 +1098,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotDeleteOrderIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeleteOrder(Guid.NewGuid()));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.DeleteOrder(Guid.NewGuid()));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).DeleteOrder(Arg.Any<Guid>());
@@ -1109,20 +1107,40 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToDeleteOrder()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeleteOrder(ExistingOrderInDiagnosisId));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.DeleteOrder(ExistingOrderInDiagnosisId));
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
             await Repository.Received(1).DeleteOrder(ExistingOrderInDiagnosisId);
         }
 
-        private static IMechanicalService CreateSubstituteService(Guid id, string description, float hours, double pricePerHour, int amount)
+        private static ICustomer CreateSubstituteCustomer(Guid id, string name, string document)
+        {
+            var customer = Substitute.For<ICustomer>();
+            customer.Id.Returns(id);
+            customer.Name.Returns(name);
+            customer.Document.Id.Returns(document);
+
+            return customer;
+        }
+
+        private static IVehicle CreateSubstituteVehicle(Guid id, string customerDocument, string licensePlate)
+        {
+            var vehicle = Substitute.For<IVehicle>();
+            vehicle.Id.Returns(id);
+            vehicle.CustomerDocument.Id.Returns(customerDocument);
+            vehicle.LicensePlate.License.Returns(licensePlate);
+
+            return vehicle;
+        }
+
+        private static IMechanicalService CreateSubstituteService(Guid id, string description, float hours, decimal pricePerHour, int amount)
         {
             var service = Substitute.For<IMechanicalService>();
             service.Id.Returns(id);
             service.Description.Returns(description);
             service.Hours.Returns(hours);
             service.PricePerHour.Returns(pricePerHour);
-            service.Price.Returns(hours * pricePerHour);
+            service.Price.Returns((decimal)hours * pricePerHour);
             service.Amount.Returns(amount);
 
             service.When(x => x.AddServiceAmount(Arg.Any<int>())).Do(callInfo =>
@@ -1142,7 +1160,7 @@ namespace ServiceTests
             return service;
         }
 
-        private static IMaterial CreateSubstitutePart(Guid id, string name, string brand, double price, int amount, int reservedAmount)
+        private static IMaterial CreateSubstitutePart(Guid id, string name, string brand, decimal price, int amount, int reservedAmount)
         {
             var part = Substitute.For<IMaterial>();
             part.Id.Returns(id);
@@ -1169,7 +1187,7 @@ namespace ServiceTests
             return part;
         }
 
-        private static IOrder CreateSubstituteOrder(Guid id, List<IMechanicalService> services, List<IMaterial> parts, double budget, WorkOrderStatus status)
+        private static IOrder CreateSubstituteOrder(Guid id, List<IMechanicalService> services, List<IMaterial> parts, decimal budget, WorkOrderStatus status)
         {
             var order = Substitute.For<IOrder>();
             order.Id.Returns(id);
@@ -1192,7 +1210,7 @@ namespace ServiceTests
                 order.Status.Returns(WorkOrderStatus.WaitingForApproval);
 
                 if (order.Id != ExistingTestOrder.Id)
-                    order.Budget.Returns(1.0);
+                    order.Budget.Returns(1.0m);
             });
 
             order.When(x => x.ApproveService(Arg.Any<bool>())).Do(callInfo =>
@@ -1207,7 +1225,7 @@ namespace ServiceTests
 
             order.When(x => x.StartService()).Do(_ => order.Status.Returns(WorkOrderStatus.InExecution));
 
-            order.When(x => x.CompleteService()).Do(_ =>
+            order.When(x => x.CompleteService(Arg.Any<DateTime>())).Do(_ =>
             {
                 order.Status.Returns(WorkOrderStatus.Finished);
                 order.Duration.Returns(TimeSpan.FromHours(6));
@@ -1219,3 +1237,7 @@ namespace ServiceTests
         }
     }
 }
+
+
+
+

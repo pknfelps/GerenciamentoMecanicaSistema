@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using GerenciamentoMecanicaSistema.Contracts.Requests.Stock;
+using GerenciamentoMecanicaSistema.Contracts.Responses.Stock;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interface;
-using Service.Interface.Dto.CustomAttributes;
-using Service.Interface.Dto.Stock;
+using GerenciamentoMecanicaSistema.Contracts.Validation;
 
 namespace GerenciamentoMecanicaSistema.Controllers
 {
@@ -19,22 +20,22 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> RegisterMaterial([FromBody] CreateMaterialDto itemDto)
+        public async Task<IActionResult> RegisterMaterial([FromBody] CreateMaterialRequest item)
         {
-            await StockService.RegisterNewMaterial(itemDto);
+            await StockService.RegisterNewMaterial(item.ToCommand());
 
             return Created();
         }
 
         [HttpGet()]
         [EndpointDescription("Endpoint para listar os itens do estoque")]
-        [ProducesResponseType(typeof(IEnumerable<MaterialDto>), StatusCodes.Status200OK, Description = "Retorna a lista de itens no estoque")]
+        [ProducesResponseType(typeof(IEnumerable<MaterialResponse>), StatusCodes.Status200OK, Description = "Retorna a lista de itens no estoque")]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         public async Task<OkObjectResult> GetMaterials([FromQuery] Guid? id = null, [FromQuery] string name = "", [FromQuery] string brand = "")
         {
             var itens = await StockService.GetMaterials(id, name, brand);
 
-            return Ok(itens);
+            return Ok(itens.Select(MaterialResponse.Create));
         }
 
         [HttpPost("amount/{id}")]
@@ -43,7 +44,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> AddMaterialAmount([FromRoute, GuidValidation] Guid id, [FromBody] ValueUpdateDto<int> value)
+        public async Task<IActionResult> AddMaterialAmount([FromRoute, GuidValidation] Guid id, [FromBody] ValueUpdateRequest<int> value)
         {
             await StockService.AddMaterialAmount(id, value.Value);
 
@@ -56,7 +57,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> RemoveMaterialAmount([FromRoute, GuidValidation] Guid id, ValueUpdateDto<int> value)
+        public async Task<IActionResult> RemoveMaterialAmount([FromRoute, GuidValidation] Guid id, ValueUpdateRequest<int> value)
         {
             await StockService.RemoveMaterialAmount(id, value.Value);
 
@@ -69,7 +70,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> UpdateMaterialPrice([FromRoute, GuidValidation] Guid id, ValueUpdateDto<double> value)
+        public async Task<IActionResult> UpdateMaterialPrice([FromRoute, GuidValidation] Guid id, ValueUpdateRequest<decimal> value)
         {
             await StockService.UpdateMaterialPrice(id, value.Value);
 

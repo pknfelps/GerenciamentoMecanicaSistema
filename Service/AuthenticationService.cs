@@ -1,47 +1,25 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 using Repository.Interface;
 using Service.Interface;
-using Service.Interface.Dto.User;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
+using Service.Interface.Commands.User;
 
 namespace Service
 {
-    public class AuthenticationService(IConfiguration configuration, IUserRepository userRepository) : IAuthenticationService
+    public class AuthenticationService(IUserRepository userRepository, ITokenGenerator tokenGenerator) : IAuthenticationService
     {
-        private IConfiguration Configuration { get; set; } = configuration;
         private IUserRepository UserRepository { get; set; } = userRepository;
+        private ITokenGenerator TokenGenerator { get; set; } = tokenGenerator;
 
-        public async Task<string> Authenticate(CreateUserDto userDto)
+        public async Task<string> Authenticate(CreateUserCommand user)
         {
-            var user = await UserRepository.GetUser(userDto.Name, userDto.Role);
+            var registeredUser = await UserRepository.GetUser(user.Name, user.Role);
 
-            if (user == null)
+            if (registeredUser == null)
                 return string.Empty;
 
-            if (userDto.Password != user.Password.Secret)
+            if (user.Password != registeredUser.Password.Secret)
                 return string.Empty;
 
-            SymmetricSecurityKey secretKey = new(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"] ?? string.Empty));
-            var issuer = Configuration["Jwt:Issuer"];
-            var audience = Configuration["Jwt:Audience"];
-
-            var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
-
-            var tokenOptions = new JwtSecurityToken(
-                issuer: issuer,
-                audience: audience,
-                claims:
-                [
-                    new Claim(type: ClaimTypes.Name, user.Name),
-                    new Claim(type: ClaimTypes.Role, user.Role.ToString())
-                ],
-                expires: DateTime.UtcNow.AddMinutes(10),
-                signingCredentials: signinCredentials);
-
-            return new JwtSecurityTokenHandler().WriteToken(tokenOptions);
+            return TokenGenerator.Generate(registeredUser.Name, registeredUser.Role.ToString());
         }
     }
 }

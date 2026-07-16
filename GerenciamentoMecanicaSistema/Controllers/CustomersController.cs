@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using GerenciamentoMecanicaSistema.Contracts.Requests.Customer;
+using GerenciamentoMecanicaSistema.Contracts.Responses.Customer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interface;
-using Service.Interface.Dto.CustomAttributes;
-using Service.Interface.Dto.Customer;
+using GerenciamentoMecanicaSistema.Contracts.Validation;
 
 namespace GerenciamentoMecanicaSistema.Controllers
 {
@@ -19,22 +20,22 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Corpo da request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> RegisterCustomer([FromBody] CreateCustomerDto customerDto)
+        public async Task<IActionResult> RegisterCustomer([FromBody] CreateCustomerRequest customer)
         {
-            await CustomerService.RegisterCustomer(customerDto);
+            await CustomerService.RegisterCustomer(customer.ToCommand());
 
             return Created();
         }
 
         [HttpGet()]
         [EndpointDescription("Endpoint para listar os clientes")]
-        [ProducesResponseType(typeof(IEnumerable<CustomerDto>), StatusCodes.Status200OK, Description = "Retorna a lista de clientes")]
+        [ProducesResponseType(typeof(IEnumerable<CustomerResponse>), StatusCodes.Status200OK, Description = "Retorna a lista de clientes")]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         public async Task<OkObjectResult> GetCustomers([FromQuery] Guid? id = null, [FromQuery] string name = "", [FromQuery] string document = "")
         {
-            var costumer = await CustomerService.GetCustomers(id, name, document);
+            var customers = await CustomerService.GetCustomers(id, name, document);
 
-            return Ok(costumer);
+            return Ok(customers.Select(CustomerResponse.Create));
         }
 
         [HttpPatch("{id}")]
@@ -43,9 +44,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> UpdateCustomer([FromRoute, GuidValidation] Guid id, [FromBody] CreateCustomerDto customerDto)
+        public async Task<IActionResult> UpdateCustomer([FromRoute, GuidValidation] Guid id, [FromBody] CreateCustomerRequest customer)
         {
-            await CustomerService.UpdateCustomer(id, customerDto);
+            await CustomerService.UpdateCustomer(id, customer.ToCommand());
 
             return NoContent();
         }

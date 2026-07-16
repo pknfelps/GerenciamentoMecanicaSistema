@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MailKit" Version="4.17.0" />
     <PackageReference Include="SonarAnalyzer.CSharp" Version="10.26.0.140279">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -16,7 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Domain.Interface\Domain.Interface.csproj" />
-    <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>
 
 </Project>

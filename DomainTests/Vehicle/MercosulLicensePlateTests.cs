@@ -1,4 +1,5 @@
-﻿using Domain.Vehicle;
+﻿using Domain.Interface.Exceptions;
+using Domain.Vehicle;
 
 namespace DomainTests.Vehicle
 {
@@ -16,19 +17,20 @@ namespace DomainTests.Vehicle
         [Test]
         public void MustNotCreateLicensePlateIfNotContainsExectedLenght()
         {
-            Assert.Throws<ArgumentException>(() => new MercosulLicensePlate("PO58"));
+            Assert.Catch<DomainValidationException>(() => new MercosulLicensePlate("PO58"));
         }
 
         [Test]
         public void MustNotCreateLicensePlateIfContainsSymbolOrPunctuation()
         {
-            Assert.Throws<ArgumentException>(() => new MercosulLicensePlate("POR$.33"));
+            Assert.Catch<DomainValidationException>(() => new MercosulLicensePlate("POR$.33"));
         }
 
         [Test]
         public void MustNotCreateLicensePlateIfIsNotAValidModel()
         {
-            Assert.Throws<ArgumentException>(() => new MercosulLicensePlate("POR533H"));
+            Assert.Catch<DomainValidationException>(() => new MercosulLicensePlate("POR533H"));
         }
     }
 }
+

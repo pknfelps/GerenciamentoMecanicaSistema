@@ -4,9 +4,9 @@
 ðC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ControllerTests\obj\Debug\net10.0\Microsoft.AspNetCore.OpenApi.SourceGenerators\Microsoft.AspNetCore.OpenApi.SourceGenerators.XmlCommentGenerator\OpenApiXmlCommentSupport.generated.csutf-8…
 zC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ControllerTests\obj\Debug\net10.0\ControllerTests.AssemblyInfo.csutf-8–
 ŠC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ControllerTests\obj\Debug\net10.0\.NETCoreApp,Version=v10.0.AssemblyAttributes.csutf-8w
-lC:\Users\felip\.nuget\packages\microsoft.net.test.sdk\17.14.0\build\net8.0\Microsoft.NET.Test.Sdk.Program.csutf-8h
-_C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ControllerTests\UserControllerTests.csutf-8k
-bC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ControllerTests\VehicleControllerTests.csutf-8n
+lC:\Users\felip\.nuget\packages\microsoft.net.test.sdk\17.14.0\build\net8.0\Microsoft.NET.Test.Sdk.Program.csutf-8k
+bC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ControllerTests\VehicleControllerTests.csutf-8h
+_C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ControllerTests\UserControllerTests.csutf-8n
 eC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ControllerTests\TestWebApplicationFactory.csutf-8i
 `C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ControllerTests\StockControllerTests.csutf-8i
 `C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ControllerTests\OrderControllerTests.csutf-8l

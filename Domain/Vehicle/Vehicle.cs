@@ -1,4 +1,5 @@
-﻿using Domain.Customer;
+﻿using Domain.Interface.Exceptions;
+using Domain.Customer;
 using Domain.Interface.Custumer;
 using Domain.Interface.Vehicle;
 
@@ -18,14 +19,17 @@ namespace Domain.Vehicle
         public Vehicle(Guid id, string customerDocument, string brand, string model, int year, string licensePlate)
         {
             if (id == Guid.Empty)
-                throw new ArgumentException("Id não pode ser vazio");
+                throw new DomainValidationException("Id não pode ser vazio");
 
-            ArgumentException.ThrowIfNullOrEmpty(customerDocument);
-            ArgumentException.ThrowIfNullOrEmpty(brand);
-            ArgumentException.ThrowIfNullOrEmpty(model);
+            if (string.IsNullOrEmpty(customerDocument))
+                throw new DomainValidationException("Documento do cliente deve ser preenchido");
+            if (string.IsNullOrEmpty(brand))
+                throw new DomainValidationException("Marca deve ser preenchida");
+            if (string.IsNullOrEmpty(model))
+                throw new DomainValidationException("Modelo do veículo deve ser preenchido");
 
             if (year < 0)
-                throw new ArgumentException("Ano do veículo não pode ser menor que 0");
+                throw new DomainValidationException("Ano do veículo não pode ser menor que 0");
 
             CustomerDocument = DocumentWrapper.CreateDocument(customerDocument);
             Brand = brand;

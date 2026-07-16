@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using GerenciamentoMecanicaSistema.Contracts.Requests.User;
+using Microsoft.AspNetCore.Mvc;
 using Service.Interface;
-using Service.Interface.Dto.User;
 
 namespace GerenciamentoMecanicaSistema.Controllers
 {
@@ -15,9 +15,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK, Description = "Retorna o token de autenticação")]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Usuário ou senha inválidos")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
-        public async Task<IActionResult> Login([FromBody] CreateUserDto userDto)
+        public async Task<IActionResult> Login([FromBody] CreateUserRequest user)
         {
-            var token = await AuthenticationService.Authenticate(userDto);
+            var token = await AuthenticationService.Authenticate(user.ToCommand());
 
             if (string.IsNullOrEmpty(token))
                 return Unauthorized("Usuário ou senha inválidos");

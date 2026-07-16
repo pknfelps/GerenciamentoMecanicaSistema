@@ -1,9 +1,9 @@
-﻿using Service.Interface.Dto.User;
+using Service.Interface.Commands.User;
 
 namespace Service.Interface
 {
     public interface IAuthenticationService
     {
-        Task<string> Authenticate(CreateUserDto userDto);
+        Task<string> Authenticate(CreateUserCommand user);
     }
 }

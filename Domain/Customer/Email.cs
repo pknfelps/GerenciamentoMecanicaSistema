@@ -1,4 +1,5 @@
-﻿using Domain.Interface.Custumer;
+﻿using Domain.Interface.Exceptions;
+using Domain.Interface.Custumer;
 
 namespace Domain.Customer
 {
@@ -9,13 +10,13 @@ namespace Domain.Customer
         public Email(string address)
         {
             if (string.IsNullOrWhiteSpace(address))
-                throw new ArgumentNullException(nameof(address), $"E-mail deve ser preenchido.");
+                throw new DomainValidationException($"E-mail deve ser preenchido.");
 
             if (address.Contains(' '))
-                throw new ArgumentNullException(nameof(address), $"E-mail não pode ter espaços em branco.");
+                throw new DomainValidationException($"E-mail não pode ter espaços em branco.");
 
             if (!address.Contains('@'))
-                throw new ArgumentException("E-mail inválido.", nameof(address));
+                throw new DomainValidationException("E-mail inválido.");
 
             Address = address;
         }

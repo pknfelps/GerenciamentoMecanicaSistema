@@ -34,7 +34,7 @@ namespace RepositoryTests
                 part.Id.Returns(ExistingPartId);
                 part.Name.Returns("Vela de ignição");
                 part.Brand.Returns("Bosch");
-                part.Price.Returns(6.00);
+                part.Price.Returns(6.00m);
                 part.Amount.Returns(20);
                 part.ReservedAmount.Returns(5);
                 return part;
@@ -49,7 +49,7 @@ namespace RepositoryTests
                 part.Id.Returns(ExistingPartId);
                 part.Name.Returns("Vela de ignição");
                 part.Brand.Returns("Bosch");
-                part.Price.Returns(10.00);
+                part.Price.Returns(10.00m);
                 part.Amount.Returns(20);
                 part.ReservedAmount.Returns(5);
                 return part;
@@ -64,7 +64,7 @@ namespace RepositoryTests
                 part.Id.Returns(ExistingPartId);
                 part.Name.Returns("Vela de ignição");
                 part.Brand.Returns("Bosch");
-                part.Price.Returns(6.00);
+                part.Price.Returns(6.00m);
                 part.Amount.Returns(15);
                 part.ReservedAmount.Returns(10);
                 return part;
@@ -78,7 +78,7 @@ namespace RepositoryTests
                 id UUID PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
                 brand VARCHAR(255) NOT NULL,
-                price DOUBLE PRECISION NOT NULL,
+                price NUMERIC NOT NULL,
                 amount INT NOT NULL,
                 reserved_amount INT NOT NULL DEFAULT 0);
                 """);
@@ -219,6 +219,31 @@ namespace RepositoryTests
             {
                 Assert.That(item.Amount, Is.EqualTo(PartToUpdateAmount.Amount));
                 Assert.That(item.ReservedAmount, Is.EqualTo(PartToUpdateAmount.ReservedAmount));
+            });
+        }
+
+        [Test]
+        public async Task MustRollbackMaterialAmountUpdateInTransaction()
+        {
+            var transactionContext = new DbTransactionContext();
+            var transactionManager = new TransactionManager(Connection, transactionContext, Substitute.For<Microsoft.Extensions.Logging.ILogger<TransactionManager>>());
+            var transactionalRepository = new StockRepository(Connection, transactionContext);
+
+            Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await transactionManager.ExecuteInTransaction(async () =>
+                {
+                    await transactionalRepository.UpdateMaterialAmount(PartToUpdateAmount);
+                    throw new InvalidOperationException("force rollback");
+                }));
+
+            var item = await Repository.GetMaterial(id: ExistingPart.Id);
+
+            Assert.That(item, Is.Not.Null);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(item.Amount, Is.EqualTo(ExistingPart.Amount));
+                Assert.That(item.ReservedAmount, Is.EqualTo(ExistingPart.ReservedAmount));
             });
         }
 

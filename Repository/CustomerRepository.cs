@@ -1,12 +1,12 @@
-﻿using Dapper;
+using Dapper;
 using Domain.Interface.Custumer;
-using Repository.Dto;
+using Repository.PersistenceModels;
 using Repository.Interface;
 using System.Data;
 
 namespace Repository
 {
-    public class CustomerRepository(IDbConnection connection) : BaseRepository(connection), ICustomerRepository
+    public class CustomerRepository(IDbConnection connection, DbTransactionContext? transactionContext = null) : BaseRepository(connection, transactionContext), ICustomerRepository
     {
         public static string RegisterCustomerSql { get; private set; } = """
                 INSERT INTO customers(id, name, document, phone, email)
@@ -35,19 +35,21 @@ namespace Repository
 
         public async Task<int> RegisterCustomer(ICustomer customer)
         {
-            return await Connection.ExecuteAsync(RegisterCustomerSql, CustomerDb.Create(customer));
+            return await Connection.ExecuteAsync(RegisterCustomerSql, CustomerDb.Create(customer), Transaction);
         }
 
         public async Task<IEnumerable<ICustomer>> GetCustomers(Guid? id = null, string name = "", string document = "")
         {
-            var customers = await Connection.QueryAsync<CustomerDb>(GetCustomersSql.BuildQuery(BuildQueryParameters(id, name, document)));
+            var query = GetCustomersSql.BuildQuery(BuildQueryParameters(id, name, document));
+            var customers = await Connection.QueryAsync<CustomerDb>(query.Sql, query.Parameters, Transaction);
 
             return customers.Select(customer => customer.ToDomain());
         }
 
         public async Task<ICustomer?> GetCustomer(Guid? id = null, string name = "", string document = "")
         {
-            var customer = await Connection.QuerySingleOrDefaultAsync<CustomerDb>(GetCustomersSql.BuildQuery(BuildQueryParameters(id, name, document)));
+            var query = GetCustomersSql.BuildQuery(BuildQueryParameters(id, name, document));
+            var customer = await Connection.QuerySingleOrDefaultAsync<CustomerDb>(query.Sql, query.Parameters, Transaction);
 
             if (customer == null)
                 return null;
@@ -57,12 +59,12 @@ namespace Repository
 
         public async Task<int> UpdateCustomer(ICustomer customer)
         {
-            return await Connection.ExecuteAsync(UpdateCustomersql, CustomerDb.Create(customer));
+            return await Connection.ExecuteAsync(UpdateCustomersql, CustomerDb.Create(customer), Transaction);
         }
 
         public async Task<int> DeleteCustomer(Guid id)
         {
-            return await Connection.ExecuteAsync(DeleteCustomersql, new { id });
+            return await Connection.ExecuteAsync(DeleteCustomersql, new { id }, Transaction);
         }
 
         private static Dictionary<string, object?> BuildQueryParameters(Guid? id = null, string name = "", string document = "")

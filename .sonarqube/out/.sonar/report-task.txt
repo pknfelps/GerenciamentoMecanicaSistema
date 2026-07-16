@@ -2,5 +2,5 @@ projectKey=GerenciamentoMecanincaSistema
 serverUrl=http://localhost:9000
 serverVersion=26.6.0.123539
 dashboardUrl=http://localhost:9000/dashboard?id=GerenciamentoMecanincaSistema
-ceTaskId=2a5de943-45eb-48f4-aa88-4bcae6003cd0
-ceTaskUrl=http://localhost:9000/api/ce/task?id=2a5de943-45eb-48f4-aa88-4bcae6003cd0
+ceTaskId=50ab5b67-8333-4b34-adfa-15d9844d6f5f
+ceTaskUrl=http://localhost:9000/api/ce/task?id=50ab5b67-8333-4b34-adfa-15d9844d6f5f

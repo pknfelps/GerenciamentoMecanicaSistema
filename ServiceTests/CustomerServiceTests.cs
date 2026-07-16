@@ -3,7 +3,9 @@ using NSubstitute;
 using Repository.Interface;
 using Service;
 using Service.Interface;
-using Service.Interface.Dto.Customer;
+using Service.Interface.Exceptions;
+using Service.Interface.Commands.Customer;
+using Service.Interface.Results.Customer;
 
 namespace ServiceTests
 {
@@ -12,9 +14,9 @@ namespace ServiceTests
         private ICustomerService CustomerService { get; set; }
         private ICustomerRepository CustomerRepository { get; set; }
 
-        private static CreateCustomerDto CustomerToCreate { get; } = new("Fulano", "66211973063", "11912345678", "fulano@gmail.com");
-        private static CreateCustomerDto CustomerToCreateFormated { get; set; } = new("Fulano", "662.119.730-63", "(11) 91234-5678", "fulano@gmail.com");
-        private static CreateCustomerDto CustomerToFailCreation { get; set; } = new("Teste", "274.465.520-18", "(11) 91234-5678", "teste@gmail.com");
+        private static CreateCustomerCommand CustomerToCreate { get; } = new("Fulano", "66211973063", "11912345678", "fulano@gmail.com");
+        private static CreateCustomerCommand CustomerToCreateFormated { get; set; } = new("Fulano", "662.119.730-63", "(11) 91234-5678", "fulano@gmail.com");
+        private static CreateCustomerCommand CustomerToFailCreation { get; set; } = new("Teste", "274.465.520-18", "(11) 91234-5678", "teste@gmail.com");
 
         private static readonly Guid ExistingCustomerId = Guid.NewGuid();
         private static ICustomer ExistingCustomer
@@ -46,10 +48,11 @@ namespace ServiceTests
             }
         }
 
-        private static CustomerDto ExistingCustomerDto { get; } = new(ExistingCustomerId, "Ciclano", "10.359.666/0001-94", "(11) 91234-5678", "ciclano@gmail.com");
-        private static CustomerDto ExistingCustomer2Dto { get; } = new(ExistingCustomer2Id, "Beltrano", "65.457.513/0001-71", "(11) 91234-5678", "beltrano@gmail.com");
-        private static CreateCustomerDto CustomerToUpdateDto { get; } = new("Ciclano", "10.359.666/0001-94", "(11) 94321-8765", "ciclano.company@gmail.com");
-        private static CreateCustomerDto CustomerToFailtUpdateOrDeleteDto { get; } = new("Beltrano", "65.457.513/0001-71", "(11) 91234-5678", "beltrano@gmail.com");
+        private static CustomerResult ExistingCustomerResult { get; } = new(ExistingCustomerId, "Ciclano", "10.359.666/0001-94", "(11) 91234-5678", "ciclano@gmail.com");
+        private static CustomerResult ExistingCustomer2Result { get; } = new(ExistingCustomer2Id, "Beltrano", "65.457.513/0001-71", "(11) 91234-5678", "beltrano@gmail.com");
+        private static CreateCustomerCommand ExistingCustomerCommand { get; } = new("Ciclano", "10.359.666/0001-94", "(11) 91234-5678", "ciclano@gmail.com");
+        private static CreateCustomerCommand CustomerToUpdate { get; } = new("Ciclano", "10.359.666/0001-94", "(11) 94321-8765", "ciclano.company@gmail.com");
+        private static CreateCustomerCommand CustomerToFailUpdateOrDelete { get; } = new("Beltrano", "65.457.513/0001-71", "(11) 91234-5678", "beltrano@gmail.com");
 
         [SetUp]
         public void SetUp()
@@ -133,13 +136,13 @@ namespace ServiceTests
         [Test]
         public async Task MustNotCreateCustomerIfExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.RegisterCustomer(ExistingCustomerDto));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await CustomerService.RegisterCustomer(ExistingCustomerCommand));
         }
 
         [Test]
         public async Task MustThrowExceptionIfFailedToCreateCustomer()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.RegisterCustomer(CustomerToFailCreation));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await CustomerService.RegisterCustomer(CustomerToFailCreation));
 
             await CustomerRepository.ReceivedWithAnyArgs(1).RegisterCustomer(Arg.Any<ICustomer>());
         }
@@ -155,8 +158,8 @@ namespace ServiceTests
 
             Assert.Multiple(() =>
             {
-                Assert.That(clientes[0].Equals(ExistingCustomerDto), Is.True);
-                Assert.That(clientes[1].Equals(ExistingCustomer2Dto), Is.True);
+                Assert.That(clientes[0], Is.EqualTo(ExistingCustomerResult));
+                Assert.That(clientes[1], Is.EqualTo(ExistingCustomer2Result));
             });
         }
 
@@ -168,7 +171,7 @@ namespace ServiceTests
             await CustomerRepository.Received(1).GetCustomers(document: ExistingCustomer.Document.Id);
 
             Assert.That(clientes, Has.Count.EqualTo(1));
-            Assert.That(clientes[0].Equals(ExistingCustomerDto), Is.True);
+            Assert.That(clientes[0], Is.EqualTo(ExistingCustomerResult));
         }
 
         [Test]
@@ -178,7 +181,7 @@ namespace ServiceTests
 
             await CustomerRepository.Received(1).GetCustomer(document: ExistingCustomer.Document.Id);
 
-            Assert.That(cliente, Is.EqualTo(ExistingCustomerDto));
+            Assert.That(cliente, Is.EqualTo(ExistingCustomerResult));
         }
 
         [Test]
@@ -194,7 +197,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotGetCustomerWithNoParameters()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.GetCustomer());
+            Assert.CatchAsync<ApplicationBaseException>(async () => await CustomerService.GetCustomer());
 
             await CustomerRepository.Received(0).GetCustomer();
         }
@@ -202,7 +205,7 @@ namespace ServiceTests
         [Test]
         public async Task MustUpdateCustomer()
         {
-            await CustomerService.UpdateCustomer(ExistingCustomer.Id, CustomerToUpdateDto);
+            await CustomerService.UpdateCustomer(ExistingCustomer.Id, CustomerToUpdate);
 
             await CustomerRepository.Received(1).UpdateCustomer(Arg.Any<ICustomer>());
         }
@@ -210,15 +213,15 @@ namespace ServiceTests
         [Test]
         public async Task MustNotUpdateCustomerIfNotExists()
         {
-            var customer = new CreateCustomerDto("Teste", "358.410.168-64", "(11) 21245-6458", "teste@gmail.com");
+            var customer = new CreateCustomerCommand("Teste", "358.410.168-64", "(11) 21245-6458", "teste@gmail.com");
 
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.UpdateCustomer(Guid.NewGuid(), customer));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await CustomerService.UpdateCustomer(Guid.NewGuid(), customer));
         }
 
         [Test]
         public async Task MustThrowExceptionIfFailedToUpdate()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.UpdateCustomer(ExistingCustomerId, CustomerToFailtUpdateOrDeleteDto));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await CustomerService.UpdateCustomer(ExistingCustomerId, CustomerToFailUpdateOrDelete));
 
             await CustomerRepository.Received(1).UpdateCustomer(Arg.Any<ICustomer>());
         }
@@ -234,15 +237,16 @@ namespace ServiceTests
         [Test]
         public async Task MustNotDeleteCustomerIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.DeleteCustomer(Guid.NewGuid()));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await CustomerService.DeleteCustomer(Guid.NewGuid()));
         }
 
         [Test]
         public async Task MustThrowExceptionIfFailToDelete()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await CustomerService.DeleteCustomer(ExistingCustomer2.Id));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await CustomerService.DeleteCustomer(ExistingCustomer2.Id));
 
             await CustomerRepository.Received(1).DeleteCustomer(ExistingCustomer2.Id);
         }
     }
 }
+

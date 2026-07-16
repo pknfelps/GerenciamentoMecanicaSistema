@@ -3,8 +3,9 @@ using NSubstitute;
 using Repository.Interface;
 using Service;
 using Service.Interface;
-using Service.Interface.Dto;
-using Service.Interface.Dto.Stock;
+using Service.Interface.Exceptions;
+using Service.Interface.Commands.Stock;
+using Service.Interface.Results.Stock;
 
 namespace ServiceTests
 {
@@ -13,8 +14,8 @@ namespace ServiceTests
         private IStockService Service { get; set; }
         private IStockRepository Repository { get; set; }
 
-        private static CreateMaterialDto PartToRegister { get; } = new("Óleo de motor", "Lubrax", 41.90, 5);
-        private static CreateMaterialDto PartToFailRegister { get; } = new("Teste", "Testando", 15, 1);
+        private static CreateMaterialCommand PartToRegister { get; } = new("Óleo de motor", "Lubrax", 41.90m, 5);
+        private static CreateMaterialCommand PartToFailRegister { get; } = new("Teste", "Testando", 15, 1);
 
         private static readonly Guid ExistingPartId = Guid.NewGuid();
         private static IMaterial ExistingPart
@@ -25,7 +26,7 @@ namespace ServiceTests
                 part.Id.Returns(ExistingPartId);
                 part.Name.Returns("Vela de ignição");
                 part.Brand.Returns("Bosch");
-                part.Price.Returns(6.00);
+                part.Price.Returns(6.00m);
                 part.Amount.Returns(20);
                 part.ReservedAmount.Returns(5);
                 return part;
@@ -41,21 +42,22 @@ namespace ServiceTests
                 part.Id.Returns(ExistingPart2Id);
                 part.Name.Returns("Flúido para radiador");
                 part.Brand.Returns("Gitanes");
-                part.Price.Returns(30.00);
+                part.Price.Returns(30.00m);
                 part.Amount.Returns(5);
                 part.ReservedAmount.Returns(0);
                 return part;
             }
         }
 
-        private static MaterialDto ExistingPartDto { get; } = new(ExistingPartId, "Vela de ignição", "Bosch", 6.00, 20, 5);
-        private static MaterialDto ExistingPart2Dto { get; } = new(ExistingPart2Id, "Flúido para radiador", "Gitanes", 30.00, 5, 0);
-        private static UpdateItemDto<int> PartToFailIntOperations { get; } = new(Guid.NewGuid(), 5);
-        private static UpdateItemDto<double> PartToFailDoubleOperations { get; } = new(Guid.NewGuid(), 10.00);
-        private static UpdateItemDto<int> PartToAddAmount { get; } = new(ExistingPartId, 5);
-        private static UpdateItemDto<int> PartToFailAddAmount { get; } = new(ExistingPart2Id, 5);
-        private static UpdateItemDto<double> PartToUpdatePrice { get; } = new(ExistingPartId, 10.00);
-        private static UpdateItemDto<double> PartToFailUpdatePrice { get; } = new(ExistingPart2Id, 35.00);
+        private static MaterialResult ExistingPartResult { get; } = new(ExistingPartId, "Vela de ignição", "Bosch", 6.00m, 20, 5);
+        private static MaterialResult ExistingPart2Result { get; } = new(ExistingPart2Id, "Flúido para radiador", "Gitanes", 30.00m, 5, 0);
+        private static CreateMaterialCommand ExistingPartCommand { get; } = new("Vela de ignição", "Bosch", 6.00m, 20);
+        private static (Guid Id, int Value) PartToFailIntOperations { get; } = new(Guid.NewGuid(), 5);
+        private static (Guid Id, decimal Value) PartToFailDecimalOperations { get; } = new(Guid.NewGuid(), 10.00m);
+        private static (Guid Id, int Value) PartToAddAmount { get; } = new(ExistingPartId, 5);
+        private static (Guid Id, int Value) PartToFailAddAmount { get; } = new(ExistingPart2Id, 5);
+        private static (Guid Id, decimal Value) PartToUpdatePrice { get; } = new(ExistingPartId, 10.00m);
+        private static (Guid Id, decimal Value) PartToFailUpdatePrice { get; } = new(ExistingPart2Id, 35.00m);
 
         [SetUp]
         public void SetUp()
@@ -135,15 +137,15 @@ namespace ServiceTests
         [Test]
         public async Task MustNotRegisterNewPartIfAlreadyExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RegisterNewMaterial(ExistingPartDto));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RegisterNewMaterial(ExistingPartCommand));
 
-            await Repository.Received(1).GetMaterial(name: ExistingPartDto.Name, brand: ExistingPartDto.Brand);
+            await Repository.Received(1).GetMaterial(name: ExistingPartCommand.Name, brand: ExistingPartCommand.Brand);
         }
 
         [Test]
         public async Task MustThrowExceptionIfFailedToRegisterNewPart()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RegisterNewMaterial(PartToFailRegister));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RegisterNewMaterial(PartToFailRegister));
 
             await Repository.Received(1).GetMaterial(name: PartToFailRegister.Name, brand: PartToFailRegister.Brand);
             await Repository.ReceivedWithAnyArgs(1).RegisterNewMaterial(Arg.Any<IMaterial>());
@@ -159,8 +161,8 @@ namespace ServiceTests
             Assert.That(itens, Has.Count.EqualTo(2));
             Assert.Multiple(() =>
             {
-                Assert.That(itens[0].Equals(ExistingPartDto), Is.True);
-                Assert.That(itens[1].Equals(ExistingPart2Dto), Is.True);
+                Assert.That(itens[0], Is.EqualTo(ExistingPartResult));
+                Assert.That(itens[1], Is.EqualTo(ExistingPart2Result));
             });
         }
 
@@ -171,8 +173,7 @@ namespace ServiceTests
 
             await Repository.Received(1).GetMaterial(name: ExistingPart.Name, brand: ExistingPart.Brand);
 
-            Assert.That(item, Is.Not.Null);
-            Assert.That(item.Equals(ExistingPartDto), Is.True);
+            Assert.That(item, Is.EqualTo(ExistingPartResult));
         }
 
         [Test]
@@ -192,8 +193,7 @@ namespace ServiceTests
 
             await Repository.Received(1).GetMaterial(ExistingPart.Id);
 
-            Assert.That(item, Is.Not.Null);
-            Assert.That(item.Equals(ExistingPartDto), Is.True);
+            Assert.That(item, Is.EqualTo(ExistingPartResult));
         }
 
         [Test]
@@ -209,7 +209,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotGetPartIfNoParameterWasGiven()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.GetMaterial());
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.GetMaterial());
         }
 
         [Test]
@@ -224,7 +224,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotAddPartAmountIfPartDoentExist()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddMaterialAmount(PartToFailIntOperations.Id, PartToFailIntOperations.Value));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddMaterialAmount(PartToFailIntOperations.Id, PartToFailIntOperations.Value));
 
             await Repository.Received(1).GetMaterial(PartToFailIntOperations.Id);
             await Repository.Received(0).UpdateMaterialAmount(Arg.Any<IMaterial>());
@@ -242,7 +242,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotRemovePartAmountIfPartDoentExist()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RemoveMaterialAmount(PartToFailIntOperations.Id, PartToFailIntOperations.Value));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RemoveMaterialAmount(PartToFailIntOperations.Id, PartToFailIntOperations.Value));
 
             await Repository.Received(1).GetMaterial(PartToFailIntOperations.Id);
             await Repository.Received(0).UpdateMaterialAmount(Arg.Any<IMaterial>());
@@ -260,7 +260,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotReservePartAmountIfPartDoentExist()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ReserveMaterialAmount(PartToFailIntOperations.Id, PartToFailIntOperations.Value));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ReserveMaterialAmount(PartToFailIntOperations.Id, PartToFailIntOperations.Value));
 
             await Repository.Received(1).GetMaterial(PartToFailIntOperations.Id);
             await Repository.Received(0).UpdateMaterialAmount(Arg.Any<IMaterial>());
@@ -278,7 +278,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotRestorePartAmountIfPartDoentExist()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RestoreMaterialAmount(PartToFailIntOperations.Id, PartToFailIntOperations.Value));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RestoreMaterialAmount(PartToFailIntOperations.Id, PartToFailIntOperations.Value));
 
             await Repository.Received(1).GetMaterial(PartToFailIntOperations.Id);
             await Repository.Received(0).UpdateMaterialAmount(Arg.Any<IMaterial>());
@@ -296,7 +296,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotConsumePartAmountIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.ConsumeReservedAmount(PartToFailIntOperations.Id, PartToFailIntOperations.Value));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ConsumeReservedAmount(PartToFailIntOperations.Id, PartToFailIntOperations.Value));
 
             await Repository.Received(1).GetMaterial(PartToFailIntOperations.Id);
             await Repository.Received(0).UpdateMaterialAmount(Arg.Any<IMaterial>());
@@ -305,7 +305,7 @@ namespace ServiceTests
         [Test]
         public async Task MustThrowExceptionIfFailUpdatePartAmount()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.AddMaterialAmount(PartToFailAddAmount.Id, PartToFailAddAmount.Value));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.AddMaterialAmount(PartToFailAddAmount.Id, PartToFailAddAmount.Value));
 
             await Repository.Received(1).GetMaterial(ExistingPart2Id);
             await Repository.Received(1).UpdateMaterialAmount(Arg.Any<IMaterial>());
@@ -323,16 +323,16 @@ namespace ServiceTests
         [Test]
         public async Task MustNotUpdatePartPriceIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdateMaterialPrice(PartToFailDoubleOperations.Id, PartToFailDoubleOperations.Value));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.UpdateMaterialPrice(PartToFailDecimalOperations.Id, PartToFailDecimalOperations.Value));
 
-            await Repository.Received(1).GetMaterial(PartToFailDoubleOperations.Id);
+            await Repository.Received(1).GetMaterial(PartToFailDecimalOperations.Id);
             await Repository.Received(0).UpdateMaterialPrice(Arg.Any<IMaterial>());
         }
 
         [Test]
         public async Task MustThrowExceptionIfFailtToUpdatePartPrice()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdateMaterialPrice(PartToFailUpdatePrice.Id, PartToFailUpdatePrice.Value));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.UpdateMaterialPrice(PartToFailUpdatePrice.Id, PartToFailUpdatePrice.Value));
 
             await Repository.Received(1).GetMaterial(ExistingPart2Id);
             await Repository.Received(1).UpdateMaterialPrice(Arg.Any<IMaterial>());
@@ -350,7 +350,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotDeletePartIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeleteMaterial(Guid.NewGuid()));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.DeleteMaterial(Guid.NewGuid()));
 
             await Repository.Received(1).GetMaterial(Arg.Any<Guid>());
             await Repository.Received(0).DeleteMaterial(Arg.Any<Guid>());
@@ -359,10 +359,11 @@ namespace ServiceTests
         [Test]
         public async Task MustThrowExceptionIfFailToDeletePart()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeleteMaterial(ExistingPart2.Id));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.DeleteMaterial(ExistingPart2.Id));
 
             await Repository.Received(1).GetMaterial(id: ExistingPart2.Id);
             await Repository.Received(1).DeleteMaterial(ExistingPart2.Id);
         }
     }
 }
+

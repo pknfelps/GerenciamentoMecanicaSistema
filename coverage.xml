@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <results>
   <modules>
-    <module id="9B230AD966A0224D87F64D1D137A323F7BDC85DF" name="DomainTests.dll" path="DomainTests.dll" block_coverage="94.16" line_coverage="89.81" blocks_covered="1579" blocks_not_covered="98" lines_covered="864" lines_partially_covered="98" lines_not_covered="0">
+    <module id="36DAA95CFBA6AC45B3288F26A699F22BA951ADE6" name="DomainTests.dll" path="DomainTests.dll" block_coverage="94.16" line_coverage="89.81" blocks_covered="1579" blocks_not_covered="98" lines_covered="864" lines_partially_covered="98" lines_not_covered="0">
       <functions>
         <function id="8284" token="0x6000003" name="MustNotCreateLicensePlateIfNotValid()" namespace="DomainTests.Vehicle" type_name="LicensePlateWrapperTests" block_coverage="100.00" line_coverage="100.00" blocks_covered="5" blocks_not_covered="0" lines_covered="3" lines_partially_covered="0" lines_not_covered="0">
           <ranges>
@@ -1953,7 +1953,7 @@
         <skipped_function id="13564" original_id="13564" token="0x6000065" name="set_LicensePlate(string)" type_name="OrderTests" reason="attribute_excluded" />
       </skipped_functions>
     </module>
-    <module id="A9E7347F0A5DD342923637A18AC6F21A5D8772EF" name="RepositoryTests.dll" path="RepositoryTests.dll" block_coverage="100.00" line_coverage="100.00" blocks_covered="2554" blocks_not_covered="0" lines_covered="1107" lines_partially_covered="0" lines_not_covered="0">
+    <module id="C446EF0AB7DA8D429F42F9C9F3FBC90807620BB9" name="RepositoryTests.dll" path="RepositoryTests.dll" block_coverage="100.00" line_coverage="100.00" blocks_covered="2554" blocks_not_covered="0" lines_covered="1107" lines_partially_covered="0" lines_not_covered="0">
       <functions>
         <function id="8484" token="0x600000d" name="get_ServiceToRegister()" namespace="RepositoryTests" type_name="CatalogRepositoryTests" block_coverage="100.00" line_coverage="100.00" blocks_covered="23" blocks_not_covered="0" lines_covered="10" lines_partially_covered="0" lines_not_covered="0">
           <ranges>
@@ -3212,7 +3212,7 @@
         <skipped_function id="14961" original_id="14961" token="0x6000064" name="set_VehicleRepository(Repository.Interface.IVehicleRepository)" type_name="VehicleRepositoryTests" reason="attribute_excluded" />
       </skipped_functions>
     </module>
-    <module id="C4EF440DDDDE50469B7C65C0A00741956BB4FCD3" name="ControllerTests.dll" path="ControllerTests.dll" block_coverage="82.08" line_coverage="74.99" blocks_covered="3032" blocks_not_covered="662" lines_covered="1409" lines_partially_covered="12" lines_not_covered="458">
+    <module id="44C8D90C024FFD48BEE2E4FAF885A891D4803EF3" name="ControllerTests.dll" path="ControllerTests.dll" block_coverage="82.08" line_coverage="74.99" blocks_covered="3032" blocks_not_covered="662" lines_covered="1409" lines_partially_covered="12" lines_not_covered="458">
       <functions>
         <function id="9740" token="0x600003e" name="&lt;OpenApiXmlCommentSupport_generated&gt;F4DDB812836705CBF315DA4E528E9AE03F9B3AF3621EABDCFA02A4940C818DAB1__XmlComment(string, string, string, string, string, bool, System.Collections.Generic.List&lt;string&gt;, System.Collections.Generic.List&lt;Microsoft.AspNetCore.OpenApi.Generated.&lt;OpenApiXmlCommentSupport_generated&gt;F4DDB812836705CBF315DA4E528E9AE03F9B3AF3621EABDCFA02A4940C818DAB1__XmlParameterComment&gt;, System.Collections.Generic.List&lt;Microsoft.AspNetCore.OpenApi.Generated.&lt;OpenApiXmlCommentSupport_generated&gt;F4DDB812836705CBF315DA4E528E9AE03F9B3AF3621EABDCFA02A4940C818DAB1__XmlResponseComment&gt;)" namespace="Microsoft.AspNetCore.OpenApi.Generated" type_name="&lt;OpenApiXmlCommentSupport_generated&gt;F4DDB812836705CBF315DA4E528E9AE03F9B3AF3621EABDCFA02A4940C818DAB1__XmlComment" block_coverage="0.00" line_coverage="0.00" blocks_covered="0" blocks_not_covered="2" lines_covered="0" lines_partially_covered="0" lines_not_covered="10">
           <ranges>
@@ -5653,7 +5653,7 @@
         <skipped_function id="28089" original_id="28089" token="0x6000133" name="set_VehicleService(Service.Interface.IVehicleService)" type_name="VehicleControllerTests" reason="attribute_excluded" />
       </skipped_functions>
     </module>
-    <module id="9FB2BE6403ADBF418E356034E8316CBE79658D8D" name="ServiceTests.dll" path="ServiceTests.dll" block_coverage="99.22" line_coverage="98.71" blocks_covered="6375" blocks_not_covered="50" lines_covered="2365" lines_partially_covered="7" lines_not_covered="24">
+    <module id="931D35FA1C086840BC781F23E86051D3B01053B4" name="ServiceTests.dll" path="ServiceTests.dll" block_coverage="99.22" line_coverage="98.71" blocks_covered="6375" blocks_not_covered="50" lines_covered="2365" lines_partially_covered="7" lines_not_covered="24">
       <functions>
         <function id="8676" token="0x6000029" name="get_ExistingUser()" namespace="ServiceTests" type_name="AuthenticationServiceTests" block_coverage="100.00" line_coverage="100.00" blocks_covered="17" blocks_not_covered="0" lines_covered="8" lines_partially_covered="0" lines_not_covered="0">
           <ranges>
@@ -8890,7 +8890,7 @@
         <skipped_function id="27963" original_id="27963" token="0x600015a" name="get_ExistingVehicleToFailUpdateOrDelete()" type_name="VehicleServiceTests" reason="attribute_excluded" />
       </skipped_functions>
     </module>
-    <module id="F35F9DDAC54426448FF04C89F1A1990A61231693" name="Service.Interface.dll" path="Service.Interface.dll" block_coverage="72.70" line_coverage="68.49" blocks_covered="450" blocks_not_covered="169" lines_covered="163" lines_partially_covered="8" lines_not_covered="67">
+    <module id="B34827D05DD31F439059CF0CEF600594AA742FFB" name="Service.Interface.dll" path="Service.Interface.dll" block_coverage="72.70" line_coverage="68.49" blocks_covered="450" blocks_not_covered="169" lines_covered="163" lines_partially_covered="8" lines_not_covered="67">
       <functions>
         <function id="8272" token="0x600002d" name="UpdateItemDto(System.Guid, T)" namespace="Service.Interface.Dto" type_name="UpdateItemDto&lt;T&gt;" block_coverage="100.00" line_coverage="100.00" blocks_covered="2" blocks_not_covered="0" lines_covered="3" lines_partially_covered="0" lines_not_covered="0">
           <ranges>
@@ -9712,7 +9712,7 @@
         <skipped_function id="9282" original_id="9282" token="0x6000018" name="get_Password()" type_name="PostgreSqlConfiguration" reason="attribute_excluded" />
       </skipped_functions>
     </module>
-    <module id="03867BD597F73141A964E13C1158BF0CA13A22DA" name="GerenciamentoMecanicaSistema.dll" path="GerenciamentoMecanicaSistema.dll" block_coverage="38.07" line_coverage="36.57" blocks_covered="348" blocks_not_covered="566" lines_covered="222" lines_partially_covered="0" lines_not_covered="385">
+    <module id="ADD08B7213884D46A47536730AB7FF6E0E6513CF" name="GerenciamentoMecanicaSistema.dll" path="GerenciamentoMecanicaSistema.dll" block_coverage="38.07" line_coverage="36.57" blocks_covered="348" blocks_not_covered="566" lines_covered="222" lines_partially_covered="0" lines_not_covered="385">
       <functions>
         <function id="8272" token="0x6000001" name="&lt;OpenApiXmlCommentSupport_generated&gt;FF4B2ADCE150740F1EB61291F4E420260433C6EAEFF1A502647ECEB70E5A92BE8__XmlComment(string, string, string, string, string, bool, System.Collections.Generic.List&lt;string&gt;, System.Collections.Generic.List&lt;Microsoft.AspNetCore.OpenApi.Generated.&lt;OpenApiXmlCommentSupport_generated&gt;FF4B2ADCE150740F1EB61291F4E420260433C6EAEFF1A502647ECEB70E5A92BE8__XmlParameterComment&gt;, System.Collections.Generic.List&lt;Microsoft.AspNetCore.OpenApi.Generated.&lt;OpenApiXmlCommentSupport_generated&gt;FF4B2ADCE150740F1EB61291F4E420260433C6EAEFF1A502647ECEB70E5A92BE8__XmlResponseComment&gt;)" namespace="Microsoft.AspNetCore.OpenApi.Generated" type_name="&lt;OpenApiXmlCommentSupport_generated&gt;FF4B2ADCE150740F1EB61291F4E420260433C6EAEFF1A502647ECEB70E5A92BE8__XmlComment" block_coverage="0.00" line_coverage="0.00" blocks_covered="0" blocks_not_covered="2" lines_covered="0" lines_partially_covered="0" lines_not_covered="10">
           <ranges>
@@ -10639,7 +10639,7 @@
         <skipped_function id="18114" original_id="18114" token="0x600008b" name="set_VehicleService(Service.Interface.IVehicleService)" type_name="VehiclesController" reason="attribute_excluded" />
       </skipped_functions>
     </module>
-    <module id="533439EDAEB7EB488084E78EE742546DF578F4F4" name="Domain.dll" path="Domain.dll" block_coverage="99.58" line_coverage="99.21" blocks_covered="707" blocks_not_covered="3" lines_covered="375" lines_partially_covered="2" lines_not_covered="1">
+    <module id="DD683FED477E3D4CBF6AE9BBC512A0168F23379A" name="Domain.dll" path="Domain.dll" block_coverage="99.58" line_coverage="99.21" blocks_covered="707" blocks_not_covered="3" lines_covered="375" lines_partially_covered="2" lines_not_covered="1">
       <functions>
         <function id="8428" token="0x6000013" name="get_Duration()" namespace="Domain.WorkOrder" type_name="Order" block_coverage="100.00" line_coverage="100.00" blocks_covered="8" blocks_not_covered="0" lines_covered="1" lines_partially_covered="0" lines_not_covered="0">
           <ranges>
@@ -19187,7 +19187,7 @@
         <skipped_function id="112565" original_id="112565" token="0x60007b8" name="get_Name()" type_name="ContainerBuilder.FromExistingVolume.DockerVolume&lt;TBuilderEntity, TContainerEntity, TConfigurationEntity&gt;" reason="attribute_excluded" />
       </skipped_functions>
     </module>
-    <module id="5C26423515E6AE4491C2ADFB15FD08443B0584EF" name="Service.dll" path="Service.dll" block_coverage="95.19" line_coverage="93.08" blocks_covered="930" blocks_not_covered="47" lines_covered="417" lines_partially_covered="5" lines_not_covered="26">
+    <module id="651944F8E263404CA4735B608BAAA15C0EE5B7AE" name="Service.dll" path="Service.dll" block_coverage="95.19" line_coverage="93.08" blocks_covered="930" blocks_not_covered="47" lines_covered="417" lines_partially_covered="5" lines_not_covered="26">
       <functions>
         <function id="8578" token="0x6000021" name="AuthenticationService(Microsoft.Extensions.Configuration.IConfiguration, Repository.Interface.IUserRepository)" namespace="Service" type_name="AuthenticationService" block_coverage="100.00" line_coverage="100.00" blocks_covered="2" blocks_not_covered="0" lines_covered="3" lines_partially_covered="0" lines_not_covered="0">
           <ranges>
@@ -26816,7 +26816,7 @@
         <skipped_function id="93062" original_id="93062" token="0x6000fe9" name="get_Count()" type_name="MultiplexedStream.ReadResult" reason="attribute_excluded" />
       </skipped_functions>
     </module>
-    <module id="962916B1C955A445889991464D9B97D58766B8D9" name="DependencyInjection.dll" path="DependencyInjection.dll" block_coverage="78.57" line_coverage="78.79" blocks_covered="22" blocks_not_covered="6" lines_covered="26" lines_partially_covered="2" lines_not_covered="5">
+    <module id="4869937DB2027E4F98259BE91AA434A68BF666AD" name="DependencyInjection.dll" path="DependencyInjection.dll" block_coverage="78.57" line_coverage="78.79" blocks_covered="22" blocks_not_covered="6" lines_covered="26" lines_partially_covered="2" lines_not_covered="5">
       <functions>
         <function id="8272" token="0x6000001" name="Register(Microsoft.Extensions.DependencyInjection.IServiceCollection, Microsoft.Extensions.Configuration.IConfiguration)" namespace="DependencyInjection" type_name="RepositoryDependencyInjection" block_coverage="84.62" line_coverage="87.50" blocks_covered="11" blocks_not_covered="2" lines_covered="14" lines_partially_covered="2" lines_not_covered="0">
           <ranges>
@@ -26864,7 +26864,7 @@
       </source_files>
       <skipped_functions />
     </module>
-    <module id="CF35111B3A2FF144905242383DA8E3CF4D0741B8" name="Repository.dll" path="Repository.dll" block_coverage="99.36" line_coverage="99.07" blocks_covered="619" blocks_not_covered="4" lines_covered="427" lines_partially_covered="4" lines_not_covered="0">
+    <module id="CD2DD0426B16174781B596A93883CF03A0E5B4A8" name="Repository.dll" path="Repository.dll" block_coverage="99.36" line_coverage="99.07" blocks_covered="619" blocks_not_covered="4" lines_covered="427" lines_partially_covered="4" lines_not_covered="0">
       <functions>
         <function id="12070" token="0x6000049" name="BaseRepository(System.Data.IDbConnection)" namespace="Repository" type_name="BaseRepository" block_coverage="100.00" line_coverage="100.00" blocks_covered="2" blocks_not_covered="0" lines_covered="2" lines_partially_covered="0" lines_not_covered="0">
           <ranges>
@@ -34796,8 +34796,8 @@
     <skipped_module name="system.private.uri.dll" path="system.private.uri.dll" reason="no_symbols" />
     <skipped_module name="system.security.cryptography.dll" path="system.security.cryptography.dll" reason="no_symbols" />
     <skipped_module name="system.memory.dll" path="system.memory.dll" reason="no_symbols" />
-    <skipped_module name="system.collections.concurrent.dll" path="system.collections.concurrent.dll" reason="no_symbols" />
     <skipped_module name="system.diagnostics.diagnosticsource.dll" path="system.diagnostics.diagnosticsource.dll" reason="no_symbols" />
+    <skipped_module name="system.collections.concurrent.dll" path="system.collections.concurrent.dll" reason="no_symbols" />
     <skipped_module name="system.net.http.dll" path="system.net.http.dll" reason="no_symbols" />
     <skipped_module name="system.io.memorymappedfiles.dll" path="system.io.memorymappedfiles.dll" reason="no_symbols" />
     <skipped_module name="system.net.primitives.dll" path="system.net.primitives.dll" reason="no_symbols" />
@@ -34805,11 +34805,11 @@
     <skipped_module name="system.xml.xdocument.dll" path="system.xml.xdocument.dll" reason="no_symbols" />
     <skipped_module name="system.net.requests.dll" path="system.net.requests.dll" reason="no_symbols" />
     <skipped_module name="system.private.xml.linq.dll" path="system.private.xml.linq.dll" reason="no_symbols" />
-    <skipped_module name="microsoft.build.framework.dll" path="microsoft.build.framework.dll" reason="no_symbols" />
     <skipped_module name="system.net.networkinformation.dll" path="system.net.networkinformation.dll" reason="no_symbols" />
+    <skipped_module name="microsoft.build.framework.dll" path="microsoft.build.framework.dll" reason="no_symbols" />
     <skipped_module name="system.threading.thread.dll" path="system.threading.thread.dll" reason="no_symbols" />
-    <skipped_module name="microsoft.dotnet.templatelocator.dll" path="microsoft.dotnet.templatelocator.dll" reason="no_symbols" />
     <skipped_module name="system.xml.readerwriter.dll" path="system.xml.readerwriter.dll" reason="no_symbols" />
+    <skipped_module name="microsoft.dotnet.templatelocator.dll" path="microsoft.dotnet.templatelocator.dll" reason="no_symbols" />
     <skipped_module name="microsoft.deployment.dotnet.releases.dll" path="microsoft.deployment.dotnet.releases.dll" reason="no_symbols" />
     <skipped_module name="msbuild.dll" path="msbuild.dll" reason="no_symbols" />
     <skipped_module name="system.private.xml.dll" path="system.private.xml.dll" reason="no_symbols" />
@@ -34818,8 +34818,8 @@
     <skipped_module name="system.runtime.intrinsics.dll" path="system.runtime.intrinsics.dll" reason="no_symbols" />
     <skipped_module name="system.net.nameresolution.dll" path="system.net.nameresolution.dll" reason="no_symbols" />
     <skipped_module name="system.threading.threadpool.dll" path="system.threading.threadpool.dll" reason="no_symbols" />
-    <skipped_module name="system.runtime.loader.dll" path="system.runtime.loader.dll" reason="no_symbols" />
     <skipped_module name="system.io.compression.dll" path="system.io.compression.dll" reason="no_symbols" />
+    <skipped_module name="system.runtime.loader.dll" path="system.runtime.loader.dll" reason="no_symbols" />
     <skipped_module name="system.net.sockets.dll" path="system.net.sockets.dll" reason="no_symbols" />
     <skipped_module name="system.threading.overlapped.dll" path="system.threading.overlapped.dll" reason="no_symbols" />
     <skipped_module name="nuget.protocol.dll" path="nuget.protocol.dll" reason="no_symbols" />
@@ -34835,13 +34835,13 @@
     <skipped_module name="system.threading.tasks.dataflow.dll" path="system.threading.tasks.dataflow.dll" reason="no_symbols" />
     <skipped_module name="microsoft.visualstudio.solutionpersistence.dll" path="microsoft.visualstudio.solutionpersistence.dll" reason="no_symbols" />
     <skipped_module name="system.threading.tasks.parallel.dll" path="system.threading.tasks.parallel.dll" reason="no_symbols" />
-    <skipped_module name="system.collections.nongeneric.dll" path="system.collections.nongeneric.dll" reason="no_symbols" />
     <skipped_module name="system.numerics.vectors.dll" path="system.numerics.vectors.dll" reason="no_symbols" />
+    <skipped_module name="system.collections.nongeneric.dll" path="system.collections.nongeneric.dll" reason="no_symbols" />
     <skipped_module name="microsoft.build.tasks.core.dll" path="microsoft.build.tasks.core.dll" reason="no_symbols" />
     <skipped_module name="microsoft.build.utilities.core.dll" path="microsoft.build.utilities.core.dll" reason="no_symbols" />
     <skipped_module name="microsoft.build.nugetsdkresolver.dll" path="microsoft.build.nugetsdkresolver.dll" reason="no_symbols" />
-    <skipped_module name="system.io.pipes.dll" path="system.io.pipes.dll" reason="no_symbols" />
     <skipped_module name="system.reflection.metadata.dll" path="system.reflection.metadata.dll" reason="no_symbols" />
+    <skipped_module name="system.io.pipes.dll" path="system.io.pipes.dll" reason="no_symbols" />
     <skipped_module name="system.security.accesscontrol.dll" path="system.security.accesscontrol.dll" reason="no_symbols" />
     <skipped_module name="microsoft.net.sdk.workloadmsbuildsdkresolver.dll" path="microsoft.net.sdk.workloadmsbuildsdkresolver.dll" reason="no_symbols" />
     <skipped_module name="microsoft.net.sdk.workloadmanifestreader.dll" path="microsoft.net.sdk.workloadmanifestreader.dll" reason="no_symbols" />
@@ -34853,10 +34853,10 @@
     <skipped_module name="system.diagnostics.tracesource.dll" path="system.diagnostics.tracesource.dll" reason="no_symbols" />
     <skipped_module name="microsoft.visualstudio.testplatform.common.dll" path="microsoft.visualstudio.testplatform.common.dll" reason="path_is_excluded" />
     <skipped_module name="microsoft.testplatform.utilities.dll" path="microsoft.testplatform.utilities.dll" reason="path_is_excluded" />
-    <skipped_module name="microsoft.testplatform.build.dll" path="microsoft.testplatform.build.dll" reason="path_is_excluded" />
-    <skipped_module name="microsoft.testplatform.build.resources.dll" path="microsoft.testplatform.build.resources.dll" reason="path_is_excluded" />
     <skipped_module name="system.collections.specialized.dll" path="system.collections.specialized.dll" reason="no_symbols" />
+    <skipped_module name="microsoft.testplatform.build.dll" path="microsoft.testplatform.build.dll" reason="path_is_excluded" />
     <skipped_module name="microsoft.extensions.filesystemglobbing.dll" path="microsoft.extensions.filesystemglobbing.dll" reason="no_symbols" />
+    <skipped_module name="microsoft.testplatform.build.resources.dll" path="microsoft.testplatform.build.resources.dll" reason="path_is_excluded" />
     <skipped_module name="vstest.console.resources.dll" path="vstest.console.resources.dll" reason="path_is_excluded" />
     <skipped_module name="microsoft.testplatform.crossplatengine.dll" path="microsoft.testplatform.crossplatengine.dll" reason="path_is_excluded" />
     <skipped_module name="microsoft.visualstudio.testplatform.client.dll" path="microsoft.visualstudio.testplatform.client.dll" reason="path_is_excluded" />
@@ -34899,8 +34899,8 @@
     <skipped_module name="nunit.engine.core.dll" path="nunit.engine.core.dll" reason="public_key_token_is_excluded" />
     <skipped_module name="testcentric.engine.metadata.dll" path="testcentric.engine.metadata.dll" reason="no_symbols" />
     <skipped_module name="nunit.framework.dll" path="nunit.framework.dll" reason="public_key_token_is_excluded" />
-    <skipped_module name="domain.interface.dll" path="domain.interface.dll" reason="optimized_or_instrumented" />
     <skipped_module name="system.diagnostics.textwritertracelistener.dll" path="system.diagnostics.textwritertracelistener.dll" reason="no_symbols" />
+    <skipped_module name="domain.interface.dll" path="domain.interface.dll" reason="optimized_or_instrumented" />
     <skipped_module name="microsoft.aspnetcore.openapi.dll" path="microsoft.aspnetcore.openapi.dll" reason="no_symbols" />
     <skipped_module name="microsoft.openapi.dll" path="microsoft.openapi.dll" reason="no_symbols" />
     <skipped_module name="microsoft.aspnetcore.mvc.testing.dll" path="microsoft.aspnetcore.mvc.testing.dll" reason="no_symbols" />
@@ -34909,9 +34909,9 @@
     <skipped_module name="nsubstitute.dll" path="nsubstitute.dll" reason="no_symbols" />
     <skipped_module name="repository.interface.dll" path="repository.interface.dll" reason="optimized_or_instrumented" />
     <skipped_module name="npgsql.dll" path="npgsql.dll" reason="no_symbols" />
+    <skipped_module name="castle.core.dll" path="castle.core.dll" reason="no_symbols" />
     <skipped_module name="system.transactions.local.dll" path="system.transactions.local.dll" reason="no_symbols" />
     <skipped_module name="microsoft.extensions.configuration.abstractions.dll" path="microsoft.extensions.configuration.abstractions.dll" reason="no_symbols" />
-    <skipped_module name="castle.core.dll" path="castle.core.dll" reason="no_symbols" />
     <skipped_module name="system.reflection.emit.dll" path="system.reflection.emit.dll" reason="no_symbols" />
     <skipped_module name="microsoft.aspnetcore.testhost.dll" path="microsoft.aspnetcore.testhost.dll" reason="path_is_excluded" />
     <skipped_module name="microsoft.aspnetcore.hosting.server.abstractions.dll" path="microsoft.aspnetcore.hosting.server.abstractions.dll" reason="no_symbols" />
@@ -34935,10 +34935,10 @@
     <skipped_module name="microsoft.aspnetcore.authentication.dll" path="microsoft.aspnetcore.authentication.dll" reason="no_symbols" />
     <skipped_module name="microsoft.aspnetcore.authentication.jwtbearer.dll" path="microsoft.aspnetcore.authentication.jwtbearer.dll" reason="no_symbols" />
     <skipped_module name="system.io.pipelines.dll" path="system.io.pipelines.dll" reason="no_symbols" />
+    <skipped_module name="microsoft.extensions.options.configurationextensions.dll" path="microsoft.extensions.options.configurationextensions.dll" reason="no_symbols" />
     <skipped_module name="microsoft.identitymodel.tokens.dll" path="microsoft.identitymodel.tokens.dll" reason="no_symbols" />
     <skipped_module name="system.identitymodel.tokens.jwt.dll" path="system.identitymodel.tokens.jwt.dll" reason="no_symbols" />
     <skipped_module name="microsoft.identitymodel.logging.dll" path="microsoft.identitymodel.logging.dll" reason="no_symbols" />
-    <skipped_module name="microsoft.extensions.options.configurationextensions.dll" path="microsoft.extensions.options.configurationextensions.dll" reason="no_symbols" />
     <skipped_module name="microsoft.aspnetcore.httpspolicy.dll" path="microsoft.aspnetcore.httpspolicy.dll" reason="no_symbols" />
     <skipped_module name="microsoft.aspnetcore.authorization.policy.dll" path="microsoft.aspnetcore.authorization.policy.dll" reason="no_symbols" />
     <skipped_module name="microsoft.identitymodel.jsonwebtokens.dll" path="microsoft.identitymodel.jsonwebtokens.dll" reason="no_symbols" />
@@ -34946,6 +34946,7 @@
     <skipped_module name="swashbuckle.aspnetcore.swaggerui.dll" path="swashbuckle.aspnetcore.swaggerui.dll" reason="no_symbols" />
     <skipped_module name="microsoft.extensions.fileproviders.abstractions.dll" path="microsoft.extensions.fileproviders.abstractions.dll" reason="no_symbols" />
     <skipped_module name="microsoft.extensions.fileproviders.physical.dll" path="microsoft.extensions.fileproviders.physical.dll" reason="no_symbols" />
+    <skipped_module name="system.net.http.json.dll" path="system.net.http.json.dll" reason="no_symbols" />
     <skipped_module name="microsoft.extensions.configuration.commandline.dll" path="microsoft.extensions.configuration.commandline.dll" reason="no_symbols" />
     <skipped_module name="microsoft.extensions.configuration.fileextensions.dll" path="microsoft.extensions.configuration.fileextensions.dll" reason="no_symbols" />
     <skipped_module name="microsoft.extensions.options.dll" path="microsoft.extensions.options.dll" reason="no_symbols" />
@@ -34968,7 +34969,6 @@
     <skipped_module name="microsoft.aspnetcore.server.kestrel.transport.namedpipes.dll" path="microsoft.aspnetcore.server.kestrel.transport.namedpipes.dll" reason="no_symbols" />
     <skipped_module name="system.net.quic.dll" path="system.net.quic.dll" reason="no_symbols" />
     <skipped_module name="microsoft.aspnetcore.server.iis.dll" path="microsoft.aspnetcore.server.iis.dll" reason="no_symbols" />
-    <skipped_module name="system.net.http.json.dll" path="system.net.http.json.dll" reason="no_symbols" />
     <skipped_module name="microsoft.aspnetcore.server.iisintegration.dll" path="microsoft.aspnetcore.server.iisintegration.dll" reason="no_symbols" />
     <skipped_module name="microsoft.aspnetcore.http.dll" path="microsoft.aspnetcore.http.dll" reason="no_symbols" />
     <skipped_module name="microsoft.aspnetcore.connections.abstractions.dll" path="microsoft.aspnetcore.connections.abstractions.dll" reason="no_symbols" />

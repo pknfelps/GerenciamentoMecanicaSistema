@@ -1,4 +1,5 @@
-﻿using Domain.Vehicle;
+﻿using Domain.Interface.Exceptions;
+using Domain.Vehicle;
 
 namespace DomainTests.Vehicle
 {
@@ -16,19 +17,20 @@ namespace DomainTests.Vehicle
         [Test]
         public void MustNotCreateLicensePlateIfNotContainsExectedLenght()
         {
-            Assert.Throws<ArgumentException>(() => new OldBrazilLicensePlate("PR91"));
+            Assert.Catch<DomainValidationException>(() => new OldBrazilLicensePlate("PR91"));
         }
 
         [Test]
         public void MustNotCreateLicensePlateIfContainsSymbolOrPunctuation()
         {
-            Assert.Throws<ArgumentException>(() => new OldBrazilLicensePlate("PR$.911"));
+            Assert.Catch<DomainValidationException>(() => new OldBrazilLicensePlate("PR$.911"));
         }
 
         [Test]
         public void MustNotCreateLicensePlateIfIsNotAValidModel()
         {
-            Assert.Throws<ArgumentException>(() => new OldBrazilLicensePlate("PR3911X"));
+            Assert.Catch<DomainValidationException>(() => new OldBrazilLicensePlate("PR3911X"));
         }
     }
 }
+

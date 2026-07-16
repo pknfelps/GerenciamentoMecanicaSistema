@@ -1,4 +1,5 @@
-﻿namespace Domain.Customer
+﻿using Domain.Interface.Exceptions;
+namespace Domain.Customer
 {
     public static class DocumentWrapper
     {
@@ -10,7 +11,7 @@
             {
                 Cpf.DigitCount => new Cpf(numbers),
                 Cnpj.DigitCount => new Cnpj(numbers),
-                _ => throw new ArgumentException("Documento inválido.", nameof(document))
+                _ => throw new DomainValidationException("Documento inválido.")
             };
         }
     }

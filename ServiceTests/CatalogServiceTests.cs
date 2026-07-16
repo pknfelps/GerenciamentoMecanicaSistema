@@ -3,7 +3,9 @@ using NSubstitute;
 using Repository.Interface;
 using Service;
 using Service.Interface;
-using Service.Interface.Dto.Service;
+using Service.Interface.Exceptions;
+using Service.Interface.Commands.Catalog;
+using Service.Interface.Results.Catalog;
 
 namespace ServiceTests
 {
@@ -12,9 +14,9 @@ namespace ServiceTests
         private ICatalogService Service { get; set; }
         private ICatalogRepository Repository { get; set; }
 
-        private static CreateServiceDto ServiceToCreate { get; } = new("Troca de Óleo", 2, 50, 1);
-        private static CreateServiceDto ServiceToFailCreation { get; } = new("Teste", 1, 10, 1);
-        private static CreateServiceDto ExistingServiceToCreateDto { get; } = new("Revisão", 6, 100, 1);
+        private static CreateServiceCommand ServiceToCreate { get; } = new("Troca de Óleo", 2, 50, 1);
+        private static CreateServiceCommand ServiceToFailCreation { get; } = new("Teste", 1, 10, 1);
+        private static CreateServiceCommand ExistingServiceToCreate { get; } = new("Revisão", 6, 100, 1);
 
         private static readonly Guid ExistingServiceId = Guid.NewGuid();
         private static IMechanicalService ExistingService
@@ -56,7 +58,7 @@ namespace ServiceTests
             }
         }
 
-        private static ServiceDto ServiceToUpdate { get; } = new(ExistingServiceId, "Revisão Veicular", 4, 150, 1);
+        private static CreateServiceCommand ServiceToUpdate { get; } = new("Revisão Veicular", 4, 150, 1);
 
         [SetUp]
         public async Task SetUp()
@@ -133,16 +135,16 @@ namespace ServiceTests
         [Test]
         public async Task MustNotRegisterServiceIfAlreadyExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RegisterService(ExistingServiceToCreateDto));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RegisterService(ExistingServiceToCreate));
 
-            await Repository.Received(1).GetService(description: ExistingServiceToCreateDto.Description);
+            await Repository.Received(1).GetService(description: ExistingServiceToCreate.Description);
             await Repository.Received(0).RegisterService(Arg.Any<IMechanicalService>());
         }
 
         [Test]
         public async Task MustFailRegisterService()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.RegisterService(ServiceToFailCreation));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.RegisterService(ServiceToFailCreation));
 
             await Repository.Received(1).GetService(description: ServiceToFailCreation.Description);
             await Repository.Received(1).RegisterService(Arg.Any<IMechanicalService>());
@@ -233,24 +235,24 @@ namespace ServiceTests
         [Test]
         public async Task MustNotGetServiceIfNoParameterWasGiven()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.GetService());
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.GetService());
         }
 
         [Test]
         public async Task MustUpdateService()
         {
-            await Service.UpdateService(ServiceToUpdate.Id, ServiceToUpdate);
+            await Service.UpdateService(ExistingServiceId, ServiceToUpdate);
 
-            await Repository.Received(1).GetService(ServiceToUpdate.Id);
+            await Repository.Received(1).GetService(ExistingServiceId);
             await Repository.Received(1).UpdateService(Arg.Any<IMechanicalService>());
         }
 
         [Test]
         public async Task MustNotUpdateServiceIfNotExists()
         {
-            var service = new CreateServiceDto("Revisão Automotiva", 4, 150, 1);
+            var service = new CreateServiceCommand("Revisão Automotiva", 4, 150, 1);
 
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdateService(Guid.NewGuid(), service));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.UpdateService(Guid.NewGuid(), service));
 
             await Repository.Received(1).GetService(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).UpdateService(Arg.Any<IMechanicalService>());
@@ -259,11 +261,11 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToUpdateService()
         {
-            var service = new ServiceDto(ExistingServiceId, "Revisão Automotiva", 4, 150, 1);
+            var service = new CreateServiceCommand("Revisão Automotiva", 4, 150, 1);
 
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.UpdateService(ExistingServiceId, service));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.UpdateService(ExistingServiceId, service));
 
-            await Repository.Received(1).GetService(service.Id);
+            await Repository.Received(1).GetService(ExistingServiceId);
             await Repository.Received(1).UpdateService(Arg.Any<IMechanicalService>());
         }
 
@@ -279,7 +281,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotDeleteServiceIfNotExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeleteService(Guid.NewGuid()));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.DeleteService(Guid.NewGuid()));
 
             await Repository.Received(1).GetService(Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).DeleteService(Arg.Any<Guid>());
@@ -288,10 +290,11 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToDeleteService()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await Service.DeleteService(ExistingService2Id));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.DeleteService(ExistingService2Id));
 
             await Repository.Received(1).GetService(ExistingService2Id);
             await Repository.Received(1).DeleteService(ExistingService2Id);
         }
     }
 }
+

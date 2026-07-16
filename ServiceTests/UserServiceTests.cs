@@ -3,7 +3,9 @@ using NSubstitute;
 using Repository.Interface;
 using Service;
 using Service.Interface;
-using Service.Interface.Dto.User;
+using Service.Interface.Exceptions;
+using Service.Interface.Commands.User;
+using Service.Interface.Results.User;
 
 namespace ServiceTests
 {
@@ -12,8 +14,8 @@ namespace ServiceTests
         private IUserService UserService { get; set; }
         private IUserRepository UserRepository { get; set; }
 
-        private static CreateUserDto UserToRegister { get; } = new("Fulano", "Senha@123", "Manager");
-        private static CreateUserDto UserToFail { get; } = new("Teste", "Teste@123", "User");
+        private static CreateUserCommand UserToRegister { get; } = new("Fulano", "Senha@123", "Manager");
+        private static CreateUserCommand UserToFail { get; } = new("Teste", "Teste@123", "User");
 
         private static readonly Guid ExistingUserId = Guid.NewGuid();
         private static IUser ExistingUser
@@ -29,7 +31,8 @@ namespace ServiceTests
             }
         }
 
-        private static UserDto ExistingUserDto { get; } = new(Guid.NewGuid(), "Admin", "Admin@123", "Admin");
+        private static UserResult ExistingUserResult { get; } = new(Guid.NewGuid(), "Admin", "Admin@123", "Admin");
+        private static CreateUserCommand ExistingUserCommand { get; } = new("Admin", "Admin@123", "Admin");
 
         [SetUp]
         public void SetUp()
@@ -71,7 +74,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotCreateUserIfExists()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await UserService.RegisterUser(ExistingUserDto));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await UserService.RegisterUser(ExistingUserCommand));
 
             await UserRepository.ReceivedWithAnyArgs(0).RegisterUser(Arg.Any<IUser>());
         }
@@ -79,7 +82,7 @@ namespace ServiceTests
         [Test]
         public async Task MustThrowExceptionIfFailRegister()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await UserService.RegisterUser(UserToFail));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await UserService.RegisterUser(UserToFail));
 
             await UserRepository.ReceivedWithAnyArgs(1).RegisterUser(Arg.Any<IUser>());
         }
@@ -87,7 +90,7 @@ namespace ServiceTests
         [Test]
         public async Task MustGetUser()
         {
-            var User = await UserService.GetUser(ExistingUserDto);
+            var User = await UserService.GetUser(ExistingUserCommand.Name, ExistingUserCommand.Role);
 
             await UserRepository.ReceivedWithAnyArgs(1).GetUser(Arg.Any<string>(), Arg.Any<string>());
 
@@ -95,15 +98,15 @@ namespace ServiceTests
 
             Assert.Multiple(() =>
             {
-                Assert.That(User.Name, Is.EqualTo(ExistingUserDto.Name));
-                Assert.That(User.Role, Is.EqualTo(ExistingUserDto.Role));
+                Assert.That(User.Name, Is.EqualTo(ExistingUserResult.Name));
+                Assert.That(User.Role, Is.EqualTo(ExistingUserResult.Role));
             });
         }
 
         [Test]
         public async Task MustNotGetUserIfNotExists()
         {
-            var User = await UserService.GetUser(UserToRegister);
+            var User = await UserService.GetUser(UserToRegister.Name, UserToRegister.Role);
 
             await UserRepository.ReceivedWithAnyArgs(1).GetUser(Arg.Any<string>(), Arg.Any<string>());
 
@@ -111,3 +114,4 @@ namespace ServiceTests
         }
     }
 }
+

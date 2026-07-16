@@ -1,11 +1,4 @@
-Í
-_C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ControllerTests\UserControllerTests.csControllerTests7
-#ControllerTests.UserControllerTestsMustRegisterUser[
-#ControllerTests.UserControllerTests4MustReturnBadRequestIfTryRegisterAUserThatIsNotValidg
-#ControllerTests.UserControllerTests@MustReturnInternalServerErrorIfTryRegisterAUserThatAlreadyExists@
-#ControllerTests.UserControllerTestsMustGetUserByNomeAndCargo\
-#ControllerTests.UserControllerTests5MustReturnNotFoundIfTryGetClienteClienteThatNotExistsW
-#ControllerTests.UserControllerTests0MustReturnBadRequestIfTryGetUserWithInvalidModel·
+·
 bC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ControllerTests\VehicleControllerTests.csControllerTests=
 &ControllerTests.VehicleControllerTestsMustRegisterVehicleb
 &ControllerTests.VehicleControllerTests8MustReturnBadRequestIfTryRegisterVehicleWithInvalidModel\
@@ -17,7 +10,14 @@ bC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ControllerTests\Vehicl
 &ControllerTests.VehicleControllerTests0MustReturnInternalServerErrorIfFailUpdateVehicle;
 &ControllerTests.VehicleControllerTestsMustDeleteVehicle`
 &ControllerTests.VehicleControllerTests6MustReturnBadRequestIfTryDeleteVehicleWithInvalidModelZ
-&ControllerTests.VehicleControllerTests0MustReturnInternalServerErrorIfFailDeleteVehicle√
+&ControllerTests.VehicleControllerTests0MustReturnInternalServerErrorIfFailDeleteVehicleÍ
+_C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ControllerTests\UserControllerTests.csControllerTests7
+#ControllerTests.UserControllerTestsMustRegisterUser[
+#ControllerTests.UserControllerTests4MustReturnBadRequestIfTryRegisterAUserThatIsNotValidg
+#ControllerTests.UserControllerTests@MustReturnInternalServerErrorIfTryRegisterAUserThatAlreadyExists@
+#ControllerTests.UserControllerTestsMustGetUserByNomeAndCargo\
+#ControllerTests.UserControllerTests5MustReturnNotFoundIfTryGetClienteClienteThatNotExistsW
+#ControllerTests.UserControllerTests0MustReturnBadRequestIfTryGetUserWithInvalidModel√
 `C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ControllerTests\StockControllerTests.csControllerTests<
 $ControllerTests.StockControllerTestsMustRegisterMaterialc
 $ControllerTests.StockControllerTests;MustReturnBadRequestWhenTryRegisterMaterialWithInvalidModel[

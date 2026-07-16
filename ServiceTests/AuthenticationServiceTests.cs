@@ -1,18 +1,19 @@
-﻿using Domain.Interface.User;
-using Microsoft.Extensions.Configuration;
+using Domain.Interface.User;
 using NSubstitute;
 using Repository.Interface;
 using Service;
 using Service.Interface;
-using Service.Interface.Dto.User;
+using Service.Interface.Commands.User;
 
 namespace ServiceTests
 {
     public class AuthenticationServiceTests
     {
+        private const string GeneratedToken = "generated-token";
+
         private IAuthenticationService AuthenticationService { get; set; }
         private IUserRepository UsuarioRepository { get; set; }
-        private IConfiguration Configuration { get; set; }
+        private ITokenGenerator TokenGenerator { get; set; }
 
         private static readonly Guid ExistingUserId = Guid.NewGuid();
         private static IUser ExistingUser
@@ -28,15 +29,15 @@ namespace ServiceTests
             }
         }
 
-        private static CreateUserDto ExistingUserDto { get; } = new("Admin", "Admin@123", "Admin");
-        private static CreateUserDto ExistingUserWithWrongPassword { get; } = new("Admin", "Teste@123", "Admin");
-        private static CreateUserDto UnexistingUser { get; } = new("Fulano", "Fulano@123", "Usuario");
+        private static CreateUserCommand ExistingUserCommand { get; } = new("Admin", "Admin@123", "Admin");
+        private static CreateUserCommand ExistingUserWithWrongPassword { get; } = new("Admin", "Teste@123", "Admin");
+        private static CreateUserCommand UnexistingUser { get; } = new("Fulano", "Fulano@123", "Usuario");
 
         [SetUp]
         public void SetUp()
         {
             UsuarioRepository = Substitute.For<IUserRepository>();
-            Configuration = Substitute.For<IConfiguration>();
+            TokenGenerator = Substitute.For<ITokenGenerator>();
 
             UsuarioRepository.GetUser(Arg.Any<string>(), Arg.Any<string>()).Returns(callInfo =>
             {
@@ -49,21 +50,20 @@ namespace ServiceTests
                 return null;
             });
 
-            Configuration["Jwt:Key"].Returns("chaveTestesecurityKeyfortestingTokengeneration");
-            Configuration["Jwt:Issuer"].Returns("admin");
-            Configuration["Jwt:Audience"].Returns("mecanica");
+            TokenGenerator.Generate(Arg.Any<string>(), Arg.Any<string>()).Returns(GeneratedToken);
 
-            AuthenticationService = new AuthenticationService(Configuration, UsuarioRepository);
+            AuthenticationService = new AuthenticationService(UsuarioRepository, TokenGenerator);
         }
 
         [Test]
         public async Task MustLogInAndGenerateToken()
         {
-            var token = await AuthenticationService.Authenticate(ExistingUserDto);
+            var token = await AuthenticationService.Authenticate(ExistingUserCommand);
 
-            Assert.That(string.IsNullOrEmpty(token), Is.False);
+            Assert.That(token, Is.EqualTo(GeneratedToken));
 
             await UsuarioRepository.Received(1).GetUser(ExistingUser.Name, ExistingUser.Role.ToString());
+            TokenGenerator.Received(1).Generate(ExistingUser.Name, ExistingUser.Role.ToString());
         }
 
         [Test]
@@ -74,6 +74,7 @@ namespace ServiceTests
             Assert.That(string.IsNullOrEmpty(token), Is.True);
 
             await UsuarioRepository.Received(1).GetUser(UnexistingUser.Name, UnexistingUser.Role);
+            TokenGenerator.DidNotReceiveWithAnyArgs().Generate(default!, default!);
         }
 
         [Test]
@@ -84,6 +85,7 @@ namespace ServiceTests
             Assert.That(string.IsNullOrEmpty(token), Is.True);
 
             await UsuarioRepository.Received(1).GetUser(ExistingUserWithWrongPassword.Name, ExistingUserWithWrongPassword.Role);
+            TokenGenerator.DidNotReceiveWithAnyArgs().Generate(default!, default!);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿namespace DomainTests.Vehicle
+﻿using Domain.Interface.Exceptions;
+namespace DomainTests.Vehicle
 {
     public class VehicleTests
     {
@@ -41,37 +42,38 @@
         [Test]
         public void MustNotCreateVehicleIdIsEmpty()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.Vehicle.Vehicle(Guid.Empty, CostumerDocument, "Porsche", "911", 1990, "PRX3911"));
+            Assert.Catch<DomainValidationException>(() => new Domain.Vehicle.Vehicle(Guid.Empty, CostumerDocument, "Porsche", "911", 1990, "PRX3911"));
         }
 
         [Test]
         public void MustNotCreateVehicleIfCostumerDocumentIsEmpty()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.Vehicle.Vehicle("", "Porsche", "911", 1990, "PRX3911"));
+            Assert.Catch<DomainValidationException>(() => new Domain.Vehicle.Vehicle("", "Porsche", "911", 1990, "PRX3911"));
         }
 
         [Test]
         public void MustNotCreateVehicleIfBrandIsEmpty()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.Vehicle.Vehicle(CostumerDocument, "", "911", 1990, "PRX3911"));
+            Assert.Catch<DomainValidationException>(() => new Domain.Vehicle.Vehicle(CostumerDocument, "", "911", 1990, "PRX3911"));
         }
 
         [Test]
         public void MustNotCreateVehicleIfModelIsEmpty()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.Vehicle.Vehicle(CostumerDocument, "Porsche", "", 1990, "PRX3911"));
+            Assert.Catch<DomainValidationException>(() => new Domain.Vehicle.Vehicle(CostumerDocument, "Porsche", "", 1990, "PRX3911"));
         }
 
         [Test]
         public void MustNotCreateVehicleIfYearIsLowerThan0()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.Vehicle.Vehicle(CostumerDocument, "Porsche", "911", -1, "PRX3911"));
+            Assert.Catch<DomainValidationException>(() => new Domain.Vehicle.Vehicle(CostumerDocument, "Porsche", "911", -1, "PRX3911"));
         }
 
         [Test]
         public void MustNotCreateVehicleIfLicenselIsEmpty()
         {
-            Assert.Throws<ArgumentException>(() => new Domain.Vehicle.Vehicle(CostumerDocument, "Porsche", "911", 1990, ""));
+            Assert.Catch<DomainValidationException>(() => new Domain.Vehicle.Vehicle(CostumerDocument, "Porsche", "911", 1990, ""));
         }
     }
 }
+

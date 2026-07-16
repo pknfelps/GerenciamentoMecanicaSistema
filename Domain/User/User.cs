@@ -1,4 +1,5 @@
-﻿using Domain.Interface.User;
+﻿using Domain.Interface.Exceptions;
+using Domain.Interface.User;
 
 namespace Domain.User
 {
@@ -13,15 +14,18 @@ namespace Domain.User
 
         public User(Guid id, string name, string password, string role)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(name);
-            ArgumentException.ThrowIfNullOrWhiteSpace(password);
-            ArgumentException.ThrowIfNullOrWhiteSpace(role);
+            if (string.IsNullOrWhiteSpace(name))
+                throw new DomainValidationException("Nome deve ser preenchido");
+            if (string.IsNullOrWhiteSpace(password))
+                throw new DomainValidationException("Senha deve ser preenchida");
+            if (string.IsNullOrWhiteSpace(role))
+                throw new DomainValidationException("Cargo deve ser preenchido");
 
             if (password == name || password == role)
-                throw new ArgumentException("Senha deve ser diferente do nome e do cargo");
+                throw new DomainValidationException("Senha deve ser diferente do nome e do cargo");
 
             if (!Enum.TryParse(role, out Roles cargoParsed))
-                throw new ArgumentException($"Cargo \"{role}\" inválido");
+                throw new DomainValidationException($"Cargo \"{role}\" inválido");
 
             Id = id;
             Name = name;

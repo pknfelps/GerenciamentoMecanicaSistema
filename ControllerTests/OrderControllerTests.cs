@@ -1,7 +1,10 @@
-﻿using NSubstitute;
+﻿using GerenciamentoMecanicaSistema.Contracts.Requests.Order;
+using GerenciamentoMecanicaSistema.Contracts.Responses.Order;
+using NSubstitute;
 using Service.Interface;
-using Service.Interface.Dto;
-using Service.Interface.Dto.Order;
+using Service.Interface.Exceptions;
+using Service.Interface.Commands.Order;
+using Service.Interface.Results.Order;
 using System.Net;
 using System.Net.Http.Json;
 
@@ -11,22 +14,22 @@ namespace ControllerTests
     {
         private IOrdersService OrderService { get; set; }
 
-        private static readonly CreateOrderDto OrderToCreate = new("123.456.789-12", "TST1234");
-        private static readonly DetailedWorkOrderDto ExistingOrder = new(Guid.NewGuid(), "123.456.789-12", "TST1234", 0.0, "Received", DateTime.Now, DateTime.MinValue, [], [], TimeSpan.Zero);
-        private static readonly UpdateItemDto<int> OrderUpdate = new(Guid.NewGuid(), 1);
+        private static readonly CreateOrderRequest OrderToCreate = new("123.456.789-12", "TST1234");
+        private static readonly DetailedWorkOrderResult ExistingOrder = new(Guid.NewGuid(), "123.456.789-12", "TST1234", 0.0m, "Received", DateTime.Now, DateTime.MinValue, [], [], TimeSpan.Zero);
+        private static readonly UpdateOrderItemRequest<int> OrderUpdate = new(Guid.NewGuid(), 1);
 
         protected override void MockService()
         {
             OrderService = TestWebAppFactory.OrderServiceMock;
 
-            OrderService.CreateServiceOrder(Arg.Any<CreateOrderDto>()).Returns(callInfo =>
+            OrderService.CreateServiceOrder(Arg.Any<CreateOrderCommand>()).Returns(callInfo =>
             {
-                var order = callInfo.ArgAt<CreateOrderDto>(0);
+                var order = callInfo.ArgAt<CreateOrderCommand>(0);
 
-                if (order.Equals(OrderToCreate))
+                if (order.Equals(OrderToCreate.ToCommand()))
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
             OrderService.GetOrders(id: Arg.Any<Guid?>(), customerDocument: Arg.Any<string>(), vehicleLicensePlate: Arg.Any<string>()).Returns(callInfo =>
@@ -63,30 +66,30 @@ namespace ControllerTests
                 if (id == ExistingOrder.Id)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
-            OrderService.AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>()).Returns(callInfo =>
+            OrderService.AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
                 if (id == ExistingOrder.Id)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
-            OrderService.RemoveServiceOfOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>()).Returns(callInfo =>
+            OrderService.RemoveServiceOfOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
                 if (id == ExistingOrder.Id)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
-            OrderService.AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>()).Returns(callInfo =>
+            OrderService.AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
@@ -94,17 +97,17 @@ namespace ControllerTests
                     return Task.CompletedTask;
 
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
-            OrderService.RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>()).Returns(callInfo =>
+            OrderService.RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
                 if (id == ExistingOrder.Id)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
             OrderService.CompleteDiagnosis(Arg.Any<Guid>()).Returns(callInfo =>
@@ -114,17 +117,17 @@ namespace ControllerTests
                 if (id == ExistingOrder.Id)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
-            OrderService.ApproveBudget(Arg.Any<Guid>(), Arg.Any<ApproveOrderDto>()).Returns(callInfo =>
+            OrderService.ApproveBudget(Arg.Any<Guid>(), Arg.Any<ApproveOrderCommand>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
                 if (id == ExistingOrder.Id)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
             OrderService.StartExecution(Arg.Any<Guid>()).Returns(callInfo =>
@@ -134,7 +137,7 @@ namespace ControllerTests
                 if (id == ExistingOrder.Id)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
             OrderService.CompleteExecution(Arg.Any<Guid>()).Returns(callInfo =>
@@ -144,7 +147,7 @@ namespace ControllerTests
                 if (id == ExistingOrder.Id)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
             OrderService.DeliverVehicle(Arg.Any<Guid>()).Returns(callInfo =>
@@ -154,7 +157,7 @@ namespace ControllerTests
                 if (id == ExistingOrder.Id)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
 
             OrderService.DeleteOrder(Arg.Any<Guid>()).Returns(callInfo =>
@@ -164,7 +167,7 @@ namespace ControllerTests
                 if (id == ExistingOrder.Id)
                     return Task.CompletedTask;
 
-                throw new InvalidOperationException();
+                throw new NotFoundException("Recurso não encontrado");
             });
         }
 
@@ -173,7 +176,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PostAsJsonAsync($"orders", OrderToCreate);
 
-            await OrderService.Received(1).CreateServiceOrder(OrderToCreate);
+            await OrderService.Received(1).CreateServiceOrder(OrderToCreate.ToCommand());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
         }
@@ -183,34 +186,34 @@ namespace ControllerTests
         {
             var response = await TestClient.PostAsJsonAsync($"orders", new { Teste = "Teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).CreateServiceOrder(Arg.Any<CreateOrderDto>());
+            await OrderService.ReceivedWithAnyArgs(0).CreateServiceOrder(Arg.Any<CreateOrderCommand>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorIfTryCreateOrderWithInvalidOrder()
+        public async Task MustReturnNotFoundIfTryCreateOrderWithInvalidOrder()
         {
-            var order = new CreateOrderDto("321.654.987-98", "XXX0000");
+            var order = new CreateOrderRequest("321.654.987-98", "XXX0000");
             var response = await TestClient.PostAsJsonAsync($"orders", order);
 
-            await OrderService.Received(1).CreateServiceOrder(order);
+            await OrderService.Received(1).CreateServiceOrder(order.ToCommand());
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         }
 
         [Test]
         public async Task MustGetOrders()
         {
             var response = await TestClient.GetAsync($"orders");
-            var orders = await response.Content.ReadFromJsonAsync<List<WorkOrderDto>>();
+            var orders = await response.Content.ReadFromJsonAsync<List<WorkOrderResponse>>();
 
             await OrderService.Received(1).GetOrders();
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
             Assert.That(orders, Has.Count.EqualTo(1));
             Assert.That(orders[0], Is.Not.Null);
-            Assert.That(orders[0].Equals(ExistingOrder), Is.True);
+            Assert.That(orders[0].Id, Is.EqualTo(ExistingOrder.Id));
         }
 
         [Test]
@@ -218,7 +221,7 @@ namespace ControllerTests
         {
             var response = await TestClient.GetAsync($"orders?id={ExistingOrder.Id}");
 
-            var orders = await response.Content.ReadFromJsonAsync<List<WorkOrderDto>>();
+            var orders = await response.Content.ReadFromJsonAsync<List<WorkOrderResponse>>();
 
             await OrderService.Received(1).GetOrders(id: ExistingOrder.Id);
 
@@ -227,14 +230,14 @@ namespace ControllerTests
 
             var order = orders[0];
             Assert.That(order, Is.Not.Null);
-            Assert.That(order.Equals(ExistingOrder), Is.True);
+            Assert.That(order.Id, Is.EqualTo(ExistingOrder.Id));
         }
 
         [Test]
         public async Task MustGetDetailedOrder()
         {
             var response = await TestClient.GetAsync($"orders/details?id={ExistingOrder.Id}");
-            var orders = await response.Content.ReadFromJsonAsync<List<DetailedWorkOrderDto>>();
+            var orders = await response.Content.ReadFromJsonAsync<List<DetailedWorkOrderResponse>>();
 
             await OrderService.Received(1).GetOrders(id: ExistingOrder.Id);
 
@@ -243,7 +246,7 @@ namespace ControllerTests
 
             var order = orders[0];
             Assert.That(order, Is.Not.Null);
-            Assert.That(order.Equals(ExistingOrder), Is.True);
+            Assert.That(order.Id, Is.EqualTo(ExistingOrder.Id));
         }
 
         [Test]
@@ -251,14 +254,14 @@ namespace ControllerTests
         {
             var response = await TestClient.GetAsync($"orders/vehicles/{ExistingOrder.VehicleLicensePlate}");
 
-            var orders = await response.Content.ReadFromJsonAsync<List<DetailedWorkOrderDto>>();
+            var orders = await response.Content.ReadFromJsonAsync<List<DetailedWorkOrderResponse>>();
 
             await OrderService.Received(1).GetOrders(vehicleLicensePlate: ExistingOrder.VehicleLicensePlate);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
             Assert.That(orders, Has.Count.EqualTo(1));
             Assert.That(orders[0], Is.Not.Null);
-            Assert.That(orders[0].Equals(ExistingOrder), Is.True);
+            Assert.That(orders[0].Id, Is.EqualTo(ExistingOrder.Id));
         }
 
         [Test]
@@ -282,14 +285,14 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorItTryStartDiagnosisThatNotExists()
+        public async Task MustReturnNotFoundItTryStartDiagnosisThatNotExists()
         {
             var id = Guid.NewGuid();
             var response = await TestClient.PatchAsync($"orders/{id}/diagnosis/start", null);
 
             await OrderService.Received(1).StartDiagnosis(id);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         }
 
         [Test]
@@ -307,19 +310,19 @@ namespace ControllerTests
         {
             var response = await TestClient.PostAsJsonAsync($"orders/{ExistingOrder.Id}/services", OrderUpdate);
 
-            await OrderService.Received(1).AddServiceToOrder(ExistingOrder.Id, Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).AddServiceToOrder(ExistingOrder.Id, Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorItTryAddServiceToOrderThatNotExists()
+        public async Task MustReturnNotFoundItTryAddServiceToOrderThatNotExists()
         {
             var response = await TestClient.PostAsJsonAsync($"orders/{Guid.NewGuid()}/services", OrderUpdate);
 
-            await OrderService.Received(1).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>());
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         }
 
         [Test]
@@ -327,7 +330,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PatchAsJsonAsync($"orders/0000/services", new { Teste = "Teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.ReceivedWithAnyArgs(0).AddServiceToOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
@@ -337,19 +340,19 @@ namespace ControllerTests
         {
             var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/services", OrderUpdate);
 
-            await OrderService.Received(1).RemoveServiceOfOrder(ExistingOrder.Id, Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).RemoveServiceOfOrder(ExistingOrder.Id, Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorItTryRemoveServiceOfOrderThatNotExists()
+        public async Task MustReturnNotFoundItTryRemoveServiceOfOrderThatNotExists()
         {
             var response = await TestClient.PatchAsJsonAsync($"orders/{Guid.NewGuid()}/services", OrderUpdate);
 
-            await OrderService.Received(1).RemoveServiceOfOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).RemoveServiceOfOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>());
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         }
 
         [Test]
@@ -357,7 +360,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PatchAsJsonAsync($"orders/0000/services", new { Teste = "Teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).RemoveServiceOfOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.ReceivedWithAnyArgs(0).RemoveServiceOfOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
@@ -367,19 +370,19 @@ namespace ControllerTests
         {
             var response = await TestClient.PostAsJsonAsync($"orders/{ExistingOrder.Id}/materials", OrderUpdate);
 
-            await OrderService.Received(1).AddMaterialToOrder(ExistingOrder.Id, Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).AddMaterialToOrder(ExistingOrder.Id, Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorItTryAddMaterialToOrderThatNotExists()
+        public async Task MustReturnNotFoundItTryAddMaterialToOrderThatNotExists()
         {
             var response = await TestClient.PostAsJsonAsync($"orders/{Guid.NewGuid()}/materials", OrderUpdate);
 
-            await OrderService.Received(1).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>());
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         }
 
         [Test]
@@ -387,7 +390,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/materials", new { Teste = "Teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.ReceivedWithAnyArgs(0).AddMaterialToOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
@@ -397,19 +400,19 @@ namespace ControllerTests
         {
             var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/materials", OrderUpdate);
 
-            await OrderService.Received(1).RemoveMaterialFromOrder(ExistingOrder.Id, Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).RemoveMaterialFromOrder(ExistingOrder.Id, Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorItTryRemoveMaterialFromOrderThatNotExists()
+        public async Task MustReturnNotFoundItTryRemoveMaterialFromOrderThatNotExists()
         {
             var response = await TestClient.PatchAsJsonAsync($"orders/{Guid.NewGuid()}/materials", OrderUpdate);
 
-            await OrderService.Received(1).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.Received(1).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>());
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         }
 
         [Test]
@@ -417,7 +420,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/materials", new { Teste = "Teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateItemDto<int>>());
+            await OrderService.ReceivedWithAnyArgs(0).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<UpdateOrderItemCommand<int>>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
@@ -433,14 +436,14 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInternalServerErrorItTryCompleteDiagnosisThatNotExists()
+        public async Task MustReturnNotFoundItTryCompleteDiagnosisThatNotExists()
         {
             var id = Guid.NewGuid();
             var response = await TestClient.PatchAsync($"orders/{id}/diagnosis/complete", null);
 
             await OrderService.Received(1).CompleteDiagnosis(id);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         }
 
         [Test]
@@ -456,23 +459,23 @@ namespace ControllerTests
         [Test]
         public async Task MustApproveBudget()
         {
-            var approve = new ApproveOrderDto(ExistingOrder.CustomerDocument, true);
+            var approve = new ApproveOrderRequest(ExistingOrder.CustomerDocument, true);
             var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/budget", approve);
 
-            await OrderService.Received(1).ApproveBudget(ExistingOrder.Id, approve);
+            await OrderService.Received(1).ApproveBudget(ExistingOrder.Id, approve.ToCommand());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         }
 
         [Test]
-        public async Task MustReturnInvalidServerErrorIfTryApproveBudgetThatNotExists()
+        public async Task MustReturnNotFoundIfTryApproveBudgetThatNotExists()
         {
-            var approve = new ApproveOrderDto(ExistingOrder.CustomerDocument, true);
+            var approve = new ApproveOrderRequest(ExistingOrder.CustomerDocument, true);
             var response = await TestClient.PatchAsJsonAsync($"orders/{Guid.NewGuid()}/budget", approve);
 
-            await OrderService.Received(1).ApproveBudget(Arg.Any<Guid>(), approve);
+            await OrderService.Received(1).ApproveBudget(Arg.Any<Guid>(), approve.ToCommand());
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         }
 
         [Test]
@@ -480,7 +483,7 @@ namespace ControllerTests
         {
             var response = await TestClient.PatchAsJsonAsync($"orders/0000/budget", new { Teste = "teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).ApproveBudget(Arg.Any<Guid>(), Arg.Any<ApproveOrderDto>());
+            await OrderService.ReceivedWithAnyArgs(0).ApproveBudget(Arg.Any<Guid>(), Arg.Any<ApproveOrderCommand>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
@@ -496,14 +499,14 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInvalidServerErrorIfTryStartExecutionThatNotExists()
+        public async Task MustReturnNotFoundIfTryStartExecutionThatNotExists()
         {
             var id = Guid.NewGuid();
             var response = await TestClient.PatchAsync($"orders/{id}/execution/start", null);
 
             await OrderService.Received(1).StartExecution(id);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         }
 
         [Test]
@@ -527,14 +530,14 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInvalidServerErrorIfTryCompleteExecutionThatNotExists()
+        public async Task MustReturnNotFoundIfTryCompleteExecutionThatNotExists()
         {
             var id = Guid.NewGuid();
             var response = await TestClient.PatchAsync($"orders/{id}/execution/complete", null);
 
             await OrderService.Received(1).CompleteExecution(id);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         }
 
         [Test]
@@ -558,14 +561,14 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInvalidServerErrorIfTryDeliverVehicleThatNotExists()
+        public async Task MustReturnNotFoundIfTryDeliverVehicleThatNotExists()
         {
             var id = Guid.NewGuid();
             var response = await TestClient.PatchAsync($"orders/{id}/delivery", null);
 
             await OrderService.Received(1).DeliverVehicle(id);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         }
 
         [Test]
@@ -589,14 +592,14 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustReturnInvalidServerErrorIfTryDeleteOrderThatNotExists()
+        public async Task MustReturnNotFoundIfTryDeleteOrderThatNotExists()
         {
             var id = Guid.NewGuid();
             var response = await TestClient.DeleteAsync($"orders/{id}");
 
             await OrderService.Received(1).DeleteOrder(id);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         }
 
         [Test]

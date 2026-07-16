@@ -1,6 +1,10 @@
-﻿using Repository.Interface;
+﻿using Domain.Interface.Service;
+using Domain.MechanicalService;
+using Repository.Interface;
 using Service.Interface;
-using Service.Interface.Dto.Service;
+using Service.Interface.Exceptions;
+using Service.Interface.Commands.Catalog;
+using Service.Interface.Results.Catalog;
 
 namespace Service
 {
@@ -8,59 +12,66 @@ namespace Service
     {
         private ICatalogRepository Repository { get; set; } = repository;
 
-        public async Task RegisterService(CreateServiceDto serviceDto)
+        public async Task RegisterService(CreateServiceCommand service)
         {
-            if (await Repository.GetService(description: serviceDto.Description) != null)
-                throw new InvalidOperationException("Serivço já cadastrado");
+            if (await Repository.GetService(description: service.Description) != null)
+                throw new ConflictException("Serviço já cadastrado");
 
-            var registry = await Repository.RegisterService(serviceDto.ToDomain());
+            IMechanicalService serviceToRegister = new MechanicalService(service.Description, service.Hours, service.PricePerHour);
+
+            var registry = await Repository.RegisterService(serviceToRegister);
 
             if (registry == 0)
-                throw new InvalidOperationException("Falha ao registrar o serviço");
+                throw new ApplicationFailureException("Falha ao registrar o serviço");
         }
 
-        public async Task<IEnumerable<ServiceDto>> GetServices(Guid? id = null, string description = "")
+        public async Task<IEnumerable<ServiceResult>> GetServices(Guid? id = null, string description = "")
         {
             var services = await Repository.GetServices(id, description);
 
-            return services.Select(ServiceDto.Create);
+            return services.Select(CreateResult);
         }
 
-        public async Task<ServiceDto?> GetService(Guid? id = null, string description = "")
+        public async Task<ServiceResult?> GetService(Guid? id = null, string description = "")
         {
             if (id == null && string.IsNullOrEmpty(description))
-                throw new InvalidOperationException("Falha ao procurar serviço. Nenhum argumento fornecido");
+                throw new InvalidRequestException("Falha ao procurar serviço. Nenhum argumento fornecido");
 
-            var services = await Repository.GetService(id, description);
+            var service = await Repository.GetService(id, description);
 
-            if (services == null)
+            if (service == null)
                 return null;
 
-            return ServiceDto.Create(services);
+            return CreateResult(service);
         }
 
-        public async Task UpdateService(Guid serviceId, CreateServiceDto serviceDto)
+        public async Task UpdateService(Guid serviceId, CreateServiceCommand service)
         {
-            var service = await Repository.GetService(serviceId) ?? throw new InvalidOperationException("Serviço não encontrado");
+            var serviceToUpdate = await Repository.GetService(serviceId) ?? throw new NotFoundException("Serviço não encontrado");
 
-            service.UpdateDescriptrion(serviceDto.Description);
-            service.UpdateHours(serviceDto.Hours);
-            service.UpdatePricePerHour(serviceDto.PricePerHour);
+            serviceToUpdate.UpdateDescriptrion(service.Description);
+            serviceToUpdate.UpdateHours(service.Hours);
+            serviceToUpdate.UpdatePricePerHour(service.PricePerHour);
 
-            var registry = await Repository.UpdateService(service);
+            var registry = await Repository.UpdateService(serviceToUpdate);
 
             if (registry == 0)
-                throw new InvalidOperationException("Falha ao atualizar o serviço");
+                throw new ApplicationFailureException("Falha ao atualizar o serviço");
         }
 
         public async Task DeleteService(Guid serviceId)
         {
-            _ = await Repository.GetService(serviceId) ?? throw new InvalidOperationException("Serviço não encontrado");
+            _ = await Repository.GetService(serviceId) ?? throw new NotFoundException("Serviço não encontrado");
 
             var registry = await Repository.DeleteService(serviceId);
 
             if (registry == 0)
-                throw new InvalidOperationException("Falha ao atualizar o serviço");
+                throw new ApplicationFailureException("Falha ao atualizar o serviço");
+        }
+
+        private static ServiceResult CreateResult(IMechanicalService service)
+        {
+            return new(service.Id, service.Description, service.Hours, service.PricePerHour, service.Amount);
         }
     }
 }

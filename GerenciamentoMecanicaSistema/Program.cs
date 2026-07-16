@@ -1,7 +1,7 @@
 using DependencyInjection;
+using GerenciamentoMecanicaSistema.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Service.Settings;
 using System.Text;
 
 namespace GerenciamentoMecanicaSistema
@@ -33,12 +33,12 @@ namespace GerenciamentoMecanicaSistema
                 };
             });
 
-            builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
-
             RepositoryDependencyInjection.Register(builder.Services, builder.Configuration);
             ServiceDependencyInjection.Register(builder.Services);
 
             var app = builder.Build();
+
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
 
             if (app.Environment.IsDevelopment())
             {

@@ -1,4 +1,5 @@
-﻿using Domain.Customer;
+﻿using Domain.Interface.Exceptions;
+using Domain.Customer;
 
 namespace DomainTests.Customer
 {
@@ -7,33 +8,33 @@ namespace DomainTests.Customer
         [Test]
         public void MustNotCreateCpfIfNullOrWhiteSpace()
         {
-            Assert.Catch<ArgumentNullException>(() => new Cpf(""));
-            Assert.Catch<ArgumentNullException>(() => new Cpf(" "));
+            Assert.Catch<DomainValidationException>(() => new Cpf(""));
+            Assert.Catch<DomainValidationException>(() => new Cpf(" "));
 
         }
 
         [Test]
         public void MustNotCreateCpfIfContainsWhiteSpace()
         {
-            Assert.Catch<ArgumentNullException>(() => new Cpf("123 456 789 12"));
+            Assert.Catch<DomainValidationException>(() => new Cpf("123 456 789 12"));
         }
 
         [Test]
         public void MustNotCreateCpfIfContainsAnyLetter()
         {
-            Assert.Catch<ArgumentException>(() => new Cpf("123A5678912"));
+            Assert.Catch<DomainValidationException>(() => new Cpf("123A5678912"));
         }
 
         [Test]
         public void MustNotCreateCpfIfLessThan11Digits()
         {
-            Assert.Catch<ArgumentException>(() => new Cpf("1234567891"));
+            Assert.Catch<DomainValidationException>(() => new Cpf("1234567891"));
         }
 
         [Test]
         public void MustNotCreateCpfIfItIsInvalid()
         {
-            Assert.Catch<ArgumentException>(() => new Cpf("12345678912"));
+            Assert.Catch<DomainValidationException>(() => new Cpf("12345678912"));
         }
 
         [Test]
@@ -56,3 +57,4 @@ namespace DomainTests.Customer
         }
     }
 }
+

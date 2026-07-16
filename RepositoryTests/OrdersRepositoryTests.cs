@@ -107,7 +107,7 @@ namespace RepositoryTests
                 id UUID PRIMARY KEY,
                 customer_document VARCHAR(100) NOT NULL REFERENCES customers(document),
                 vehicle_license_plate VARCHAR(100) NOT NULL REFERENCES vehicles(license_plate),
-                budget DOUBLE PRECISION NOT NULL,
+                budget NUMERIC NOT NULL,
                 status VARCHAR(50) NOT NULL,
                 date_created TIMESTAMP NOT NULL DEFAULT NOW(),
                 date_finished TIMESTAMP NOT NULL,
@@ -119,7 +119,7 @@ namespace RepositoryTests
                 id UUID PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
                 brand VARCHAR(255) NOT NULL,
-                price DOUBLE PRECISION NOT NULL,
+                price NUMERIC NOT NULL,
                 amount INT NOT NULL,
                 reserved_amount INT NOT NULL DEFAULT 0);
                 """);
@@ -129,7 +129,7 @@ namespace RepositoryTests
                 id UUID PRIMARY KEY,
                 description VARCHAR(255) NOT NULL,
                 hours FLOAT NOT NULL,
-                price_per_hour DOUBLE PRECISION NOT NULL);
+                price_per_hour NUMERIC NOT NULL);
                 """);
 
             await Connection.ExecuteAsync("""
@@ -138,7 +138,7 @@ namespace RepositoryTests
                 order_id UUID NOT NULL REFERENCES orders(id),
                 name VARCHAR(255) NOT NULL,
                 brand VARCHAR(255) NOT NULL,
-                price DOUBLE PRECISION NOT NULL,
+                price NUMERIC NOT NULL,
                 amount INT NOT NULL);
                 """);
 
@@ -148,7 +148,7 @@ namespace RepositoryTests
                 order_id UUID NOT NULL REFERENCES orders(id),
                 description VARCHAR(255) NOT NULL,
                 hours FLOAT NOT NULL,
-                price_per_hour DOUBLE PRECISION NOT NULL,
+                price_per_hour NUMERIC NOT NULL,
                 amount INT NOT NULL);
                 """);
 
@@ -243,23 +243,23 @@ namespace RepositoryTests
             Assert.Multiple(() =>
             {
                 Assert.That(order.Services, Has.Count.EqualTo(1));
-                Assert.That(order.Services[0].Id, Is.EqualTo(Service.Id));
-                Assert.That(order.Services[0].Description, Is.EqualTo(Service.Description));
-                Assert.That(order.Services[0].Hours, Is.EqualTo(Service.Hours));
-                Assert.That(order.Services[0].PricePerHour, Is.EqualTo(Service.PricePerHour));
-                Assert.That(order.Services[0].Price, Is.EqualTo(Service.Price));
-                Assert.That(order.Services[0].Amount, Is.EqualTo(Service.Amount));
+                Assert.That(order.Services.ElementAt(0).Id, Is.EqualTo(Service.Id));
+                Assert.That(order.Services.ElementAt(0).Description, Is.EqualTo(Service.Description));
+                Assert.That(order.Services.ElementAt(0).Hours, Is.EqualTo(Service.Hours));
+                Assert.That(order.Services.ElementAt(0).PricePerHour, Is.EqualTo(Service.PricePerHour));
+                Assert.That(order.Services.ElementAt(0).Price, Is.EqualTo(Service.Price));
+                Assert.That(order.Services.ElementAt(0).Amount, Is.EqualTo(Service.Amount));
             });
 
             Assert.Multiple(() =>
             {
                 Assert.That(order.Materials, Has.Count.EqualTo(1));
-                Assert.That(order.Materials[0].Id, Is.EqualTo(Part.Id));
-                Assert.That(order.Materials[0].Name, Is.EqualTo(Part.Name));
-                Assert.That(order.Materials[0].Brand, Is.EqualTo(Part.Brand));
-                Assert.That(order.Materials[0].Price, Is.EqualTo(Part.Price));
-                Assert.That(order.Materials[0].Amount, Is.EqualTo(1));
-                Assert.That(order.Materials[0].ReservedAmount, Is.EqualTo(0));
+                Assert.That(order.Materials.ElementAt(0).Id, Is.EqualTo(Part.Id));
+                Assert.That(order.Materials.ElementAt(0).Name, Is.EqualTo(Part.Name));
+                Assert.That(order.Materials.ElementAt(0).Brand, Is.EqualTo(Part.Brand));
+                Assert.That(order.Materials.ElementAt(0).Price, Is.EqualTo(Part.Price));
+                Assert.That(order.Materials.ElementAt(0).Amount, Is.EqualTo(1));
+                Assert.That(order.Materials.ElementAt(0).ReservedAmount, Is.EqualTo(0));
             });
         }
 
@@ -299,23 +299,23 @@ namespace RepositoryTests
             Assert.Multiple(() =>
             {
                 Assert.That(ordersList[0].Services, Has.Count.EqualTo(1));
-                Assert.That(ordersList[0].Services[0].Id, Is.EqualTo(Service.Id));
-                Assert.That(ordersList[0].Services[0].Description, Is.EqualTo(Service.Description));
-                Assert.That(ordersList[0].Services[0].Hours, Is.EqualTo(Service.Hours));
-                Assert.That(ordersList[0].Services[0].PricePerHour, Is.EqualTo(Service.PricePerHour));
-                Assert.That(ordersList[0].Services[0].Price, Is.EqualTo(Service.Price));
-                Assert.That(ordersList[0].Services[0].Amount, Is.EqualTo(Service.Amount));
+                Assert.That(ordersList[0].Services.ElementAt(0).Id, Is.EqualTo(Service.Id));
+                Assert.That(ordersList[0].Services.ElementAt(0).Description, Is.EqualTo(Service.Description));
+                Assert.That(ordersList[0].Services.ElementAt(0).Hours, Is.EqualTo(Service.Hours));
+                Assert.That(ordersList[0].Services.ElementAt(0).PricePerHour, Is.EqualTo(Service.PricePerHour));
+                Assert.That(ordersList[0].Services.ElementAt(0).Price, Is.EqualTo(Service.Price));
+                Assert.That(ordersList[0].Services.ElementAt(0).Amount, Is.EqualTo(Service.Amount));
             });
 
             Assert.Multiple(() =>
             {
                 Assert.That(ordersList[0].Materials, Has.Count.EqualTo(1));
-                Assert.That(ordersList[0].Materials[0].Id, Is.EqualTo(Part.Id));
-                Assert.That(ordersList[0].Materials[0].Name, Is.EqualTo(Part.Name));
-                Assert.That(ordersList[0].Materials[0].Brand, Is.EqualTo(Part.Brand));
-                Assert.That(ordersList[0].Materials[0].Price, Is.EqualTo(Part.Price));
-                Assert.That(ordersList[0].Materials[0].Amount, Is.EqualTo(1));
-                Assert.That(ordersList[0].Materials[0].ReservedAmount, Is.EqualTo(0));
+                Assert.That(ordersList[0].Materials.ElementAt(0).Id, Is.EqualTo(Part.Id));
+                Assert.That(ordersList[0].Materials.ElementAt(0).Name, Is.EqualTo(Part.Name));
+                Assert.That(ordersList[0].Materials.ElementAt(0).Brand, Is.EqualTo(Part.Brand));
+                Assert.That(ordersList[0].Materials.ElementAt(0).Price, Is.EqualTo(Part.Price));
+                Assert.That(ordersList[0].Materials.ElementAt(0).Amount, Is.EqualTo(1));
+                Assert.That(ordersList[0].Materials.ElementAt(0).ReservedAmount, Is.EqualTo(0));
             });
         }
 
@@ -356,23 +356,23 @@ namespace RepositoryTests
             Assert.Multiple(() =>
             {
                 Assert.That(ordersList[0].Services, Has.Count.EqualTo(1));
-                Assert.That(ordersList[0].Services[0].Id, Is.EqualTo(Service.Id));
-                Assert.That(ordersList[0].Services[0].Description, Is.EqualTo(Service.Description));
-                Assert.That(ordersList[0].Services[0].Hours, Is.EqualTo(Service.Hours));
-                Assert.That(ordersList[0].Services[0].PricePerHour, Is.EqualTo(Service.PricePerHour));
-                Assert.That(ordersList[0].Services[0].Price, Is.EqualTo(Service.Price));
-                Assert.That(ordersList[0].Services[0].Amount, Is.EqualTo(Service.Amount));
+                Assert.That(ordersList[0].Services.ElementAt(0).Id, Is.EqualTo(Service.Id));
+                Assert.That(ordersList[0].Services.ElementAt(0).Description, Is.EqualTo(Service.Description));
+                Assert.That(ordersList[0].Services.ElementAt(0).Hours, Is.EqualTo(Service.Hours));
+                Assert.That(ordersList[0].Services.ElementAt(0).PricePerHour, Is.EqualTo(Service.PricePerHour));
+                Assert.That(ordersList[0].Services.ElementAt(0).Price, Is.EqualTo(Service.Price));
+                Assert.That(ordersList[0].Services.ElementAt(0).Amount, Is.EqualTo(Service.Amount));
             });
 
             Assert.Multiple(() =>
             {
                 Assert.That(ordersList[0].Materials, Has.Count.EqualTo(1));
-                Assert.That(ordersList[0].Materials[0].Id, Is.EqualTo(Part.Id));
-                Assert.That(ordersList[0].Materials[0].Name, Is.EqualTo(Part.Name));
-                Assert.That(ordersList[0].Materials[0].Brand, Is.EqualTo(Part.Brand));
-                Assert.That(ordersList[0].Materials[0].Price, Is.EqualTo(Part.Price));
-                Assert.That(ordersList[0].Materials[0].Amount, Is.EqualTo(1));
-                Assert.That(ordersList[0].Materials[0].ReservedAmount, Is.EqualTo(0));
+                Assert.That(ordersList[0].Materials.ElementAt(0).Id, Is.EqualTo(Part.Id));
+                Assert.That(ordersList[0].Materials.ElementAt(0).Name, Is.EqualTo(Part.Name));
+                Assert.That(ordersList[0].Materials.ElementAt(0).Brand, Is.EqualTo(Part.Brand));
+                Assert.That(ordersList[0].Materials.ElementAt(0).Price, Is.EqualTo(Part.Price));
+                Assert.That(ordersList[0].Materials.ElementAt(0).Amount, Is.EqualTo(1));
+                Assert.That(ordersList[0].Materials.ElementAt(0).ReservedAmount, Is.EqualTo(0));
             });
         }
 

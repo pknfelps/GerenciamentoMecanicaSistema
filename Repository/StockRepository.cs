@@ -1,20 +1,20 @@
-﻿using Dapper;
+using Dapper;
 using Domain.Interface.Stock;
-using Repository.Dto;
+using Repository.PersistenceModels;
 using Repository.Interface;
 using System.Data;
 
 namespace Repository
 {
-    public class StockRepository(IDbConnection connection) : BaseRepository(connection), IStockRepository
+    public class StockRepository(IDbConnection connection, DbTransactionContext? transactionContext = null) : BaseRepository(connection, transactionContext), IStockRepository
     {
         public static string RegisterMaterialSql { get; private set; } = """
                 INSERT INTO stock(id, name, brand, price, amount, reserved_amount)
-                VALUES (@Id, @Name, @Brand, @Price, @Amount, @Reserved_Amount);
+                VALUES (@Id, @Name, @Brand, @Price, @Amount, @ReservedAmount);
                 """;
 
         public static string GetItensSql { get; private set; } = """
-                SELECT id, name, brand, price, amount, reserved_amount
+                SELECT id, name, brand, price, amount, reserved_amount AS ReservedAmount
                 FROM stock
                 {0}
                 LIMIT 50;
@@ -29,7 +29,7 @@ namespace Repository
         public static string UpdateMaterialAmountSql { get; private set; } = """
                 UPDATE stock
                 SET amount = @Amount,
-                    reserved_amount = @Reserved_Amount
+                    reserved_amount = @ReservedAmount
                 WHERE id = @Id;
                 """;
 
@@ -40,19 +40,21 @@ namespace Repository
 
         public async Task<int> RegisterNewMaterial(IMaterial material)
         {
-            return await Connection.ExecuteAsync(RegisterMaterialSql, MaterialDb.Create(material));
+            return await Connection.ExecuteAsync(RegisterMaterialSql, MaterialDb.Create(material), Transaction);
         }
 
         public async Task<IEnumerable<IMaterial>> GetMaterials(Guid? id = null, string name = "", string brand = "")
         {
-            var materials = await Connection.QueryAsync<MaterialDb>(GetItensSql.BuildQuery(BuildQueryParameters(id, name, brand)));
+            var query = GetItensSql.BuildQuery(BuildQueryParameters(id, name, brand));
+            var materials = await Connection.QueryAsync<MaterialDb>(query.Sql, query.Parameters, Transaction);
 
             return materials.Select(material => material.ToDomain());
         }
 
         public async Task<IMaterial?> GetMaterial(Guid? id = null, string name = "", string brand = "")
         {
-            var material = await Connection.QuerySingleOrDefaultAsync<MaterialDb>(GetItensSql.BuildQuery(BuildQueryParameters(id, name, brand)));
+            var query = GetItensSql.BuildQuery(BuildQueryParameters(id, name, brand));
+            var material = await Connection.QuerySingleOrDefaultAsync<MaterialDb>(query.Sql, query.Parameters, Transaction);
 
             if (material == null)
                 return null;
@@ -62,17 +64,17 @@ namespace Repository
 
         public async Task<int> UpdateMaterialPrice(IMaterial material)
         {
-            return await Connection.ExecuteAsync(UpdateMaterialPriceSql, MaterialDb.Create(material));
+            return await Connection.ExecuteAsync(UpdateMaterialPriceSql, MaterialDb.Create(material), Transaction);
         }
 
         public async Task<int> UpdateMaterialAmount(IMaterial material)
         {
-            return await Connection.ExecuteAsync(UpdateMaterialAmountSql, MaterialDb.Create(material));
+            return await Connection.ExecuteAsync(UpdateMaterialAmountSql, MaterialDb.Create(material), Transaction);
         }
 
         public async Task<int> DeleteMaterial(Guid materialId)
         {
-            return await Connection.ExecuteAsync(DeleMaterialSql, new { Id = materialId });
+            return await Connection.ExecuteAsync(DeleMaterialSql, new { Id = materialId }, Transaction);
         }
 
         private static Dictionary<string, object?> BuildQueryParameters(Guid? id = null, string name = "", string brand = "")

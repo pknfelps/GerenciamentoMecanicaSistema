@@ -1,4 +1,5 @@
-﻿using Domain.Interface.Custumer;
+﻿using Domain.Interface.Exceptions;
+using Domain.Interface.Custumer;
 using System.Reflection.Metadata;
 
 namespace Domain.Customer
@@ -13,21 +14,21 @@ namespace Domain.Customer
         protected Document(string document)
         {
             if (string.IsNullOrWhiteSpace(document))
-                throw new ArgumentNullException(nameof(document), $"{this} deve ser preenchido.");
+                throw new DomainValidationException($"{this} deve ser preenchido.");
 
             if (document.Contains(' '))
-                throw new ArgumentNullException(nameof(document), $"{this} não pode ter espaços em branco.");
+                throw new DomainValidationException($"{this} não pode ter espaços em branco.");
 
             if (document.FirstOrDefault(char.IsLetter) != default)
-                throw new ArgumentException($"{this} não deve conter letras.", nameof(document));
+                throw new DomainValidationException($"{this} não deve conter letras.");
 
             string numbers = string.Concat(document.Where(char.IsNumber));
 
             if (numbers.Length != DocumentDigitCount)
-                throw new ArgumentException($"{this} inválido.", nameof(document));
+                throw new DomainValidationException($"{this} inválido.");
 
             if (!IsValid(numbers))
-                throw new ArgumentException($"{this} inválido.", nameof(document));
+                throw new DomainValidationException($"{this} inválido.");
 
             Id = numbers;
         }

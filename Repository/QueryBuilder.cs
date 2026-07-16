@@ -1,23 +1,28 @@
-﻿namespace Repository
+using Dapper;
+
+namespace Repository
 {
     internal static class QueryBuilder
     {
-        public static string BuildQuery(this string query, Dictionary<string, object?> parameters)
+        public static QueryData BuildQuery(this string query, Dictionary<string, object?> parameters)
         {
             List<string> queryParams = [];
+            DynamicParameters dynamicParameters = new();
 
             foreach (var parameter in parameters)
             {
                 if (string.IsNullOrEmpty(parameter.Value?.ToString()))
                     continue;
 
-                queryParams.Add($"{parameter.Key} = '{parameter.Value}'");
+                var parameterName = $"Param{queryParams.Count}";
+                queryParams.Add($"{parameter.Key} = @{parameterName}");
+                dynamicParameters.Add(parameterName, parameter.Value);
             }
 
             if (queryParams.Count == 0)
-                return string.Format(query, "");
+                return new QueryData(string.Format(query, ""), dynamicParameters);
 
-            return string.Format(query, string.Join("AND ", queryParams).Insert(0, "WHERE "));
+            return new QueryData(string.Format(query, string.Join(" AND ", queryParams).Insert(0, "WHERE ")), dynamicParameters);
         }
     }
 }
