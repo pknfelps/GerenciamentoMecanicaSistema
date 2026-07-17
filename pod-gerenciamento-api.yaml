@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-gerenciamento-api
+  labels:
+    app: gerenciamento-api
+spec:
+  containers:
+  - name: gerenciamento-api
+    image: felipejesusoliveira/gerenciamentomecanicasistema:latest
+    ports:
+    - containerPort: 8080
+      protocol: TCP
+  resources:
+    limits:
+      cpu: "0.75"
+      memory: "512Mi"
+    requests:
+      cpu: "0.2"
+      memory: "256Mi"

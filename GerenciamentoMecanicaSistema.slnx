@@ -1,6 +1,8 @@
 <Solution>
   <Folder Name="/src/">
     <File Path="docker-compose.yaml" />
+    <File Path="pod-gerenciamento-api.yaml" />
+    <File Path="svc-gerenciamento-api.yaml" />
     <Project Path="Bootstrapper/DependencyInjection.csproj" />
     <Project Path="Domain.Interface/Domain.Interface.csproj" />
     <Project Path="Domain/Domain.csproj" />
