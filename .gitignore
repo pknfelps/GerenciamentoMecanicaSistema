@@ -70,8 +70,6 @@ nunit-*.xml
 .vs/ProjectEvaluation/gerenciamentomecanicasistema.metadata.v10.bin
 .vs/ProjectEvaluation/gerenciamentomecanicasistema.projects.v10.bin
 .vs/ProjectEvaluation/gerenciamentomecanicasistema.strings.v10.bin
-Infrastructure.Interface/Infrastructure.Interface.csproj
-Infrastructure/Infrastructure.csproj
 .vs/GerenciamentoMecanicaSistema.slnx/FileContentIndex/17781b6e-a7a8-4866-8bb5-460e42878098.vsidx
 .vs/GerenciamentoMecanicaSistema.slnx/FileContentIndex/2153b858-8e94-43a1-8a81-9786a5d5dc76.vsidx
 .vs/GerenciamentoMecanicaSistema.slnx/FileContentIndex/35132194-baec-49a1-b72c-e46d430be101.vsidx
