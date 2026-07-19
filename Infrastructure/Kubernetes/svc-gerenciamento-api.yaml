@@ -3,10 +3,10 @@ kind: Service
 metadata:
   name: svc-gerenciamento-api
 spec:
-  type: NodePort
+  type: LoadBalancer
   selector:
     app: gerenciamento-api
   ports:
-    - port: 80
-      targetPort: 8080
-      nodePort: 31000
+      - port: 30000
+        targetPort: 8080
+        protocol: TCP

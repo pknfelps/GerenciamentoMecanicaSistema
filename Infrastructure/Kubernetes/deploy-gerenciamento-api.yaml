@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy-gerenciamento-api
+  labels:
+    app: gerenciamento-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gerenciamento-api
+  template:
+    metadata:
+      name: pod-gerenciamento-api
+      labels:
+        app: gerenciamento-api
+    spec:
+      containers:
+        - name: gerenciamento-api
+          image: felipejesusoliveira/gerenciamentomecanicasistema@sha256:31729b0af5c918be7990d512e997fa6a83c543e6865d6eae5ff2df36187ba6fe
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Host=svc-gerenciamento-db;Port=5432;Database=postgres;Username=postgres;Password=adm123"
+          resources:
+            limits:
+              cpu: "0.75"
+              memory: "512Mi"
+            requests:
+              cpu: "0.2"
+              memory: "256Mi"
+          startupProbe:
+            httpGet:
+              path: /health/startup
+              port: 8080
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3

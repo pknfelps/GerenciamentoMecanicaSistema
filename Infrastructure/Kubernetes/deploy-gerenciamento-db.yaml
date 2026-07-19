@@ -1,0 +1,53 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy-gerenciamento-db
+  labels:
+    app: gerenciamento-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gerenciamento-db
+  template:
+    metadata:
+      name: pod-gerenciamento-db
+      labels:
+        app: gerenciamento-db
+    spec:
+      containers:
+        - name: gerenciamento-db
+          image: postgres:16
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: POSTGRES_DB
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+            - name: postgres-init
+              mountPath: /docker-entrypoint-initdb.d
+          ports:
+            - name: postgres
+              containerPort: 5432
+              protocol: TCP
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: pvc-gerenciamento-db
+        - name: postgres-init
+          configMap:
+            name: postgres-init-script
+      restartPolicy: Always

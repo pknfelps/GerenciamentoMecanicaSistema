@@ -1,6 +1,8 @@
 using DependencyInjection;
+using GerenciamentoMecanicaSistema.HealthChecks;
 using GerenciamentoMecanicaSistema.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -14,6 +16,12 @@ namespace GerenciamentoMecanicaSistema
 
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
+            builder.Services.AddHealthChecks()
+                .AddCheck<PostgreSqlHealthCheck>(
+                    "postgresql",
+                    failureStatus: HealthStatus.Unhealthy,
+                    tags: ["ready"],
+                    timeout: TimeSpan.FromSeconds(2));
 
             builder.Services.AddAuthentication(x =>
             {

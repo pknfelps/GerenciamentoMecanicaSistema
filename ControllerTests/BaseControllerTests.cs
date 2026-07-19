@@ -13,22 +13,25 @@ namespace ControllerTests
         protected HttpClient TestClient { get; set; }
 
         [SetUp]
-        public virtual void SetUp()
+        public virtual Task SetUp()
         {
             TestWebAppFactory = new TestWebApplicationFactory();
             TestClient = TestWebAppFactory.CreateClient();
             TestClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GenerateTestToken());
 
             MockService();
+            
+            return Task.CompletedTask;
         }
 
         protected abstract void MockService();
 
         [TearDown]
-        public void TearDown()
+        public virtual Task TearDown()
         {
             TestClient.Dispose();
             TestWebAppFactory.Dispose();
+            return Task.CompletedTask;
         }
 
         private static string GenerateTestToken()

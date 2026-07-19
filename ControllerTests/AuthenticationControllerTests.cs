@@ -17,12 +17,14 @@ namespace ControllerTests
         private readonly string TokenValido = "TokenvalidoCriadocomsUcessoaPartirDetestedeController";
         private readonly string UnauthorizedMessage = "Usuário ou senha inválidos";
 
-        public override void SetUp()
+        public override Task SetUp()
         {
             TestWebAppFactory = new TestWebApplicationFactory();
             TestClient = TestWebAppFactory.CreateClient();
 
             MockService();
+
+            return Task.CompletedTask;
         }
 
         protected override void MockService()

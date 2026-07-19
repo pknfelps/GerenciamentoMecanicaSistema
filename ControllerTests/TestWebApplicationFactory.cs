@@ -1,13 +1,14 @@
 ﻿using GerenciamentoMecanicaSistema;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Service.Interface;
 
 namespace ControllerTests
 {
-    public class TestWebApplicationFactory : WebApplicationFactory<Program>
+    public class TestWebApplicationFactory(string? databaseConnectionString = null) : WebApplicationFactory<Program>
     {
         public ICustomerService CustomerServiceMock { get; private set; } = Substitute.For<ICustomerService>();
         public IUserService UserServiceMock { get; private set; } = Substitute.For<IUserService>();
@@ -19,6 +20,17 @@ namespace ControllerTests
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
+            if (!string.IsNullOrWhiteSpace(databaseConnectionString))
+            {
+                builder.ConfigureAppConfiguration((_, configuration) =>
+                {
+                    configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                    {
+                        ["ConnectionStrings:DefaultConnection"] = databaseConnectionString
+                    });
+                });
+            }
+
             builder.ConfigureServices(services =>
             {
                 List<ServiceDescriptor?> servicesToMock =
