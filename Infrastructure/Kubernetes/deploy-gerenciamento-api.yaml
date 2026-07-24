@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: gerenciamento-api
-          image: felipejesusoliveira/gerenciamentomecanicasistema@sha256:31729b0af5c918be7990d512e997fa6a83c543e6865d6eae5ff2df36187ba6fe
+          image: felipejesusoliveira/gerenciamentomecanicasistema@sha256:7bcf7c8bf7ce3d783c3c99ba2b76bd19b05ee08484ceebb793700e1217223ca8
           ports:
           - containerPort: 8080
             protocol: TCP
