@@ -14,4 +14,4 @@ resources:
 configMapGenerator:
   - name: postgres-init-script
     files:
-      - Init.sql=/DbEntrypoint/Init.sql
+      - Init.sql=DbEntrypoint/Init.sql

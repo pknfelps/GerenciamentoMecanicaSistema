@@ -141,4 +141,4 @@ jobs:
         run: aws eks update-kubeconfig --name api-cluster --region us-east-1
 
       - name: Deploy to EKS
-        run: kubectl apply -k Infrastructure\Kubernetes
+        run: kubectl apply -k Infrastructure/Kubernetes
