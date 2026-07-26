@@ -19,6 +19,8 @@ spec:
         - name: gerenciamento-db
           image: postgres:16
           env:
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:

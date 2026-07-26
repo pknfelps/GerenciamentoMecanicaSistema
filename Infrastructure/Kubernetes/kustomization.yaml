@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - db-secrets.yaml
+  - storageclass-ebs-gp3.yaml
   - pvc-gerenciamento-db.yaml
   - deploy-gerenciamento-api.yaml
   - deploy-gerenciamento-db.yaml
