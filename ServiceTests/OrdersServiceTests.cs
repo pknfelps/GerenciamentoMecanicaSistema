@@ -304,6 +304,8 @@ namespace ServiceTests
             await DependenciesGateway.ReceivedWithAnyArgs(0).GetServiceById(Guid.Empty);
             await DependenciesGateway.ReceivedWithAnyArgs(0).GetMaterialById(Guid.Empty);
             await TransactionManager.ReceivedWithAnyArgs(0).ExecuteInTransaction(Arg.Any<Func<Task<Guid>>>());
+            await EventDispatcher.Received(1).Publish(Arg.Is<OrderStatusChangedEvent>(notification =>
+                notification.Order.Status == WorkOrderStatus.Received));
         }
 
         [Test]
@@ -320,6 +322,8 @@ namespace ServiceTests
             await Repository.Received(1).AddServiceToOrder(orderId, Arg.Is<IMechanicalService>(service => service.Id == ExistingService.Id && service.Amount == 2));
             await Repository.Received(1).AddMaterialToOrder(orderId, Arg.Is<IMaterial>(material => material.Id == ExistingPart.Id && material.Amount == 3));
             await TransactionManager.Received(1).ExecuteInTransaction(Arg.Any<Func<Task<Guid>>>());
+            await EventDispatcher.Received(1).Publish(Arg.Is<OrderStatusChangedEvent>(notification =>
+                notification.Order.Id == orderId && notification.Order.Status == WorkOrderStatus.Received));
 
             Assert.That(orderId, Is.Not.EqualTo(Guid.Empty));
         }
@@ -396,6 +400,7 @@ namespace ServiceTests
             await DependenciesGateway.Received(1).GetCustomerByDocument(ExistingCustomer.Document);
             await DependenciesGateway.Received(1).GetVehicleByLicensePlate(ExistingVehicle.LicensePlate);
             await Repository.ReceivedWithAnyArgs(1).CreateOrder(Arg.Any<IOrder>());
+            await EventDispatcher.ReceivedWithAnyArgs(0).Publish(Arg.Any<IApplicationEvent>());
         }
 
         [Test]
@@ -750,6 +755,8 @@ namespace ServiceTests
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
+            await EventDispatcher.Received(1).Publish(Arg.Is<OrderStatusChangedEvent>(notification =>
+                notification.Order == ExistingReceivedOrder && notification.Order.Status == WorkOrderStatus.InDiagnosis));
         }
 
         [Test]
@@ -1127,6 +1134,8 @@ namespace ServiceTests
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
+            await EventDispatcher.Received(1).Publish(Arg.Is<OrderStatusChangedEvent>(notification =>
+                notification.Order == ExistingOrderInDiagnosis && notification.Order.Status == WorkOrderStatus.InExecution));
         }
 
         [Test]
@@ -1154,6 +1163,8 @@ namespace ServiceTests
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
+            await EventDispatcher.Received(1).Publish(Arg.Is<OrderStatusChangedEvent>(notification =>
+                notification.Order == ExistingOrderInDiagnosis && notification.Order.Status == WorkOrderStatus.Finished));
         }
 
         [Test]
@@ -1181,6 +1192,8 @@ namespace ServiceTests
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
+            await EventDispatcher.Received(1).Publish(Arg.Is<OrderStatusChangedEvent>(notification =>
+                notification.Order == ExistingOrderInDiagnosis && notification.Order.Status == WorkOrderStatus.Delivered));
         }
 
         [Test]

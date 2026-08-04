@@ -22,7 +22,7 @@ namespace DependencyInjection
             service.AddTransient<IOrdersService, OrdersService>();
             service.AddTransient<IOrderDependenciesGateway, OrderDependenciesGateway>();
             service.AddTransient<IApplicationEventDispatcher, ApplicationEventDispatcher>();
-            service.AddTransient<IApplicationEventHandler, BudgetAvailableEventHandler>();
+            service.AddTransient<IApplicationEventHandler, OrderNotificationEventHandler>();
             service.AddTransient<ITokenGenerator, JwtTokenGenerator>();
 
             service.AddTransient<ISmtpClient, SmtpClient>();

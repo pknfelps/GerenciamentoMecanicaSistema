@@ -43,6 +43,8 @@ namespace Service
 
             if (await Repository.CreateOrder(order) == 0)
                 throw new ApplicationFailureException("Erro ao salvar ordem");
+
+            await EventDispatcher.Publish(new OrderStatusChangedEvent(order));
         }
 
         public async Task<Guid> CreateServiceOrder(
@@ -72,7 +74,8 @@ namespace Service
             if (requestedVehicle.CustomerDocument.Id != requestedCustomer.Document.Id)
                 throw new InvalidRequestException("O documento do proprietário do veículo deve corresponder ao documento do cliente");
 
-            return await TransactionManager.ExecuteInTransaction(async () =>
+            Order? createdOrder = null;
+            var orderId = await TransactionManager.ExecuteInTransaction(async () =>
             {
                 var customer = await GetOrCreateCustomer(requestedCustomer);
                 var vehicle = await GetOrCreateVehicle(requestedVehicle, customer);
@@ -97,8 +100,14 @@ namespace Service
                     if (await Repository.AddMaterialToOrder(order.Id, material) == 0)
                         throw new ApplicationFailureException("Erro ao salvar material da ordem");
 
+                createdOrder = order;
                 return order.Id;
             });
+
+            await EventDispatcher.Publish(new OrderStatusChangedEvent(
+                createdOrder ?? throw new ApplicationFailureException("Erro ao criar ordem")));
+
+            return orderId;
         }
 
         public async Task<WorkOrderStatus> GetOrderStatus(Guid orderId)
@@ -161,6 +170,8 @@ namespace Service
 
             if (registry == 0)
                 throw new ApplicationFailureException("Falha ao atualizar a ordem");
+
+            await EventDispatcher.Publish(new OrderStatusChangedEvent(order));
         }
 
         public async Task AddServiceToOrder(Guid orderId, UpdateOrderItemCommand<int> service)
@@ -325,6 +336,8 @@ namespace Service
 
             if (registry == 0)
                 throw new ApplicationFailureException("Falha ao inicar execução");
+
+            await EventDispatcher.Publish(new OrderStatusChangedEvent(order));
         }
 
         public async Task CompleteExecution(Guid orderId)
@@ -343,6 +356,8 @@ namespace Service
                 if (registry == 0)
                     throw new ApplicationFailureException("Falha ao completar execução");
             });
+
+            await EventDispatcher.Publish(new OrderStatusChangedEvent(order));
         }
 
         public async Task DeliverVehicle(Guid orderId)
@@ -355,6 +370,8 @@ namespace Service
 
             if (registry == 0)
                 throw new ApplicationFailureException("Falha ao inicar execução");
+
+            await EventDispatcher.Publish(new OrderStatusChangedEvent(order));
         }
 
         public async Task DeleteOrder(Guid orderId)

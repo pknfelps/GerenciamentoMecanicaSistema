@@ -7,5 +7,6 @@ namespace Service.Interface
     public interface IEmailService
     {
         Task NotifyBudget(ICustomer customer, IVehicle vehicle, IOrder order);
+        Task NotifyOrderStatus(ICustomer customer, IVehicle vehicle, IOrder order);
     }
 }
