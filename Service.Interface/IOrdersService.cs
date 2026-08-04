@@ -2,6 +2,7 @@ using Service.Interface.Commands.Order;
 using Service.Interface.Commands.Customer;
 using Service.Interface.Commands.Vehicle;
 using Service.Interface.Results.Order;
+using Domain.Interface.Order;
 
 namespace Service.Interface
 {
@@ -13,6 +14,7 @@ namespace Service.Interface
             CreateVehicleCommand vehicleToCreate,
             IReadOnlyCollection<UpdateOrderItemCommand<int>> servicesToAdd,
             IReadOnlyCollection<UpdateOrderItemCommand<int>> materialsToAdd);
+        Task<WorkOrderStatus> GetOrderStatus(Guid orderId);
         Task<IEnumerable<DetailedWorkOrderResult>> GetOrders(Guid? id = null, string customerDocument = "", string vehicleLicensePlate = "");
         Task<DetailedWorkOrderResult?> GetOrder(Guid? id = null, string customerDocument = "", string vehicleLicensePlate = "");
         Task StartDiagnosis(Guid orderId);

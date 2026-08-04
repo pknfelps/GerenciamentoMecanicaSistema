@@ -1,5 +1,6 @@
 ﻿using GerenciamentoMecanicaSistema.Contracts.Requests.Order;
 using GerenciamentoMecanicaSistema.Contracts.Responses.Order;
+using Domain.Interface.Order;
 using NSubstitute;
 using Service.Interface;
 using Service.Interface.Exceptions;
@@ -45,6 +46,16 @@ namespace ControllerTests
                     return ExistingOrder.Id;
 
                 throw new NotFoundException("Recurso não encontrado");
+            });
+
+            OrderService.GetOrderStatus(Arg.Any<Guid>()).Returns(callInfo =>
+            {
+                var id = callInfo.ArgAt<Guid>(0);
+
+                if (id == ExistingOrder.Id)
+                    return WorkOrderStatus.Received;
+
+                throw new NotFoundException("Ordem não encontrada");
             });
 
             OrderService.GetOrders(id: Arg.Any<Guid?>(), customerDocument: Arg.Any<string>(), vehicleLicensePlate: Arg.Any<string>()).Returns(callInfo =>
@@ -237,6 +248,44 @@ namespace ControllerTests
                 default!);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        }
+
+        [Test]
+        public async Task MustGetOrderStatus()
+        {
+            var response = await TestClient.GetAsync($"orders/{ExistingOrder.Id}/status");
+            var orderStatus = await response.Content.ReadFromJsonAsync<OrderStatusResponse>();
+
+            await OrderService.Received(1).GetOrderStatus(ExistingOrder.Id);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+                Assert.That(orderStatus?.Id, Is.EqualTo(ExistingOrder.Id));
+                Assert.That(orderStatus?.Status, Is.EqualTo(WorkOrderStatus.Received.ToString()));
+            });
+        }
+
+        [Test]
+        public async Task MustReturnNotFoundIfOrderStatusDoesNotExist()
+        {
+            var id = Guid.NewGuid();
+
+            var response = await TestClient.GetAsync($"orders/{id}/status");
+
+            await OrderService.Received(1).GetOrderStatus(id);
+
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        }
+
+        [Test]
+        public async Task MustReturnBadRequestIfOrderStatusIdIsInvalid()
+        {
+            var response = await TestClient.GetAsync("orders/00000/status");
+
+            await OrderService.ReceivedWithAnyArgs(0).GetOrderStatus(Guid.Empty);
+
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
 
         [Test]

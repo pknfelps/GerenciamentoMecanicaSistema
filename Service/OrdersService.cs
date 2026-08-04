@@ -101,6 +101,17 @@ namespace Service
             });
         }
 
+        public async Task<WorkOrderStatus> GetOrderStatus(Guid orderId)
+        {
+            if (orderId == Guid.Empty)
+                throw new InvalidRequestException("A identificação da ordem deve ser informada");
+
+            var order = await Repository.GetOrder(orderId)
+                ?? throw new NotFoundException($"Ordem com id \"{orderId}\" não encontrada");
+
+            return order.Status;
+        }
+
         public async Task<IEnumerable<DetailedWorkOrderResult>> GetOrders(Guid? id = null, string customerDocument = "", string vehicleLicensePlate = "")
         {
             if (!string.IsNullOrEmpty(customerDocument))

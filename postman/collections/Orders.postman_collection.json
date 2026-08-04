@@ -82,6 +82,25 @@
       "response": []
     },
     {
+      "name": "GetOrderStatus",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/{{api}}/{{order_id}}/status",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}",
+            "{{order_id}}",
+            "status"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "GetDetailedOrders",
       "request": {
         "method": "GET",

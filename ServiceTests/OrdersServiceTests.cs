@@ -399,6 +399,36 @@ namespace ServiceTests
         }
 
         [Test]
+        public async Task MustGetOrderStatus()
+        {
+            var expectedStatus = ExistingReceivedOrder.Status;
+
+            var status = await Service.GetOrderStatus(ExistingReceivedOrder.Id);
+
+            await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
+
+            Assert.That(status, Is.EqualTo(expectedStatus));
+        }
+
+        [Test]
+        public async Task MustNotGetStatusIfOrderDoesNotExist()
+        {
+            var id = Guid.NewGuid();
+
+            Assert.CatchAsync<NotFoundException>(async () => await Service.GetOrderStatus(id));
+
+            await Repository.Received(1).GetOrder(id);
+        }
+
+        [Test]
+        public async Task MustNotGetStatusWithEmptyOrderId()
+        {
+            Assert.CatchAsync<InvalidRequestException>(async () => await Service.GetOrderStatus(Guid.Empty));
+
+            await Repository.ReceivedWithAnyArgs(0).GetOrder(Arg.Any<Guid>());
+        }
+
+        [Test]
         public async Task MustGetOrders()
         {
             var orders = await Service.GetOrders();

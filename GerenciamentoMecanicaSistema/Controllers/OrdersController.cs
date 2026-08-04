@@ -42,6 +42,19 @@ namespace GerenciamentoMecanicaSistema.Controllers
             return Ok(orders.Select(WorkOrderResponse.Create));
         }
 
+        [AllowAnonymous]
+        [HttpGet("{id}/status")]
+        [EndpointDescription("Endpoint para consultar a situação atual de uma ordem de serviço")]
+        [ProducesResponseType(typeof(OrderStatusResponse), StatusCodes.Status200OK, Description = "Retorna a situação atual da ordem")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Identificação da ordem inválida")]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Description = "Ordem não encontrada")]
+        public async Task<OkObjectResult> GetOrderStatus([FromRoute, GuidValidation] Guid id)
+        {
+            var status = await OrderService.GetOrderStatus(id);
+
+            return Ok(new OrderStatusResponse(id, status.ToString()));
+        }
+
         [HttpGet("details")]
         [EndpointDescription("Endpoint para listar as ordens de serviço detalhadas")]
         [ProducesResponseType(typeof(IEnumerable<DetailedWorkOrderResponse>), StatusCodes.Status200OK, Description = "Retorna a lista de ordens")]
