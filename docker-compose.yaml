@@ -1,22 +1,72 @@
-# docker-compose.yml
+name: gerenciamento-mecanica
+
 services:
-  db:
-    image: postgres:16
+  api:
+    image: gerenciamento-mecanica-api:local
+    build:
+      context: .
+      dockerfile: GerenciamentoMecanicaSistema/Dockerfile
+      args:
+        BUILD_CONFIGURATION: Release
     environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: adm123
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: 8080
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=${POSTGRES_DB:-postgres};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}"
+      Jwt__Audience: ${JWT_AUDIENCE:-mecanica}
+      Jwt__Issuer: ${JWT_ISSUER:-admin}
+      Jwt__Key: ${JWT_KEY:?Defina JWT_KEY no arquivo .env}
+      EmailSettings__Host: smtp
+      EmailSettings__Port: 25
+      EmailSettings__Username: ""
+      EmailSettings__Password: ""
+      EmailSettings__SenderName: ${EMAIL_SENDER_NAME:-Mecânica}
+      EmailSettings__SenderEmail: ${EMAIL_SENDER_ADDRESS:-noreply@mecanica.local}
+      EmailSettings__UseTls: "false"
     ports:
-      - "5432:5432"
+      - "127.0.0.1:${API_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      smtp:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/health/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+    init: true
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - ./InitDb:/docker-entrypoint-initdb.d
       - db_data:/var/lib/postgresql/data
+      - ./InitDb/Init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
 
   smtp:
-    image: rnwood/smtp4dev:latest
+    image: rnwood/smtp4dev:3.15.0
     ports:
-      - "3000:80"
-      - "2525:25"
-    
+      - "127.0.0.1:${SMTP_WEB_PORT:-3000}:80"
+      - "127.0.0.1:${SMTP_PORT:-2525}:25"
+    volumes:
+      - smtp_data:/smtp4dev
+    restart: unless-stopped
+    init: true
+
 volumes:
   db_data:
+  smtp_data:
