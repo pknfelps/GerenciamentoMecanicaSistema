@@ -58,6 +58,8 @@ namespace ControllerTests
                 throw new NotFoundException("Ordem não encontrada");
             });
 
+            OrderService.GetOperationalOrders().Returns([WorkOrderResult.Create(ExistingOrder)]);
+
             OrderService.GetOrders(id: Arg.Any<Guid?>(), customerDocument: Arg.Any<string>(), vehicleLicensePlate: Arg.Any<string>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid?>(0);
@@ -286,6 +288,22 @@ namespace ControllerTests
             await OrderService.ReceivedWithAnyArgs(0).GetOrderStatus(Guid.Empty);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        }
+
+        [Test]
+        public async Task MustGetOperationalOrders()
+        {
+            var response = await TestClient.GetAsync("orders/operational");
+            var orders = await response.Content.ReadFromJsonAsync<List<WorkOrderResponse>>();
+
+            await OrderService.Received(1).GetOperationalOrders();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+                Assert.That(orders, Has.Count.EqualTo(1));
+                Assert.That(orders?[0].Id, Is.EqualTo(ExistingOrder.Id));
+            });
         }
 
         [Test]

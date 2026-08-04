@@ -55,6 +55,17 @@ namespace GerenciamentoMecanicaSistema.Controllers
             return Ok(new OrderStatusResponse(id, status.ToString()));
         }
 
+        [HttpGet("operational")]
+        [EndpointDescription("Endpoint para listar as ordens de serviço ativas por prioridade operacional")]
+        [ProducesResponseType(typeof(IEnumerable<WorkOrderResponse>), StatusCodes.Status200OK, Description = "Retorna as ordens ativas ordenadas por prioridade e antiguidade")]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
+        public async Task<OkObjectResult> GetOperationalOrders()
+        {
+            var orders = await OrderService.GetOperationalOrders();
+
+            return Ok(orders.Select(WorkOrderResponse.Create));
+        }
+
         [HttpGet("details")]
         [EndpointDescription("Endpoint para listar as ordens de serviço detalhadas")]
         [ProducesResponseType(typeof(IEnumerable<DetailedWorkOrderResponse>), StatusCodes.Status200OK, Description = "Retorna a lista de ordens")]

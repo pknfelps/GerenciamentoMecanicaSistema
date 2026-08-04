@@ -218,6 +218,62 @@ namespace RepositoryTests
         }
 
         [Test]
+        public async Task MustGetOperationalOrdersByPriorityAndCreationDate()
+        {
+            var oldestInExecutionId = Guid.NewGuid();
+            var newestInExecutionId = Guid.NewGuid();
+            var waitingForExecutionId = Guid.NewGuid();
+            var inDiagnosisId = Guid.NewGuid();
+            var receivedId = Guid.NewGuid();
+            var finishedId = Guid.NewGuid();
+            var deliveredId = Guid.NewGuid();
+            var baseDate = DateTime.UtcNow.AddDays(-10);
+            var ordersToInsert = new[]
+            {
+                new { Id = newestInExecutionId, Status = WorkOrderStatus.InExecution.ToString(), DateCreated = baseDate.AddDays(1) },
+                new { Id = oldestInExecutionId, Status = WorkOrderStatus.InExecution.ToString(), DateCreated = baseDate },
+                new { Id = waitingForExecutionId, Status = WorkOrderStatus.WaitingForExecution.ToString(), DateCreated = baseDate },
+                new { Id = inDiagnosisId, Status = WorkOrderStatus.InDiagnosis.ToString(), DateCreated = baseDate },
+                new { Id = receivedId, Status = WorkOrderStatus.Received.ToString(), DateCreated = baseDate },
+                new { Id = finishedId, Status = WorkOrderStatus.Finished.ToString(), DateCreated = baseDate },
+                new { Id = deliveredId, Status = WorkOrderStatus.Delivered.ToString(), DateCreated = baseDate }
+            };
+
+            await Connection.ExecuteAsync(
+                """
+                INSERT INTO orders(id, customer_document, vehicle_license_plate, budget, status, date_created, date_finished, duration)
+                VALUES (@Id, '417.384.220-11', 'CVC2026', 0, @Status, @DateCreated, @DateFinished, @Duration);
+                """,
+                ordersToInsert.Select(order => new
+                {
+                    order.Id,
+                    order.Status,
+                    order.DateCreated,
+                    DateFinished = DateTime.MinValue,
+                    Duration = TimeSpan.Zero
+                }));
+
+            var orders = (await Repository.GetOperationalOrders()).ToList();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    orders.Select(order => order.Id),
+                    Is.EqualTo(new[]
+                    {
+                        oldestInExecutionId,
+                        newestInExecutionId,
+                        waitingForExecutionId,
+                        ExistingOrderId,
+                        inDiagnosisId,
+                        receivedId
+                    }));
+                Assert.That(orders.Select(order => order.Status), Does.Not.Contain(WorkOrderStatus.Finished));
+                Assert.That(orders.Select(order => order.Status), Does.Not.Contain(WorkOrderStatus.Delivered));
+            });
+        }
+
+        [Test]
         public async Task MustGetDetailedOrderById()
         {
             var order = await Repository.GetOrder(id: ExistingOrderId);

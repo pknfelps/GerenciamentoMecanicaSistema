@@ -8,6 +8,7 @@ namespace Repository.Interface
     {
         Task<int> CreateOrder(IOrder serviceOrder);
         Task<IEnumerable<IOrder>> GetOrders(Guid? id = null, string customer_document = "", string vehicle_license_plate = "");
+        Task<IEnumerable<IOrder>> GetOperationalOrders();
         Task<IOrder?> GetOrder(Guid? id = null, string customer_document = "", string vehicle_license_plate = "");
         Task<int> UpdateOrder(IOrder order);
         Task<int> AddServiceToOrder(Guid orderId, IMechanicalService service);

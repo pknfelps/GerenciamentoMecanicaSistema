@@ -15,6 +15,7 @@ namespace Service.Interface
             IReadOnlyCollection<UpdateOrderItemCommand<int>> servicesToAdd,
             IReadOnlyCollection<UpdateOrderItemCommand<int>> materialsToAdd);
         Task<WorkOrderStatus> GetOrderStatus(Guid orderId);
+        Task<IEnumerable<WorkOrderResult>> GetOperationalOrders();
         Task<IEnumerable<DetailedWorkOrderResult>> GetOrders(Guid? id = null, string customerDocument = "", string vehicleLicensePlate = "");
         Task<DetailedWorkOrderResult?> GetOrder(Guid? id = null, string customerDocument = "", string vehicleLicensePlate = "");
         Task StartDiagnosis(Guid orderId);

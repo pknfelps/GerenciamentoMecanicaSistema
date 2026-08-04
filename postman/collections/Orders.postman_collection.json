@@ -101,6 +101,24 @@
       "response": []
     },
     {
+      "name": "GetOperationalOrders",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/{{api}}/operational",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{api}}",
+            "operational"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "GetDetailedOrders",
       "request": {
         "method": "GET",

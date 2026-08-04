@@ -429,6 +429,24 @@ namespace ServiceTests
         }
 
         [Test]
+        public async Task MustGetOperationalOrdersInRepositoryOrder()
+        {
+            var inExecution = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0m, WorkOrderStatus.InExecution);
+            var waitingForExecution = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0m, WorkOrderStatus.WaitingForExecution);
+            var waitingForApproval = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0m, WorkOrderStatus.WaitingForApproval);
+            var inDiagnosis = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0m, WorkOrderStatus.InDiagnosis);
+            var received = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0m, WorkOrderStatus.Received);
+            IOrder[] operationalOrders = [inExecution, waitingForExecution, waitingForApproval, inDiagnosis, received];
+            Repository.GetOperationalOrders().Returns(operationalOrders);
+
+            var result = (await Service.GetOperationalOrders()).ToList();
+
+            await Repository.Received(1).GetOperationalOrders();
+
+            Assert.That(result.Select(order => order.Id), Is.EqualTo(operationalOrders.Select(order => order.Id)));
+        }
+
+        [Test]
         public async Task MustGetOrders()
         {
             var orders = await Service.GetOrders();

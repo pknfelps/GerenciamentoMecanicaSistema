@@ -112,6 +112,13 @@ namespace Service
             return order.Status;
         }
 
+        public async Task<IEnumerable<WorkOrderResult>> GetOperationalOrders()
+        {
+            var orders = await Repository.GetOperationalOrders();
+
+            return orders.Select(WorkOrderResult.Create);
+        }
+
         public async Task<IEnumerable<DetailedWorkOrderResult>> GetOrders(Guid? id = null, string customerDocument = "", string vehicleLicensePlate = "")
         {
             if (!string.IsNullOrEmpty(customerDocument))

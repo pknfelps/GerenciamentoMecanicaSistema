@@ -62,6 +62,31 @@ namespace Repository
                 os.date_finished;
             """;
 
+        public static string GetOperationalOrdersSql { get; private set; } = """
+            SELECT
+                os.id,
+                os.customer_document AS CustomerDocument,
+                os.vehicle_license_plate AS VehicleLicensePlate,
+                '[]'::json AS services,
+                '[]'::json AS materials,
+                os.budget,
+                os.status,
+                os.date_created AS DateCreated,
+                os.date_finished AS DateFinished
+            FROM orders os
+            WHERE os.status NOT IN (@Finished, @Delivered)
+            ORDER BY
+                CASE os.status
+                    WHEN @InExecution THEN 0
+                    WHEN @WaitingForExecution THEN 1
+                    WHEN @WaitingForApproval THEN 2
+                    WHEN @InDiagnosis THEN 3
+                    WHEN @Received THEN 4
+                    ELSE 5
+                END,
+                os.date_created ASC;
+            """;
+
         public static string UpdateOrderSql { get; private set; } = """
             UPDATE orders
             SET budget = @Budget,
@@ -127,6 +152,25 @@ namespace Repository
         {
             var query = GetOrdersSql.BuildQuery(BuildQueryParameters(id, customer_document, vehicle_license_plate));
             var orders = await Connection.QueryAsync<OrderDb>(query.Sql, query.Parameters, Transaction);
+
+            return orders.Select(order => order.ToDomain());
+        }
+
+        public async Task<IEnumerable<IOrder>> GetOperationalOrders()
+        {
+            var orders = await Connection.QueryAsync<OrderDb>(
+                GetOperationalOrdersSql,
+                new
+                {
+                    Finished = WorkOrderStatus.Finished.ToString(),
+                    Delivered = WorkOrderStatus.Delivered.ToString(),
+                    InExecution = WorkOrderStatus.InExecution.ToString(),
+                    WaitingForExecution = WorkOrderStatus.WaitingForExecution.ToString(),
+                    WaitingForApproval = WorkOrderStatus.WaitingForApproval.ToString(),
+                    InDiagnosis = WorkOrderStatus.InDiagnosis.ToString(),
+                    Received = WorkOrderStatus.Received.ToString()
+                },
+                Transaction);
 
             return orders.Select(order => order.ToDomain());
         }
