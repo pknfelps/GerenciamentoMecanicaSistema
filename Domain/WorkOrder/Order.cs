@@ -27,6 +27,25 @@ namespace Domain.WorkOrder
 
         public Order(string customerDocument, string vehicleLicensePlate, DateTime dateCreated) : this(Guid.NewGuid(), customerDocument, vehicleLicensePlate, [], [], 0.0m, WorkOrderStatus.Received, dateCreated, DateTime.MinValue) { }
 
+        // TODO: Reavaliar status ao criar já com serviços e insumos
+        // TODO: Já deveria ser criada seguindo o fluxo de finalizar diagnóstico?
+        public Order(
+            string customerDocument,
+            string vehicleLicensePlate,
+            IEnumerable<IMechanicalService> services,
+            IEnumerable<IMaterial> materials,
+            DateTime dateCreated) : this(
+                Guid.NewGuid(),
+                customerDocument,
+                vehicleLicensePlate,
+                ValidateServices(services),
+                ValidateMaterials(materials),
+                0.0m,
+                WorkOrderStatus.Received,
+                dateCreated,
+                DateTime.MinValue)
+        { }
+
         public Order(Guid id, string customerDocument, string vehicleLicensePlate, List<IMechanicalService> services, List<IMaterial> materials, decimal budget, WorkOrderStatus status, DateTime dateCreated, DateTime dateFinished)
         {
             if (id == Guid.Empty)
@@ -187,6 +206,38 @@ namespace Domain.WorkOrder
                 throw new InvalidDomainStateException("Não é possível entregar o veículo enquanto não estiver finalizado");
 
             Status = WorkOrderStatus.Delivered;
+        }
+
+        private static List<IMechanicalService> ValidateServices(IEnumerable<IMechanicalService> services)
+        {
+            if (services == null)
+                throw new DomainValidationException("A lista de serviços deve ser informada");
+
+            var serviceList = services.ToList();
+
+            if (serviceList.Any(service => service.Amount <= 0))
+                throw new DomainValidationException("As quantidades dos serviços devem ser maiores que zero");
+
+            if (serviceList.Select(service => service.Id).Distinct().Count() != serviceList.Count)
+                throw new DomainValidationException("A ordem não pode conter serviços duplicados");
+
+            return serviceList;
+        }
+
+        private static List<IMaterial> ValidateMaterials(IEnumerable<IMaterial> materials)
+        {
+            if (materials == null)
+                throw new DomainValidationException("A lista de materiais deve ser informada");
+
+            var materialList = materials.ToList();
+
+            if (materialList.Any(material => material.Amount <= 0))
+                throw new DomainValidationException("As quantidades dos materiais devem ser maiores que zero");
+
+            if (materialList.Select(material => material.Id).Distinct().Count() != materialList.Count)
+                throw new DomainValidationException("A ordem não pode conter materiais duplicados");
+
+            return materialList;
         }
 
         private void CalculateBudget()

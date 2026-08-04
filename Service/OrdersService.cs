@@ -1,12 +1,16 @@
 ﻿using Domain.Customer;
 using Domain.Interface.Order;
+using Domain.MechanicalService;
+using Domain.Stock;
 using Domain.Vehicle;
 using Domain.WorkOrder;
 using Microsoft.Extensions.Logging;
 using Repository.Interface;
 using Service.Interface;
 using Service.Interface.Exceptions;
+using Service.Interface.Commands.Customer;
 using Service.Interface.Commands.Order;
+using Service.Interface.Commands.Vehicle;
 using Service.Interface.Events;
 using Service.Interface.Events.Order;
 using Service.Interface.Results.Order;
@@ -24,19 +28,77 @@ namespace Service
 
         public async Task CreateServiceOrder(CreateOrderCommand orderToCreate)
         {
+            ArgumentNullException.ThrowIfNull(orderToCreate);
+
             var customerDocument = DocumentWrapper.CreateDocument(orderToCreate.CustomerDocument).Id;
             var vehicleLicensePlate = LicensePlateWrapper.CreateLicensePlate(orderToCreate.VehicleLicensePlate).License;
 
-            var customer = await DependenciesGateway.GetCustomerByDocument(customerDocument) ?? throw new NotFoundException("Cliente não cadastrado. Realize o cadastro antes de criar a ordem de serviço");
+            var customer = await DependenciesGateway.GetCustomerByDocument(customerDocument)
+                ?? throw new NotFoundException("Cliente não cadastrado. Realize o cadastro antes de criar a ordem de serviço");
 
-            var vehicle = await DependenciesGateway.GetVehicleByLicensePlate(vehicleLicensePlate) ?? throw new NotFoundException("Veículo não cadastrado. Realize o cadastro antes de criar a ordem de serviço");
+            var vehicle = await DependenciesGateway.GetVehicleByLicensePlate(vehicleLicensePlate)
+                ?? throw new NotFoundException("Veículo não cadastrado. Realize o cadastro antes de criar a ordem de serviço");
 
             var order = new Order(customer.Document.Id, vehicle.LicensePlate.License, DateTime.Now);
 
-            var registry = await Repository.CreateOrder(order);
-
-            if (registry == 0)
+            if (await Repository.CreateOrder(order) == 0)
                 throw new ApplicationFailureException("Erro ao salvar ordem");
+        }
+
+        public async Task<Guid> CreateServiceOrder(
+            CreateCustomerCommand customerToCreate,
+            CreateVehicleCommand vehicleToCreate,
+            IReadOnlyCollection<UpdateOrderItemCommand<int>> servicesToAdd,
+            IReadOnlyCollection<UpdateOrderItemCommand<int>> materialsToAdd)
+        {
+            ArgumentNullException.ThrowIfNull(customerToCreate);
+            ArgumentNullException.ThrowIfNull(vehicleToCreate);
+            ValidateOrderItems(servicesToAdd, "serviços");
+            ValidateOrderItems(materialsToAdd, "materiais");
+
+            var requestedCustomer = new Customer(
+                customerToCreate.Name,
+                customerToCreate.Document,
+                customerToCreate.Phone,
+                customerToCreate.Email);
+
+            var requestedVehicle = new Vehicle(
+                vehicleToCreate.CustomerDocument,
+                vehicleToCreate.Brand,
+                vehicleToCreate.Model,
+                vehicleToCreate.Year,
+                vehicleToCreate.LicensePlate);
+
+            if (requestedVehicle.CustomerDocument.Id != requestedCustomer.Document.Id)
+                throw new InvalidRequestException("O documento do proprietário do veículo deve corresponder ao documento do cliente");
+
+            return await TransactionManager.ExecuteInTransaction(async () =>
+            {
+                var customer = await GetOrCreateCustomer(requestedCustomer);
+                var vehicle = await GetOrCreateVehicle(requestedVehicle, customer);
+                var services = await ResolveServices(servicesToAdd);
+                var materials = await ResolveAndReserveMaterials(materialsToAdd);
+
+                var order = new Order(
+                    customer.Document.Id,
+                    vehicle.LicensePlate.License,
+                    services,
+                    materials,
+                    DateTime.Now);
+
+                if (await Repository.CreateOrder(order) == 0)
+                    throw new ApplicationFailureException("Erro ao salvar ordem");
+
+                foreach (var service in order.Services)
+                    if (await Repository.AddServiceToOrder(order.Id, service) == 0)
+                        throw new ApplicationFailureException("Erro ao salvar serviço da ordem");
+
+                foreach (var material in order.Materials)
+                    if (await Repository.AddMaterialToOrder(order.Id, material) == 0)
+                        throw new ApplicationFailureException("Erro ao salvar material da ordem");
+
+                return order.Id;
+            });
         }
 
         public async Task<IEnumerable<DetailedWorkOrderResult>> GetOrders(Guid? id = null, string customerDocument = "", string vehicleLicensePlate = "")
@@ -301,6 +363,104 @@ namespace Service
 
             if (registry == 0)
                 throw new ApplicationFailureException("Falha ao deletar ordem");
+        }
+
+        private async Task<Domain.Interface.Custumer.ICustomer> GetOrCreateCustomer(Customer requestedCustomer)
+        {
+            var existingCustomer = await DependenciesGateway.GetCustomerByDocument(requestedCustomer.Document.Id);
+
+            if (existingCustomer == null)
+            {
+                if (await DependenciesGateway.RegisterCustomer(requestedCustomer) == 0)
+                    throw new ApplicationFailureException("Erro ao salvar cliente da ordem");
+
+                return requestedCustomer;
+            }
+
+            if (!string.Equals(existingCustomer.Name, requestedCustomer.Name, StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(existingCustomer.Phone.Number, requestedCustomer.Phone.Number, StringComparison.Ordinal)
+                || !string.Equals(existingCustomer.Email.Address, requestedCustomer.Email.Address, StringComparison.OrdinalIgnoreCase))
+                throw new ConflictException("Os dados informados não correspondem ao cliente já cadastrado");
+
+            return existingCustomer;
+        }
+
+        private async Task<Domain.Interface.Vehicle.IVehicle> GetOrCreateVehicle(Vehicle requestedVehicle, Domain.Interface.Custumer.ICustomer customer)
+        {
+            var existingVehicle = await DependenciesGateway.GetVehicleByLicensePlate(requestedVehicle.LicensePlate.License);
+
+            if (existingVehicle == null)
+            {
+                if (await DependenciesGateway.RegisterVehicle(requestedVehicle) == 0)
+                    throw new ApplicationFailureException("Erro ao salvar veículo da ordem");
+
+                return requestedVehicle;
+            }
+
+            if (!string.Equals(existingVehicle.CustomerDocument.Id, customer.Document.Id, StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(existingVehicle.Brand, requestedVehicle.Brand, StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(existingVehicle.Model, requestedVehicle.Model, StringComparison.OrdinalIgnoreCase)
+                || existingVehicle.Year != requestedVehicle.Year)
+                throw new ConflictException("Os dados informados não correspondem ao veículo já cadastrado");
+
+            return existingVehicle;
+        }
+
+        private async Task<List<Domain.Interface.Service.IMechanicalService>> ResolveServices(IReadOnlyCollection<UpdateOrderItemCommand<int>> requestedServices)
+        {
+            List<Domain.Interface.Service.IMechanicalService> services = [];
+
+            foreach (var requestedService in requestedServices)
+            {
+                var catalogService = await DependenciesGateway.GetServiceById(requestedService.Id)
+                    ?? throw new NotFoundException($"Serviço com id \"{requestedService.Id}\" não encontrado");
+
+                services.Add(new MechanicalService(
+                    catalogService.Id,
+                    catalogService.Description,
+                    catalogService.Hours,
+                    catalogService.PricePerHour,
+                    requestedService.Value));
+            }
+
+            return services;
+        }
+
+        private async Task<List<Domain.Interface.Stock.IMaterial>> ResolveAndReserveMaterials(IReadOnlyCollection<UpdateOrderItemCommand<int>> requestedMaterials)
+        {
+            List<Domain.Interface.Stock.IMaterial> materials = [];
+
+            foreach (var requestedMaterial in requestedMaterials)
+            {
+                var stockMaterial = await DependenciesGateway.GetMaterialById(requestedMaterial.Id)
+                    ?? throw new NotFoundException($"Material com id \"{requestedMaterial.Id}\" não encontrado");
+
+                await StockService.ReserveMaterialAmount(requestedMaterial.Id, requestedMaterial.Value);
+
+                materials.Add(new Material(
+                    stockMaterial.Id,
+                    stockMaterial.Name,
+                    stockMaterial.Brand,
+                    stockMaterial.Price,
+                    requestedMaterial.Value));
+            }
+
+            return materials;
+        }
+
+        private static void ValidateOrderItems(IReadOnlyCollection<UpdateOrderItemCommand<int>>? items, string itemType)
+        {
+            if (items == null)
+                throw new InvalidRequestException($"A lista de {itemType} deve ser informada");
+
+            if (items.Any(item => item is null))
+                throw new InvalidRequestException($"A lista de {itemType} não pode conter itens nulos");
+
+            if (items.Any(item => item.Id == Guid.Empty || item.Value <= 0))
+                throw new InvalidRequestException($"A lista de {itemType} contém um item inválido");
+
+            if (items.Select(item => item.Id).Distinct().Count() != items.Count)
+                throw new InvalidRequestException($"A lista de {itemType} não pode conter identificadores duplicados");
         }
 
     }

@@ -28,7 +28,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"CustomerDocument\": \"662.119.730-63\",\r\n    \"VehicleLicensePlate\": \"CVC2025\"\r\n}",
+          "raw": "{\r\n    \"customer\": {\r\n        \"name\": \"Fulano\",\r\n        \"document\": \"662.119.730-63\",\r\n        \"phone\": \"(11) 91234-5678\",\r\n        \"email\": \"fulano@gmail.com\"\r\n    },\r\n    \"vehicle\": {\r\n        \"customerDocument\": \"662.119.730-63\",\r\n        \"brand\": \"Honda\",\r\n        \"model\": \"Civic\",\r\n        \"year\": 2025,\r\n        \"licensePlate\": \"CVC2025\"\r\n    },\r\n    \"services\": [\r\n        {\r\n            \"id\": \"8dcc551f-5c3a-4746-8f51-a18be6107a2f\",\r\n            \"value\": 1\r\n        }\r\n    ],\r\n    \"materials\": [\r\n        {\r\n            \"id\": \"b03ae302-a3dc-40ba-a7ce-2430a7f0ee5d\",\r\n            \"value\": 1\r\n        }\r\n    ]\r\n}",
           "options": {
             "raw": {
               "language": "json"

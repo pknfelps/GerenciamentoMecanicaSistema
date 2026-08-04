@@ -16,15 +16,19 @@ namespace GerenciamentoMecanicaSistema.Controllers
 
         [HttpPost()]
         [EndpointDescription("Endpoint para registrar uma ordem de serviço")]
-        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(CreateOrderResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest orderToCreate)
         {
-            await OrderService.CreateServiceOrder(orderToCreate.ToCommand());
+            var orderId = await OrderService.CreateServiceOrder(
+                orderToCreate.Customer.ToCommand(),
+                orderToCreate.Vehicle.ToCommand(),
+                [.. orderToCreate.Services.Select(service => service.ToCommand())],
+                [.. orderToCreate.Materials.Select(material => material.ToCommand())]);
 
-            return Created();
+            return CreatedAtAction(nameof(GetOrders), new { id = orderId }, new CreateOrderResponse(orderId));
         }
 
         [HttpGet()]

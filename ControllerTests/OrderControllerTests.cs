@@ -3,7 +3,9 @@ using GerenciamentoMecanicaSistema.Contracts.Responses.Order;
 using NSubstitute;
 using Service.Interface;
 using Service.Interface.Exceptions;
+using Service.Interface.Commands.Customer;
 using Service.Interface.Commands.Order;
+using Service.Interface.Commands.Vehicle;
 using Service.Interface.Results.Order;
 using System.Net;
 using System.Net.Http.Json;
@@ -14,20 +16,33 @@ namespace ControllerTests
     {
         private IOrdersService OrderService { get; set; }
 
-        private static readonly CreateOrderRequest OrderToCreate = new("123.456.789-12", "TST1234");
         private static readonly DetailedWorkOrderResult ExistingOrder = new(Guid.NewGuid(), "123.456.789-12", "TST1234", 0.0m, "Received", DateTime.Now, DateTime.MinValue, [], [], TimeSpan.Zero);
+        private static readonly Guid ExistingServiceId = Guid.NewGuid();
+        private static readonly Guid ExistingMaterialId = Guid.NewGuid();
+        private static readonly CreateOrderRequest OrderToCreate = new(
+            new("Teste", ExistingOrder.CustomerDocument, "(11) 91234-5678", "teste@gmail.com"),
+            new(ExistingOrder.CustomerDocument, "Honda", "Civic", 2026, ExistingOrder.VehicleLicensePlate),
+            [new(ExistingServiceId, 1)],
+            [new(ExistingMaterialId, 2)]);
         private static readonly UpdateOrderItemRequest<int> OrderUpdate = new(Guid.NewGuid(), 1);
 
         protected override void MockService()
         {
             OrderService = TestWebAppFactory.OrderServiceMock;
 
-            OrderService.CreateServiceOrder(Arg.Any<CreateOrderCommand>()).Returns(callInfo =>
+            OrderService.CreateServiceOrder(
+                Arg.Any<CreateCustomerCommand>(),
+                Arg.Any<CreateVehicleCommand>(),
+                Arg.Any<IReadOnlyCollection<UpdateOrderItemCommand<int>>>(),
+                Arg.Any<IReadOnlyCollection<UpdateOrderItemCommand<int>>>()).Returns(callInfo =>
             {
-                var order = callInfo.ArgAt<CreateOrderCommand>(0);
+                var customer = callInfo.ArgAt<CreateCustomerCommand>(0);
+                var vehicle = callInfo.ArgAt<CreateVehicleCommand>(1);
+                var services = callInfo.ArgAt<IReadOnlyCollection<UpdateOrderItemCommand<int>>>(2);
+                var materials = callInfo.ArgAt<IReadOnlyCollection<UpdateOrderItemCommand<int>>>(3);
 
-                if (order.Equals(OrderToCreate.ToCommand()))
-                    return Task.CompletedTask;
+                if (AreEquivalent(customer, vehicle, services, materials, OrderToCreate))
+                    return ExistingOrder.Id;
 
                 throw new NotFoundException("Recurso não encontrado");
             });
@@ -175,10 +190,20 @@ namespace ControllerTests
         public async Task MustCreateOrder()
         {
             var response = await TestClient.PostAsJsonAsync($"orders", OrderToCreate);
+            var createdOrder = await response.Content.ReadFromJsonAsync<CreateOrderResponse>();
 
-            await OrderService.Received(1).CreateServiceOrder(OrderToCreate.ToCommand());
+            await OrderService.Received(1).CreateServiceOrder(
+                Arg.Is<CreateCustomerCommand>(customer => customer == OrderToCreate.Customer.ToCommand()),
+                Arg.Is<CreateVehicleCommand>(vehicle => vehicle == OrderToCreate.Vehicle.ToCommand()),
+                Arg.Is<IReadOnlyCollection<UpdateOrderItemCommand<int>>>(services => services.SequenceEqual(OrderToCreate.Services.Select(service => service.ToCommand()))),
+                Arg.Is<IReadOnlyCollection<UpdateOrderItemCommand<int>>>(materials => materials.SequenceEqual(OrderToCreate.Materials.Select(material => material.ToCommand()))));
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
+            Assert.Multiple(() =>
+            {
+                Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
+                Assert.That(createdOrder?.Id, Is.EqualTo(ExistingOrder.Id));
+                Assert.That(response.Headers.Location?.Query, Does.Contain(ExistingOrder.Id.ToString()));
+            });
         }
 
         [Test]
@@ -186,7 +211,11 @@ namespace ControllerTests
         {
             var response = await TestClient.PostAsJsonAsync($"orders", new { Teste = "Teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).CreateServiceOrder(Arg.Any<CreateOrderCommand>());
+            await OrderService.ReceivedWithAnyArgs(0).CreateServiceOrder(
+                default!,
+                default!,
+                default!,
+                default!);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
@@ -194,10 +223,18 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnNotFoundIfTryCreateOrderWithInvalidOrder()
         {
-            var order = new CreateOrderRequest("321.654.987-98", "XXX0000");
+            var order = new CreateOrderRequest(
+                new("Outro cliente", "529.982.247-25", "(11) 91234-5678", "outro@gmail.com"),
+                new("529.982.247-25", "Ford", "Fiesta", 2020, "ABC1D23"),
+                [new(Guid.NewGuid(), 1)],
+                []);
             var response = await TestClient.PostAsJsonAsync($"orders", order);
 
-            await OrderService.Received(1).CreateServiceOrder(order.ToCommand());
+            await OrderService.ReceivedWithAnyArgs(1).CreateServiceOrder(
+                default!,
+                default!,
+                default!,
+                default!);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         }
@@ -611,5 +648,16 @@ namespace ControllerTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
+
+        private static bool AreEquivalent(
+            CreateCustomerCommand customer,
+            CreateVehicleCommand vehicle,
+            IReadOnlyCollection<UpdateOrderItemCommand<int>> services,
+            IReadOnlyCollection<UpdateOrderItemCommand<int>> materials,
+            CreateOrderRequest request) =>
+            customer == request.Customer.ToCommand()
+            && vehicle == request.Vehicle.ToCommand()
+            && services.SequenceEqual(request.Services.Select(service => service.ToCommand()))
+            && materials.SequenceEqual(request.Materials.Select(material => material.ToCommand()));
     }
 }

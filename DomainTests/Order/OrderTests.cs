@@ -41,6 +41,45 @@ namespace DomainTests.Order
         }
 
         [Test]
+        public void MustOpenWorkOrderWithServicesAndMaterials()
+        {
+            var service = Substitute.For<IMechanicalService>();
+            service.Id.Returns(Guid.NewGuid());
+            service.Amount.Returns(2);
+
+            var material = Substitute.For<IMaterial>();
+            material.Id.Returns(Guid.NewGuid());
+            material.Amount.Returns(3);
+
+            var order = new Domain.WorkOrder.Order(Document, LicensePlate, [service], [material], DateTime.Now);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(order.Id, Is.Not.EqualTo(Guid.Empty));
+                Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Received));
+                Assert.That(order.Services.Single(), Is.SameAs(service));
+                Assert.That(order.Materials.Single(), Is.SameAs(material));
+                Assert.That(order.Budget, Is.Zero);
+            });
+        }
+
+        [Test]
+        public void MustNotOpenWorkOrderWithDuplicatedItems()
+        {
+            var duplicatedId = Guid.NewGuid();
+            var firstService = Substitute.For<IMechanicalService>();
+            firstService.Id.Returns(duplicatedId);
+            firstService.Amount.Returns(1);
+
+            var secondService = Substitute.For<IMechanicalService>();
+            secondService.Id.Returns(duplicatedId);
+            secondService.Amount.Returns(2);
+
+            Assert.Catch<DomainValidationException>(() =>
+                new Domain.WorkOrder.Order(Document, LicensePlate, [firstService, secondService], [], DateTime.Now));
+        }
+
+        [Test]
         public void MustNotCreateWorkOrderIfIdIsEmpty()
         {
             Assert.Catch<DomainValidationException>(() => new Domain.WorkOrder.Order(Guid.Empty, Document, LicensePlate, [], [], 0.0m, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue));

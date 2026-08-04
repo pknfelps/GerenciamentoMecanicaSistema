@@ -9,7 +9,9 @@ using Repository.Interface;
 using Service;
 using Service.Interface;
 using Service.Interface.Exceptions;
+using Service.Interface.Commands.Customer;
 using Service.Interface.Commands.Order;
+using Service.Interface.Commands.Vehicle;
 using Service.Interface.Events;
 using Service.Interface.Events.Order;
 using Service.Interface.Results.Order;
@@ -28,20 +30,23 @@ namespace ServiceTests
         private IApplicationEventDispatcher EventDispatcher { get; set; }
 
         private static CustomerResult ExistingCustomer { get; } = new(Guid.NewGuid(), "Teste", "417.384.220-11", "(11) 91234-5678", "teste@gmail.com");
-        private static ICustomer ExistingCustomerDomain { get; } = CreateSubstituteCustomer(ExistingCustomer.Id, ExistingCustomer.Name, ExistingCustomer.Document);
+        private static ICustomer ExistingCustomerDomain { get; } = CreateSubstituteCustomer(ExistingCustomer.Id, ExistingCustomer.Name, ExistingCustomer.Document, ExistingCustomer.Phone, ExistingCustomer.Email);
 
         private static CustomerResult ExistingFailCustomer { get; } = new(Guid.NewGuid(), "Teste", "662.119.730-63", "(11) 91234-5678", "teste@gmail.com");
-        private static ICustomer ExistingFailCustomerDomain { get; } = CreateSubstituteCustomer(ExistingFailCustomer.Id, ExistingFailCustomer.Name, ExistingFailCustomer.Document);
+        private static ICustomer ExistingFailCustomerDomain { get; } = CreateSubstituteCustomer(ExistingFailCustomer.Id, ExistingFailCustomer.Name, ExistingFailCustomer.Document, ExistingFailCustomer.Phone, ExistingFailCustomer.Email);
 
         private static VehicleResult ExistingVehicle { get; } = new(Guid.NewGuid(), ExistingCustomer.Document, "Honda", "Civic", 2026, "CVC2026");
-        private static IVehicle ExistingVehicleDomain { get; } = CreateSubstituteVehicle(ExistingVehicle.Id, ExistingVehicle.CustomerDocument, ExistingVehicle.LicensePlate);
-
-        private static CreateOrderCommand OrderToCreate { get; } = new(ExistingCustomer.Document, ExistingVehicle.LicensePlate);
+        private static IVehicle ExistingVehicleDomain { get; } = CreateSubstituteVehicle(ExistingVehicle.Id, ExistingVehicle.CustomerDocument, ExistingVehicle.Brand, ExistingVehicle.Model, ExistingVehicle.Year, ExistingVehicle.LicensePlate);
 
         private static IMechanicalService ExistingService { get; } = CreateSubstituteService(Guid.NewGuid(), "Revisão", 6, 100, 1);
         private static IMechanicalService ExistingService2 { get; } = CreateSubstituteService(Guid.NewGuid(), "Troca de Pneu", 2, 150, 1);
         private static IMaterial ExistingPart { get; } = CreateSubstitutePart(Guid.NewGuid(), "Pneu", "Michelin", 600, 10, 4);
         private static IMaterial ExistingPart2 { get; } = CreateSubstitutePart(Guid.NewGuid(), "Óleo de Motor", "Lubrax", 35, 20, 0);
+        private static CreateOrderCommand OrderToCreate => new(ExistingCustomer.Document, ExistingVehicle.LicensePlate);
+        private static CreateCustomerCommand CustomerToCreate => new(ExistingCustomer.Name, ExistingCustomer.Document, ExistingCustomer.Phone, ExistingCustomer.Email);
+        private static CreateVehicleCommand VehicleToCreate => new(ExistingCustomer.Document, ExistingVehicle.Brand, ExistingVehicle.Model, ExistingVehicle.Year, ExistingVehicle.LicensePlate);
+        private static IReadOnlyCollection<UpdateOrderItemCommand<int>> ServicesToAdd => [new(ExistingService.Id, 2)];
+        private static IReadOnlyCollection<UpdateOrderItemCommand<int>> MaterialsToAdd => [new(ExistingPart.Id, 3)];
         private static IOrder ExistingReceivedOrder { get; } = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0m, WorkOrderStatus.Received);
         private static IOrder ExistingTestOrder { get; set; } = CreateSubstituteOrder(Guid.NewGuid(), [], [], 0.0m, WorkOrderStatus.Received);
         private static readonly Guid ExistingOrderInDiagnosisId = Guid.NewGuid();
@@ -58,7 +63,7 @@ namespace ServiceTests
             {
                 var order = callInfo.ArgAt<IOrder>(0);
 
-                if (order.CustomerDocument.Id == ExistingCustomer.Document)
+                if (order.Id != Guid.Empty)
                     return 1;
 
                 return 0;
@@ -153,7 +158,7 @@ namespace ServiceTests
                 var id = callInfo.ArgAt<Guid>(0);
                 var service = callInfo.ArgAt<IMechanicalService>(1);
 
-                if (id == ExistingReceivedOrder.Id && service.Id == ExistingService.Id)
+                if (id != Guid.Empty && service.Id == ExistingService.Id)
                     return 1;
 
                 return 0;
@@ -186,7 +191,7 @@ namespace ServiceTests
                 var id = callInfo.ArgAt<Guid>(0);
                 var part = callInfo.ArgAt<IMaterial>(1);
 
-                if (id == ExistingReceivedOrder.Id && part.Id == ExistingPart.Id)
+                if (id != Guid.Empty && part.Id == ExistingPart.Id)
                     return 1;
 
                 return 0;
@@ -225,6 +230,8 @@ namespace ServiceTests
             });
 
             DependenciesGateway = Substitute.For<IOrderDependenciesGateway>();
+            DependenciesGateway.RegisterCustomer(Arg.Any<ICustomer>()).Returns(1);
+            DependenciesGateway.RegisterVehicle(Arg.Any<IVehicle>()).Returns(1);
 
             List<ICustomer> customers = [ExistingCustomerDomain, ExistingFailCustomerDomain];
 
@@ -278,6 +285,7 @@ namespace ServiceTests
 
             TransactionManager = Substitute.For<ITransactionManager>();
             TransactionManager.ExecuteInTransaction(Arg.Any<Func<Task>>()).Returns(callInfo => callInfo.Arg<Func<Task>>()());
+            TransactionManager.ExecuteInTransaction(Arg.Any<Func<Task<Guid>>>()).Returns(callInfo => callInfo.Arg<Func<Task<Guid>>>()());
 
             EventDispatcher = Substitute.For<IApplicationEventDispatcher>();
             EventDispatcher.Publish(Arg.Any<IApplicationEvent>()).Returns(Task.CompletedTask);
@@ -293,40 +301,99 @@ namespace ServiceTests
             await DependenciesGateway.Received(1).GetCustomerByDocument(ExistingCustomer.Document);
             await DependenciesGateway.Received(1).GetVehicleByLicensePlate(ExistingVehicle.LicensePlate);
             await Repository.ReceivedWithAnyArgs(1).CreateOrder(Arg.Any<IOrder>());
+            await DependenciesGateway.ReceivedWithAnyArgs(0).GetServiceById(Guid.Empty);
+            await DependenciesGateway.ReceivedWithAnyArgs(0).GetMaterialById(Guid.Empty);
+            await TransactionManager.ReceivedWithAnyArgs(0).ExecuteInTransaction(Arg.Any<Func<Task<Guid>>>());
         }
 
         [Test]
-        public async Task MustNotCreateOrderIfCustomerNotExists()
+        public async Task MustCreateCompleteOrder()
         {
-            var order = new CreateOrderCommand("000.000.000-00", ExistingVehicle.LicensePlate);
+            var orderId = await Service.CreateServiceOrder(CustomerToCreate, VehicleToCreate, ServicesToAdd, MaterialsToAdd);
 
-            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.CreateServiceOrder(order));
+            await DependenciesGateway.Received(1).GetCustomerByDocument(ExistingCustomer.Document);
+            await DependenciesGateway.Received(1).GetVehicleByLicensePlate(ExistingVehicle.LicensePlate);
+            await DependenciesGateway.Received(1).GetServiceById(ExistingService.Id);
+            await DependenciesGateway.Received(1).GetMaterialById(ExistingPart.Id);
+            await StockService.Received(1).ReserveMaterialAmount(ExistingPart.Id, 3);
+            await Repository.ReceivedWithAnyArgs(1).CreateOrder(Arg.Any<IOrder>());
+            await Repository.Received(1).AddServiceToOrder(orderId, Arg.Is<IMechanicalService>(service => service.Id == ExistingService.Id && service.Amount == 2));
+            await Repository.Received(1).AddMaterialToOrder(orderId, Arg.Is<IMaterial>(material => material.Id == ExistingPart.Id && material.Amount == 3));
+            await TransactionManager.Received(1).ExecuteInTransaction(Arg.Any<Func<Task<Guid>>>());
 
-            await DependenciesGateway.Received(1).GetCustomerByDocument(order.CustomerDocument);
+            Assert.That(orderId, Is.Not.EqualTo(Guid.Empty));
+        }
+
+        [Test]
+        public async Task MustNotCreateCompleteOrderIfVehicleOwnerDoesNotMatchCustomer()
+        {
+            var vehicle = VehicleToCreate with { CustomerDocument = ExistingFailCustomer.Document };
+
+            Assert.CatchAsync<InvalidRequestException>(async () =>
+                await Service.CreateServiceOrder(CustomerToCreate, vehicle, ServicesToAdd, MaterialsToAdd));
+
+            await DependenciesGateway.ReceivedWithAnyArgs(0).GetCustomerByDocument(default!);
+            await Repository.ReceivedWithAnyArgs(0).CreateOrder(Arg.Any<IOrder>());
+        }
+
+        [Test]
+        public async Task MustCreateCustomerAndVehicleIfTheyDoNotExist()
+        {
+            var customer = new CreateCustomerCommand("Novo cliente", "529.982.247-25", "(11) 99876-5432", "novo@gmail.com");
+            var vehicle = new CreateVehicleCommand(customer.Document, "Ford", "Ka", 2020, "ABC1D23");
+
+            var orderId = await Service.CreateServiceOrder(customer, vehicle, [], []);
+
+            await DependenciesGateway.Received(1).RegisterCustomer(Arg.Is<ICustomer>(registeredCustomer => registeredCustomer.Document.Id == customer.Document));
+            await DependenciesGateway.Received(1).RegisterVehicle(Arg.Is<IVehicle>(registeredVehicle => registeredVehicle.LicensePlate.License == vehicle.LicensePlate));
+            await Repository.Received(1).CreateOrder(Arg.Is<IOrder>(order => order.Id == orderId));
+        }
+
+        [Test]
+        public async Task MustRejectExistingCustomerWithDifferentData()
+        {
+            var customer = CustomerToCreate with { Name = "Nome divergente" };
+
+            Assert.CatchAsync<ConflictException>(async () => await Service.CreateServiceOrder(customer, VehicleToCreate, ServicesToAdd, MaterialsToAdd));
+
+            await DependenciesGateway.Received(1).GetCustomerByDocument(ExistingCustomer.Document);
             await DependenciesGateway.ReceivedWithAnyArgs(0).GetVehicleByLicensePlate(default!);
             await Repository.ReceivedWithAnyArgs(0).CreateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
-        public async Task MustNotCreateOrderIfVehicleNotExists()
+        public async Task MustNotCreateOrderIfServiceDoesNotExist()
         {
-            var order = new CreateOrderCommand(ExistingCustomer.Document, "AAA0000");
+            IReadOnlyCollection<UpdateOrderItemCommand<int>> services = [new(Guid.NewGuid(), 1)];
 
-            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.CreateServiceOrder(order));
+            Assert.CatchAsync<NotFoundException>(async () => await Service.CreateServiceOrder(CustomerToCreate, VehicleToCreate, services, []));
 
-            await DependenciesGateway.Received(1).GetCustomerByDocument(ExistingCustomer.Document);
-            await DependenciesGateway.Received(1).GetVehicleByLicensePlate(order.VehicleLicensePlate);
+            await Repository.ReceivedWithAnyArgs(0).CreateOrder(Arg.Any<IOrder>());
+        }
+
+        [Test]
+        public async Task MustNotCreateOrderWithDuplicatedItems()
+        {
+            IReadOnlyCollection<UpdateOrderItemCommand<int>> services =
+            [
+                new(ExistingService.Id, 1),
+                new(ExistingService.Id, 2)
+            ];
+
+            Assert.CatchAsync<InvalidRequestException>(async () => await Service.CreateServiceOrder(CustomerToCreate, VehicleToCreate, services, []));
+
+            await TransactionManager.ReceivedWithAnyArgs(0).ExecuteInTransaction(Arg.Any<Func<Task<Guid>>>());
             await Repository.ReceivedWithAnyArgs(0).CreateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
         public async Task MustFailToCreateOrder()
         {
-            var order = new CreateOrderCommand(ExistingFailCustomer.Document, ExistingVehicle.LicensePlate);
+            Repository.CreateOrder(Arg.Any<IOrder>()).Returns(0);
 
-            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.CreateServiceOrder(order));
+            Assert.CatchAsync<ApplicationFailureException>(async () => await Service.CreateServiceOrder(CustomerToCreate, VehicleToCreate, ServicesToAdd, MaterialsToAdd));
 
-            await DependenciesGateway.Received(1).GetCustomerByDocument(ExistingFailCustomer.Document);
+            await DependenciesGateway.Received(1).GetCustomerByDocument(ExistingCustomer.Document);
             await DependenciesGateway.Received(1).GetVehicleByLicensePlate(ExistingVehicle.LicensePlate);
             await Repository.ReceivedWithAnyArgs(1).CreateOrder(Arg.Any<IOrder>());
         }
@@ -1113,21 +1180,26 @@ namespace ServiceTests
             await Repository.Received(1).DeleteOrder(ExistingOrderInDiagnosisId);
         }
 
-        private static ICustomer CreateSubstituteCustomer(Guid id, string name, string document)
+        private static ICustomer CreateSubstituteCustomer(Guid id, string name, string document, string phone, string email)
         {
             var customer = Substitute.For<ICustomer>();
             customer.Id.Returns(id);
             customer.Name.Returns(name);
             customer.Document.Id.Returns(document);
+            customer.Phone.Number.Returns(phone);
+            customer.Email.Address.Returns(email);
 
             return customer;
         }
 
-        private static IVehicle CreateSubstituteVehicle(Guid id, string customerDocument, string licensePlate)
+        private static IVehicle CreateSubstituteVehicle(Guid id, string customerDocument, string brand, string model, int year, string licensePlate)
         {
             var vehicle = Substitute.For<IVehicle>();
             vehicle.Id.Returns(id);
             vehicle.CustomerDocument.Id.Returns(customerDocument);
+            vehicle.Brand.Returns(brand);
+            vehicle.Model.Returns(model);
+            vehicle.Year.Returns(year);
             vehicle.LicensePlate.License.Returns(licensePlate);
 
             return vehicle;
