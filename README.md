@@ -109,3 +109,32 @@ As collections e o ambiente estão na pasta [postman](postman). Importe os arqui
 ## 📧 E-mails locais
 
 As notificações de orçamento e atualização de status são enviadas para o smtp4dev. Elas não saem do ambiente local e podem ser visualizadas em `http://localhost:3000`.
+
+## Deploy em Kubernetes
+
+Os manifestos estão em [Infrastructure/Kubernetes](Infrastructure/Kubernetes). O Kustomize aplica os Deployments e Services da API e do PostgreSQL, o Secret, o ConfigMap do script de inicialização e o HPA baseado em CPU e memória.
+
+O PVC permanece no projeto como referência de estudo, mas não é aplicado pelo Kustomize nem utilizado pelo Deployment do banco.
+
+Antes do deploy, revise os valores em [db-secrets.yaml](Infrastructure/Kubernetes/db-secrets.yaml).
+
+Se o cluster ainda não possuir o Metrics Server, aplique:
+
+```bash
+kubectl apply -f Infrastructure/Kubernetes/metrics-server.yaml
+```
+
+Valide e aplique os manifestos:
+
+```bash
+kubectl kustomize Infrastructure/Kubernetes
+kubectl apply --dry-run=client --validate=false -k Infrastructure/Kubernetes
+kubectl apply -k Infrastructure/Kubernetes
+```
+
+Consulte os recursos:
+
+```bash
+kubectl get deployments,services,hpa
+kubectl top pods
+```

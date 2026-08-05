@@ -23,7 +23,15 @@ spec:
             protocol: TCP
           env:
             - name: ConnectionStrings__DefaultConnection
-              value: "Host=svc-gerenciamento-db;Port=5432;Database=postgres;Username=postgres;Password=adm123"
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: CONNECTION_STRING
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: JWT_KEY
           resources:
             limits:
               cpu: "0.75"

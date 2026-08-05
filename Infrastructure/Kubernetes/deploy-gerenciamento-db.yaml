@@ -37,8 +37,6 @@ spec:
                   name: db-secrets
                   key: POSTGRES_DB
           volumeMounts:
-            - name: postgres-storage
-              mountPath: /var/lib/postgresql/data
             - name: postgres-init
               mountPath: /docker-entrypoint-initdb.d
           ports:
@@ -46,9 +44,6 @@ spec:
               containerPort: 5432
               protocol: TCP
       volumes:
-        - name: postgres-storage
-          persistentVolumeClaim:
-            claimName: pvc-gerenciamento-db
         - name: postgres-init
           configMap:
             name: postgres-init-script

@@ -11,7 +11,6 @@
     <Project Path="Service.Interface/Service.Interface.csproj" />
     <Project Path="Service/Service.csproj" />
   </Folder>
-  <Folder Name="/src/InitDb/" />
   <Folder Name="/testes/">
     <Project Path="ControllerTests/ControllerTests.csproj" Id="d9e83580-8bee-4957-a1c8-ec04071a5762" />
     <Project Path="DomainTests/DomainTests.csproj" />
