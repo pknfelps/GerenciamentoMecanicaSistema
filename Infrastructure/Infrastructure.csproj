@@ -23,4 +23,8 @@
     <ProjectReference Include="..\Service.Interface\Service.Interface.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Terraform\" />
+  </ItemGroup>
+
 </Project>
