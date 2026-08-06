@@ -37,3 +37,18 @@ output "eks_node_role_arn" {
   description = "ARN da role IAM usada pelos nos do EKS."
   value       = aws_iam_role.eks_nodes.arn
 }
+
+output "eks_cluster_arn" {
+  description = "ARN do cluster EKS."
+  value       = aws_eks_cluster.main.arn
+}
+
+output "eks_cluster_endpoint" {
+  description = "Endpoint da API Kubernetes do cluster EKS."
+  value       = aws_eks_cluster.main.endpoint
+}
+
+output "eks_node_group_name" {
+  description = "Nome do Managed Node Group do EKS."
+  value       = aws_eks_node_group.main.node_group_name
+}
