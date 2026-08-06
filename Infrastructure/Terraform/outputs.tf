@@ -27,3 +27,13 @@ output "public_route_table_id" {
   description = "ID da tabela de rotas das subnets publicas."
   value       = aws_route_table.public.id
 }
+
+output "eks_cluster_role_arn" {
+  description = "ARN da role IAM usada pelo control plane do EKS."
+  value       = aws_iam_role.eks_cluster.arn
+}
+
+output "eks_node_role_arn" {
+  description = "ARN da role IAM usada pelos nos do EKS."
+  value       = aws_iam_role.eks_nodes.arn
+}
