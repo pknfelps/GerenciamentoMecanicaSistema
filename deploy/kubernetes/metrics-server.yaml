@@ -165,6 +165,8 @@ spec:
             initialDelaySeconds: 20
             periodSeconds: 10
           resources:
+            limits:
+              memory: 500Mi
             requests:
               cpu: 100m
               memory: 200Mi
@@ -186,7 +188,8 @@ spec:
       priorityClassName: system-cluster-critical
       serviceAccountName: metrics-server
       volumes:
-        - emptyDir: {}
+        - emptyDir:
+            sizeLimit: 100Mi
           name: tmp-dir
 ---
 apiVersion: apiregistration.k8s.io/v1
