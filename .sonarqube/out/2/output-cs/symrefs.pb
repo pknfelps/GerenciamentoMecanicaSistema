@@ -1,225 +1,0 @@
-Å
-cC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\IVehicleRepository.cs
-
- '
-
- !
-
-+ 2
-
-$ /
-
-6 8
-
-H U
-
-		 "
-
-		) +
-
-		; H
-
-
-
- 
-
-
-
-) 0
-
- 
-
-% .™
-`C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\IUserRepository.cs
-
- $
-
- 
-
-% )
-
- 
-
-$ (
-
-1 5Ø
-aC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\IStockRepository.cs
-
- %
-
- %
-
-0 8
-
-% 1
-
-8 :
-
-J N
-
-\ a
-
-		 $
-
-		+ -
-
-		= A
-
-		O T
-
-
-
- %
-
-
-
-0 8
-
- &
-
-1 9
-
-  
-
-& 0
-bC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\IOrdersRepository.cs
-
- &
-
-		 
-
-		% 1
-
-
-
-" +
-
-
-
-2 4
-
-
-
-D U
-
-
-
-c x
-
- 
-
-% '
-
-7 H
-
-V k
-
- 
-
-% *
-
- #
-
-) 0
-
-E L
-
- &
-
-, 3
-
-H O
-
- (
-
-. 5
-
-< E
-
- $
-
-* 1
-
-= E
-
- )
-
-/ 6
-
-B J
-
- )
-
-/ 6
-
-= G
-
- 
-
-# *ö
-dC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\ICustomerRepository.cs
-
- (
-
- "
-
-- 5
-
-% 1
-
-8 :
-
-J N
-
-\ d
-
-		 $
-
-		+ -
-
-		= A
-
-		O W
-
-
-
-  
-
-
-
-+ 3
-
-  
-
-& (Å
-cC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\ICatalogRepository.cs
-
- '
-
- !
-
-5 <
-
-. 9
-
-@ B
-
-R ]
-
-		" ,
-
-		3 5
-
-		E P
-
-
-
- 
-
-
-
-3 :
-
- 
-
-% .

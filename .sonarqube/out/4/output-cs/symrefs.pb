@@ -1,685 +1,0 @@
-á
-]C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\IVehicleService.cs
-
- $
-
- 
-
-. 8
-
-& 1
-
-8 :
-
-J V
-
-		 $
-
-		+ -
-
-		= I
-
-
-
- 
-
-
-
-  "
-
-
-
-5 ?
-
- 
-
-  "ò
-ZC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\IUserService.cs
-
- !
-
- 
-
-( /
-
- 
-
-- 4—
-[C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\IStockService.cs
-
- "
-
-  
-
-3 >
-
-' 3
-
-: <
-
-L P
-
-^ c
-
-		 &
-
-		- /
-
-		? C
-
-		Q V
-
-
-
- 
-
-
-
-$ &
-
-
-
-, 1
-
- !
-
-' )
-
-/ 4
-
- "
-
-( *
-
-0 5
-
- "
-
-( *
-
-0 5
-
- "
-
-( *
-
-0 5
-
-  
-
-& (
-
-1 6
-
- 
-
-! #w
-]C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\ISmtpConnection.cs
-
- $
-
- (ß
-\C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\IOrdersService.cs
-
- #
-
- 
-
-/ <
-
-		0 9
-
-		@ B
-
-		R b
-			p É
-
-
-
-$ ,
-
-
-
-3 5
-
-
-
-E U
-
-
-
-c v
-
- 
-
-! (
-
- 
-
-$ +
-
-@ J
-
- !
-
-' .
-
-C M
-
- 
-
-% ,
-
-A J
-
- $
-
-* 1
-
-F O
-
- 
-
-$ +
-
- 
-
-  '
-
-9 @
-
- 
-
-! (
-
- 
-
-$ +
-
- 
-
-! (
-
- 
-
- %ô
-[C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\IEmailService.cs
-
- "
-
-		 
-
-		$ ,
-
-		7 >
-
-		G L†
-^C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\ICustomerService.cs
-
- %
-
- 
-
-0 ;
-
-' 3
-
-: <
-
-L P
-
-^ f
-
-		 &
-
-		- /
-
-		? C
-
-		Q Y
-
-
-
- 
-
-
-
-! #
-
-
-
-7 B
-
- 
-
-! #á
-]C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\ICatalogService.cs
-
- $
-
- 
-
-. 8
-
-& 1
-
-8 :
-
-J U
-
-		 $
-
-		+ -
-
-		= H
-
-
-
- 
-
-
-
-  )
-
-
-
-< F
-
- 
-
-  )ä
-dC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\IAuthenticationService.cs
-
- +
-
- !
-
-0 7Ö
-dC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Vehicle\VehicleDto.cs
-   
-! #' )
-, <
-å ú
-E J
-û £
-S X
-• ™
-^ b
-¨ ∞
-k w
-≤ æ
- J L
-
-! 'K
-1 8A HM Tj q	y Ä
-à è
-ñ ù
-
-! )œ
-jC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Vehicle\CreateVehicleDto.cs
- !   +
-) 97 G
-B G, 1
-P U, 1
-[ _( ,
-h t3 ?
- &I Y2
- [ `"" ""$ )''$ )2
- a f""- 2""> C''+ 02
- h l""G K""W [''2 63
- "n z""_ k	""w É''8 D
-
-  (
-
- #
-, /. 1  , /2
-   "" #""6 =""O V""o v
-
-%% 'ƒ
-^C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\User\UserDto.cs
-   
- $' -
-- 1a e
-: Bg o
-K Oq u2
- A C   $ &
-
- $2
-+ /8 <A EL Pb f
-
- &
-
- #
-, /. 1  #2
-  , 0E I^ b
-
- '»
-dC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\User\CreateUserDto.cs
-		  %
-		& *+ /
-		3 ;/ 7
-		D H+ /2
- @ D   $""$ (2
- F N( 09 A""* 22
- P TE IR V""4 8
-
- %
-
- #
-, /. 1& )(
-  4 8M Q
-
-   '—
-_C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\UpdateItemDto.cs
-
- 
-  + , 
-' )' )
-- 2' ,
-
- 
-
- ∂
-fC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Stock\ValueUpdateDto.cs
-
- 
-  !# $ 
-% *' ,
-
- ¥
-cC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Stock\MaterialDto.cs
-		  ! #
-		" $' )
-		- 1
-		É á
-		: ?
-		â é
-		H M
-		ê ï
-		S Y
-		ó ù
-		_ m2 @
- = ?5
- !] k	t Ç
-Ü î!!@ N
-
-" (F
-3 7@ DI MT X` dl py }
-
-" *
-
- #
-, /. 1$ '<
-  ( ,? CV Zo s
-
- '°
-iC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Stock\CreateMaterialDto.cs
-		 " )
-		* .+ /
-		7 <, 1
-		E J, 1
-		P V* 02
- < @!! !!  $&&$ (2
- B G!!( -!!6 ;&&* /2
- I N!!? D!!M R&&1 62
- P V!!V \!!e k&&8 >
-
-! )
-
- #
-, / * -2
- !! !!1 5!!H L!!` d
-
-$$ '‡
-dC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Service\ServiceDto.cs
-		   
-		! #' )
-		, 7			z Ö
-		? D
-		á å
-		M Y
-		é ö
-		_ e
-		ú ¢
- O Q
-
-! '?
-; BK RW ^l s	{ Ç
-ë ò
-
-+ 3
-jC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Service\CreateServiceDto.cs
-		 ! +
-		) 42 =
-		< A+ 0
-		J V3 ?
-		\ b* 02
- !N Y!! !!* 5&&$ /2
- [ `!!9 >!!J O&&1 62
- "b n!!S _!!k w&&8 D
-
- 
-
-* 2
-
- #
-, / , /(
- !!" )!!B I!!c j
-
-$$ 'â	
-dC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Order\WorkOrderDto.cs(
- ## "%% ",, %
-# %' )
-. >7 G
-G Z: M
-c i- 3
-r x- 3
-
-É é4 ?
-
-ô •5 A
-
-∞ ∏!!1 92
- %%S U.. .. !33$ &2
- &%%] m..% 5..? O33( 84
- )	%%u à..S f	..p É33: M8
- 
-%%ê ñ
-..á ç
-..ó ù33O U8
- 
-%%û §
-..° ß
-..± ∑33W ]8
- #
-%%∑ ¬
-..ª ∆
-..– €33_ j8
- $
-%%  ÷
-..ﬂ Î
-..ı Å33l x9
-!!  
-%%ﬁ Ê
-..Ö ç
-..ó ü	33z Ç
-
-### )d
-##1 6##? D##I N##d i
-##á å
-##ï ö
-##Æ ≥
-##¡ ∆
-##’ ⁄
-
-%%# )d
-%%? D%%M R%%W \%%o t
-%%ä è
-%%ò ù
-%%± ∂
-%%ƒ …
-%%ÿ ›
-
-'' #
-'', /)) ,,& )d
-,, .. ..9 >..j o
-..ë ñ
-..´ ∞
-..  œ
-..Ô Ù
-..ë ñ
-
-11 '◊
-gC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Order\ApproveOrderDto.cs
-   *
-( 87 G
-? G- 5(
- & #/ ?$ 4(
- C KW _6 >
-
- #
-, / + .
- ' .O V
-
- '÷
-fC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Order\CreateOrderDto.cs
-  '
-' 77 G
-@ S: M(
- & #- =$ 4(
- )A T^ q6 I
-
- #
-, / ( +
- ' ,X ]
-
- 'Í
-lC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Order\DetailedWorkOrderDto.cs
-		 % . -
-		+ -
-		â ã
-		6 F
-		ç ù
-		O b
-		ü ≤
-		k q
-		¥ ∫
-			z Ä
-		º ¬
-
-		ã ñ
-		ƒ œ
-
-		° ≠
-		— ›
-
-		¿ »9 A
-
-		‹ Â; D
-
-		 ¯
-		ﬂ Á2
-  (!! !!( 0$$* 2$$? G2
-! *!!: C!!S \))+ 4))A J
-
-/ 5t
-= B   ! ! &< A_ dm r
-Ü ã
-ô û
-Ã —
- 
-± π
- 
-¿ …
-
- #
-, / . 1å
- !!" '!!M R$$$ )))% *.. ..9 >..j o
-..ë ñ
-..´ ∞
-..  œ
-..Ô Ù
-..ë ñ
-$$ !&& "
-$$: ;$$^ _
-$$O P$$U V
-)) "++ #
-))< =))a b
-))R S))X Y
-
-11 'ˇ
-fC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Customer\CustomerDto.cs
-  ! '
-" $' )
-- 1t x
-: B	z Ç
-K P
-Ñ â
-Y ^
-ã ê2
- M O " $$ &
-
-" (>
-3 ;D LQ Y` hv ~
-ç ï
-
-" *
-
- #
-, /. 1( +>
-  !0 8M Uk s
-Ü é
-
- 'ò
-âC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\CustomAttributes\RegularLicensePlateExpressionAttribute.cs
-
- 7§
-lC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Customer\CreateCustomerDto.cs
- " -
-* .+ /
-7 ?/ 7
-H M, 1
-V [, 12
- L P $ ($$$ (2
- R Z, 4A I$$* 22
- \ aM R_ d$$4 92
- c hh mz $$; @
-
-! )
-
- #
-, /. 1. 12
-  #8 @V ^q y
-
-"" 'ö
-ãC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\CustomAttributes\RegularNonEmptyStringExpressionAttribute.cs
-
-
-
- 9î
-ÖC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\CustomAttributes\RegularDocumentExpressionAttribute.cs
-
- 3¿
-zC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\CustomAttributes\GuidValidationAttribute.cs
-
- (
-
- $
-- 2 
- " â
-ÇC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\CustomAttributes\GenericValueValidationAttribute.cs
-
- 0
-
- $(
-- 2   
- % 
- ) !
-  + "ƒ
-~C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\CustomAttributes\DateTimeValidationAttribute.cs
-
- .
-
- $
-- 2 
-" & 

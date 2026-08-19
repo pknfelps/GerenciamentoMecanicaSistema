@@ -1,1 +1,0 @@
-lR_C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ControllerTests\ControllerTests.csprojòCSharp14

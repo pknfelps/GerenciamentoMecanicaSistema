@@ -1,1 +1,0 @@
-mR`C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Bootstrapper\DependencyInjection.csprojòCSharp14

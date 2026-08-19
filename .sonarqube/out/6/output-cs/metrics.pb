@@ -1,21 +1,0 @@
-«
-RC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\VehicleService.cs 8r1	
-!"#$&()+,./0245689:<>?@ABx‚#$&()+0245:<>?„
-OC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\UserService.cs	 8r	
- !"x‚	Ž
-PC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\EmailService.cs 8r&	
- !"#$%')*+,-‚	!')*‘
-RC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\SmtpConnection.cs 8r 	
- !"$&'()x‚!"$&y
-ZC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\Settings\EmailSettings.cs 8r	
-‚	
-ì
-QC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\OrdersService.csx 8KrÔ
- !#$%&()+-.01235689;=>@ACDEGIKLMOPQSUWXY[]^_`acdfghjklnprtuvwyz{}~ƒ…†‡‰Š‹‘’“•–˜™š›œŸ ¡£¤¥§©ª«­®°±²³µ¶·¸¹º¼½¾ÀÁÂÄÆÈÉËÌÍÎÏÐÑÒÓÕÖ×ÙÚÜÞßàáâäæçèêëìîðòóôö÷øúüýÿ‚ƒ…†‡‰‹Ž‘’“•–—˜™›žŸ¡¢£¥§¨©ªx'‚´ %&()+-235689;=>@EGIKLQSWY[]acfglnptuwyzƒ‰‹“•˜™Ÿ¥§«­°±³µ¶º¼ÂÄÆÈÉÍÑ×ÙÚÜÞàáäæçìîðòóøúüýÿ‚‡‰‹Ž“•—˜›ž£¥§Ý
-PC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\StockService.cs( 8rT	
- !#%&()+,-/124568:;=>?ACDFGHJLMOPQSUVXYZ\^`abdefhjklnoprstuvx‚( !#%&(-/168:?ACHJLQSUZ\^`afhjkprs³
-SC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\CustomerService.cs 8r5	
- "#$%'(*,-/023468:;<>?@BDEFGHx	‚$%'(*,-/468:;@BDE¬
-RC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\CatalogService.cs 8r1	 "$%'(*+,./0245689:<>?@ABx‚ "$%',./0245:<>?œ
-YC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service\AuthenticationService.cs 8r'
-!"#$%&'()*,-./x‚&'),

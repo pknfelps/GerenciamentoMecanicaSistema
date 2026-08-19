@@ -1,199 +1,0 @@
-§
-]C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Vehicle\IVehicle.cs
-
- 
-
- "
-
- 
-
-		 
-
-
-
- 
-
- "|
-bC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Vehicle\ILicensePlate.cs
-
- "
-
- v
-\C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Custumer\IPhone.cs
-
- 
-
- ‰
-WC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\User\IUser.cs
-
- 
-
- 
-
- 
-
- u
-[C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\User\IPassword.cs
-
- 
-
- e
-WC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\User\Roles.cs
-
- ©
-gC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Service\IMechanicalService.cs
-
- '
-
- 
-
- 
-
- 
-
- 
-
-		 
-
- 
-
-' 5
-
- 
-
- '
-
- 
-
-' 6
-
- 
-
-" (
-
-  
-
-% +y
-_C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Custumer\IDocument.cs
-
- 
-
- ‡
-YC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Order\IOrder.cs
-
- 
-
-
-
- "
-
- )
-
-! )
-
- !
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- %
-
-9 E
-
- (
-
-< K
-
- 
-
-( 5
-
-  
-
-+ ;
-
- 
-
- 
-
-! )
-
- 
-
- 
-
- n
-TC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\IEntity.cs
-
- 
-
- ¶
-\C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Stock\IMaterial.cs
-
- 
-
- 
-
- 
-
- 
-
- 
-
-		 
-
-
-
- 
-
-
-
- !
-
- 
-
- $
-
- 
-
- %
-
- 
-
- %
-
- "
-
-' -
-
- 
-
-  %v
-\C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Custumer\IEmail.cs
-
- 
-
- p
-bC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Order\WorkOrderStatus.cs
-
- 
-_C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Custumer\ICustomer.cs
-
- 
-
- 
-
- 
-
- 
-
- 

@@ -1,68 +1,0 @@
-o
-]C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\IVehicleService.csr	
-i
-ZC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\IUserService.csr		
-r
-[C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\IStockService.csr	
-k
-]C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\ISmtpConnection.csr	x
-\C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\IOrdersService.csr	
-k
-[C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\IEmailService.csr
-	
-p
-^C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\ICustomerService.csr	
-o
-]C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\ICatalogService.csr	
-r
-dC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\IAuthenticationService.csr	Å
-dC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Vehicle\VehicleDto.cs 8r	
-Ç¢
-jC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Vehicle\CreateVehicleDto.cs 8r$	
- "#%&'()*xÇ"'å
-^C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\User\UserDto.cs 8	r	
- xÇó
-dC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\User\CreateUserDto.cs 	8r	
- !"#$%xÇ"x
-_C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\UpdateItemDto.cs 8r	
-|
-fC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Stock\ValueUpdateDto.cs 8r	
-ï
-cC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Stock\MaterialDto.cs 8r	
- !"#$xÇ!°
-iC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Stock\CreateMaterialDto.cs 8r#	
-!"$%&'()xÇ!&Ç
-dC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Service\ServiceDto.cs 8r	
-Ç¢
-jC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Service\CreateServiceDto.cs 8r#	
-!"$%&'()xÇ!&™
-dC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Order\WorkOrderDto.cs 8r/	
- !#%'()*,./123456xÇ#%)*.3ñ
-gC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Order\ApproveOrderDto.cs 8r	
-xÇï
-fC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Order\CreateOrderDto.cs 8r	
-xÇ∂
-lC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Order\DetailedWorkOrderDto.cs 8r*	
-!"$&')+,./123456xÇ!"$&')+,.3î
-fC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Customer\CustomerDto.cs 8
-r	
- xÇ¶
-âC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\CustomAttributes\RegularLicensePlateExpressionAttribute.cs 8r	
-Ç
-°
-lC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\Customer\CreateCustomerDto.cs 8r!	
- "#$%&'xÇ$¨
-ãC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\CustomAttributes\RegularNonEmptyStringExpressionAttribute.cs 8r	
-Ç¢
-ÖC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\CustomAttributes\RegularDocumentExpressionAttribute.cs 8r	
-Ç
-°
-zC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\CustomAttributes\GuidValidationAttribute.cs 8r	
-xÇ
-≤
-ÇC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\CustomAttributes\GenericValueValidationAttribute.cs 8r	
-xÇ
-•
-~C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Service.Interface\Dto\CustomAttributes\DateTimeValidationAttribute.cs 8r	
-xÇ
-

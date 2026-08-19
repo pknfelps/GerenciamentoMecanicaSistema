@@ -1,36 +1,0 @@
-Ÿ
-RC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\WorkOrder\Order.csQ  8ArË	
- "#%&'()*+,-.01235689:;=>@BCDFGHIJLMNPQRSUVXZ\]_`bcdeghjlmnpqrstvwxz{|}€‚„†‡‰ŠŒŽ‘’”•–˜™š›ž ¡¢£¥¦¨©ª«­®¯±²³´¶·¹º»½¾ÀÁÃÄÅÆx‚p "#%&'()*+,-235:;=>@BDFJLRSUVXZ\]_deghjlnptv|}€‚„†‡‰Ž‘’”•š›¢£¥ª«­®³´¶½¾ÀÁÃ‘
-RC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Vehicle\Vehicle.cs 8r 	
- !"#$%&x‚ !"#s
-`C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Vehicle\OldBrazilLicensePlate.cs 8r		r
-_C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Vehicle\MercosulLicensePlate.cs 8r		†
-^C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Vehicle\LicensePlateWrapper.cs 8r
-x‚
-‡
-WC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Vehicle\LicensePlate.cs	 8
-r	x‚	ƒ
-LC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\User\User.cs 
-8r	
- x‚
-PC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\User\Password.cs
- 8r	x	‚
-Ê
-fC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\MechanicalService\MechanicalService.cs 8r8	
- "#$%&')*+-.01235689:;=>@BCDEGHIJx‚ "#$%&+-235:;=DEGÂ
-QC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Stock\Material.cs 8r@	
- !"#$&()*+-.01235679:;<>?@BCDEGHJKLMOPQRx‚  !"#*+-2356;<>?DEGLMO~
-QC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Customer\Phone.cs 8r	x‚{
-QC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Customer\Email.cs 8r	
-x‚
-[C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Customer\DocumentWrapper.cs 8r	
-x‚	±
-TC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Customer\Document.cs 8r3
- !#%&')*,-/02346789:;=>@ACDEFx‚ ')*,-/69:>@ACˆ
-TC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Customer\Customer.cs	 8r	
-x‚
-q
-OC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Customer\Cpf.cs 8r
-‚r
-PC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain\Customer\Cnpj.cs 8r
-‚

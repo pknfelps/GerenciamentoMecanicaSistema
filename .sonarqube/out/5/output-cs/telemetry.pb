@@ -1,1 +1,0 @@
-dRWC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\DomainTests\DomainTests.csprojòCSharp14

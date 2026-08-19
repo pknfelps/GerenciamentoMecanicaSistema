@@ -1,307 +1,0 @@
-™
-cC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Bootstrapper\ServiceDependencyInjection.cs
-	namespace 	
-DependencyInjection
- 
-{		 
-public
-
- 
-
-static
-
- 
-class
-
- &
-ServiceDependencyInjection
-
- 2
-{ 
-public 
-static 
-void 
-Register #
-(# $
-IServiceCollection$ 6
-service7 >
-)> ?
-{ 	
-service 
-. 
-AddTransient  
-<  !
-ICustomerService! 1
-,1 2
-CustomerService3 B
->B C
-(C D
-)D E
-;E F
-service 
-. 
-AddTransient  
-<  !
-IUserService! -
-,- .
-UserService/ :
->: ;
-(; <
-)< =
-;= >
-service 
-. 
-AddTransient  
-<  !"
-IAuthenticationService! 7
-,7 8!
-AuthenticationService9 N
->N O
-(O P
-)P Q
-;Q R
-service 
-. 
-AddTransient  
-<  !
-IStockService! .
-,. /
-StockService0 <
->< =
-(= >
-)> ?
-;? @
-service 
-. 
-AddTransient  
-<  !
-IVehicleService! 0
-,0 1
-VehicleService2 @
->@ A
-(A B
-)B C
-;C D
-service 
-. 
-AddTransient  
-<  !
-ICatalogService! 0
-,0 1
-CatalogService2 @
->@ A
-(A B
-)B C
-;C D
-service 
-. 
-AddTransient  
-<  !
-IOrdersService! /
-,/ 0
-OrdersService1 >
->> ?
-(? @
-)@ A
-;A B
-service 
-. 
-AddTransient  
-<  !
-ISmtpClient! ,
-,, -
-
-SmtpClient. 8
->8 9
-(9 :
-): ;
-;; <
-service 
-. 
-AddTransient  
-<  !
-ISmtpConnection! 0
-,0 1
-SmtpConnection2 @
->@ A
-(A B
-)B C
-;C D
-service 
-. 
-AddTransient  
-<  !
-IEmailService! .
-,. /
-EmailService0 <
->< =
-(= >
-)> ?
-;? @
-} 	
-} 
-} Å
-fC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Bootstrapper\RepositoryDependencyInjection.cs
-	namespace 	
-DependencyInjection
- 
-{		 
-public
-
- 
-
-static
-
- 
-class
-
- )
-RepositoryDependencyInjection
-
- 5
-{ 
-private 
-const 
-string 
-DbConnectionString /
-=0 1
-$str2 E
-;E F
-public 
-static 
-void 
-Register #
-(# $
-IServiceCollection$ 6
-service7 >
-,> ?
-IConfiguration@ N
-configurationO \
-)\ ]
-{ 	
-var 
-connectionString  
-=! "
-configuration# 0
-.0 1
-GetConnectionString1 D
-(D E
-DbConnectionStringE W
-)W X
-?? 
-throw 
-new %
-InvalidOperationException 6
-(6 7
-$"7 9
-$str9 L
-{L M
-DbConnectionStringM _
-}_ `
-$str` l
-"l m
-)m n
-;n o
-service 
-. 
-	AddScoped 
-< 
-IDbConnection +
->+ ,
-(, -
-provider- 5
-=>6 8
-{ 
-var 
-
-connection 
-=  
-new! $
-NpgsqlConnection% 5
-(5 6
-connectionString6 F
-)F G
-;G H
-
-connection 
-. 
-Open 
-(  
-)  !
-;! "
-return 
-
-connection !
-;! "
-} 
-) 
-; 
-service 
-. 
-	AddScoped 
-< 
-ICustomerRepository 1
-,1 2
-CustomerRepository3 E
->E F
-(F G
-)G H
-;H I
-service 
-. 
-	AddScoped 
-< 
-IUserRepository -
-,- .
-UserRepository/ =
->= >
-(> ?
-)? @
-;@ A
-service 
-. 
-	AddScoped 
-< 
-IStockRepository .
-,. /
-StockRepository0 ?
->? @
-(@ A
-)A B
-;B C
-service 
-. 
-	AddScoped 
-< 
-IVehicleRepository 0
-,0 1
-VehicleRepository2 C
->C D
-(D E
-)E F
-;F G
-service 
-. 
-	AddScoped 
-< 
-ICatalogRepository 0
-,0 1
-CatalogRepository2 C
->C D
-(D E
-)E F
-;F G
-service 
-. 
-	AddScoped 
-< 
-IOrdersRepository /
-,/ 0
-OrdersRepository1 A
->A B
-(B C
-)C D
-;D E
-}   	
-}!! 
-}"" 

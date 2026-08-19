@@ -1,8 +1,0 @@
-ï
-cC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Bootstrapper\ServiceDependencyInjection.cs
- 8r	
-Ç
-ù
-fC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Bootstrapper\RepositoryDependencyInjection.cs 8r	
- !"Ç
-

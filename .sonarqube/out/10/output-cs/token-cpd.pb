@@ -1,4612 +1,0 @@
-≤&
-`C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Program.cs
-	namespace 	(
-GerenciamentoMecanicaSistema
- &
-{ 
-public		 
-
-class		 
-Program		 
-{
-
- 
-public 
-static 
-void 
-Main 
-(  
-string  &
-[& '
-]' (
-args) -
-)- .
-{ 	
-var 
-builder 
-= 
-WebApplication (
-.( )
-CreateBuilder) 6
-(6 7
-args7 ;
-); <
-;< =
-builder 
-. 
-Services 
-. 
-AddControllers +
-(+ ,
-), -
-;- .
-builder 
-. 
-Services 
-. 
-
-AddOpenApi '
-(' (
-)( )
-;) *
-builder 
-. 
-Services 
-. 
-AddAuthentication .
-(. /
-x/ 0
-=>1 3
-{ 
-x 
-. %
-DefaultAuthenticateScheme +
-=, -
-JwtBearerDefaults. ?
-.? @ 
-AuthenticationScheme@ T
-;T U
-x 
-. "
-DefaultChallengeScheme (
-=) *
-JwtBearerDefaults+ <
-.< = 
-AuthenticationScheme= Q
-;Q R
-} 
-) 
-. 
-AddJwtBearer 
-( 
-options #
-=>$ &
-{ 
-options 
-. %
-TokenValidationParameters 1
-=2 3
-new4 7%
-TokenValidationParameters8 Q
-{ 
-ValidateIssuer "
-=# $
-true% )
-,) *
-ValidateAudience $
-=% &
-true' +
-,+ ,
-ValidateLifetime $
-=% &
-true' +
-,+ ,$
-ValidateIssuerSigningKey ,
-=- .
-true/ 3
-,3 4
-ValidIssuer 
-=  !
-builder" )
-.) *
-Configuration* 7
-[7 8
-$str8 D
-]D E
-,E F
-ValidAudience !
-=" #
-builder$ +
-.+ ,
-Configuration, 9
-[9 :
-$str: H
-]H I
-,I J
-IssuerSigningKey   $
-=  % &
-new  ' * 
-SymmetricSecurityKey  + ?
-(  ? @
-Encoding  @ H
-.  H I
-UTF8  I M
-.  M N
-GetBytes  N V
-(  V W
-builder  W ^
-.  ^ _
-Configuration  _ l
-[  l m
-$str  m v
-]  v w
-)  w x
-)  x y
-}!! 
-;!! 
-}"" 
-)"" 
-;"" 
-builder$$ 
-.$$ 
-Services$$ 
-.$$ 
-	Configure$$ &
-<$$& '
-EmailSettings$$' 4
->$$4 5
-($$5 6
-builder$$6 =
-.$$= >
-Configuration$$> K
-.$$K L
-
-GetSection$$L V
-($$V W
-$str$$W f
-)$$f g
-)$$g h
-;$$h i)
-RepositoryDependencyInjection&& )
-.&&) *
-Register&&* 2
-(&&2 3
-builder&&3 :
-.&&: ;
-Services&&; C
-,&&C D
-builder&&E L
-.&&L M
-Configuration&&M Z
-)&&Z [
-;&&[ \&
-ServiceDependencyInjection'' &
-.''& '
-Register''' /
-(''/ 0
-builder''0 7
-.''7 8
-Services''8 @
-)''@ A
-;''A B
-var)) 
-app)) 
-=)) 
-builder)) 
-.)) 
-Build)) #
-())# $
-)))$ %
-;))% &
-if++ 
-(++ 
-app++ 
-.++ 
-Environment++ 
-.++  
-IsDevelopment++  -
-(++- .
-)++. /
-)++/ 0
-{,, 
-app-- 
-.-- 
-
-MapOpenApi-- 
-(-- 
-)--  
-;--  !
-app.. 
-... 
-UseSwaggerUI..  
-(..  !
-options..! (
-=>..) +
-options.., 3
-...3 4
-SwaggerEndpoint..4 C
-(..C D
-$str..D V
-,..V W
-$str..X f
-)..g h
-)..h i
-;..i j
-}// 
-app11 
-.11 
-UseHttpsRedirection11 #
-(11# $
-)11$ %
-;11% &
-app33 
-.33 
-UseAuthentication33 !
-(33! "
-)33" #
-;33# $
-app44 
-.44 
-UseAuthorization44  
-(44  !
-)44! "
-;44" #
-app66 
-.66 
-MapControllers66 
-(66 
-)66  
-;66  !
-app88 
-.88 
-Run88 
-(88 
-)88 
-;88 
-}99 	
-}:: 
-};; Ô<
-wC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\VehiclesController.cs
-	namespace 	(
-GerenciamentoMecanicaSistema
- &
-.& '
-Controllers' 2
-{ 
-[		 
-ApiController		 
-]		 
-[
-
- 
-Route
-
- 
-
-(
-
-
- 
-$str
-
- 
-)
-
- 
-]
-
- 
-[ 
-	Authorize 
-( 
-Roles 
-= 
-$str 
-) 
-]  
-public 
-
-class 
-VehiclesController #
-(# $
-IVehicleService$ 3
-vehicleService4 B
-)B C
-:D E
-ControllerBaseF T
-{ 
-private 
-IVehicleService 
-VehicleService  .
-{/ 0
-get1 4
-;4 5
-set6 9
-;9 :
-}; <
-== >
-vehicleService? M
-;M N
-[ 	
-HttpPost	 
-( 
-) 
-] 
-[ 	
-EndpointDescription	 
-( 
-$str A
-)A B
-]B C
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *
-Status201Created* :
-): ;
-]; <
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *!
-Status401Unauthorized* ?
-,? @
-DescriptionA L
-=M N
-$strO o
-)o p
-]p q
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *
-Status400BadRequest* =
-,= >
-Description? J
-=K L
-$strM b
-)b c
-]c d
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *(
-Status500InternalServerError* F
-,F G
-DescriptionH S
-=T U
-$strV p
-)p q
-]q r
-public 
-async 
-Task 
-< 
-IActionResult '
->' (
-RegisterVehicle) 8
-(8 9
-[9 :
-FromBody: B
-]B C
-CreateVehicleDtoD T
-
-vehicleDtoU _
-)_ `
-{ 	
-await 
-VehicleService  
-.  !
-RegisterVehicle! 0
-(0 1
-
-vehicleDto1 ;
-); <
-;< =
-return 
-Created 
-( 
-) 
-; 
-} 	
-[ 	
-HttpGet	 
-( 
-) 
-] 
-[ 	
-EndpointDescription	 
-( 
-$str ?
-)? @
-]@ A
-[ 	 
-ProducesResponseType	 
-( 
-typeof $
-($ %
-IEnumerable% 0
-<0 1
-
-VehicleDto1 ;
->; <
-)< =
-,= >
-StatusCodes? J
-.J K
-Status200OKK V
-,V W
-DescriptionX c
-=d e
-$str	f É
-)
-É Ñ
-]
-Ñ Ö
-[   	 
-ProducesResponseType  	 
-(   
-StatusCodes   )
-.  ) *!
-Status401Unauthorized  * ?
-,  ? @
-Description  A L
-=  M N
-$str  O o
-)  o p
-]  p q
-public!! 
-async!! 
-Task!! 
-<!! 
-IActionResult!! '
->!!' (
-GetVehicles!!) 4
-(!!4 5
-[!!5 6
-	FromQuery!!6 ?
-]!!? @
-Guid!!A E
-?!!E F
-id!!G I
-=!!J K
-null!!L P
-,!!P Q
-[!!R S
-	FromQuery!!S \
-]!!\ ]
-string!!^ d
-licensePlate!!e q
-=!!r s
-$str!!t v
-)!!v w
-{"" 	
-var## 
-vehicles## 
-=## 
-await##  
-VehicleService##! /
-.##/ 0
-GetVehicles##0 ;
-(##; <
-id##< >
-,##> ?
-licensePlate##@ L
-)##L M
-;##M N
-return%% 
-Ok%% 
-(%% 
-vehicles%% 
-)%% 
-;%%  
-}&& 	
-[(( 	
-	HttpPatch((	 
-((( 
-$str(( 
-)(( 
-](( 
-[)) 	
-EndpointDescription))	 
-()) 
-$str)) M
-)))M N
-]))N O
-[** 	 
-ProducesResponseType**	 
-(** 
-StatusCodes** )
-.**) *
-Status204NoContent*** <
-)**< =
-]**= >
-[++ 	 
-ProducesResponseType++	 
-(++ 
-StatusCodes++ )
-.++) *!
-Status401Unauthorized++* ?
-,++? @
-Description++A L
-=++M N
-$str++O o
-)++o p
-]++p q
-[,, 	 
-ProducesResponseType,,	 
-(,, 
-StatusCodes,, )
-.,,) *
-Status400BadRequest,,* =
-,,,= >
-Description,,? J
-=,,K L
-$str,,M b
-),,b c
-],,c d
-[-- 	 
-ProducesResponseType--	 
-(-- 
-StatusCodes-- )
-.--) *(
-Status500InternalServerError--* F
-,--F G
-Description--H S
-=--T U
-$str--V p
-)--p q
-]--q r
-public.. 
-async.. 
-Task.. 
-<.. 
-IActionResult.. '
->..' (
-UpdateVehicle..) 6
-(..6 7
-[..7 8
-	FromRoute..8 A
-,..A B
-GuidValidation..C Q
-]..Q R
-Guid..S W
-id..X Z
-,..Z [
-[..\ ]
-FromBody..] e
-]..e f
-CreateVehicleDto..g w
-
-vehicleDto	..x Ç
-)
-..Ç É
-{// 	
-await00 
-VehicleService00  
-.00  !
-UpdateVehicle00! .
-(00. /
-id00/ 1
-,001 2
-
-vehicleDto003 =
-)00= >
-;00> ?
-return22 
-	NoContent22 
-(22 
-)22 
-;22 
-}33 	
-[55 	
-
-HttpDelete55	 
-(55 
-$str55 
-)55 
-]55 
-[66 	
-EndpointDescription66	 
-(66 
-$str66 ?
-)66? @
-]66@ A
-[77 	 
-ProducesResponseType77	 
-(77 
-StatusCodes77 )
-.77) *
-Status200OK77* 5
-)775 6
-]776 7
-[88 	 
-ProducesResponseType88	 
-(88 
-StatusCodes88 )
-.88) *!
-Status401Unauthorized88* ?
-,88? @
-Description88A L
-=88M N
-$str88O o
-)88o p
-]88p q
-[99 	 
-ProducesResponseType99	 
-(99 
-StatusCodes99 )
-.99) *
-Status400BadRequest99* =
-,99= >
-Description99? J
-=99K L
-$str99M b
-)99b c
-]99c d
-[:: 	 
-ProducesResponseType::	 
-(:: 
-StatusCodes:: )
-.::) *(
-Status500InternalServerError::* F
-,::F G
-Description::H S
-=::T U
-$str::V p
-)::p q
-]::q r
-public;; 
-async;; 
-Task;; 
-<;; 
-IActionResult;; '
->;;' (
-DeleteVehicle;;) 6
-(;;6 7
-[;;7 8
-	FromRoute;;8 A
-,;;A B
-GuidValidation;;C Q
-];;Q R
-Guid;;S W
-id;;X Z
-);;Z [
-{<< 	
-await== 
-VehicleService==  
-.==  !
-DeleteVehicle==! .
-(==. /
-id==/ 1
-)==1 2
-;==2 3
-return?? 
-Ok?? 
-(?? 
-)?? 
-;?? 
-}@@ 	
-}AA 
-}BB ˆ'
-tC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\UsersController.cs
-	namespace 	(
-GerenciamentoMecanicaSistema
- &
-.& '
-Controllers' 2
-{ 
-[ 
-ApiController 
-] 
-[		 
-Route		 
-
-(		
- 
-$str		 
-)		 
-]		 
-[
-
- 
-	Authorize
-
- 
-(
-
- 
-Roles
-
- 
-=
-
- 
-$str
-
- 
-)
-
- 
-]
-
-  
-public 
-
-class 
-UsersController  
-(  !
-IUserService! -
-usuarioService. <
-)< =
-:> ?
-ControllerBase@ N
-{ 
-private 
-IUserService 
-UsersService )
-{* +
-get, /
-;/ 0
-set1 4
-;4 5
-}6 7
-=8 9
-usuarioService: H
-;H I
-[ 	
-HttpPost	 
-( 
-) 
-] 
-[ 	
-EndpointDescription	 
-( 
-$str A
-)A B
-]B C
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *
-Status201Created* :
-): ;
-]; <
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *!
-Status401Unauthorized* ?
-,? @
-DescriptionA L
-=M N
-$strO o
-)o p
-]p q
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *
-Status400BadRequest* =
-,= >
-Description? J
-=K L
-$strM b
-)b c
-]c d
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *(
-Status500InternalServerError* F
-,F G
-DescriptionH S
-=T U
-$strV p
-)p q
-]q r
-public 
-async 
-Task 
-< 
-IActionResult '
->' (
-RegisterUser) 5
-(5 6
-[6 7
-FromBody7 ?
-]? @
-CreateUserDtoA N
-userDtoO V
-)V W
-{ 	
-await 
-UsersService 
-. 
-RegisterUser +
-(+ ,
-userDto, 3
-)3 4
-;4 5
-return 
-Created 
-( 
-) 
-; 
-} 	
-[ 	
-HttpGet	 
-( 
-) 
-] 
-[ 	
-EndpointDescription	 
-( 
-$str >
-)> ?
-]? @
-[ 	 
-ProducesResponseType	 
-( 
-typeof $
-($ %
-UserDto% ,
-), -
-,- .
-StatusCodes/ :
-.: ;
-Status200OK; F
-,F G
-DescriptionH S
-=T U
-$strV i
-)i j
-]j k
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *!
-Status401Unauthorized* ?
-,? @
-DescriptionA L
-=M N
-$strO o
-)o p
-]p q
-[   	 
-ProducesResponseType  	 
-(   
-StatusCodes   )
-.  ) *
-Status400BadRequest  * =
-,  = >
-Description  ? J
-=  K L
-$str  M b
-)  b c
-]  c d
-[!! 	 
-ProducesResponseType!!	 
-(!! 
-StatusCodes!! )
-.!!) *(
-Status500InternalServerError!!* F
-,!!F G
-Description!!H S
-=!!T U
-$str!!V p
-)!!p q
-]!!q r
-["" 	 
-ProducesResponseType""	 
-("" 
-StatusCodes"" )
-."") *
-Status404NotFound""* ;
-,""; <
-Description""= H
-=""I J
-$str""K c
-)""c d
-]""d e
-public## 
-async## 
-Task## 
-<## 
-IActionResult## '
->##' (
-GetUser##) 0
-(##0 1
-[##1 2
-	FromQuery##2 ;
-]##; <
-string##= C
-name##D H
-,##H I
-[##J K
-	FromQuery##K T
-]##T U
-string##V \
-role##] a
-)##a b
-{$$ 	
-var%% 
-usuario%% 
-=%% 
-await%% 
-UsersService%%  ,
-.%%, -
-GetUser%%- 4
-(%%4 5
-new%%5 8
-CreateUserDto%%9 F
-(%%F G
-name%%G K
-,%%K L
-$str%%M O
-,%%O P
-role%%Q U
-)%%U V
-)%%V W
-;%%W X
-if'' 
-('' 
-usuario'' 
-is'' 
-null'' 
-)''  
-return(( 
-NotFound(( 
-(((  
-)((  !
-;((! "
-return** 
-Ok** 
-(** 
-usuario** 
-)** 
-;** 
-}++ 	
-},, 
-}-- ı[
-tC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\StockController.cs
-	namespace 	(
-GerenciamentoMecanicaSistema
- &
-.& '
-Controllers' 2
-{ 
-[		 
-ApiController		 
-]		 
-[
-
- 
-Route
-
- 
-
-(
-
-
- 
-$str
-
- 
-)
-
- 
-]
-
- 
-[ 
-	Authorize 
-( 
-Roles 
-= 
-$str 
-) 
-]  
-public 
-
-class 
-StockController  
-(  !
-IStockService! .
-stockService/ ;
-); <
-:= >
-ControllerBase? M
-{ 
-public 
-IStockService 
-StockService )
-{* +
-get, /
-;/ 0
-private1 8
-set9 <
-;< =
-}> ?
-=@ A
-stockServiceB N
-;N O
-[ 	
-HttpPost	 
-( 
-) 
-] 
-[ 	
-EndpointDescription	 
-( 
-$str H
-)H I
-]I J
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *
-Status201Created* :
-): ;
-]; <
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *!
-Status401Unauthorized* ?
-,? @
-DescriptionA L
-=M N
-$strO o
-)o p
-]p q
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *
-Status400BadRequest* =
-,= >
-Description? J
-=K L
-$strM b
-)b c
-]c d
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *(
-Status500InternalServerError* F
-,F G
-DescriptionH S
-=T U
-$strV p
-)p q
-]q r
-public 
-async 
-Task 
-< 
-IActionResult '
->' (
-RegisterMaterial) 9
-(9 :
-[: ;
-FromBody; C
-]C D
-CreateMaterialDtoE V
-itemDtoW ^
-)^ _
-{ 	
-await 
-StockService 
-. 
-RegisterNewMaterial 2
-(2 3
-itemDto3 :
-): ;
-;; <
-return 
-Created 
-( 
-) 
-; 
-} 	
-[ 	
-HttpGet	 
-( 
-) 
-] 
-[ 	
-EndpointDescription	 
-( 
-$str G
-)G H
-]H I
-[ 	 
-ProducesResponseType	 
-( 
-typeof $
-($ %
-IEnumerable% 0
-<0 1
-MaterialDto1 <
->< =
-)= >
-,> ?
-StatusCodes@ K
-.K L
-Status200OKL W
-,W X
-DescriptionY d
-=e f
-$str	g å
-)
-å ç
-]
-ç é
-[   	 
-ProducesResponseType  	 
-(   
-StatusCodes   )
-.  ) *!
-Status401Unauthorized  * ?
-,  ? @
-Description  A L
-=  M N
-$str  O o
-)  o p
-]  p q
-public!! 
-async!! 
-Task!! 
-<!! 
-OkObjectResult!! (
->!!( )
-GetMaterials!!* 6
-(!!6 7
-[!!7 8
-	FromQuery!!8 A
-]!!A B
-Guid!!C G
-?!!G H
-id!!I K
-=!!L M
-null!!N R
-,!!R S
-[!!T U
-	FromQuery!!U ^
-]!!^ _
-string!!` f
-name!!g k
-=!!l m
-$str!!n p
-,!!p q
-[!!r s
-	FromQuery!!s |
-]!!| }
-string	!!~ Ñ
-brand
-!!Ö ä
-=
-!!ã å
-$str
-!!ç è
-)
-!!è ê
-{"" 	
-var## 
-itens## 
-=## 
-await## 
-StockService## *
-.##* +
-GetMaterials##+ 7
-(##7 8
-id##8 :
-,##: ;
-name##< @
-,##@ A
-brand##B G
-)##G H
-;##H I
-return%% 
-Ok%% 
-(%% 
-itens%% 
-)%% 
-;%% 
-}&& 	
-[(( 	
-HttpPost((	 
-((( 
-$str(( 
-)((  
-]((  !
-[)) 	
-EndpointDescription))	 
-()) 
-$str)) K
-)))K L
-]))L M
-[** 	 
-ProducesResponseType**	 
-(** 
-StatusCodes** )
-.**) *
-Status200OK*** 5
-)**5 6
-]**6 7
-[++ 	 
-ProducesResponseType++	 
-(++ 
-StatusCodes++ )
-.++) *!
-Status401Unauthorized++* ?
-,++? @
-Description++A L
-=++M N
-$str++O o
-)++o p
-]++p q
-[,, 	 
-ProducesResponseType,,	 
-(,, 
-StatusCodes,, )
-.,,) *
-Status400BadRequest,,* =
-,,,= >
-Description,,? J
-=,,K L
-$str,,M b
-),,b c
-],,c d
-[-- 	 
-ProducesResponseType--	 
-(-- 
-StatusCodes-- )
-.--) *(
-Status500InternalServerError--* F
-,--F G
-Description--H S
-=--T U
-$str--V p
-)--p q
-]--q r
-public.. 
-async.. 
-Task.. 
-<.. 
-IActionResult.. '
->..' (
-AddMaterialAmount..) :
-(..: ;
-[..; <
-	FromRoute..< E
-,..E F
-GuidValidation..G U
-]..U V
-Guid..W [
-id..\ ^
-,..^ _
-[..` a
-FromBody..a i
-]..i j
-ValueUpdateDto..k y
-<..y z
-int..z }
->..} ~
-value	.. Ñ
-)
-..Ñ Ö
-{// 	
-await00 
-StockService00 
-.00 
-AddMaterialAmount00 0
-(000 1
-id001 3
-,003 4
-value005 :
-.00: ;
-Value00; @
-)00@ A
-;00A B
-return22 
-Ok22 
-(22 
-)22 
-;22 
-}33 	
-[55 	
-	HttpPatch55	 
-(55 
-$str55  
-)55  !
-]55! "
-[66 	
-EndpointDescription66	 
-(66 
-$str66 J
-)66J K
-]66K L
-[77 	 
-ProducesResponseType77	 
-(77 
-StatusCodes77 )
-.77) *
-Status204NoContent77* <
-)77< =
-]77= >
-[88 	 
-ProducesResponseType88	 
-(88 
-StatusCodes88 )
-.88) *!
-Status401Unauthorized88* ?
-,88? @
-Description88A L
-=88M N
-$str88O o
-)88o p
-]88p q
-[99 	 
-ProducesResponseType99	 
-(99 
-StatusCodes99 )
-.99) *
-Status400BadRequest99* =
-,99= >
-Description99? J
-=99K L
-$str99M b
-)99b c
-]99c d
-[:: 	 
-ProducesResponseType::	 
-(:: 
-StatusCodes:: )
-.::) *(
-Status500InternalServerError::* F
-,::F G
-Description::H S
-=::T U
-$str::V p
-)::p q
-]::q r
-public;; 
-async;; 
-Task;; 
-<;; 
-IActionResult;; '
->;;' ( 
-RemoveMaterialAmount;;) =
-(;;= >
-[;;> ?
-	FromRoute;;? H
-,;;H I
-GuidValidation;;J X
-];;X Y
-Guid;;Z ^
-id;;_ a
-,;;a b
-ValueUpdateDto;;c q
-<;;q r
-int;;r u
->;;u v
-value;;w |
-);;| }
-{<< 	
-await== 
-StockService== 
-.==  
-RemoveMaterialAmount== 3
-(==3 4
-id==4 6
-,==6 7
-value==8 =
-.=== >
-Value==> C
-)==C D
-;==D E
-return?? 
-	NoContent?? 
-(?? 
-)?? 
-;?? 
-}@@ 	
-[BB 	
-	HttpPatchBB	 
-(BB 
-$strBB 
-)BB  
-]BB  !
-[CC 	
-EndpointDescriptionCC	 
-(CC 
-$strCC I
-)CCI J
-]CCJ K
-[DD 	 
-ProducesResponseTypeDD	 
-(DD 
-StatusCodesDD )
-.DD) *
-Status204NoContentDD* <
-)DD< =
-]DD= >
-[EE 	 
-ProducesResponseTypeEE	 
-(EE 
-StatusCodesEE )
-.EE) *!
-Status401UnauthorizedEE* ?
-,EE? @
-DescriptionEEA L
-=EEM N
-$strEEO o
-)EEo p
-]EEp q
-[FF 	 
-ProducesResponseTypeFF	 
-(FF 
-StatusCodesFF )
-.FF) *
-Status400BadRequestFF* =
-,FF= >
-DescriptionFF? J
-=FFK L
-$strFFM b
-)FFb c
-]FFc d
-[GG 	 
-ProducesResponseTypeGG	 
-(GG 
-StatusCodesGG )
-.GG) *(
-Status500InternalServerErrorGG* F
-,GGF G
-DescriptionGGH S
-=GGT U
-$strGGV p
-)GGp q
-]GGq r
-publicHH 
-asyncHH 
-TaskHH 
-<HH 
-IActionResultHH '
->HH' (
-UpdateMaterialPriceHH) <
-(HH< =
-[HH= >
-	FromRouteHH> G
-,HHG H
-GuidValidationHHI W
-]HHW X
-GuidHHY ]
-idHH^ `
-,HH` a
-ValueUpdateDtoHHb p
-<HHp q
-doubleHHq w
->HHw x
-valueHHy ~
-)HH~ 
-{II 	
-awaitJJ 
-StockServiceJJ 
-.JJ 
-UpdateMaterialPriceJJ 2
-(JJ2 3
-idJJ3 5
-,JJ5 6
-valueJJ7 <
-.JJ< =
-ValueJJ= B
-)JJB C
-;JJC D
-returnLL 
-	NoContentLL 
-(LL 
-)LL 
-;LL 
-}MM 	
-[OO 	
-
-HttpDeleteOO	 
-(OO 
-$strOO 
-)OO 
-]OO 
-[PP 	
-EndpointDescriptionPP	 
-(PP 
-$strPP <
-)PP< =
-]PP= >
-[QQ 	 
-ProducesResponseTypeQQ	 
-(QQ 
-StatusCodesQQ )
-.QQ) *
-Status204NoContentQQ* <
-)QQ< =
-]QQ= >
-[RR 	 
-ProducesResponseTypeRR	 
-(RR 
-StatusCodesRR )
-.RR) *!
-Status401UnauthorizedRR* ?
-,RR? @
-DescriptionRRA L
-=RRM N
-$strRRO o
-)RRo p
-]RRp q
-[SS 	 
-ProducesResponseTypeSS	 
-(SS 
-StatusCodesSS )
-.SS) *
-Status400BadRequestSS* =
-,SS= >
-DescriptionSS? J
-=SSK L
-$strSSM b
-)SSb c
-]SSc d
-[TT 	 
-ProducesResponseTypeTT	 
-(TT 
-StatusCodesTT )
-.TT) *(
-Status500InternalServerErrorTT* F
-,TTF G
-DescriptionTTH S
-=TTT U
-$strTTV p
-)TTp q
-]TTq r
-publicUU 
-asyncUU 
-TaskUU 
-<UU 
-IActionResultUU '
->UU' (
-DeleteMaterialUU) 7
-(UU7 8
-[UU8 9
-	FromRouteUU9 B
-,UUB C
-GuidValidationUUD R
-]UUR S
-GuidUUT X
-idUUY [
-)UU[ \
-{VV 	
-awaitWW 
-StockServiceWW 
-.WW 
-DeleteMaterialWW -
-(WW- .
-idWW. 0
-)WW0 1
-;WW1 2
-returnYY 
-	NoContentYY 
-(YY 
-)YY 
-;YY 
-}ZZ 	
-}[[ 
-}\\ º‡
-uC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\OrdersController.cs
-	namespace 	(
-GerenciamentoMecanicaSistema
- &
-.& '
-Controllers' 2
-{		 
-[
-
- 
-ApiController
-
- 
-]
-
- 
-[ 
-Route 
-
-(
- 
-$str 
-) 
-] 
-[ 
-	Authorize 
-( 
-Roles 
-= 
-$str 
-) 
-]  
-public 
-
-class 
-OrdersController !
-(! "
-IOrdersService" 0
-orderService1 =
-)= >
-:? @
-ControllerBaseA O
-{ 
-private 
-IOrdersService 
-OrderService +
-{, -
-get. 1
-;1 2
-set3 6
-;6 7
-}8 9
-=: ;
-orderService< H
-;H I
-[ 	
-HttpPost	 
-( 
-) 
-] 
-[ 	
-EndpointDescription	 
-( 
-$str K
-)K L
-]L M
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *
-Status201Created* :
-): ;
-]; <
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *!
-Status401Unauthorized* ?
-,? @
-DescriptionA L
-=M N
-$strO o
-)o p
-]p q
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *
-Status400BadRequest* =
-,= >
-Description? J
-=K L
-$strM b
-)b c
-]c d
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *(
-Status500InternalServerError* F
-,F G
-DescriptionH S
-=T U
-$strV p
-)p q
-]q r
-public 
-async 
-Task 
-< 
-IActionResult '
->' (
-CreateOrder) 4
-(4 5
-[5 6
-FromBody6 >
-]> ?
-CreateOrderDto@ N
-orderToCreateO \
-)\ ]
-{ 	
-await 
-OrderService 
-. 
-CreateServiceOrder 1
-(1 2
-orderToCreate2 ?
-)? @
-;@ A
-return 
-Created 
-( 
-) 
-; 
-} 	
-[ 	
-HttpGet	 
-( 
-) 
-] 
-[ 	
-EndpointDescription	 
-( 
-$str H
-)H I
-]I J
-[   	 
-ProducesResponseType  	 
-(   
-typeof   $
-(  $ %
-IEnumerable  % 0
-<  0 1
-WorkOrderDto  1 =
->  = >
-)  > ?
-,  ? @
-StatusCodes  A L
-.  L M
-Status200OK  M X
-,  X Y
-Description  Z e
-=  f g
-$str	  h É
-)
-  É Ñ
-]
-  Ñ Ö
-[!! 	 
-ProducesResponseType!!	 
-(!! 
-StatusCodes!! )
-.!!) *!
-Status401Unauthorized!!* ?
-,!!? @
-Description!!A L
-=!!M N
-$str!!O o
-)!!o p
-]!!p q
-public"" 
-async"" 
-Task"" 
-<"" 
-OkObjectResult"" (
->""( )
-	GetOrders""* 3
-(""3 4
-[""4 5
-	FromQuery""5 >
-]""> ?
-Guid""@ D
-?""D E
-id""F H
-=""I J
-null""K O
-,""O P
-[""Q R
-	FromQuery""R [
-]""[ \
-string""] c
-vehicleLicensePlate""d w
-=""x y
-$str""z |
-)""| }
-{## 	
-var$$ 
-orders$$ 
-=$$ 
-await$$ 
-OrderService$$ +
-.$$+ ,
-	GetOrders$$, 5
-($$5 6
-id$$6 8
-:$$8 9
-id$$: <
-,$$< =
-vehicleLicensePlate$$> Q
-:$$Q R
-vehicleLicensePlate$$S f
-)$$f g
-;$$g h
-return&& 
-Ok&& 
-(&& 
-orders&& 
-.&& 
-Select&& #
-(&&# $
-WorkOrderDto&&$ 0
-.&&0 1
-Create&&1 7
-)&&7 8
-)&&8 9
-;&&9 :
-}'' 	
-[)) 	
-HttpGet))	 
-()) 
-$str)) 
-))) 
-])) 
-[** 	
-EndpointDescription**	 
-(** 
-$str** S
-)**S T
-]**T U
-[++ 	 
-ProducesResponseType++	 
-(++ 
-typeof++ $
-(++$ %
-IEnumerable++% 0
-<++0 1 
-DetailedWorkOrderDto++1 E
->++E F
-)++F G
-,++G H
-StatusCodes++I T
-.++T U
-Status200OK++U `
-,++` a
-Description++b m
-=++n o
-$str	++p ã
-)
-++ã å
-]
-++å ç
-[,, 	 
-ProducesResponseType,,	 
-(,, 
-StatusCodes,, )
-.,,) *!
-Status401Unauthorized,,* ?
-,,,? @
-Description,,A L
-=,,M N
-$str,,O o
-),,o p
-],,p q
-public-- 
-async-- 
-Task-- 
-<-- 
-OkObjectResult-- (
->--( )
-GetDetailedOrders--* ;
-(--; <
-[--< =
-	FromQuery--= F
-]--F G
-Guid--H L
-?--L M
-id--N P
-=--Q R
-null--S W
-,--W X
-[--Y Z
-	FromQuery--Z c
-]--c d
-string--e k
-vehicleLicensePlate--l 
-=
---Ä Å
-$str
---Ç Ñ
-)
---Ñ Ö
-{.. 	
-var// 
-orders// 
-=// 
-await// 
-OrderService// +
-.//+ ,
-	GetOrders//, 5
-(//5 6
-id//6 8
-://8 9
-id//: <
-,//< =
-vehicleLicensePlate//> Q
-://Q R
-vehicleLicensePlate//S f
-)//f g
-;//g h
-return11 
-Ok11 
-(11 
-orders11 
-)11 
-;11 
-}22 	
-[44 	
-AllowAnonymous44	 
-]44 
-[55 	
-HttpGet55	 
-(55 
-$str55 *
-)55* +
-]55+ ,
-[66 	
-EndpointDescription66	 
-(66 
-$str	66 ∑
-)
-66∑ ∏
-]
-66∏ π
-[77 	 
-ProducesResponseType77	 
-(77 
-typeof77 $
-(77$ % 
-DetailedWorkOrderDto77% 9
-)779 :
-,77: ;
-StatusCodes77< G
-.77G H
-Status200OK77H S
-,77S T
-Description77U `
-=77a b
-$str	77c í
-)
-77í ì
-]
-77ì î
-[88 	 
-ProducesResponseType88	 
-(88 
-StatusCodes88 )
-.88) *
-Status400BadRequest88* =
-,88= >
-Description88? J
-=88K L
-$str88M b
-)88b c
-]88c d
-[99 	 
-ProducesResponseType99	 
-(99 
-StatusCodes99 )
-.99) *(
-Status500InternalServerError99* F
-,99F G
-Description99H S
-=99T U
-$str99V p
-)99p q
-]99q r
-public:: 
-async:: 
-Task:: 
-<:: 
-IActionResult:: '
->::' (
-GetVehicleOrders::) 9
-(::9 :
-[::: ;
-	FromRoute::; D
-,::D E)
-RegularLicensePlateExpression::F c
-]::c d
-string::e k
-licensePlate::l x
-)::x y
-{;; 	
-var<< 
-order<< 
-=<< 
-await<< 
-OrderService<< *
-.<<* +
-	GetOrders<<+ 4
-(<<4 5
-vehicleLicensePlate<<5 H
-:<<H I
-licensePlate<<J V
-)<<V W
-;<<W X
-return>> 
-Ok>> 
-(>> 
-order>> 
-)>> 
-;>> 
-}?? 	
-[AA 	
-	HttpPatchAA	 
-(AA 
-$strAA )
-)AA) *
-]AA* +
-[BB 	
-EndpointDescriptionBB	 
-(BB 
-$strBB K
-)BBK L
-]BBL M
-[CC 	 
-ProducesResponseTypeCC	 
-(CC 
-StatusCodesCC )
-.CC) *
-Status204NoContentCC* <
-,CC< =
-DescriptionCC> I
-=CCJ K
-$strCCL {
-)CC{ |
-]CC| }
-[DD 	 
-ProducesResponseTypeDD	 
-(DD 
-StatusCodesDD )
-.DD) *!
-Status401UnauthorizedDD* ?
-,DD? @
-DescriptionDDA L
-=DDM N
-$strDDO o
-)DDo p
-]DDp q
-[EE 	 
-ProducesResponseTypeEE	 
-(EE 
-StatusCodesEE )
-.EE) *
-Status400BadRequestEE* =
-,EE= >
-DescriptionEE? J
-=EEK L
-$strEEM b
-)EEb c
-]EEc d
-[FF 	 
-ProducesResponseTypeFF	 
-(FF 
-StatusCodesFF )
-.FF) *(
-Status500InternalServerErrorFF* F
-,FFF G
-DescriptionFFH S
-=FFT U
-$strFFV p
-)FFp q
-]FFq r
-[GG 	 
-ProducesResponseTypeGG	 
-(GG 
-StatusCodesGG )
-.GG) *
-Status404NotFoundGG* ;
-,GG; <
-DescriptionGG= H
-=GGI J
-$strGGK p
-)GGp q
-]GGq r
-publicHH 
-asyncHH 
-TaskHH 
-<HH 
-IActionResultHH '
->HH' (
-StartDiagnosisHH) 7
-(HH7 8
-[HH8 9
-	FromRouteHH9 B
-,HHB C
-GuidValidationHHD R
-]HHR S
-GuidHHT X
-idHHY [
-)HH[ \
-{II 	
-awaitJJ 
-OrderServiceJJ 
-.JJ 
-StartDiagnosisJJ -
-(JJ- .
-idJJ. 0
-)JJ0 1
-;JJ1 2
-returnLL 
-	NoContentLL 
-(LL 
-)LL 
-;LL 
-}MM 	
-[OO 	
-HttpPostOO	 
-(OO 
-$strOO !
-)OO! "
-]OO" #
-[PP 	
-EndpointDescriptionPP	 
-(PP 
-$strPP K
-)PPK L
-]PPL M
-[QQ 	 
-ProducesResponseTypeQQ	 
-(QQ 
-StatusCodesQQ )
-.QQ) *
-Status200OKQQ* 5
-)QQ5 6
-]QQ6 7
-[RR 	 
-ProducesResponseTypeRR	 
-(RR 
-StatusCodesRR )
-.RR) *!
-Status401UnauthorizedRR* ?
-,RR? @
-DescriptionRRA L
-=RRM N
-$strRRO o
-)RRo p
-]RRp q
-[SS 	 
-ProducesResponseTypeSS	 
-(SS 
-StatusCodesSS )
-.SS) *
-Status400BadRequestSS* =
-,SS= >
-DescriptionSS? J
-=SSK L
-$strSSM b
-)SSb c
-]SSc d
-[TT 	 
-ProducesResponseTypeTT	 
-(TT 
-StatusCodesTT )
-.TT) *(
-Status500InternalServerErrorTT* F
-,TTF G
-DescriptionTTH S
-=TTT U
-$strTTV p
-)TTp q
-]TTq r
-publicUU 
-asyncUU 
-TaskUU 
-<UU 
-IActionResultUU '
->UU' (
-AddServiceToOrderUU) :
-(UU: ;
-[UU; <
-	FromRouteUU< E
-,UUE F
-GuidValidationUUG U
-]UUU V
-GuidUUW [
-idUU\ ^
-,UU^ _
-[UU` a
-FromBodyUUa i
-]UUi j
-UpdateItemDtoUUk x
-<UUx y
-intUUy |
->UU| }
-service	UU~ Ö
-)
-UUÖ Ü
-{VV 	
-awaitWW 
-OrderServiceWW 
-.WW 
-AddServiceToOrderWW 0
-(WW0 1
-idWW1 3
-,WW3 4
-serviceWW5 <
-)WW< =
-;WW= >
-returnYY 
-OkYY 
-(YY 
-)YY 
-;YY 
-}ZZ 	
-[\\ 	
-	HttpPatch\\	 
-(\\ 
-$str\\ "
-)\\" #
-]\\# $
-[]] 	
-EndpointDescription]]	 
-(]] 
-$str]] J
-)]]J K
-]]]K L
-[^^ 	 
-ProducesResponseType^^	 
-(^^ 
-StatusCodes^^ )
-.^^) *
-Status204NoContent^^* <
-)^^< =
-]^^= >
-[__ 	 
-ProducesResponseType__	 
-(__ 
-StatusCodes__ )
-.__) *!
-Status401Unauthorized__* ?
-,__? @
-Description__A L
-=__M N
-$str__O o
-)__o p
-]__p q
-[`` 	 
-ProducesResponseType``	 
-(`` 
-StatusCodes`` )
-.``) *
-Status400BadRequest``* =
-,``= >
-Description``? J
-=``K L
-$str``M b
-)``b c
-]``c d
-[aa 	 
-ProducesResponseTypeaa	 
-(aa 
-StatusCodesaa )
-.aa) *(
-Status500InternalServerErroraa* F
-,aaF G
-DescriptionaaH S
-=aaT U
-$straaV p
-)aap q
-]aaq r
-publicbb 
-asyncbb 
-Taskbb 
-<bb 
-IActionResultbb '
->bb' ( 
-RemoveServiceOfOrderbb) =
-(bb= >
-[bb> ?
-	FromRoutebb? H
-,bbH I
-GuidValidationbbJ X
-]bbX Y
-GuidbbZ ^
-idbb_ a
-,bba b
-[bbc d
-FromBodybbd l
-]bbl m
-UpdateItemDtobbn {
-<bb{ |
-intbb| 
->	bb Ä
-service
-bbÅ à
-)
-bbà â
-{cc 	
-awaitdd 
-OrderServicedd 
-.dd  
-RemoveServiceOfOrderdd 3
-(dd3 4
-iddd4 6
-,dd6 7
-servicedd8 ?
-)dd? @
-;dd@ A
-returnff 
-	NoContentff 
-(ff 
-)ff 
-;ff 
-}gg 	
-[ii 	
-HttpPostii	 
-(ii 
-$strii "
-)ii" #
-]ii# $
-[jj 	
-EndpointDescriptionjj	 
-(jj 
-$strjj H
-)jjH I
-]jjI J
-[kk 	 
-ProducesResponseTypekk	 
-(kk 
-StatusCodeskk )
-.kk) *
-Status200OKkk* 5
-)kk5 6
-]kk6 7
-[ll 	 
-ProducesResponseTypell	 
-(ll 
-StatusCodesll )
-.ll) *!
-Status401Unauthorizedll* ?
-,ll? @
-DescriptionllA L
-=llM N
-$strllO o
-)llo p
-]llp q
-[mm 	 
-ProducesResponseTypemm	 
-(mm 
-StatusCodesmm )
-.mm) *
-Status400BadRequestmm* =
-,mm= >
-Descriptionmm? J
-=mmK L
-$strmmM b
-)mmb c
-]mmc d
-[nn 	 
-ProducesResponseTypenn	 
-(nn 
-StatusCodesnn )
-.nn) *(
-Status500InternalServerErrornn* F
-,nnF G
-DescriptionnnH S
-=nnT U
-$strnnV p
-)nnp q
-]nnq r
-publicoo 
-asyncoo 
-Taskoo 
-<oo 
-IActionResultoo '
->oo' (
-AddMaterialToOrderoo) ;
-(oo; <
-[oo< =
-	FromRouteoo= F
-,ooF G
-GuidValidationooH V
-]ooV W
-GuidooX \
-idoo] _
-,oo_ `
-[ooa b
-FromBodyoob j
-]ooj k
-UpdateItemDtoool y
-<ooy z
-intooz }
->oo} ~
-	orderItem	oo à
-)
-ooà â
-{pp 	
-awaitqq 
-OrderServiceqq 
-.qq 
-AddMaterialToOrderqq 1
-(qq1 2
-idqq2 4
-,qq4 5
-	orderItemqq6 ?
-)qq? @
-;qq@ A
-returnss 
-Okss 
-(ss 
-)ss 
-;ss 
-}tt 	
-[vv 	
-	HttpPatchvv	 
-(vv 
-$strvv #
-)vv# $
-]vv$ %
-[ww 	
-EndpointDescriptionww	 
-(ww 
-$strww G
-)wwG H
-]wwH I
-[xx 	 
-ProducesResponseTypexx	 
-(xx 
-StatusCodesxx )
-.xx) *
-Status204NoContentxx* <
-)xx< =
-]xx= >
-[yy 	 
-ProducesResponseTypeyy	 
-(yy 
-StatusCodesyy )
-.yy) *!
-Status401Unauthorizedyy* ?
-,yy? @
-DescriptionyyA L
-=yyM N
-$stryyO o
-)yyo p
-]yyp q
-[zz 	 
-ProducesResponseTypezz	 
-(zz 
-StatusCodeszz )
-.zz) *
-Status400BadRequestzz* =
-,zz= >
-Descriptionzz? J
-=zzK L
-$strzzM b
-)zzb c
-]zzc d
-[{{ 	 
-ProducesResponseType{{	 
-({{ 
-StatusCodes{{ )
-.{{) *(
-Status500InternalServerError{{* F
-,{{F G
-Description{{H S
-={{T U
-$str{{V p
-){{p q
-]{{q r
-public|| 
-async|| 
-Task|| 
-<|| 
-IActionResult|| '
->||' (,
- RemoveMaterialOrSupplieFromOrder||) I
-(||I J
-[||J K
-	FromRoute||K T
-,||T U
-GuidValidation||V d
-]||d e
-Guid||f j
-id||k m
-,||m n
-[||o p
-FromBody||p x
-]||x y
-UpdateItemDto	||z á
-<
-||á à
-int
-||à ã
->
-||ã å
-	orderItem
-||ç ñ
-)
-||ñ ó
-{}} 	
-await~~ 
-OrderService~~ 
-.~~ #
-RemoveMaterialFromOrder~~ 6
-(~~6 7
-id~~7 9
-,~~9 :
-	orderItem~~; D
-)~~D E
-;~~E F
-return
-ÄÄ 
-	NoContent
-ÄÄ 
-(
-ÄÄ 
-)
-ÄÄ 
-;
-ÄÄ 
-}
-ÅÅ 	
-[
-ÉÉ 	
-	HttpPatch
-ÉÉ	 
-(
-ÉÉ 
-$str
-ÉÉ ,
-)
-ÉÉ, -
-]
-ÉÉ- .
-[
-ÑÑ 	!
-EndpointDescription
-ÑÑ	 
-(
-ÑÑ 
-$str
-ÑÑ z
-)
-ÑÑz {
-]
-ÑÑ{ |
-[
-ÖÖ 	"
-ProducesResponseType
-ÖÖ	 
-(
-ÖÖ 
-StatusCodes
-ÖÖ )
-.
-ÖÖ) * 
-Status204NoContent
-ÖÖ* <
-)
-ÖÖ< =
-]
-ÖÖ= >
-[
-ÜÜ 	"
-ProducesResponseType
-ÜÜ	 
-(
-ÜÜ 
-StatusCodes
-ÜÜ )
-.
-ÜÜ) *#
-Status401Unauthorized
-ÜÜ* ?
-,
-ÜÜ? @
-Description
-ÜÜA L
-=
-ÜÜM N
-$str
-ÜÜO o
-)
-ÜÜo p
-]
-ÜÜp q
-[
-áá 	"
-ProducesResponseType
-áá	 
-(
-áá 
-StatusCodes
-áá )
-.
-áá) *!
-Status400BadRequest
-áá* =
-,
-áá= >
-Description
-áá? J
-=
-ááK L
-$str
-ááM b
-)
-ááb c
-]
-áác d
-[
-àà 	"
-ProducesResponseType
-àà	 
-(
-àà 
-StatusCodes
-àà )
-.
-àà) **
-Status500InternalServerError
-àà* F
-,
-ààF G
-Description
-ààH S
-=
-ààT U
-$str
-ààV p
-)
-ààp q
-]
-ààq r
-public
-ââ 
-async
-ââ 
-Task
-ââ 
-<
-ââ 
-IActionResult
-ââ '
->
-ââ' (
-CompleteDiagnosis
-ââ) :
-(
-ââ: ;
-[
-ââ; <
-	FromRoute
-ââ< E
-,
-ââE F
-GuidValidation
-ââG U
-]
-ââU V
-Guid
-ââW [
-id
-ââ\ ^
-)
-ââ^ _
-{
-ää 	
-await
-ãã 
-OrderService
-ãã 
-.
-ãã 
-CompleteDiagnosis
-ãã 0
-(
-ãã0 1
-id
-ãã1 3
-)
-ãã3 4
-;
-ãã4 5
-return
-çç 
-	NoContent
-çç 
-(
-çç 
-)
-çç 
-;
-çç 
-}
-éé 	
-[
-êê 	
-AllowAnonymous
-êê	 
-]
-êê 
-[
-ëë 	
-	HttpPatch
-ëë	 
-(
-ëë 
-$str
-ëë  
-)
-ëë  !
-]
-ëë! "
-[
-íí 	!
-EndpointDescription
-íí	 
-(
-íí 
-$stríí Å
-)ííÅ Ç
-]ííÇ É
-[
-ìì 	"
-ProducesResponseType
-ìì	 
-(
-ìì 
-StatusCodes
-ìì )
-.
-ìì) * 
-Status204NoContent
-ìì* <
-)
-ìì< =
-]
-ìì= >
-[
-îî 	"
-ProducesResponseType
-îî	 
-(
-îî 
-StatusCodes
-îî )
-.
-îî) *!
-Status400BadRequest
-îî* =
-,
-îî= >
-Description
-îî? J
-=
-îîK L
-$str
-îîM b
-)
-îîb c
-]
-îîc d
-[
-ïï 	"
-ProducesResponseType
-ïï	 
-(
-ïï 
-StatusCodes
-ïï )
-.
-ïï) **
-Status500InternalServerError
-ïï* F
-,
-ïïF G
-Description
-ïïH S
-=
-ïïT U
-$str
-ïïV p
-)
-ïïp q
-]
-ïïq r
-public
-ññ 
-async
-ññ 
-Task
-ññ 
-<
-ññ 
-IActionResult
-ññ '
->
-ññ' (
-ApproveBudget
-ññ) 6
-(
-ññ6 7
-[
-ññ7 8
-	FromRoute
-ññ8 A
-,
-ññA B
-GuidValidation
-ññC Q
-]
-ññQ R
-Guid
-ññS W
-id
-ññX Z
-,
-ññZ [
-[
-ññ\ ]
-FromBody
-ññ] e
-]
-ññe f
-ApproveOrderDto
-ññg v
-approveOrderññw É
-)ññÉ Ñ
-{
-óó 	
-await
-òò 
-OrderService
-òò 
-.
-òò 
-ApproveBudget
-òò ,
-(
-òò, -
-id
-òò- /
-,
-òò/ 0
-approveOrder
-òò1 =
-)
-òò= >
-;
-òò> ?
-return
-öö 
-	NoContent
-öö 
-(
-öö 
-)
-öö 
-;
-öö 
-}
-õõ 	
-[
-ùù 	
-	HttpPatch
-ùù	 
-(
-ùù 
-$str
-ùù )
-)
-ùù) *
-]
-ùù* +
-[
-ûû 	!
-EndpointDescription
-ûû	 
-(
-ûû 
-$str
-ûû L
-)
-ûûL M
-]
-ûûM N
-[
-üü 	"
-ProducesResponseType
-üü	 
-(
-üü 
-StatusCodes
-üü )
-.
-üü) * 
-Status204NoContent
-üü* <
-)
-üü< =
-]
-üü= >
-[
-†† 	"
-ProducesResponseType
-††	 
-(
-†† 
-StatusCodes
-†† )
-.
-††) *#
-Status401Unauthorized
-††* ?
-,
-††? @
-Description
-††A L
-=
-††M N
-$str
-††O o
-)
-††o p
-]
-††p q
-[
-°° 	"
-ProducesResponseType
-°°	 
-(
-°° 
-StatusCodes
-°° )
-.
-°°) *!
-Status400BadRequest
-°°* =
-,
-°°= >
-Description
-°°? J
-=
-°°K L
-$str
-°°M b
-)
-°°b c
-]
-°°c d
-[
-¢¢ 	"
-ProducesResponseType
-¢¢	 
-(
-¢¢ 
-StatusCodes
-¢¢ )
-.
-¢¢) **
-Status500InternalServerError
-¢¢* F
-,
-¢¢F G
-Description
-¢¢H S
-=
-¢¢T U
-$str
-¢¢V p
-)
-¢¢p q
-]
-¢¢q r
-public
-££ 
-async
-££ 
-Task
-££ 
-<
-££ 
-IActionResult
-££ '
->
-££' (
-StartExecution
-££) 7
-(
-££7 8
-[
-££8 9
-	FromRoute
-££9 B
-,
-££B C
-GuidValidation
-££D R
-]
-££R S
-Guid
-££T X
-id
-££Y [
-)
-££[ \
-{
-§§ 	
-await
-•• 
-OrderService
-•• 
-.
-•• 
-StartExecution
-•• -
-(
-••- .
-id
-••. 0
-)
-••0 1
-;
-••1 2
-return
-ßß 
-	NoContent
-ßß 
-(
-ßß 
-)
-ßß 
-;
-ßß 
-}
-®® 	
-[
-™™ 	
-	HttpPatch
-™™	 
-(
-™™ 
-$str
-™™ ,
-)
-™™, -
-]
-™™- .
-[
-´´ 	!
-EndpointDescription
-´´	 
-(
-´´ 
-$str
-´´ N
-)
-´´N O
-]
-´´O P
-[
-¨¨ 	"
-ProducesResponseType
-¨¨	 
-(
-¨¨ 
-StatusCodes
-¨¨ )
-.
-¨¨) * 
-Status204NoContent
-¨¨* <
-)
-¨¨< =
-]
-¨¨= >
-[
-≠≠ 	"
-ProducesResponseType
-≠≠	 
-(
-≠≠ 
-StatusCodes
-≠≠ )
-.
-≠≠) *#
-Status401Unauthorized
-≠≠* ?
-,
-≠≠? @
-Description
-≠≠A L
-=
-≠≠M N
-$str
-≠≠O o
-)
-≠≠o p
-]
-≠≠p q
-[
-ÆÆ 	"
-ProducesResponseType
-ÆÆ	 
-(
-ÆÆ 
-StatusCodes
-ÆÆ )
-.
-ÆÆ) *!
-Status400BadRequest
-ÆÆ* =
-,
-ÆÆ= >
-Description
-ÆÆ? J
-=
-ÆÆK L
-$str
-ÆÆM b
-)
-ÆÆb c
-]
-ÆÆc d
-[
-ØØ 	"
-ProducesResponseType
-ØØ	 
-(
-ØØ 
-StatusCodes
-ØØ )
-.
-ØØ) **
-Status500InternalServerError
-ØØ* F
-,
-ØØF G
-Description
-ØØH S
-=
-ØØT U
-$str
-ØØV p
-)
-ØØp q
-]
-ØØq r
-public
-∞∞ 
-async
-∞∞ 
-Task
-∞∞ 
-<
-∞∞ 
-IActionResult
-∞∞ '
->
-∞∞' (
-CompleteExecution
-∞∞) :
-(
-∞∞: ;
-[
-∞∞; <
-	FromRoute
-∞∞< E
-,
-∞∞E F
-GuidValidation
-∞∞G U
-]
-∞∞U V
-Guid
-∞∞W [
-id
-∞∞\ ^
-)
-∞∞^ _
-{
-±± 	
-await
-≤≤ 
-OrderService
-≤≤ 
-.
-≤≤ 
-CompleteExecution
-≤≤ 0
-(
-≤≤0 1
-id
-≤≤1 3
-)
-≤≤3 4
-;
-≤≤4 5
-return
-¥¥ 
-	NoContent
-¥¥ 
-(
-¥¥ 
-)
-¥¥ 
-;
-¥¥ 
-}
-µµ 	
-[
-∑∑ 	
-	HttpPatch
-∑∑	 
-(
-∑∑ 
-$str
-∑∑ "
-)
-∑∑" #
-]
-∑∑# $
-[
-∏∏ 	!
-EndpointDescription
-∏∏	 
-(
-∏∏ 
-$str
-∏∏ m
-)
-∏∏m n
-]
-∏∏n o
-[
-ππ 	"
-ProducesResponseType
-ππ	 
-(
-ππ 
-StatusCodes
-ππ )
-.
-ππ) * 
-Status204NoContent
-ππ* <
-)
-ππ< =
-]
-ππ= >
-[
-∫∫ 	"
-ProducesResponseType
-∫∫	 
-(
-∫∫ 
-StatusCodes
-∫∫ )
-.
-∫∫) *#
-Status401Unauthorized
-∫∫* ?
-,
-∫∫? @
-Description
-∫∫A L
-=
-∫∫M N
-$str
-∫∫O o
-)
-∫∫o p
-]
-∫∫p q
-[
-ªª 	"
-ProducesResponseType
-ªª	 
-(
-ªª 
-StatusCodes
-ªª )
-.
-ªª) *!
-Status400BadRequest
-ªª* =
-,
-ªª= >
-Description
-ªª? J
-=
-ªªK L
-$str
-ªªM b
-)
-ªªb c
-]
-ªªc d
-[
-ºº 	"
-ProducesResponseType
-ºº	 
-(
-ºº 
-StatusCodes
-ºº )
-.
-ºº) **
-Status500InternalServerError
-ºº* F
-,
-ººF G
-Description
-ººH S
-=
-ººT U
-$str
-ººV p
-)
-ººp q
-]
-ººq r
-public
-ΩΩ 
-async
-ΩΩ 
-Task
-ΩΩ 
-<
-ΩΩ 
-IActionResult
-ΩΩ '
->
-ΩΩ' (
-VehicleDelivered
-ΩΩ) 9
-(
-ΩΩ9 :
-[
-ΩΩ: ;
-	FromRoute
-ΩΩ; D
-,
-ΩΩD E
-GuidValidation
-ΩΩF T
-]
-ΩΩT U
-Guid
-ΩΩV Z
-id
-ΩΩ[ ]
-)
-ΩΩ] ^
-{
-ææ 	
-await
-øø 
-OrderService
-øø 
-.
-øø 
-DeliverVehicle
-øø -
-(
-øø- .
-id
-øø. 0
-)
-øø0 1
-;
-øø1 2
-return
-¡¡ 
-	NoContent
-¡¡ 
-(
-¡¡ 
-)
-¡¡ 
-;
-¡¡ 
-}
-¬¬ 	
-[
-ƒƒ 	
-
-HttpDelete
-ƒƒ	 
-(
-ƒƒ 
-$str
-ƒƒ 
-)
-ƒƒ 
-]
-ƒƒ 
-[
-≈≈ 	!
-EndpointDescription
-≈≈	 
-(
-≈≈ 
-$str
-≈≈ >
-)
-≈≈> ?
-]
-≈≈? @
-[
-∆∆ 	"
-ProducesResponseType
-∆∆	 
-(
-∆∆ 
-StatusCodes
-∆∆ )
-.
-∆∆) * 
-Status204NoContent
-∆∆* <
-)
-∆∆< =
-]
-∆∆= >
-[
-«« 	"
-ProducesResponseType
-««	 
-(
-«« 
-StatusCodes
-«« )
-.
-««) *#
-Status401Unauthorized
-««* ?
-,
-««? @
-Description
-««A L
-=
-««M N
-$str
-««O o
-)
-««o p
-]
-««p q
-[
-»» 	"
-ProducesResponseType
-»»	 
-(
-»» 
-StatusCodes
-»» )
-.
-»») *!
-Status400BadRequest
-»»* =
-,
-»»= >
-Description
-»»? J
-=
-»»K L
-$str
-»»M b
-)
-»»b c
-]
-»»c d
-[
-…… 	"
-ProducesResponseType
-……	 
-(
-…… 
-StatusCodes
-…… )
-.
-……) **
-Status500InternalServerError
-……* F
-,
-……F G
-Description
-……H S
-=
-……T U
-$str
-……V p
-)
-……p q
-]
-……q r
-public
-   
-async
-   
-Task
-   
-<
-   
-IActionResult
-   '
->
-  ' (
-DeleteOrder
-  ) 4
-(
-  4 5
-[
-  5 6
-	FromRoute
-  6 ?
-,
-  ? @
-GuidValidation
-  A O
-]
-  O P
-Guid
-  Q U
-id
-  V X
-)
-  X Y
-{
-ÀÀ 	
-await
-ÃÃ 
-OrderService
-ÃÃ 
-.
-ÃÃ 
-DeleteOrder
-ÃÃ *
-(
-ÃÃ* +
-id
-ÃÃ+ -
-)
-ÃÃ- .
-;
-ÃÃ. /
-return
-ŒŒ 
-	NoContent
-ŒŒ 
-(
-ŒŒ 
-)
-ŒŒ 
-;
-ŒŒ 
-}
-œœ 	
-}
-–– 
-}—— ≈>
-xC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\CustomersController.cs
-	namespace 	(
-GerenciamentoMecanicaSistema
- &
-.& '
-Controllers' 2
-{ 
-[		 
-ApiController		 
-]		 
-[
-
- 
-Route
-
- 
-
-(
-
-
- 
-$str
-
- 
-)
-
- 
-]
-
- 
-[ 
-	Authorize 
-( 
-Roles 
-= 
-$str 
-) 
-]  
-public 
-
-class 
-CustomersController $
-($ %
-ICustomerService% 5
-customerService6 E
-)E F
-:G H
-ControllerBaseI W
-{ 
-private 
-ICustomerService  
-CustomerService! 0
-{1 2
-get3 6
-;6 7
-set8 ;
-;; <
-}= >
-=? @
-customerServiceA P
-;P Q
-[ 	
-HttpPost	 
-( 
-) 
-] 
-[ 	
-EndpointDescription	 
-( 
-$str A
-)A B
-]B C
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *
-Status201Created* :
-): ;
-]; <
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *!
-Status401Unauthorized* ?
-,? @
-DescriptionA L
-=M N
-$strO o
-)o p
-]p q
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *
-Status400BadRequest* =
-,= >
-Description? J
-=K L
-$strM k
-)k l
-]l m
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *(
-Status500InternalServerError* F
-,F G
-DescriptionH S
-=T U
-$strV p
-)p q
-]q r
-public 
-async 
-Task 
-< 
-IActionResult '
->' (
-RegisterCustomer) 9
-(9 :
-[: ;
-FromBody; C
-]C D
-CreateCustomerDtoE V
-customerDtoW b
-)b c
-{ 	
-await 
-CustomerService !
-.! "
-RegisterCustomer" 2
-(2 3
-customerDto3 >
-)> ?
-;? @
-return 
-Created 
-( 
-) 
-; 
-} 	
-[ 	
-HttpGet	 
-( 
-) 
-] 
-[ 	
-EndpointDescription	 
-( 
-$str ?
-)? @
-]@ A
-[ 	 
-ProducesResponseType	 
-( 
-typeof $
-($ %
-IEnumerable% 0
-<0 1
-CustomerDto1 <
->< =
-)= >
-,> ?
-StatusCodes@ K
-.K L
-Status200OKL W
-,W X
-DescriptionY d
-=e f
-$str	g Ñ
-)
-Ñ Ö
-]
-Ö Ü
-[   	 
-ProducesResponseType  	 
-(   
-StatusCodes   )
-.  ) *!
-Status401Unauthorized  * ?
-,  ? @
-Description  A L
-=  M N
-$str  O o
-)  o p
-]  p q
-public!! 
-async!! 
-Task!! 
-<!! 
-OkObjectResult!! (
->!!( )
-GetCustomers!!* 6
-(!!6 7
-[!!7 8
-	FromQuery!!8 A
-]!!A B
-Guid!!C G
-?!!G H
-id!!I K
-=!!L M
-null!!N R
-,!!R S
-[!!T U
-	FromQuery!!U ^
-]!!^ _
-string!!` f
-name!!g k
-=!!l m
-$str!!n p
-,!!p q
-[!!r s
-	FromQuery!!s |
-]!!| }
-string	!!~ Ñ
-document
-!!Ö ç
-=
-!!é è
-$str
-!!ê í
-)
-!!í ì
-{"" 	
-var## 
-costumer## 
-=## 
-await##  
-CustomerService##! 0
-.##0 1
-GetCustomers##1 =
-(##= >
-id##> @
-,##@ A
-name##B F
-,##F G
-document##H P
-)##P Q
-;##Q R
-return%% 
-Ok%% 
-(%% 
-costumer%% 
-)%% 
-;%%  
-}&& 	
-[(( 	
-	HttpPatch((	 
-((( 
-$str(( 
-)(( 
-](( 
-[)) 	
-EndpointDescription))	 
-()) 
-$str)) M
-)))M N
-]))N O
-[** 	 
-ProducesResponseType**	 
-(** 
-StatusCodes** )
-.**) *
-Status204NoContent*** <
-)**< =
-]**= >
-[++ 	 
-ProducesResponseType++	 
-(++ 
-StatusCodes++ )
-.++) *!
-Status401Unauthorized++* ?
-,++? @
-Description++A L
-=++M N
-$str++O o
-)++o p
-]++p q
-[,, 	 
-ProducesResponseType,,	 
-(,, 
-StatusCodes,, )
-.,,) *
-Status400BadRequest,,* =
-,,,= >
-Description,,? J
-=,,K L
-$str,,M b
-),,b c
-],,c d
-[-- 	 
-ProducesResponseType--	 
-(-- 
-StatusCodes-- )
-.--) *(
-Status500InternalServerError--* F
-,--F G
-Description--H S
-=--T U
-$str--V p
-)--p q
-]--q r
-public.. 
-async.. 
-Task.. 
-<.. 
-IActionResult.. '
->..' (
-UpdateCustomer..) 7
-(..7 8
-[..8 9
-	FromRoute..9 B
-,..B C
-GuidValidation..D R
-]..R S
-Guid..T X
-id..Y [
-,..[ \
-[..] ^
-FromBody..^ f
-]..f g
-CreateCustomerDto..h y
-customerDto	..z Ö
-)
-..Ö Ü
-{// 	
-await00 
-CustomerService00 !
-.00! "
-UpdateCustomer00" 0
-(000 1
-id001 3
-,003 4
-customerDto005 @
-)00@ A
-;00A B
-return22 
-	NoContent22 
-(22 
-)22 
-;22 
-}33 	
-[55 	
-
-HttpDelete55	 
-(55 
-$str55 
-)55 
-]55 
-[66 	
-EndpointDescription66	 
-(66 
-$str66 ?
-)66? @
-]66@ A
-[77 	 
-ProducesResponseType77	 
-(77 
-StatusCodes77 )
-.77) *
-Status204NoContent77* <
-)77< =
-]77= >
-[88 	 
-ProducesResponseType88	 
-(88 
-StatusCodes88 )
-.88) *!
-Status401Unauthorized88* ?
-,88? @
-Description88A L
-=88M N
-$str88O o
-)88o p
-]88p q
-[99 	 
-ProducesResponseType99	 
-(99 
-StatusCodes99 )
-.99) *
-Status400BadRequest99* =
-,99= >
-Description99? J
-=99K L
-$str99M b
-)99b c
-]99c d
-[:: 	 
-ProducesResponseType::	 
-(:: 
-StatusCodes:: )
-.::) *(
-Status500InternalServerError::* F
-,::F G
-Description::H S
-=::T U
-$str::V p
-)::p q
-]::q r
-public;; 
-async;; 
-Task;; 
-<;; 
-IActionResult;; '
->;;' (
-DeleteCustomer;;) 7
-(;;7 8
-[;;8 9
-	FromRoute;;9 B
-,;;B C
-GuidValidation;;D R
-];;R S
-Guid;;T X
-id;;Y [
-);;[ \
-{<< 	
-await== 
-CustomerService== !
-.==! "
-DeleteCustomer==" 0
-(==0 1
-id==1 3
-)==3 4
-;==4 5
-return?? 
-	NoContent?? 
-(?? 
-)?? 
-;?? 
-}@@ 	
-}AA 
-}BB ˙<
-vC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\CatalogController.cs
-	namespace 	(
-GerenciamentoMecanicaSistema
- &
-.& '
-Controllers' 2
-{ 
-[		 
-ApiController		 
-]		 
-[
-
- 
-Route
-
- 
-
-(
-
-
- 
-$str
-
- 
-)
-
- 
-]
-
- 
-[ 
-	Authorize 
-( 
-Roles 
-= 
-$str 
-) 
-]  
-public 
-
-class 
-CatalogController "
-(" #
-ICatalogService# 2
-catalogService3 A
-)A B
-:C D
-ControllerBaseE S
-{ 
-private 
-ICatalogService 
-CatalogService  .
-{/ 0
-get1 4
-;4 5
-set6 9
-;9 :
-}; <
-== >
-catalogService? M
-;M N
-[ 	
-HttpPost	 
-( 
-) 
-] 
-[ 	
-EndpointDescription	 
-( 
-$str A
-)A B
-]B C
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *
-Status201Created* :
-): ;
-]; <
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *!
-Status401Unauthorized* ?
-,? @
-DescriptionA L
-=M N
-$strO o
-)o p
-]p q
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *
-Status400BadRequest* =
-,= >
-Description? J
-=K L
-$strM b
-)b c
-]c d
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *(
-Status500InternalServerError* F
-,F G
-DescriptionH S
-=T U
-$strV p
-)p q
-]q r
-public 
-async 
-Task 
-< 
-IActionResult '
->' (
-RegisterService) 8
-(8 9
-[9 :
-FromBody: B
-]B C
-CreateServiceDtoD T
-
-serviceDtoU _
-)_ `
-{ 	
-await 
-CatalogService  
-.  !
-RegisterService! 0
-(0 1
-
-serviceDto1 ;
-); <
-;< =
-return 
-Created 
-( 
-) 
-; 
-} 	
-[ 	
-HttpGet	 
-( 
-) 
-] 
-[ 	
-EndpointDescription	 
-( 
-$str ?
-)? @
-]@ A
-[ 	 
-ProducesResponseType	 
-( 
-typeof $
-($ %
-IEnumerable% 0
-<0 1
-
-ServiceDto1 ;
->; <
-)< =
-,= >
-StatusCodes? J
-.J K
-Status200OKK V
-,V W
-DescriptionX c
-=d e
-$str	f É
-)
-É Ñ
-]
-Ñ Ö
-[   	 
-ProducesResponseType  	 
-(   
-StatusCodes   )
-.  ) *!
-Status401Unauthorized  * ?
-,  ? @
-Description  A L
-=  M N
-$str  O o
-)  o p
-]  p q
-public!! 
-async!! 
-Task!! 
-<!! 
-OkObjectResult!! (
->!!( )
-GetServices!!* 5
-(!!5 6
-[!!6 7
-	FromQuery!!7 @
-]!!@ A
-Guid!!B F
-?!!F G
-id!!H J
-=!!K L
-null!!M Q
-,!!Q R
-[!!S T
-	FromQuery!!T ]
-]!!] ^
-string!!_ e
-description!!f q
-=!!r s
-$str!!t v
-)!!v w
-{"" 	
-var## 
-services## 
-=## 
-await##  
-CatalogService##! /
-.##/ 0
-GetServices##0 ;
-(##; <
-id##< >
-,##> ?
-description##@ K
-)##K L
-;##L M
-return%% 
-Ok%% 
-(%% 
-services%% 
-)%% 
-;%%  
-}&& 	
-[(( 	
-	HttpPatch((	 
-((( 
-$str(( 
-)(( 
-](( 
-[)) 	
-EndpointDescription))	 
-()) 
-$str)) A
-)))A B
-]))B C
-[** 	 
-ProducesResponseType**	 
-(** 
-StatusCodes** )
-.**) *
-Status204NoContent*** <
-)**< =
-]**= >
-[++ 	 
-ProducesResponseType++	 
-(++ 
-StatusCodes++ )
-.++) *!
-Status401Unauthorized++* ?
-,++? @
-Description++A L
-=++M N
-$str++O o
-)++o p
-]++p q
-[,, 	 
-ProducesResponseType,,	 
-(,, 
-StatusCodes,, )
-.,,) *
-Status400BadRequest,,* =
-,,,= >
-Description,,? J
-=,,K L
-$str,,M b
-),,b c
-],,c d
-[-- 	 
-ProducesResponseType--	 
-(-- 
-StatusCodes-- )
-.--) *(
-Status500InternalServerError--* F
-,--F G
-Description--H S
-=--T U
-$str--V p
-)--p q
-]--q r
-public.. 
-async.. 
-Task.. 
-<.. 
-IActionResult.. '
->..' (
-UpdateService..) 6
-(..6 7
-[..7 8
-	FromRoute..8 A
-,..A B
-GuidValidation..C Q
-]..Q R
-Guid..S W
-id..X Z
-,..Z [
-[..\ ]
-FromBody..] e
-]..e f
-CreateServiceDto..g w
-
-serviceDto	..x Ç
-)
-..Ç É
-{// 	
-await00 
-CatalogService00  
-.00  !
-UpdateService00! .
-(00. /
-id00/ 1
-,001 2
-
-serviceDto003 =
-)00= >
-;00> ?
-return22 
-	NoContent22 
-(22 
-)22 
-;22 
-}33 	
-[55 	
-
-HttpDelete55	 
-(55 
-$str55 !
-)55! "
-]55" #
-[66 	
-EndpointDescription66	 
-(66 
-$str66 ?
-)66? @
-]66@ A
-[77 	 
-ProducesResponseType77	 
-(77 
-StatusCodes77 )
-.77) *
-Status200OK77* 5
-)775 6
-]776 7
-[88 	 
-ProducesResponseType88	 
-(88 
-StatusCodes88 )
-.88) *!
-Status401Unauthorized88* ?
-,88? @
-Description88A L
-=88M N
-$str88O o
-)88o p
-]88p q
-[99 	 
-ProducesResponseType99	 
-(99 
-StatusCodes99 )
-.99) *
-Status400BadRequest99* =
-,99= >
-Description99? J
-=99K L
-$str99M b
-)99b c
-]99c d
-[:: 	 
-ProducesResponseType::	 
-(:: 
-StatusCodes:: )
-.::) *(
-Status500InternalServerError::* F
-,::F G
-Description::H S
-=::T U
-$str::V p
-)::p q
-]::q r
-public;; 
-async;; 
-Task;; 
-<;; 
-IActionResult;; '
->;;' (
-DeleteService;;) 6
-(;;6 7
-[;;7 8
-	FromRoute;;8 A
-,;;A B
-GuidValidation;;C Q
-];;Q R
-Guid;;S W
-	serviceId;;X a
-);;a b
-{<< 	
-await== 
-CatalogService==  
-.==  !
-DeleteService==! .
-(==. /
-	serviceId==/ 8
-)==8 9
-;==9 :
-return?? 
-Ok?? 
-(?? 
-)?? 
-;?? 
-}@@ 	
-}AA 
-}BB ◊
-}C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\AuthenticationController.cs
-	namespace 	(
-GerenciamentoMecanicaSistema
- &
-.& '
-Controllers' 2
-{ 
-[ 
-ApiController 
-] 
-[ 
-Route 
-
-(
- 
-$str 
-) 
-] 
-public		 
-
-class		 $
-AuthenticationController		 )
-(		) *"
-IAuthenticationService		* @!
-authenticationService		A V
-)		V W
-:		X Y
-ControllerBase		Z h
-{
-
- 
-private "
-IAuthenticationService &!
-AuthenticationService' <
-{= >
-get? B
-;B C
-setD G
-;G H
-}I J
-=K L!
-authenticationServiceM b
-;b c
-[ 	
-HttpPost	 
-( 
-) 
-] 
-[ 	
-EndpointDescription	 
-( 
-$str C
-)C D
-]D E
-[ 	 
-ProducesResponseType	 
-( 
-typeof $
-($ %
-string% +
-)+ ,
-,, -
-StatusCodes. 9
-.9 :
-Status200OK: E
-,E F
-DescriptionG R
-=S T
-$strU v
-)v w
-]w x
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *!
-Status401Unauthorized* ?
-,? @
-DescriptionA L
-=M N
-$strO k
-)k l
-]l m
-[ 	 
-ProducesResponseType	 
-( 
-StatusCodes )
-.) *
-Status400BadRequest* =
-,= >
-Description? J
-=K L
-$strM b
-)b c
-]c d
-public 
-async 
-Task 
-< 
-IActionResult '
->' (
-Login) .
-(. /
-[/ 0
-FromBody0 8
-]8 9
-CreateUserDto: G
-userDtoH O
-)O P
-{ 	
-var 
-token 
-= 
-await !
-AuthenticationService 3
-.3 4
-Authenticate4 @
-(@ A
-userDtoA H
-)H I
-;I J
-if 
-( 
-string 
-. 
-IsNullOrEmpty $
-($ %
-token% *
-)* +
-)+ ,
-return 
-Unauthorized #
-(# $
-$str$ @
-)@ A
-;A B
-return 
-Ok 
-( 
-token 
-) 
-; 
-} 	
-} 
-} 

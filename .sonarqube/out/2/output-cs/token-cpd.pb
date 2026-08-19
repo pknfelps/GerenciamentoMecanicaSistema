@@ -1,721 +1,0 @@
-–
-cC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\IVehicleRepository.cs
-	namespace 	
-
-Repository
- 
-. 
-	Interface 
-{ 
-public 
-
-	interface 
-IVehicleRepository '
-{ 
-Task 
-< 
-int 
-> 
-RegisterVehicle !
-(! "
-IVehicle" *
-vehicle+ 2
-)2 3
-;3 4
-Task 
-< 
-IEnumerable 
-< 
-IVehicle !
->! "
->" #
-GetVehicles$ /
-(/ 0
-Guid0 4
-?4 5
-id6 8
-=9 :
-null; ?
-,? @
-stringA G
-license_plateH U
-=V W
-$strX Z
-)Z [
-;[ \
-Task		 
-<		 
-IVehicle		 
-?		 
->		 
-
-GetVehicle		 "
-(		" #
-Guid		# '
-?		' (
-id		) +
-=		, -
-null		. 2
-,		2 3
-string		4 :
-license_plate		; H
-=		I J
-$str		K M
-)		M N
-;		N O
-Task
-
- 
-<
-
- 
-int
-
- 
->
-
- 
-UpdateVehicle
-
- 
-(
-
-  
-IVehicle
-
-  (
-vehicle
-
-) 0
-)
-
-0 1
-;
-
-1 2
-Task 
-< 
-int 
-> 
-DeleteVehicle 
-(  
-Guid  $
-	vehicleId% .
-). /
-;/ 0
-} 
-} Ñ
-`C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\IUserRepository.cs
-	namespace 	
-
-Repository
- 
-. 
-	Interface 
-{ 
-public 
-
-	interface 
-IUserRepository $
-{ 
-Task 
-< 
-int 
-> 
-RegisterUser 
-( 
-IUser $
-user% )
-)) *
-;* +
-Task 
-< 
-IUser 
-? 
-> 
-GetUser 
-( 
-string #
-name$ (
-,( )
-string* 0
-role1 5
-)5 6
-;6 7
-}		 
-}
-
- ÿ
-aC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\IStockRepository.cs
-	namespace 	
-
-Repository
- 
-. 
-	Interface 
-{ 
-public 
-
-	interface 
-IStockRepository %
-{ 
-Task 
-< 
-int 
-> 
-RegisterNewMaterial %
-(% &
-	IMaterial& /
-material0 8
-)8 9
-;9 :
-Task 
-< 
-IEnumerable 
-< 
-	IMaterial "
->" #
-># $
-GetMaterials% 1
-(1 2
-Guid2 6
-?6 7
-id8 :
-=; <
-null= A
-,A B
-stringC I
-nameJ N
-=O P
-$strQ S
-,S T
-stringU [
-brand\ a
-=b c
-$strd f
-)f g
-;g h
-Task		 
-<		 
-	IMaterial		 
-?		 
->		 
-GetMaterial		 $
-(		$ %
-Guid		% )
-?		) *
-id		+ -
-=		. /
-null		0 4
-,		4 5
-string		6 <
-name		= A
-=		B C
-$str		D F
-,		F G
-string		H N
-brand		O T
-=		U V
-$str		W Y
-)		Y Z
-;		Z [
-Task
-
- 
-<
-
- 
-int
-
- 
->
-
- 
-UpdateMaterialPrice
-
- %
-(
-
-% &
-	IMaterial
-
-& /
-material
-
-0 8
-)
-
-8 9
-;
-
-9 :
-Task 
-< 
-int 
->  
-UpdateMaterialAmount &
-(& '
-	IMaterial' 0
-material1 9
-)9 :
-;: ;
-Task 
-< 
-int 
-> 
-DeleteMaterial  
-(  !
-Guid! %
-
-materialId& 0
-)0 1
-;1 2
-} 
-} •
-bC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\IOrdersRepository.cs
-	namespace 	
-
-Repository
- 
-. 
-	Interface 
-{ 
-public 
-
-	interface 
-IOrdersRepository &
-{ 
-Task		 
-<		 
-int		 
->		 
-CreateOrder		 
-(		 
-IOrder		 $
-serviceOrder		% 1
-)		1 2
-;		2 3
-Task
-
- 
-<
-
- 
-IEnumerable
-
- 
-<
-
- 
-IOrder
-
- 
->
-
-  
->
-
-  !
-	GetOrders
-
-" +
-(
-
-+ ,
-Guid
-
-, 0
-?
-
-0 1
-id
-
-2 4
-=
-
-5 6
-null
-
-7 ;
-,
-
-; <
-string
-
-= C
-customer_document
-
-D U
-=
-
-V W
-$str
-
-X Z
-,
-
-Z [
-string
-
-\ b!
-vehicle_license_plate
-
-c x
-=
-
-y z
-$str
-
-{ }
-)
-
-} ~
-;
-
-~ 
-Task 
-< 
-IOrder 
-? 
-> 
-GetOrder 
-( 
-Guid #
-?# $
-id% '
-=( )
-null* .
-,. /
-string0 6
-customer_document7 H
-=I J
-$strK M
-,M N
-stringO U!
-vehicle_license_plateV k
-=l m
-$strn p
-)p q
-;q r
-Task 
-< 
-int 
-> 
-UpdateOrder 
-( 
-IOrder $
-order% *
-)* +
-;+ ,
-Task 
-< 
-int 
-> 
-AddServiceToOrder #
-(# $
-Guid$ (
-orderId) 0
-,0 1
-IMechanicalService2 D
-serviceE L
-)L M
-;M N
-Task 
-< 
-int 
->  
-UpdateServiceOfOrder &
-(& '
-Guid' +
-orderId, 3
-,3 4
-IMechanicalService5 G
-serviceH O
-)O P
-;P Q
-Task 
-< 
-int 
-> "
-RemoveServiceFromOrder (
-(( )
-Guid) -
-orderId. 5
-,5 6
-Guid7 ;
-	serviceId< E
-)E F
-;F G
-Task 
-< 
-int 
-> 
-AddMaterialToOrder $
-($ %
-Guid% )
-orderId* 1
-,1 2
-	IMaterial3 <
-material= E
-)E F
-;F G
-Task 
-< 
-int 
-> #
-UpdateMaterialFromOrder )
-() *
-Guid* .
-orderId/ 6
-,6 7
-	IMaterial8 A
-materialB J
-)J K
-;K L
-Task 
-< 
-int 
-> #
-RemoveMaterialFromOrder )
-() *
-Guid* .
-orderId/ 6
-,6 7
-Guid8 <
-
-materialId= G
-)G H
-;H I
-Task 
-< 
-int 
-> 
-DeleteOrder 
-( 
-Guid "
-orderId# *
-)* +
-;+ ,
-} 
-} ¾
-dC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\ICustomerRepository.cs
-	namespace 	
-
-Repository
- 
-. 
-	Interface 
-{ 
-public 
-
-	interface 
-ICustomerRepository (
-{ 
-Task 
-< 
-int 
-> 
-RegisterCustomer "
-(" #
-	ICustomer# ,
-customer- 5
-)5 6
-;6 7
-Task 
-< 
-IEnumerable 
-< 
-	ICustomer "
->" #
-># $
-GetCustomers% 1
-(1 2
-Guid2 6
-?6 7
-id8 :
-=; <
-null= A
-,A B
-stringC I
-nameJ N
-=O P
-$strQ S
-,S T
-stringU [
-document\ d
-=e f
-$strg i
-)i j
-;j k
-Task		 
-<		 
-	ICustomer		 
-?		 
->		 
-GetCustomer		 $
-(		$ %
-Guid		% )
-?		) *
-id		+ -
-=		. /
-null		0 4
-,		4 5
-string		6 <
-name		= A
-=		B C
-$str		D F
-,		F G
-string		H N
-document		O W
-=		X Y
-$str		Z \
-)		\ ]
-;		] ^
-Task
-
- 
-<
-
- 
-int
-
- 
->
-
- 
-UpdateCustomer
-
-  
-(
-
-  !
-	ICustomer
-
-! *
-customer
-
-+ 3
-)
-
-3 4
-;
-
-4 5
-Task 
-< 
-int 
-> 
-DeleteCustomer  
-(  !
-Guid! %
-id& (
-)( )
-;) *
-} 
-} º
-cC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository.Interface\ICatalogRepository.cs
-	namespace 	
-
-Repository
- 
-. 
-	Interface 
-{ 
-public 
-
-	interface 
-ICatalogRepository '
-{ 
-Task 
-< 
-int 
-> 
-RegisterService !
-(! "
-IMechanicalService" 4
-service5 <
-)< =
-;= >
-Task 
-< 
-IEnumerable 
-< 
-IMechanicalService +
->+ ,
->, -
-GetServices. 9
-(9 :
-Guid: >
-?> ?
-id@ B
-=C D
-nullE I
-,I J
-stringK Q
-descriptionR ]
-=^ _
-$str` b
-)b c
-;c d
-Task		 
-<		 
-IMechanicalService		 
-?		  
->		  !
-
-GetService		" ,
-(		, -
-Guid		- 1
-?		1 2
-id		3 5
-=		6 7
-null		8 <
-,		< =
-string		> D
-description		E P
-=		Q R
-$str		S U
-)		U V
-;		V W
-Task
-
- 
-<
-
- 
-int
-
- 
->
-
- 
-UpdateService
-
- 
-(
-
-  
-IMechanicalService
-
-  2
-service
-
-3 :
-)
-
-: ;
-;
-
-; <
-Task 
-< 
-int 
-> 
-DeleteService 
-(  
-Guid  $
-	serviceId% .
-). /
-;/ 0
-} 
-} 

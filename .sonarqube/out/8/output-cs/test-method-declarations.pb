@@ -1,146 +1,0 @@
-Ç
-\C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\VehicleServiceTests.csServiceTests7
- ServiceTests.VehicleServiceTestsMustRegisterVehicleI
- ServiceTests.VehicleServiceTests%MustNotRegisterVehicleIfAlreadyExistsM
- ServiceTests.VehicleServiceTests)MustThrowExceptionIfFailToRegisterVehicle3
- ServiceTests.VehicleServiceTestsMustGetVehiclesG
- ServiceTests.VehicleServiceTests#MustGetVehiclesWithSameLicensePlate2
- ServiceTests.VehicleServiceTestsMustGetVehicle@
- ServiceTests.VehicleServiceTestsMustNotGetVehicleIfNotExists5
- ServiceTests.VehicleServiceTestsMustUpdateVehicleC
- ServiceTests.VehicleServiceTestsMustNotUpdateVehicleIfNotExistsL
- ServiceTests.VehicleServiceTests(MustThrowExceptionIfFailtToUpdateVehicle5
- ServiceTests.VehicleServiceTestsMustDeleteVehicleC
- ServiceTests.VehicleServiceTestsMustNotDeleteVehicleIfNotExistsL
- ServiceTests.VehicleServiceTests(MustThrowExceptionIfFailtToDeleteVehicleƒ
-YC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\UserServiceTests.csServiceTests/
-ServiceTests.UserServiceTestsMustCreateUser:
-ServiceTests.UserServiceTestsMustNotCreateUserIfExistsA
-ServiceTests.UserServiceTests MustThrowExceptionIfFailRegister,
-ServiceTests.UserServiceTestsMustGetUser:
-ServiceTests.UserServiceTestsMustNotGetUserIfNotExists†
-ZC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\StockServiceTests.csServiceTests5
-ServiceTests.StockServiceTestsMustRegisterNewPartG
-ServiceTests.StockServiceTests%MustNotRegisterNewPartIfAlreadyExistsM
-ServiceTests.StockServiceTests+MustThrowExceptionIfFailedToRegisterNewPart.
-ServiceTests.StockServiceTestsMustGetParts;
-ServiceTests.StockServiceTestsMustGetPartByNameAndBrandI
-ServiceTests.StockServiceTests'MustNotGetPartByNameAndBrandIfNotExists1
-ServiceTests.StockServiceTestsMustGetPartById?
-ServiceTests.StockServiceTestsMustNotGetPartByIdIfNotExistsE
-ServiceTests.StockServiceTests#MustNotGetPartIfNoParameterWasGiven3
-ServiceTests.StockServiceTestsMustAddPartAmountF
-ServiceTests.StockServiceTests$MustNotAddPartAmountIfPartDoentExist6
-ServiceTests.StockServiceTestsMustRemovePartAmountI
-ServiceTests.StockServiceTests'MustNotRemovePartAmountIfPartDoentExist7
-ServiceTests.StockServiceTestsMustReservePartAmountJ
-ServiceTests.StockServiceTests(MustNotReservePartAmountIfPartDoentExist7
-ServiceTests.StockServiceTestsMustRestorePartAmountJ
-ServiceTests.StockServiceTests(MustNotRestorePartAmountIfPartDoentExist7
-ServiceTests.StockServiceTestsMustConsumePartAmountE
-ServiceTests.StockServiceTests#MustNotConsumePartAmountIfNotExistsJ
-ServiceTests.StockServiceTests(MustThrowExceptionIfFailUpdatePartAmount5
-ServiceTests.StockServiceTestsMustUpdatePartPriceC
-ServiceTests.StockServiceTests!MustNotUpdatePartPriceIfNotExistsL
-ServiceTests.StockServiceTests*MustThrowExceptionIfFailtToUpdatePartPrice0
-ServiceTests.StockServiceTestsMustDeletePart>
-ServiceTests.StockServiceTestsMustNotDeletePartIfNotExistsF
-ServiceTests.StockServiceTests$MustThrowExceptionIfFailToDeletePartÉ
-[C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\OrdersServiceTests.csServiceTests2
-ServiceTests.OrdersServiceTestsMustCreateOrderH
-ServiceTests.OrdersServiceTests%MustNotCreateOrderIfCustomerNotExistsG
-ServiceTests.OrdersServiceTests$MustNotCreateOrderIfVehicleNotExists8
-ServiceTests.OrdersServiceTestsMustFailToCreateOrder0
-ServiceTests.OrdersServiceTestsMustGetOrders3
-ServiceTests.OrdersServiceTestsMustGetOrderByIdA
-ServiceTests.OrdersServiceTestsMustNotGetOrderByIdIfNotExistsH
-ServiceTests.OrdersServiceTests%MustGetOrderByDocumentAndLicensePlateG
-ServiceTests.OrdersServiceTests$MustNotGetOrderIfNoParameterWasGiven8
-ServiceTests.OrdersServiceTestsMustGetCustomerOrdersN
-ServiceTests.OrdersServiceTests+MustNotGetCustomerOrdersIfCustomerNotExists7
-ServiceTests.OrdersServiceTestsMustGetVehicleOrdersL
-ServiceTests.OrdersServiceTests)MustNotGetVehicleOrdersIfVehicleNotExists5
-ServiceTests.OrdersServiceTestsMustStartDiagnosisC
-ServiceTests.OrdersServiceTests MustNotStartDiagnosisIfNotExists;
-ServiceTests.OrdersServiceTestsMustFailToStartDiagnosis;
-ServiceTests.OrdersServiceTestsMustAddNewServiceToOrder>
-ServiceTests.OrdersServiceTestsMustAddServiceAmountToOrderD
-ServiceTests.OrdersServiceTests!MustNotAddServiceIfOrderNotExistsF
-ServiceTests.OrdersServiceTests#MustNotAddServiceIfServiceNotExists>
-ServiceTests.OrdersServiceTestsMustFailToAddServiceToOrderD
-ServiceTests.OrdersServiceTests!MustFailToAddServiceAmountToOrder;
-ServiceTests.OrdersServiceTestsMustRemoveServiceOfOrderA
-ServiceTests.OrdersServiceTestsMustRemoveServiceAmountOfOrderG
-ServiceTests.OrdersServiceTests$MustNotRemoveServiceIfOrderNotExistsA
-ServiceTests.OrdersServiceTestsMustFailToRemoveServiceOfOrderG
-ServiceTests.OrdersServiceTests$MustFailToRemoveServiceAmountToOrder5
-ServiceTests.OrdersServiceTestsMustAddPartToOrder;
-ServiceTests.OrdersServiceTestsMustAddPartAmountToOrderC
-ServiceTests.OrdersServiceTests MustNotAddPartToOrderIfNotExistsG
-ServiceTests.OrdersServiceTests$MustNotAddPartToOrderIfPartNotExists;
-ServiceTests.OrdersServiceTestsMustFailToAddPartToOrderA
-ServiceTests.OrdersServiceTestsMustFailToAddPartAmountToOrder:
-ServiceTests.OrdersServiceTestsMustRemovePartFromOrder@
-ServiceTests.OrdersServiceTestsMustRemovePartAmountFromOrderH
-ServiceTests.OrdersServiceTests%MustNotRemovePartFromOrderIfNotExistsL
-ServiceTests.OrdersServiceTests)MustNotRemovePartFromOrderIfPartNotExists@
-ServiceTests.OrdersServiceTestsMustFailToRemovePartFromOrderF
-ServiceTests.OrdersServiceTests#MustFailToRemovePartAmountFromOrder8
-ServiceTests.OrdersServiceTestsMustCompleteDiagnosisF
-ServiceTests.OrdersServiceTests#MustNotCompleteDiagnosisIfNotExists>
-ServiceTests.OrdersServiceTestsMustFailToCompleteDiagnosis4
-ServiceTests.OrdersServiceTestsMustApproveBudget3
-ServiceTests.OrdersServiceTestsMustRefuseBudgetE
-ServiceTests.OrdersServiceTests"MustRefuseBudgetWithPartsToRestoreO
-ServiceTests.OrdersServiceTests,MustNotApproveOrRefuseBudgetIfOrderNotExistsP
-ServiceTests.OrdersServiceTests-MustNotApproveOrRefuseBudgetWithWrongDocumentB
-ServiceTests.OrdersServiceTestsMustFailToApproveOrRefuseBudget5
-ServiceTests.OrdersServiceTestsMustStartExecutionH
-ServiceTests.OrdersServiceTests%MustNotStartExecutionIfOrderNotExists;
-ServiceTests.OrdersServiceTestsMustFailToStartExecution8
-ServiceTests.OrdersServiceTestsMustCompleteExecutionK
-ServiceTests.OrdersServiceTests(MustNotCompleteExecutionIfOrderNotExists>
-ServiceTests.OrdersServiceTestsMustFailToCompleteExecution5
-ServiceTests.OrdersServiceTestsMustDeliverVehicleH
-ServiceTests.OrdersServiceTests%MustNotDeliverVehicleIfOrderNotExists;
-ServiceTests.OrdersServiceTestsMustFailToDeliverVehicle2
-ServiceTests.OrdersServiceTestsMustDeleteOrder@
-ServiceTests.OrdersServiceTestsMustNotDeleteOrderIfNotExists8
-ServiceTests.OrdersServiceTestsMustFailToDeleteOrderž
-ZC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\EmailServiceTests.csServiceTests2
-ServiceTests.EmailServiceTestsMustNotifyBudget®
-\C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\CatalogServiceTests.csServiceTests7
- ServiceTests.CatalogServiceTestsMustRegisterServiceI
- ServiceTests.CatalogServiceTests%MustNotRegisterServiceIfAlreadyExists;
- ServiceTests.CatalogServiceTestsMustFailRegisterService3
- ServiceTests.CatalogServiceTestsMustGetServices6
- ServiceTests.CatalogServiceTestsMustGerServiceByIdD
- ServiceTests.CatalogServiceTests MustNotGerServiceByIdIfNotExists?
- ServiceTests.CatalogServiceTestsMustGetServiceByDescriptionM
- ServiceTests.CatalogServiceTests)MustNotGetServiceByDescriptionIfNotExistsJ
- ServiceTests.CatalogServiceTests&MustNotGetServiceIfNoParameterWasGiven5
- ServiceTests.CatalogServiceTestsMustUpdateServiceC
- ServiceTests.CatalogServiceTestsMustNotUpdateServiceIfNotExists;
- ServiceTests.CatalogServiceTestsMustFailToUpdateService5
- ServiceTests.CatalogServiceTestsMustDeleteServiceC
- ServiceTests.CatalogServiceTestsMustNotDeleteServiceIfNotExists;
- ServiceTests.CatalogServiceTestsMustFailToDeleteService¬
-]C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\CustomerServiceTests.csServiceTests7
-!ServiceTests.CustomerServiceTestsMustCreateCustomerB
-!ServiceTests.CustomerServiceTestsMustNotCreateCustomerIfExistsO
-!ServiceTests.CustomerServiceTests*MustThrowExceptionIfFailedToCreateCustomer8
-!ServiceTests.CustomerServiceTestsMustGetAllCustomersH
-!ServiceTests.CustomerServiceTests#MustGetAllCustomersWithSameDocument>
-!ServiceTests.CustomerServiceTestsMustGetCustomerByDocumentR
-!ServiceTests.CustomerServiceTests-MustNotGetCustomerByDocumentWithWrongDocumentG
-!ServiceTests.CustomerServiceTests"MustNotGetCustomerWithNoParameters7
-!ServiceTests.CustomerServiceTestsMustUpdateCustomerE
-!ServiceTests.CustomerServiceTests MustNotUpdateCustomerIfNotExistsG
-!ServiceTests.CustomerServiceTests"MustThrowExceptionIfFailedToUpdate7
-!ServiceTests.CustomerServiceTestsMustDeleteCustomerE
-!ServiceTests.CustomerServiceTests MustNotDeleteCustomerIfNotExistsE
-!ServiceTests.CustomerServiceTests MustThrowExceptionIfFailToDeleteþ
-cC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\ServiceTests\AuthenticationServiceTests.csServiceTestsD
-'ServiceTests.AuthenticationServiceTestsMustLogInAndGenerateToken\
-'ServiceTests.AuthenticationServiceTests1MustNotLogInAndNotGenerateTokenIfUsuarioNotExistse
-'ServiceTests.AuthenticationServiceTests:MustNotLogInAndNotGenerateTokenIfUsuarioTypedWrongPassword

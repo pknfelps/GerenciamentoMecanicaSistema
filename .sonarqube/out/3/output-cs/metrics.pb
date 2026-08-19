@@ -1,41 +1,0 @@
-±
-XC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\VehicleRepository.cs
- 8r>	
-!"#$&'()+,-/0234679:<=>?ABCDFGHIJKxÇ
-(-/4679>CHã
-UC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\UserRepository.cs 8r 	
- !#$%&xÇ !#∂
-VC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\StockRepository.cs 8rD	
- !"$%&')*+,./0235679:<=?@ABDEFGIJKLNOPQRSxÇ+0279:<AFKP~
-SC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\QueryBuilder.cs 8r	
-xÇ	È
-WC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\OrdersRepository.cs $8%rŸ	
- !"#$%&'()*+,-./0123456789:;<=>?ABCDEFGHJKLMOPQRSUVWXZ[\]^`abcefghjklmopqrtuvwyz{|~ÄÇÉÖÜáâäåçèêëíîïñóôöõúûü†°£§•ß®™´¨≠Ø∞±≥¥∂∑∏∫ºΩø¿¡¬√ƒxÇ'{ÄÇáâäåëñõ†•ß¨±≥∏∫º¡Ö
-^C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\Dto\MechanicalServiceDb.cs 8r	
-xÇ
-s
-QC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\Dto\UserDb.cs 
-8
-r	
-Ç
-Ω
-RC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\Dto\OrderDb.cs 8j!r@	
-"#$%&'()*+,-/0123456789:;=?@ABDEFGxÇ$%&'()*+,123456789:=ABDz
-TC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\Dto\VehicleDb.cs 8r	
-Ç
-y
-UC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\Dto\CustomerDb.cs 8r	
-Ç
-{
-UC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\Dto\MaterialDb.cs 8r	
-Ç
-∞
-YC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\CustomerRepository.cs
- 8r<	
- !"$%&')*+-.0124578:;<=?@ABDEFGHIxÇ
-&+-2457<AFØ
-XC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\CatalogRepository.cs
- 8r<	
- !"$%&')*+-.0124578:;<=?@ABDEFGHIxÇ
-&+-2457<AFg
-UC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Repository\BaseRepository.cs 8r	

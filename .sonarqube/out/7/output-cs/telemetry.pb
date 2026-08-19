@@ -1,1 +1,0 @@
-lR_C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\RepositoryTests\RepositoryTests.csprojòCSharp14

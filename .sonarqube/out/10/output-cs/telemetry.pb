@@ -1,1 +1,0 @@
-†RyC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema.csprojòCSharp14

@@ -1,663 +1,0 @@
-€
-]C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Vehicle\IVehicle.cs
-	namespace 	
-Domain
- 
-. 
-	Interface 
-. 
-Vehicle "
-{ 
-public 
-
-	interface 
-IVehicle 
-: 
-IEntity  '
-{ 
-	IDocument 
-CustomerDocument "
-{# $
-get% (
-;( )
-}* +
-string 
-Brand 
-{ 
-get 
-; 
-} 
-string		 
-Model		 
-{		 
-get		 
-;		 
-}		 
-int
-
- 
-Year
-
- 
-{
-
- 
-get
-
- 
-;
-
- 
-}
-
- 
-ILicensePlate 
-LicensePlate "
-{# $
-get% (
-;( )
-}* +
-} 
-} ¼
-bC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Vehicle\ILicensePlate.cs
-	namespace 	
-Domain
- 
-. 
-	Interface 
-. 
-Vehicle "
-{ 
-public 
-
-	interface 
-ILicensePlate "
-{ 
-string 
-License 
-{ 
-get 
-; 
-} 
-} 
-} æ
-\C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Stock\IMaterial.cs
-	namespace 	
-Domain
- 
-. 
-	Interface 
-. 
-Stock  
-{ 
-public 
-
-	interface 
-	IMaterial 
-:  
-IEntity! (
-{ 
-string 
-Name 
-{ 
-get 
-; 
-} 
-string 
-Brand 
-{ 
-get 
-; 
-} 
-double 
-Price 
-{ 
-get 
-; 
-} 
-int 
-Amount 
-{ 
-get 
-; 
-} 
-int		 
-ReservedAmount		 
-{		 
-get		  
-;		  !
-}		" #
-void
-
- 
-	AddAmount
-
- 
-(
-
- 
-int
-
- 
-amount
-
- !
-)
-
-! "
-;
-
-" #
-void 
-RemoveAmount 
-( 
-int 
-amount $
-)$ %
-;% &
-void 
-ReserveAmount 
-( 
-int 
-amount %
-)% &
-;& '
-void 
-RestoreAmount 
-( 
-int 
-amount %
-)% &
-;& '
-void !
-ConsumeReservedAmount "
-(" #
-int# &
-amount' -
-)- .
-;. /
-void 
-UpdatePrice 
-( 
-double 
-price  %
-)% &
-;& '
-} 
-} •
-WC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\User\IUser.cs
-	namespace 	
-Domain
- 
-. 
-	Interface 
-. 
-User 
-{ 
-public 
-
-	interface 
-IUser 
-: 
-IEntity $
-{ 
-string 
-Name 
-{ 
-get 
-; 
-} 
-	IPassword 
-Password 
-{ 
-get  
-;  !
-}" #
-Roles 
-Role 
-{ 
-get 
-; 
-} 
-} 
-}		 ­
-[C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\User\IPassword.cs
-	namespace 	
-Domain
- 
-. 
-	Interface 
-. 
-User 
-{ 
-public 
-
-	interface 
-	IPassword 
-{ 
-string 
-Secret 
-{ 
-get 
-; 
-} 
-} 
-} ’
-WC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\User\Roles.cs
-	namespace 	
-Domain
- 
-. 
-	Interface 
-. 
-User 
-{ 
-public 
-
-enum 
-Roles 
-{ 
-User 
-, 
-Manager 
-, 
-Admin 
-} 
-}		 ­
-gC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Service\IMechanicalService.cs
-	namespace 	
-Domain
- 
-. 
-	Interface 
-. 
-Service "
-{ 
-public 
-
-	interface 
-IMechanicalService '
-:( )
-IEntity* 1
-{ 
-string 
-Description 
-{ 
-get  
-;  !
-}" #
-float 
-Hours 
-{ 
-get 
-; 
-} 
-double 
-PricePerHour 
-{ 
-get !
-;! "
-}# $
-double 
-Price 
-{ 
-get 
-; 
-} 
-int		 
-Amount		 
-{		 
-get		 
-;		 
-}		 
-void 
-UpdateDescriptrion 
-(  
-string  &
-newDescription' 5
-)5 6
-;6 7
-void 
-UpdateHours 
-( 
-float 
-newHours '
-)' (
-;( )
-void 
-UpdatePricePerHour 
-(  
-double  &
-newPricePerHour' 6
-)6 7
-;7 8
-void 
-AddServiceAmount 
-( 
-int !
-amount" (
-)( )
-;) *
-void 
-RemoveServiceAmount  
-(  !
-int! $
-amount% +
-)+ ,
-;, -
-} 
-} à
-bC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Order\WorkOrderStatus.cs
-	namespace 	
-Domain
- 
-. 
-	Interface 
-. 
-Order  
-{ 
-public 
-
-enum 
-WorkOrderStatus 
-{ 
-Received 
-, 
-InDiagnosis 
-, 
-WaitingForApproval 
-, 
-WaitingForExecution 
-, 
-InExecution		 
-,		 
-Finished
-
- 
-,
-
- 
-	Delivered 
-} 
-} â
-YC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Order\IOrder.cs
-	namespace 	
-Domain
- 
-. 
-	Interface 
-. 
-Order  
-{ 
-public 
-
-	interface 
-IOrder 
-: 
-IEntity %
-{		 
-	IDocument
-
- 
-CustomerDocument
-
- "
-{
-
-# $
-get
-
-% (
-;
-
-( )
-}
-
-* +
-ILicensePlate 
-VehicleLicensePlate )
-{* +
-get, /
-;/ 0
-}1 2
-List 
-< 
-IMechanicalService 
->  
-Services! )
-{* +
-get, /
-;/ 0
-}1 2
-List 
-< 
-	IMaterial 
-> 
-	Materials !
-{" #
-get$ '
-;' (
-}) *
-double 
-Budget 
-{ 
-get 
-; 
-} 
-WorkOrderStatus 
-Status 
-{  
-get! $
-;$ %
-}& '
-DateTime 
-DateCreated 
-{ 
-get "
-;" #
-}$ %
-DateTime 
-DateFinished 
-{ 
-get  #
-;# $
-}% &
-TimeSpan 
-Duration 
-{ 
-get 
-;  
-}! "
-void 
-StartDiagnosis 
-( 
-) 
-; 
-IMechanicalService 
-
-AddService %
-(% &
-IMechanicalService& 8
-serviceToAdd9 E
-)E F
-;F G
-IMechanicalService 
-RemoveService (
-(( )
-IMechanicalService) ;
-serviceToRemove< K
-)K L
-;L M
-	IMaterial 
-AddMaterial 
-( 
-	IMaterial '
-materialToAdd( 5
-)5 6
-;6 7
-	IMaterial 
-RemoveMaterial  
-(  !
-	IMaterial! *
-materialToRemove+ ;
-); <
-;< =
-void 
-FinalizeDiagnosis 
-( 
-)  
-;  !
-void 
-ApproveService 
-( 
-bool  
-approved! )
-)) *
-;* +
-void 
-StartService 
-( 
-) 
-; 
-void 
-CompleteService 
-( 
-) 
-; 
-void 
-DeliverVehicle 
-( 
-) 
-; 
-} 
-} ý
-TC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\IEntity.cs
-	namespace 	
-Domain
- 
-. 
-	Interface 
-{ 
-public 
-
-	interface 
-IEntity 
-{ 
-Guid 
-Id 
-{ 
-get 
-; 
-} 
-} 
-} ¯
-\C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Custumer\IPhone.cs
-	namespace 	
-Domain
- 
-. 
-	Interface 
-. 
-Custumer #
-{ 
-public 
-
-	interface 
-IPhone 
-{ 
-string 
-Number 
-{ 
-get 
-; 
-} 
-} 
-} °
-\C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Custumer\IEmail.cs
-	namespace 	
-Domain
- 
-. 
-	Interface 
-. 
-Custumer #
-{ 
-public 
-
-	interface 
-IEmail 
-{ 
-string 
-Address 
-{ 
-get 
-; 
-} 
-} 
-} ±
-_C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Custumer\IDocument.cs
-	namespace 	
-Domain
- 
-. 
-	Interface 
-. 
-Custumer #
-{ 
-public 
-
-	interface 
-	IDocument 
-{ 
-string 
-Id 
-{ 
-get 
-; 
-} 
-} 
-} Œ
-_C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Custumer\ICustomer.cs
-	namespace 	
-Domain
- 
-. 
-	Interface 
-. 
-Custumer #
-{ 
-public 
-
-	interface 
-	ICustomer 
-:  
-IEntity! (
-{ 
-string 
-Name 
-{ 
-get 
-; 
-} 
-	IDocument 
-Document 
-{ 
-get  
-;  !
-}" #
-IPhone 
-Phone 
-{ 
-get 
-; 
-} 
-IEmail 
-Email 
-{ 
-get 
-; 
-} 
-}		 
-}
-
- 

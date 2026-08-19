@@ -1,17 +1,0 @@
-∏
-`C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Program.cs 8r0	
- !"$&')+,-./134689:;xÇ $&')+-.13468«
-wC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\VehiclesController.cs 8r9	
- !"#%&()*+,-./02356789:;<=?@ABÇ#%02=?≤
-tC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\UsersController.cs 8r'	
- !"#$%'(*+,-xÇ%'(*ﬁ
-tC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\StockController.cs 8rO	
- !"#%&()*+,-./02356789:;<=?@BCDEFGHIJLMOPQRSTUVWYZ[\Ç#%02=?JLWY®
-uC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\OrdersController.cs 8r¯	
- !"#$&')*+,-./12456789:;<>?ABCDEFGHIJLMOPQRSTUVWYZ\]^_`abcdfgijklmnopqstvwxyz{|}~ÄÅÉÑÖÜáàâäãçéêëíìîïñóòöõùûü†°¢£§•ß®™´¨≠ÆØ∞±≤¥µ∑∏π∫ªºΩæø¡¬ƒ≈∆«»… ÀÃŒœ–—Ç+$&/1<>JLWYdfqs~Äãçòö•ß≤¥ø¡ÃŒ»
-xC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\CustomersController.cs 8r9	
- !"#%&()*+,-./02356789:;<=?@ABÇ#%02=?∆
-vC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\CatalogController.cs 8r9	
- !"#%&()*+,-./02356789:;<=?@ABÇ#%02=?™
-}C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema\Controllers\AuthenticationController.cs 8r	
-xÇ

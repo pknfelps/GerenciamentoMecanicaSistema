@@ -1,60 +1,0 @@
-ª
-]C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Vehicle\IVehicle.cs
- 
- 	 
-    ' % (  		 		 
-
- 
-
-  % (∂
-bC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Vehicle\ILicensePlate.cs
- 	 
-  "  ∞
-\C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Custumer\IPhone.cs
- 	 
-    Ò
-WC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\User\IUser.cs
- 	 
-   $       Ø
-[C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\User\IPassword.cs
- 	 
-    è
-WC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\User\Roles.cs
- 	 
-  ≈
-gC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Service\IMechanicalService.cs
- 	 
-  '* 1       !  		 		    &     &  ! ! $≥
-_C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Custumer\IDocument.cs
- 	 
-    π
-YC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Order\IOrder.cs
- 
- 
- 
- 
- 	 
-   %
-
- 
-
-% ( , /  , /  $ '   ! $  "   #    & 8 ) ;  ' ! *       ®
-TC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\IEntity.cs
- 	 
-    ÷
-\C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Stock\IMaterial.cs
- 	 
-  ! (        		 		  
-
- 
-
-        # &  ∞
-\C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Custumer\IEmail.cs
- 	 
-    ö
-bC:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Order\WorkOrderStatus.cs
- 	 
-  ï
-_C:\Users\felip\source\repos\GerenciamentoMecanicaSistema\Domain.Interface\Custumer\ICustomer.cs
- 	 
-  ! (         
