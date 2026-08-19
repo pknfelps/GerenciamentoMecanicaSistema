@@ -1,8 +1,6 @@
 using DependencyInjection;
-using GerenciamentoMecanicaSistema.HealthChecks;
 using GerenciamentoMecanicaSistema.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -16,12 +14,16 @@ namespace GerenciamentoMecanicaSistema
 
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
-            builder.Services.AddHealthChecks()
-                .AddCheck<PostgreSqlHealthCheck>(
-                    "postgresql",
-                    failureStatus: HealthStatus.Unhealthy,
-                    tags: ["ready"],
-                    timeout: TimeSpan.FromSeconds(2));
+
+            var jwtIssuer = builder.Configuration["Jwt:Issuer"]
+                ?? throw new InvalidOperationException("JWT issuer not configured.");
+            var jwtAudience = builder.Configuration["Jwt:Audience"]
+                ?? throw new InvalidOperationException("JWT audience not configured.");
+            var jwtKey = builder.Configuration["Jwt:Key"]
+                ?? throw new InvalidOperationException("JWT signing key not configured.");
+
+            if (jwtKey.Length < 32)
+                throw new InvalidOperationException("JWT signing key must contain at least 32 characters.");
 
             builder.Services.AddAuthentication(x =>
             {
@@ -35,14 +37,16 @@ namespace GerenciamentoMecanicaSistema
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                    ValidAudience = builder.Configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                    ValidIssuer = jwtIssuer,
+                    ValidAudience = jwtAudience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
                 };
             });
 
-            RepositoryDependencyInjection.Register(builder.Services, builder.Configuration);
-            ServiceDependencyInjection.Register(builder.Services);
+            builder.Services
+                .AddApplication()
+                .AddInfrastructure(builder.Configuration)
+                .AddPersistence(builder.Configuration);
 
             var app = builder.Build();
 

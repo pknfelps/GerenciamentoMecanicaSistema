@@ -33,13 +33,13 @@ namespace ServiceTests
             var customer = Substitute.For<ICustomer>();
             var vehicle = Substitute.For<IVehicle>();
 
-            DependenciesGateway.GetCustomerByDocument(order.CustomerDocument.Id).Returns(customer);
-            DependenciesGateway.GetVehicleByLicensePlate(order.VehicleLicensePlate.License).Returns(vehicle);
+            DependenciesGateway.GetCustomerByDocument(order.CustomerDocument).Returns(customer);
+            DependenciesGateway.GetVehicleByLicensePlate(order.VehicleLicensePlate).Returns(vehicle);
 
             await Handler.Handle(new BudgetAvailableEvent(order));
 
-            await DependenciesGateway.Received(1).GetCustomerByDocument(order.CustomerDocument.Id);
-            await DependenciesGateway.Received(1).GetVehicleByLicensePlate(order.VehicleLicensePlate.License);
+            await DependenciesGateway.Received(1).GetCustomerByDocument(order.CustomerDocument);
+            await DependenciesGateway.Received(1).GetVehicleByLicensePlate(order.VehicleLicensePlate);
             await EmailService.Received(1).NotifyBudget(customer, vehicle, order);
             await EmailService.ReceivedWithAnyArgs(0).NotifyOrderStatus(default!, default!, default!);
         }
@@ -51,13 +51,13 @@ namespace ServiceTests
             var customer = Substitute.For<ICustomer>();
             var vehicle = Substitute.For<IVehicle>();
 
-            DependenciesGateway.GetCustomerByDocument(order.CustomerDocument.Id).Returns(customer);
-            DependenciesGateway.GetVehicleByLicensePlate(order.VehicleLicensePlate.License).Returns(vehicle);
+            DependenciesGateway.GetCustomerByDocument(order.CustomerDocument).Returns(customer);
+            DependenciesGateway.GetVehicleByLicensePlate(order.VehicleLicensePlate).Returns(vehicle);
 
             await Handler.Handle(new OrderStatusChangedEvent(order));
 
-            await DependenciesGateway.Received(1).GetCustomerByDocument(order.CustomerDocument.Id);
-            await DependenciesGateway.Received(1).GetVehicleByLicensePlate(order.VehicleLicensePlate.License);
+            await DependenciesGateway.Received(1).GetCustomerByDocument(order.CustomerDocument);
+            await DependenciesGateway.Received(1).GetVehicleByLicensePlate(order.VehicleLicensePlate);
             await EmailService.Received(1).NotifyOrderStatus(customer, vehicle, order);
             await EmailService.ReceivedWithAnyArgs(0).NotifyBudget(default!, default!, default!);
         }
@@ -67,22 +67,16 @@ namespace ServiceTests
         {
             var order = CreateOrder();
 
-            DependenciesGateway.GetCustomerByDocument(order.CustomerDocument.Id).Returns((ICustomer?)null);
+            DependenciesGateway.GetCustomerByDocument(order.CustomerDocument).Returns((ICustomer?)null);
 
             Assert.DoesNotThrowAsync(async () => await Handler.Handle(new OrderStatusChangedEvent(order)));
 
-            await DependenciesGateway.Received(1).GetCustomerByDocument(order.CustomerDocument.Id);
+            await DependenciesGateway.Received(1).GetCustomerByDocument(order.CustomerDocument);
             await DependenciesGateway.ReceivedWithAnyArgs(0).GetVehicleByLicensePlate(default!);
             await EmailService.ReceivedWithAnyArgs(0).NotifyOrderStatus(default!, default!, default!);
         }
 
-        private static IOrder CreateOrder()
-        {
-            var order = Substitute.For<IOrder>();
-            order.CustomerDocument.Id.Returns("41738422011");
-            order.VehicleLicensePlate.License.Returns("CVC2026");
-
-            return order;
-        }
+        private static OrderNotificationSnapshot CreateOrder() =>
+            new(Guid.NewGuid(), "41738422011", "CVC2026", 100m, WorkOrderStatus.WaitingForApproval);
     }
 }

@@ -8,9 +8,8 @@ COPY ["GerenciamentoMecanicaSistema/GerenciamentoMecanicaSistema.csproj", "Geren
 COPY ["Bootstrapper/DependencyInjection.csproj", "Bootstrapper/"]
 COPY ["Domain.Interface/Domain.Interface.csproj", "Domain.Interface/"]
 COPY ["Domain/Domain.csproj", "Domain/"]
+COPY ["Infrastructure.Interface/Infrastructure.Interface.csproj", "Infrastructure.Interface/"]
 COPY ["Infrastructure/Infrastructure.csproj", "Infrastructure/"]
-COPY ["Repository.Interface/Repository.Interface.csproj", "Repository.Interface/"]
-COPY ["Repository/Repository.csproj", "Repository/"]
 COPY ["Service.Interface/Service.Interface.csproj", "Service.Interface/"]
 COPY ["Service/Service.csproj", "Service/"]
 

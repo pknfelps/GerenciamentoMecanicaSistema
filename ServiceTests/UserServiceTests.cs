@@ -1,6 +1,8 @@
-﻿using Domain.Interface.User;
+using Domain.Interface.User;
+using Domain.Interface.Exceptions;
+using Infrastructure.Interface.Authentication;
 using NSubstitute;
-using Repository.Interface;
+using Infrastructure.Interface.Persistence;
 using Service;
 using Service.Interface;
 using Service.Interface.Exceptions;
@@ -13,6 +15,8 @@ namespace ServiceTests
     {
         private IUserService UserService { get; set; }
         private IUserRepository UserRepository { get; set; }
+        private IPasswordHasher PasswordHasher { get; set; }
+        private const string PasswordHash = "Stored-password-hash1!";
 
         private static CreateUserCommand UserToRegister { get; } = new("Fulano", "Senha@123", "Manager");
         private static CreateUserCommand UserToFail { get; } = new("Teste", "Teste@123", "User");
@@ -25,25 +29,29 @@ namespace ServiceTests
                 var user = Substitute.For<IUser>();
                 user.Id.Returns(ExistingUserId);
                 user.Name.Returns("Admin");
-                user.Password.Secret.Returns("Admin@123");
                 user.Role.Returns(Roles.Admin);
                 return user;
             }
         }
 
-        private static UserResult ExistingUserResult { get; } = new(Guid.NewGuid(), "Admin", "Admin@123", "Admin");
+        private static UserResult ExistingUserResult { get; } = new(Guid.NewGuid(), "Admin", "Admin");
         private static CreateUserCommand ExistingUserCommand { get; } = new("Admin", "Admin@123", "Admin");
 
         [SetUp]
         public void SetUp()
         {
             UserRepository = Substitute.For<IUserRepository>();
+            PasswordHasher = Substitute.For<IPasswordHasher>();
+            PasswordHasher.Hash(Arg.Any<string>()).Returns(PasswordHash);
 
-            UserRepository.RegisterUser(Arg.Any<IUser>()).Returns(callInfo =>
+            UserRepository.RegisterUser(Arg.Any<IUserCredentials>()).Returns(callInfo =>
             {
-                var user = callInfo.ArgAt<IUser>(0);
+                var credentials = callInfo.ArgAt<IUserCredentials>(0);
+                var user = credentials.User;
 
-                if (user.Name == UserToRegister.Name && user.Password.Secret == UserToRegister.Password && user.Role.ToString() == UserToRegister.Role)
+                if (user.Name == UserToRegister.Name
+                    && credentials.PasswordHash == PasswordHash
+                    && user.Role.ToString() == UserToRegister.Role)
                     return 1;
 
                 return 0;
@@ -60,7 +68,7 @@ namespace ServiceTests
                 return null;
             });
 
-            UserService = new UserService(UserRepository);
+            UserService = new UserService(UserRepository, PasswordHasher);
         }
 
         [Test]
@@ -68,7 +76,19 @@ namespace ServiceTests
         {
             await UserService.RegisterUser(UserToRegister);
 
-            await UserRepository.ReceivedWithAnyArgs(1).RegisterUser(Arg.Any<IUser>());
+            await UserRepository.ReceivedWithAnyArgs(1).RegisterUser(Arg.Any<IUserCredentials>());
+            PasswordHasher.Received(1).Hash(UserToRegister.Password);
+        }
+
+        [Test]
+        public void MustNotHashOrRegisterUserWithInvalidPassword()
+        {
+            var invalidUser = new CreateUserCommand("Fulano", "invalid", "Manager");
+
+            Assert.CatchAsync<DomainValidationException>(() => UserService.RegisterUser(invalidUser));
+
+            PasswordHasher.DidNotReceiveWithAnyArgs().Hash(default!);
+            UserRepository.DidNotReceiveWithAnyArgs().RegisterUser(default!);
         }
 
         [Test]
@@ -76,7 +96,7 @@ namespace ServiceTests
         {
             Assert.CatchAsync<ApplicationBaseException>(async () => await UserService.RegisterUser(ExistingUserCommand));
 
-            await UserRepository.ReceivedWithAnyArgs(0).RegisterUser(Arg.Any<IUser>());
+            await UserRepository.ReceivedWithAnyArgs(0).RegisterUser(Arg.Any<IUserCredentials>());
         }
 
         [Test]
@@ -84,7 +104,7 @@ namespace ServiceTests
         {
             Assert.CatchAsync<ApplicationBaseException>(async () => await UserService.RegisterUser(UserToFail));
 
-            await UserRepository.ReceivedWithAnyArgs(1).RegisterUser(Arg.Any<IUser>());
+            await UserRepository.ReceivedWithAnyArgs(1).RegisterUser(Arg.Any<IUserCredentials>());
         }
 
         [Test]

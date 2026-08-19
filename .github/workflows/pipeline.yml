@@ -144,8 +144,23 @@ jobs:
       - name: Update Kube Config
         run: aws eks update-kubeconfig --name api-cluster --region us-east-1
 
+      - name: Configure Kubernetes secrets
+        env:
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          JWT_KEY: ${{ secrets.JWT_KEY }}
+        run: |
+          kubectl create secret generic db-secrets \
+            --from-literal=POSTGRES_DB="$POSTGRES_DB" \
+            --from-literal=POSTGRES_USER="$POSTGRES_USER" \
+            --from-literal=POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
+            --from-literal=CONNECTION_STRING="Host=svc-gerenciamento-db;Port=5432;Database=$POSTGRES_DB;Username=$POSTGRES_USER;Password=$POSTGRES_PASSWORD" \
+            --from-literal=JWT_KEY="$JWT_KEY" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Deploy to EKS
-        working-directory: Infrastructure/Kubernetes
+        working-directory: deploy/kubernetes
         run: |
           kustomize edit set image "${IMAGE_NAME}=${IMAGE_NAME}:${IMAGE_TAG}"
           kubectl apply -k .

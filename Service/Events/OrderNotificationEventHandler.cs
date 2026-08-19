@@ -1,4 +1,3 @@
-using Domain.Interface.Order;
 using Microsoft.Extensions.Logging;
 using Service.Interface;
 using Service.Interface.Exceptions;
@@ -28,9 +27,9 @@ namespace Service.Events
 
             try
             {
-                var customer = await DependenciesGateway.GetCustomerByDocument(order.CustomerDocument.Id)
+                var customer = await DependenciesGateway.GetCustomerByDocument(order.CustomerDocument)
                     ?? throw new ApplicationFailureException("Falha ao notificar o cliente. Cliente não encontrado");
-                var vehicle = await DependenciesGateway.GetVehicleByLicensePlate(order.VehicleLicensePlate.License)
+                var vehicle = await DependenciesGateway.GetVehicleByLicensePlate(order.VehicleLicensePlate)
                     ?? throw new ApplicationFailureException("Falha ao notificar o cliente. Veículo não encontrado");
 
                 if (applicationEvent is BudgetAvailableEvent)
@@ -44,13 +43,13 @@ namespace Service.Events
                     exception,
                     "Falha ao enviar notificação da ordem. EventType: {EventType}. OrderId: {OrderId}. CustomerDocument: {CustomerDocument}. VehicleLicensePlate: {VehicleLicensePlate}",
                     applicationEvent.GetType().Name,
-                    order.Id,
-                    order.CustomerDocument.Id,
-                    order.VehicleLicensePlate.License);
+                    order.OrderId,
+                    order.CustomerDocument,
+                    order.VehicleLicensePlate);
             }
         }
 
-        private static IOrder? GetOrder(IApplicationEvent applicationEvent) =>
+        private static OrderNotificationSnapshot? GetOrder(IApplicationEvent applicationEvent) =>
             applicationEvent switch
             {
                 BudgetAvailableEvent budgetAvailable => budgetAvailable.Order,

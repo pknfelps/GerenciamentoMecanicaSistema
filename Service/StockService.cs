@@ -1,6 +1,6 @@
-﻿using Domain.Interface.Stock;
+using Domain.Interface.Stock;
 using Domain.Stock;
-using Repository.Interface;
+using Infrastructure.Interface.Persistence;
 using Service.Interface;
 using Service.Interface.Exceptions;
 using Service.Interface.Commands.Stock;

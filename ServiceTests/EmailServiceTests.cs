@@ -1,9 +1,11 @@
 using Domain.Interface.Custumer;
 using Domain.Interface.Order;
 using Domain.Interface.Vehicle;
+using Infrastructure.Interface.Email;
 using NSubstitute;
 using Service;
 using Service.Interface;
+using Service.Interface.Events.Order;
 
 namespace ServiceTests
 {
@@ -30,9 +32,12 @@ namespace ServiceTests
             vehicle.Model.Returns("Civic");
             vehicle.LicensePlate.License.Returns("CVC2026");
 
-            var order = Substitute.For<IOrder>();
-            order.Budget.Returns(100);
-            order.Id.Returns(Guid.NewGuid());
+            var order = new OrderNotificationSnapshot(
+                Guid.NewGuid(),
+                "41738422011",
+                "CVC2026",
+                100m,
+                WorkOrderStatus.WaitingForApproval);
 
             await EmailService.NotifyBudget(customer, vehicle, order);
 
@@ -55,16 +60,19 @@ namespace ServiceTests
             vehicle.Model.Returns("Civic");
             vehicle.LicensePlate.License.Returns("CVC2026");
 
-            var order = Substitute.For<IOrder>();
-            order.Id.Returns(Guid.NewGuid());
-            order.Status.Returns(WorkOrderStatus.InExecution);
+            var order = new OrderNotificationSnapshot(
+                Guid.NewGuid(),
+                "41738422011",
+                "CVC2026",
+                100m,
+                WorkOrderStatus.InExecution);
 
             await EmailService.NotifyOrderStatus(customer, vehicle, order);
 
             await EmailSender.Received(1).SendAsync(
                 customer.Name,
                 customer.Email.Address,
-                Arg.Is<string>(subject => subject.Contains(order.Id.ToString())),
+                Arg.Is<string>(subject => subject.Contains(order.OrderId.ToString())),
                 Arg.Is<string>(body => body.Contains(customer.Name) && body.Contains(vehicle.Model) && body.Contains("em execução")),
                 Arg.Is<string>(body => body.Contains(customer.Name) && body.Contains(vehicle.Model) && body.Contains("em execução")));
         }

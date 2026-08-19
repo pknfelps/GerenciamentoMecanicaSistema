@@ -1,11 +1,13 @@
-﻿using Domain.Customer;
+using Domain.Customer;
 using Domain.Interface.Order;
+using Domain.Interface.Service;
+using Domain.Interface.Stock;
 using Domain.MechanicalService;
 using Domain.Stock;
 using Domain.Vehicle;
 using Domain.WorkOrder;
 using Microsoft.Extensions.Logging;
-using Repository.Interface;
+using Infrastructure.Interface.Persistence;
 using Service.Interface;
 using Service.Interface.Exceptions;
 using Service.Interface.Commands.Customer;
@@ -44,7 +46,7 @@ namespace Service
             if (await Repository.CreateOrder(order) == 0)
                 throw new ApplicationFailureException("Erro ao salvar ordem");
 
-            await EventDispatcher.Publish(new OrderStatusChangedEvent(order));
+            await EventDispatcher.Publish(new OrderStatusChangedEvent(CreateNotificationSnapshot(order)));
         }
 
         public async Task<Guid> CreateServiceOrder(
@@ -104,8 +106,8 @@ namespace Service
                 return order.Id;
             });
 
-            await EventDispatcher.Publish(new OrderStatusChangedEvent(
-                createdOrder ?? throw new ApplicationFailureException("Erro ao criar ordem")));
+            await EventDispatcher.Publish(new OrderStatusChangedEvent(CreateNotificationSnapshot(
+                createdOrder ?? throw new ApplicationFailureException("Erro ao criar ordem"))));
 
             return orderId;
         }
@@ -171,7 +173,7 @@ namespace Service
             if (registry == 0)
                 throw new ApplicationFailureException("Falha ao atualizar a ordem");
 
-            await EventDispatcher.Publish(new OrderStatusChangedEvent(order));
+            await EventDispatcher.Publish(new OrderStatusChangedEvent(CreateNotificationSnapshot(order)));
         }
 
         public async Task AddServiceToOrder(Guid orderId, UpdateOrderItemCommand<int> service)
@@ -179,22 +181,23 @@ namespace Service
             var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException("Ordem não encontrada");
 
             var orderService = order.Services.FirstOrDefault(x => x.Id == service.Id);
-
-            int registry = 0;
+            IMechanicalService serviceToPersist;
+            int registry;
 
             if (orderService == null)
             {
-                var serviceToAdd = await DependenciesGateway.GetServiceById(service.Id) ?? throw new NotFoundException($"Serviço com id \"{service.Id}\" não encontrado");
+                var catalogService = await DependenciesGateway.GetServiceById(service.Id) ?? throw new NotFoundException($"Serviço com id \"{service.Id}\" não encontrado");
+                var serviceToAdd = CreateOrderService(catalogService, service.Value);
 
-                order.AddService(serviceToAdd);
+                serviceToPersist = order.AddService(serviceToAdd);
 
-                registry = await Repository.AddServiceToOrder(orderId, serviceToAdd);
+                registry = await Repository.AddServiceToOrder(orderId, serviceToPersist);
             }
             else
             {
-                orderService.AddServiceAmount(service.Value);
+                serviceToPersist = order.AddService(CreateOrderService(orderService, service.Value));
 
-                registry = await Repository.UpdateServiceOfOrder(orderId, orderService);
+                registry = await Repository.UpdateServiceOfOrder(orderId, serviceToPersist);
             }
 
             if (registry == 0)
@@ -206,15 +209,14 @@ namespace Service
             var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException("Ordem não encontrada");
 
             var orderService = order.Services.FirstOrDefault(x => x.Id == service.Id) ?? throw new NotFoundException("Serviço não encontrado na ordem");
-
-            orderService.RemoveServiceAmount(service.Value);
+            var updatedService = order.RemoveService(CreateOrderService(orderService, service.Value));
 
             int registry;
 
-            if (orderService.Amount == 0)
+            if (updatedService.Amount == 0)
                 registry = await Repository.RemoveServiceFromOrder(orderId, service.Id);
             else
-                registry = await Repository.UpdateServiceOfOrder(orderId, orderService);
+                registry = await Repository.UpdateServiceOfOrder(orderId, updatedService);
 
             if (registry == 0)
                 throw new ApplicationFailureException("Erro ao salvar serviço");
@@ -235,16 +237,15 @@ namespace Service
                 if (material == null)
                 {
                     var stockItem = await DependenciesGateway.GetMaterialById(orderItem.Id) ?? throw new NotFoundException("Item não encontrado no estoque");
-
-                    var itemAdded = order.AddMaterial(stockItem);
+                    var itemAdded = order.AddMaterial(CreateOrderMaterial(stockItem, orderItem.Value));
 
                     registry = await Repository.AddMaterialToOrder(orderId, itemAdded);
                 }
                 else
                 {
-                    material.AddAmount(orderItem.Value);
+                    var updatedMaterial = order.AddMaterial(CreateOrderMaterial(material, orderItem.Value));
 
-                    registry = await Repository.UpdateMaterialFromOrder(orderId, material);
+                    registry = await Repository.UpdateMaterialFromOrder(orderId, updatedMaterial);
                 }
 
                 if (registry == 0)
@@ -261,14 +262,13 @@ namespace Service
                 await StockService.RestoreMaterialAmount(orderItem.Id, orderItem.Value);
 
                 var material = order.Materials.FirstOrDefault(x => x.Id == orderItem.Id) ?? throw new NotFoundException("Material não encontrado na ordem");
-
-                material.RemoveAmount(orderItem.Value);
+                var updatedMaterial = order.RemoveMaterial(CreateOrderMaterial(material, orderItem.Value));
                 int registry;
 
-                if (material.Amount == 0)
-                    registry = await Repository.RemoveMaterialFromOrder(orderId, material.Id);
+                if (updatedMaterial.Amount == 0)
+                    registry = await Repository.RemoveMaterialFromOrder(orderId, updatedMaterial.Id);
                 else
-                    registry = await Repository.UpdateMaterialFromOrder(orderId, material);
+                    registry = await Repository.UpdateMaterialFromOrder(orderId, updatedMaterial);
 
                 if (registry == 0)
                     throw new ApplicationFailureException("Erro ao salvar serviço");
@@ -292,14 +292,15 @@ namespace Service
                 order.Status,
                 order.Budget);
 
-            await EventDispatcher.Publish(new BudgetAvailableEvent(order));
+            await EventDispatcher.Publish(new BudgetAvailableEvent(CreateNotificationSnapshot(order)));
         }
 
         public async Task ApproveBudget(Guid orderId, ApproveOrderCommand approve)
         {
             var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com id \"{orderId}\" não encontrada");
+            var customerDocument = DocumentWrapper.CreateDocument(approve.CustomerDocument).Id;
 
-            if (order.CustomerDocument.Id != approve.CustomerDocument)
+            if (order.CustomerDocument.Id != customerDocument)
                 throw new BusinessRuleException("Documento de aprovação não está de acordo com o documento do cliente da ordem");
 
             order.ApproveService(approve.Approved);
@@ -337,7 +338,7 @@ namespace Service
             if (registry == 0)
                 throw new ApplicationFailureException("Falha ao inicar execução");
 
-            await EventDispatcher.Publish(new OrderStatusChangedEvent(order));
+            await EventDispatcher.Publish(new OrderStatusChangedEvent(CreateNotificationSnapshot(order)));
         }
 
         public async Task CompleteExecution(Guid orderId)
@@ -357,7 +358,7 @@ namespace Service
                     throw new ApplicationFailureException("Falha ao completar execução");
             });
 
-            await EventDispatcher.Publish(new OrderStatusChangedEvent(order));
+            await EventDispatcher.Publish(new OrderStatusChangedEvent(CreateNotificationSnapshot(order)));
         }
 
         public async Task DeliverVehicle(Guid orderId)
@@ -371,7 +372,7 @@ namespace Service
             if (registry == 0)
                 throw new ApplicationFailureException("Falha ao inicar execução");
 
-            await EventDispatcher.Publish(new OrderStatusChangedEvent(order));
+            await EventDispatcher.Publish(new OrderStatusChangedEvent(CreateNotificationSnapshot(order)));
         }
 
         public async Task DeleteOrder(Guid orderId)
@@ -497,6 +498,30 @@ namespace Service
             if (items.Select(item => item.Id).Distinct().Count() != items.Count)
                 throw new InvalidRequestException($"A lista de {itemType} não pode conter identificadores duplicados");
         }
+
+        private static IMechanicalService CreateOrderService(IMechanicalService service, int amount) =>
+            new MechanicalService(
+                service.Id,
+                service.Description,
+                service.Hours,
+                service.PricePerHour,
+                amount);
+
+        private static IMaterial CreateOrderMaterial(IMaterial material, int amount) =>
+            new Material(
+                material.Id,
+                material.Name,
+                material.Brand,
+                material.Price,
+                amount);
+
+        private static OrderNotificationSnapshot CreateNotificationSnapshot(Domain.Interface.Order.IOrder order) =>
+            new(
+                order.Id,
+                order.CustomerDocument.Id,
+                order.VehicleLicensePlate.License,
+                order.Budget,
+                order.Status);
 
     }
 }

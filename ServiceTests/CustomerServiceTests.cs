@@ -1,6 +1,6 @@
-﻿using Domain.Interface.Custumer;
+using Domain.Interface.Custumer;
 using NSubstitute;
-using Repository.Interface;
+using Infrastructure.Interface.Persistence;
 using Service;
 using Service.Interface;
 using Service.Interface.Exceptions;
@@ -231,13 +231,16 @@ namespace ServiceTests
         {
             await CustomerService.DeleteCustomer(ExistingCustomer.Id);
 
+            await CustomerRepository.Received(1).GetCustomer(ExistingCustomer.Id);
             await CustomerRepository.Received(1).DeleteCustomer(ExistingCustomer.Id);
         }
 
         [Test]
         public async Task MustNotDeleteCustomerIfNotExists()
         {
-            Assert.CatchAsync<ApplicationBaseException>(async () => await CustomerService.DeleteCustomer(Guid.NewGuid()));
+            Assert.CatchAsync<NotFoundException>(async () => await CustomerService.DeleteCustomer(Guid.NewGuid()));
+
+            await CustomerRepository.ReceivedWithAnyArgs(0).DeleteCustomer(Arg.Any<Guid>());
         }
 
         [Test]

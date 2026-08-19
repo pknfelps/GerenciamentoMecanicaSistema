@@ -5,28 +5,38 @@ namespace Domain.User
 {
     public class Password : IPassword
     {
-        public string Secret { get; private set; }
+        public string Value { get; private set; }
 
-        private static readonly int MinPasswordLenght = 6;
+        private const int MinPasswordLength = 6;
 
         public Password(string password)
         {
-            if (string.IsNullOrEmpty(password))
+            if (string.IsNullOrWhiteSpace(password))
                 throw new DomainValidationException("Senha deve ser preenchida");
 
-            if (password.Contains(' '))
+            if (password.Any(char.IsWhiteSpace))
                 throw new DomainValidationException("Senha não deve conter espaços em branco");
 
-            if (password.Length < MinPasswordLenght)
-                throw new DomainValidationException("Senha deve conter mais de 4 caracteres");
+            if (password.Length < MinPasswordLength)
+                throw new DomainValidationException($"Senha deve conter pelo menos {MinPasswordLength} caracteres");
 
-            if (password.FirstOrDefault(char.IsLetter) == default || password.FirstOrDefault(char.IsNumber) == default || (password.FirstOrDefault(x => char.IsSymbol(x) || char.IsPunctuation(x)) == default))
+            if (!password.Any(char.IsLetter)
+                || !password.Any(char.IsDigit)
+                || !password.Any(character => char.IsSymbol(character) || char.IsPunctuation(character)))
                 throw new DomainValidationException("Senha deve conter letras, números e símbolos");
 
-            if (password.FirstOrDefault(x => char.IsLetter(x) && char.IsUpper(x)) == default || password.FirstOrDefault(x => char.IsLetter(x) && char.IsLower(x)) == default)
+            if (!password.Any(char.IsUpper) || !password.Any(char.IsLower))
                 throw new DomainValidationException("Senha deve conter letras maiúsculas e minúsculas");
 
-            Secret = password;
+            Value = password;
+        }
+
+        public Password(string password, IUser user) : this(password)
+        {
+            ArgumentNullException.ThrowIfNull(user);
+
+            if (Value == user.Name || Value == user.Role.ToString())
+                throw new DomainValidationException("Senha deve ser diferente do nome e do cargo");
         }
     }
 }

@@ -16,7 +16,7 @@ namespace ControllerTests
 
         private readonly CreateUserRequest UserToRegister = new("Fulano", "Fulano@123", "User");
         private static Guid ExistingUserId = Guid.NewGuid();
-        private readonly UserResult ExistingUser = new(ExistingUserId, "Ciclano", "Ciclano@123", "Admin");
+        private readonly UserResult ExistingUser = new(ExistingUserId, "Ciclano", "Admin");
 
         protected override void MockService()
         {
@@ -67,7 +67,7 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnConflictIfTryRegisterAUserThatAlreadyExists()
         {
-            var user = new CreateUserRequest(ExistingUser.Name, ExistingUser.Password, ExistingUser.Role);
+            var user = new CreateUserRequest(ExistingUser.Name, "Ciclano@123", ExistingUser.Role);
 
             var response = await TestClient.PostAsJsonAsync("users", user);
 

@@ -83,13 +83,18 @@ flowchart LR
 
 | Projeto | Responsabilidade |
 |---|---|
-| `GerenciamentoMecanicaSistema` | API HTTP, controllers, autenticação, middleware e health checks. |
+| `GerenciamentoMecanicaSistema` | API HTTP, controllers, autenticação e middleware. |
 | `Domain` e `Domain.Interface` | Entidades, objetos de valor, regras e contratos do domínio. |
-| `Service` e `Service.Interface` | Casos de uso, regras de aplicação, eventos e notificações. |
-| `Repository` e `Repository.Interface` | Persistência, consultas, transações e contratos de repositório. |
-| `Infrastructure` | Integrações externas, geração de JWT e envio de e-mails. |
-| `Bootstrapper` | Registro das dependências da aplicação. |
-| `ControllerTests`, `DomainTests`, `RepositoryTests` e `ServiceTests` | Testes automatizados por camada. |
+| `Service` e `Service.Interface` | Casos de uso, regras de aplicação, eventos e contratos dos casos de uso. |
+| `Infrastructure.Interface` | Contratos implementados pela infraestrutura: persistência, autenticação e envio de e-mail. |
+| `Infrastructure` | Adaptadores externos: PostgreSQL, health check do banco, geração de JWT, hash de senha e envio de e-mails. |
+| `Bootstrapper` | Composition root para registro separado de aplicação, infraestrutura e persistência. |
+| `deploy` | Artefatos operacionais de Kubernetes e Terraform, fora da infraestrutura executada pela API. |
+| `ControllerTests`, `DomainTests`, `InfrastructureTests` e `ServiceTests` | Testes automatizados por camada. |
+
+As interfaces de repositório e transação ficam em `Infrastructure.Interface/Persistence`. As implementações PostgreSQL ficam em `Infrastructure/Persistence/PostgreSql`. Dessa forma, `Service` e `Infrastructure` compartilham apenas as abstrações de `Infrastructure.Interface`, sem que os casos de uso conheçam classes concretas.
+
+No cadastro de usuários, `Password` valida a senha em texto puro antes da geração do hash. `UserCredentials`, abstraído por `IUserCredentials`, transporta somente o usuário e a string do hash nos fluxos de persistência e autenticação. Consultas comuns retornam `IUser` sem senha ou hash.
 
 ## 🛠️ Tecnologias
 
@@ -159,6 +164,8 @@ O Compose inicia:
 - smtp4dev.
 
 A API só é iniciada depois que o PostgreSQL passa no health check. Na primeira criação do volume do banco, o script [Init.sql](InitDb/Init.sql) cria as tabelas e os dados iniciais.
+
+O usuário inicial agora é armazenado com hash PBKDF2. Ambientes criados antes dessa alteração ainda possuem a senha em texto puro no volume existente; para desenvolvimento, recrie o volume com `docker compose down --volumes` antes de subir o ambiente novamente.
 
 Verifique o estado dos serviços:
 
@@ -243,7 +250,7 @@ Em outros ambientes, configure `EmailSettings__Host`, `EmailSettings__Port`, cre
 
 ## Infraestrutura como código com Terraform
 
-Os arquivos estão em [Infrastructure/Terraform](Infrastructure/Terraform).
+Os arquivos estão em [deploy/terraform](deploy/terraform).
 
 ### Recursos provisionados
 
@@ -278,14 +285,14 @@ aws sts get-caller-identity
 Entre na pasta do Terraform e copie o exemplo:
 
 ```bash
-cd Infrastructure/Terraform
+cd deploy/terraform
 cp terraform.tfvars.example terraform.tfvars
 ```
 
 No PowerShell:
 
 ```powershell
-Set-Location Infrastructure/Terraform
+Set-Location deploy/terraform
 Copy-Item terraform.tfvars.example terraform.tfvars
 ```
 
@@ -356,11 +363,11 @@ Revise cuidadosamente o plano de destruição antes da aplicação.
 
 ## Deploy em Kubernetes
 
-Os manifestos estão em [Infrastructure/Kubernetes](Infrastructure/Kubernetes). O Kustomize aplica:
+Os manifestos estão em [deploy/kubernetes](deploy/kubernetes). O Kustomize aplica:
 
 - Deployments da API e do PostgreSQL;
 - Services `LoadBalancer` e `ClusterIP`;
-- Secret com configurações da aplicação e do banco;
+- Referências a um Secret externo com configurações da aplicação e do banco;
 - ConfigMap com o script de inicialização;
 - StorageClass de estudo;
 - HPA baseado em CPU e memória.
@@ -369,12 +376,12 @@ O PVC permanece no projeto como referência de estudo, mas não é aplicado pelo
 
 ### Configuração
 
-Antes do deploy, revise [db-secrets.yaml](Infrastructure/Kubernetes/db-secrets.yaml). Não utilize valores reais de produção no arquivo versionado.
+O Secret `db-secrets` não é versionado. Na pipeline ele é criado a partir dos GitHub Secrets. Para uma aplicação manual de estudo, use [db-secrets.example.yaml](deploy/kubernetes/db-secrets.example.yaml) apenas como modelo, gere um arquivo local ignorado pelo Git ou crie o Secret diretamente com `kubectl create secret`.
 
 Se o cluster ainda não possuir o Metrics Server, aplique:
 
 ```bash
-kubectl apply -f Infrastructure/Kubernetes/metrics-server.yaml
+kubectl apply -f deploy/kubernetes/metrics-server.yaml
 ```
 
 O Metrics Server é necessário para que o HPA obtenha as métricas de CPU e memória.
@@ -384,9 +391,9 @@ O Metrics Server é necessário para que o HPA obtenha as métricas de CPU e mem
 Na raiz do repositório:
 
 ```bash
-kubectl kustomize Infrastructure/Kubernetes
-kubectl apply --dry-run=client --validate=false -k Infrastructure/Kubernetes
-kubectl apply -k Infrastructure/Kubernetes
+kubectl kustomize deploy/kubernetes
+kubectl apply --dry-run=client --validate=false -k deploy/kubernetes
+kubectl apply -k deploy/kubernetes
 ```
 
 Valide os rollouts e os recursos:
@@ -418,7 +425,8 @@ O fluxo executado é:
 4. Build da imagem Docker.
 5. Publicação da imagem `felipejesusoliveira/gerenciamentomecanicasistema:latest` no Docker Hub.
 6. Autenticação na AWS e atualização do kubeconfig do cluster `api-cluster`.
-7. Aplicação dos manifestos com `kubectl apply -k Infrastructure/Kubernetes`.
+7. Criação ou atualização do Secret Kubernetes a partir dos secrets protegidos do repositório.
+8. Aplicação dos manifestos com `kubectl apply -k deploy/kubernetes`.
 
 O Terraform não é executado pela pipeline. O cluster deve ser provisionado manualmente antes do primeiro deploy.
 
@@ -430,6 +438,10 @@ O Terraform não é executado pela pipeline. O cluster deve ser provisionado man
 | `DOCKER_TOKEN` | Publicação da imagem no Docker Hub. |
 | `AWS_ACCESS_KEY_ID` | Identificação da credencial utilizada no deploy. |
 | `AWS_ACCESS_KEY_SECRET` | Chave secreta utilizada no deploy. |
+| `POSTGRES_DB` | Nome do banco PostgreSQL no cluster. |
+| `POSTGRES_USER` | Usuário do PostgreSQL no cluster. |
+| `POSTGRES_PASSWORD` | Senha do PostgreSQL no cluster. |
+| `JWT_KEY` | Chave privada usada para assinar os tokens JWT. |
 
 A identidade AWS da pipeline precisa consultar o cluster EKS e estar autorizada a acessar a API Kubernetes.
 

@@ -2,6 +2,6 @@
 {
     public interface IPassword
     {
-        string Secret { get; }
+        string Value { get; }
     }
 }

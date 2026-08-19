@@ -6,20 +6,18 @@ namespace DomainTests.User
     public class UserTests
     {
         private static readonly string NameUser = "Fulano";
-        private static readonly string PasswordUser = "Senha@123";
         private static readonly string RoleUser = Roles.Manager.ToString();
 
         [Test]
         public void MustCreateUser()
         {
-            var usuario = new Domain.User.User(NameUser, PasswordUser, RoleUser);
+            var usuario = new Domain.User.User(NameUser, RoleUser);
 
             Assert.That(usuario, Is.Not.Null);
 
             Assert.Multiple(() =>
             {
                 Assert.That(usuario.Name, Is.EqualTo(NameUser));
-                Assert.That(usuario.Password.Secret, Is.EqualTo(PasswordUser));
                 Assert.That(usuario.Role.ToString(), Is.EqualTo(RoleUser));
             });
         }
@@ -27,40 +25,21 @@ namespace DomainTests.User
         [Test]
         public void MustNotCreateUserIfNomeIsEmpty()
         {
-            Assert.Catch<DomainValidationException>(() => new Domain.User.User("", PasswordUser, RoleUser));
-            Assert.Catch<DomainValidationException>(() => new Domain.User.User(" ", PasswordUser, RoleUser));
-        }
-
-        [Test]
-        public void MustNotCreateUserIfSenhaIsEmpty()
-        {
-            Assert.Catch<DomainValidationException>(() => new Domain.User.User(NameUser, "", RoleUser));
-            Assert.Catch<DomainValidationException>(() => new Domain.User.User(NameUser, " ", RoleUser));
+            Assert.Catch<DomainValidationException>(() => new Domain.User.User("", RoleUser));
+            Assert.Catch<DomainValidationException>(() => new Domain.User.User(" ", RoleUser));
         }
 
         [Test]
         public void MustNotCreateUserIfCargoIsEmpty()
         {
-            Assert.Catch<DomainValidationException>(() => new Domain.User.User(NameUser, PasswordUser, ""));
-            Assert.Catch<DomainValidationException>(() => new Domain.User.User(NameUser, PasswordUser, " "));
-        }
-
-        [Test]
-        public void MustNotCreateUserIfSenhaIsEqualToNome()
-        {
-            Assert.Catch<DomainValidationException>(() => new Domain.User.User(NameUser, NameUser, RoleUser));
-        }
-
-        [Test]
-        public void MustNotCreateUserIfSenhaIsEqualToCargo()
-        {
-            Assert.Catch<DomainValidationException>(() => new Domain.User.User(NameUser, RoleUser, RoleUser));
+            Assert.Catch<DomainValidationException>(() => new Domain.User.User(NameUser, ""));
+            Assert.Catch<DomainValidationException>(() => new Domain.User.User(NameUser, " "));
         }
 
         [Test]
         public void MustNotCreateUserIfCargoIsInvalid()
         {
-            Assert.Catch<DomainValidationException>(() => new Domain.User.User(NameUser, PasswordUser, "Customer"));
+            Assert.Catch<DomainValidationException>(() => new Domain.User.User(NameUser, "Customer"));
         }
     }
 }

@@ -1,11 +1,11 @@
-﻿using Domain.Interface.Custumer;
+using Domain.Interface.Custumer;
 using Domain.Interface.Order;
 using Domain.Interface.Service;
 using Domain.Interface.Stock;
 using Domain.Interface.Vehicle;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using Repository.Interface;
+using Infrastructure.Interface.Persistence;
 using Service;
 using Service.Interface;
 using Service.Interface.Exceptions;
@@ -323,7 +323,7 @@ namespace ServiceTests
             await Repository.Received(1).AddMaterialToOrder(orderId, Arg.Is<IMaterial>(material => material.Id == ExistingPart.Id && material.Amount == 3));
             await TransactionManager.Received(1).ExecuteInTransaction(Arg.Any<Func<Task<Guid>>>());
             await EventDispatcher.Received(1).Publish(Arg.Is<OrderStatusChangedEvent>(notification =>
-                notification.Order.Id == orderId && notification.Order.Status == WorkOrderStatus.Received));
+                notification.Order.OrderId == orderId && notification.Order.Status == WorkOrderStatus.Received));
 
             Assert.That(orderId, Is.Not.EqualTo(Guid.Empty));
         }
@@ -756,7 +756,7 @@ namespace ServiceTests
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
             await EventDispatcher.Received(1).Publish(Arg.Is<OrderStatusChangedEvent>(notification =>
-                notification.Order == ExistingReceivedOrder && notification.Order.Status == WorkOrderStatus.InDiagnosis));
+                notification.Order.OrderId == ExistingReceivedOrder.Id && notification.Order.Status == WorkOrderStatus.InDiagnosis));
         }
 
         [Test]
@@ -1044,7 +1044,9 @@ namespace ServiceTests
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
-            await EventDispatcher.Received(1).Publish(Arg.Is<BudgetAvailableEvent>(notification => notification.Order == ExistingOrderInDiagnosis));
+            await EventDispatcher.Received(1).Publish(Arg.Is<BudgetAvailableEvent>(notification =>
+                notification.Order.OrderId == ExistingOrderInDiagnosis.Id
+                && notification.Order.Status == WorkOrderStatus.WaitingForApproval));
         }
 
         [Test]
@@ -1074,6 +1076,17 @@ namespace ServiceTests
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
+        }
+
+        [Test]
+        public async Task MustApproveBudgetWithUnformattedDocument()
+        {
+            var unformattedDocument = string.Concat(ExistingReceivedOrder.CustomerDocument.Id.Where(char.IsDigit));
+
+            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(unformattedDocument, true));
+
+            await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
 
@@ -1135,7 +1148,7 @@ namespace ServiceTests
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
             await EventDispatcher.Received(1).Publish(Arg.Is<OrderStatusChangedEvent>(notification =>
-                notification.Order == ExistingOrderInDiagnosis && notification.Order.Status == WorkOrderStatus.InExecution));
+                notification.Order.OrderId == ExistingOrderInDiagnosis.Id && notification.Order.Status == WorkOrderStatus.InExecution));
         }
 
         [Test]
@@ -1164,7 +1177,7 @@ namespace ServiceTests
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
             await EventDispatcher.Received(1).Publish(Arg.Is<OrderStatusChangedEvent>(notification =>
-                notification.Order == ExistingOrderInDiagnosis && notification.Order.Status == WorkOrderStatus.Finished));
+                notification.Order.OrderId == ExistingOrderInDiagnosis.Id && notification.Order.Status == WorkOrderStatus.Finished));
         }
 
         [Test]
@@ -1193,7 +1206,7 @@ namespace ServiceTests
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
             await EventDispatcher.Received(1).Publish(Arg.Is<OrderStatusChangedEvent>(notification =>
-                notification.Order == ExistingOrderInDiagnosis && notification.Order.Status == WorkOrderStatus.Delivered));
+                notification.Order.OrderId == ExistingOrderInDiagnosis.Id && notification.Order.Status == WorkOrderStatus.Delivered));
         }
 
         [Test]
@@ -1333,9 +1346,44 @@ namespace ServiceTests
             order.DateCreated.Returns(DateTime.Now);
             order.DateFinished.Returns(DateTime.MinValue);
 
+            order.AddService(Arg.Any<IMechanicalService>()).Returns(callInfo =>
+            {
+                var serviceToAdd = callInfo.ArgAt<IMechanicalService>(0);
+                var existingService = services.FirstOrDefault(service => service.Id == serviceToAdd.Id);
+
+                if (existingService == null)
+                    return serviceToAdd;
+
+                existingService.AddServiceAmount(serviceToAdd.Amount);
+                return existingService;
+            });
+
+            order.RemoveService(Arg.Any<IMechanicalService>()).Returns(callInfo =>
+            {
+                var serviceToRemove = callInfo.ArgAt<IMechanicalService>(0);
+                var existingService = services.First(service => service.Id == serviceToRemove.Id);
+                existingService.RemoveServiceAmount(serviceToRemove.Amount);
+                return existingService;
+            });
+
             order.AddMaterial(Arg.Any<IMaterial>()).Returns(callInfo =>
             {
-                return callInfo.ArgAt<IMaterial>(0);
+                var materialToAdd = callInfo.ArgAt<IMaterial>(0);
+                var existingMaterial = parts.FirstOrDefault(material => material.Id == materialToAdd.Id);
+
+                if (existingMaterial == null)
+                    return materialToAdd;
+
+                existingMaterial.AddAmount(materialToAdd.Amount);
+                return existingMaterial;
+            });
+
+            order.RemoveMaterial(Arg.Any<IMaterial>()).Returns(callInfo =>
+            {
+                var materialToRemove = callInfo.ArgAt<IMaterial>(0);
+                var existingMaterial = parts.First(material => material.Id == materialToRemove.Id);
+                existingMaterial.RemoveAmount(materialToRemove.Amount);
+                return existingMaterial;
             });
 
             order.When(x => x.FinalizeDiagnosis()).Do(_ =>
@@ -1370,7 +1418,3 @@ namespace ServiceTests
         }
     }
 }
-
-
-
-

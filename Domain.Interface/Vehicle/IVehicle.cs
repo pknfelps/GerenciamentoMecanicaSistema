@@ -9,5 +9,7 @@ namespace Domain.Interface.Vehicle
         string Model { get; }
         int Year { get; }
         ILicensePlate LicensePlate { get; }
+
+        void UpdateDetails(string brand, string model, int year);
     }
 }

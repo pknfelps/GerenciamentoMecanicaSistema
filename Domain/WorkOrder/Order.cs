@@ -27,8 +27,6 @@ namespace Domain.WorkOrder
 
         public Order(string customerDocument, string vehicleLicensePlate, DateTime dateCreated) : this(Guid.NewGuid(), customerDocument, vehicleLicensePlate, [], [], 0.0m, WorkOrderStatus.Received, dateCreated, DateTime.MinValue) { }
 
-        // TODO: Reavaliar status ao criar já com serviços e insumos
-        // TODO: Já deveria ser criada seguindo o fluxo de finalizar diagnóstico?
         public Order(
             string customerDocument,
             string vehicleLicensePlate,
@@ -81,11 +79,7 @@ namespace Domain.WorkOrder
 
         public IMechanicalService AddService(IMechanicalService serviceToAdd)
         {
-            if (Status is WorkOrderStatus.Received)
-                throw new InvalidDomainStateException("Não é possível adicionar serviços antes de iniciar o diagnóstico");
-
-            if (Status is WorkOrderStatus.InExecution or WorkOrderStatus.Finished or WorkOrderStatus.Delivered)
-                throw new InvalidDomainStateException("Não é possível adicionar serviços após o inicio do serviço");
+            EnsureDiagnosisInProgress("adicionar serviços");
 
             var service = services.FirstOrDefault(s => s.Id == serviceToAdd.Id);
 
@@ -105,29 +99,21 @@ namespace Domain.WorkOrder
 
         public IMechanicalService RemoveService(IMechanicalService serviceToRemove)
         {
-            if (Status is WorkOrderStatus.Received)
-                throw new InvalidDomainStateException("Não é possível adicionar serviços antes de iniciar o diagnóstico");
-
-            if (Status is WorkOrderStatus.InExecution or WorkOrderStatus.Finished or WorkOrderStatus.Delivered)
-                throw new InvalidDomainStateException("Não é possível adicionar serviços após o inicio do serviço");
+            EnsureDiagnosisInProgress("remover serviços");
 
             var service = services.First(x => x.Id == serviceToRemove.Id);
 
             service.RemoveServiceAmount(serviceToRemove.Amount);
 
             if (service.Amount == 0)
-                services.Remove(serviceToRemove);
+                services.Remove(service);
 
             return service;
         }
 
         public IMaterial AddMaterial(IMaterial materialToAdd)
         {
-            if (Status is WorkOrderStatus.Received)
-                throw new InvalidDomainStateException("Não é possível adicionar peças ou insumos antes de iniciar o diagnóstico");
-
-            if (Status is WorkOrderStatus.InExecution or WorkOrderStatus.Finished or WorkOrderStatus.Delivered)
-                throw new InvalidDomainStateException("Não é possível adicionar peças ou insumos após o inicio do serviço");
+            EnsureDiagnosisInProgress("adicionar peças ou insumos");
 
             var material = materials.FirstOrDefault(x => x.Id == materialToAdd.Id);
 
@@ -147,11 +133,7 @@ namespace Domain.WorkOrder
 
         public IMaterial RemoveMaterial(IMaterial materialToRemove)
         {
-            if (Status is WorkOrderStatus.Received)
-                throw new InvalidDomainStateException("Não é possível remover peças ou insumos antes de iniciar o diagnóstico");
-
-            if (Status is WorkOrderStatus.InExecution or WorkOrderStatus.Finished or WorkOrderStatus.Delivered)
-                throw new InvalidDomainStateException("Não é possível remover peças ou insumos após o inicio do serviço");
+            EnsureDiagnosisInProgress("remover peças ou insumos");
 
             var material = materials.First(x => x.Id == materialToRemove.Id);
 
@@ -238,6 +220,12 @@ namespace Domain.WorkOrder
                 throw new DomainValidationException("A ordem não pode conter materiais duplicados");
 
             return materialList;
+        }
+
+        private void EnsureDiagnosisInProgress(string operation)
+        {
+            if (Status is not WorkOrderStatus.InDiagnosis)
+                throw new InvalidDomainStateException($"Só é possível {operation} durante o diagnóstico");
         }
 
         private void CalculateBudget()

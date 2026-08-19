@@ -1,6 +1,6 @@
-﻿using Domain.Interface.Stock;
+using Domain.Interface.Stock;
 using NSubstitute;
-using Repository.Interface;
+using Infrastructure.Interface.Persistence;
 using Service;
 using Service.Interface;
 using Service.Interface.Exceptions;

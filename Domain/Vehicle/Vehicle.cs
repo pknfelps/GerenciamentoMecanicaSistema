@@ -38,5 +38,19 @@ namespace Domain.Vehicle
             LicensePlate = LicensePlateWrapper.CreateLicensePlate(licensePlate);
             Id = id;
         }
+
+        public void UpdateDetails(string brand, string model, int year)
+        {
+            if (string.IsNullOrEmpty(brand))
+                throw new DomainValidationException("Marca deve ser preenchida");
+            if (string.IsNullOrEmpty(model))
+                throw new DomainValidationException("Modelo do veículo deve ser preenchido");
+            if (year < 0)
+                throw new DomainValidationException("Ano do veículo não pode ser menor que 0");
+
+            Brand = brand;
+            Model = model;
+            Year = year;
+        }
     }
 }

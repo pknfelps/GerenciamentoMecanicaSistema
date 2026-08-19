@@ -1,4 +1,5 @@
 ﻿using Domain.Interface.Exceptions;
+using Domain.Interface.User;
 using Domain.User;
 
 namespace DomainTests.User
@@ -10,7 +11,7 @@ namespace DomainTests.User
         {
             var password = new Password("Password@123");
 
-            Assert.That(password, Is.Not.Null);
+            Assert.That(password.Value, Is.EqualTo("Password@123"));
         }
 
         [Test]
@@ -23,6 +24,7 @@ namespace DomainTests.User
         public void MustNotCreatePasswordIfContainsWhiteSpaces()
         {
             Assert.Catch<DomainValidationException>(() => new Password("Pass word@123"));
+            Assert.Catch<DomainValidationException>(() => new Password("Password@\t123"));
         }
 
         [Test]
@@ -44,6 +46,14 @@ namespace DomainTests.User
         {
             Assert.Catch<DomainValidationException>(() => new Password("password@123"));
             Assert.Catch<DomainValidationException>(() => new Password("PASSWORD@123"));
+        }
+
+        [Test]
+        public void MustNotUseUserNameAsPassword()
+        {
+            var user = new Domain.User.User("Password@123", Roles.Manager.ToString());
+
+            Assert.Catch<DomainValidationException>(() => new Password("Password@123", user));
         }
     }
 }

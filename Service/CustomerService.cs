@@ -1,6 +1,6 @@
-﻿using Domain.Customer;
+using Domain.Customer;
 using Domain.Interface.Custumer;
-using Repository.Interface;
+using Infrastructure.Interface.Persistence;
 using Service.Interface;
 using Service.Interface.Exceptions;
 using Service.Interface.Commands.Customer;
@@ -65,7 +65,7 @@ namespace Service
 
         public async Task DeleteCustomer(Guid id)
         {
-            _ = await Repository.GetCustomers(id) ?? throw new NotFoundException("Cliente não existe no sistema");
+            _ = await Repository.GetCustomer(id) ?? throw new NotFoundException("Cliente não existe no sistema");
 
             var registry = await Repository.DeleteCustomer(id);
 

@@ -1,7 +1,6 @@
 ﻿using GerenciamentoMecanicaSistema;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Service.Interface;
@@ -10,6 +9,10 @@ namespace ControllerTests
 {
     public class TestWebApplicationFactory(string? databaseConnectionString = null) : WebApplicationFactory<Program>
     {
+        public const string JwtKey = "controller-tests-only-key-with-at-least-32-characters";
+        public const string JwtIssuer = "controller-tests";
+        public const string JwtAudience = "controller-tests";
+
         public ICustomerService CustomerServiceMock { get; private set; } = Substitute.For<ICustomerService>();
         public IUserService UserServiceMock { get; private set; } = Substitute.For<IUserService>();
         public IAuthenticationService AuthenticationServiceMock { get; private set; } = Substitute.For<IAuthenticationService>();
@@ -20,16 +23,12 @@ namespace ControllerTests
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-            if (!string.IsNullOrWhiteSpace(databaseConnectionString))
-            {
-                builder.ConfigureAppConfiguration((_, configuration) =>
-                {
-                    configuration.AddInMemoryCollection(new Dictionary<string, string?>
-                    {
-                        ["ConnectionStrings:DefaultConnection"] = databaseConnectionString
-                    });
-                });
-            }
+            builder.UseSetting(
+                "ConnectionStrings:DefaultConnection",
+                databaseConnectionString ?? "Host=localhost;Port=5432;Database=tests;Username=tests;Password=tests");
+            builder.UseSetting("Jwt:Key", JwtKey);
+            builder.UseSetting("Jwt:Issuer", JwtIssuer);
+            builder.UseSetting("Jwt:Audience", JwtAudience);
 
             builder.ConfigureServices(services =>
             {

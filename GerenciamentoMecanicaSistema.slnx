@@ -6,15 +6,14 @@
     <Project Path="Domain/Domain.csproj" />
     <Project Path="GerenciamentoMecanicaSistema/GerenciamentoMecanicaSistema.csproj" />
     <Project Path="Infrastructure/Infrastructure.csproj" />
-    <Project Path="Repository.Interface/Repository.Interface.csproj" />
-    <Project Path="Repository/Repository.csproj" />
+    <Project Path="Infrastructure.Interface/Infrastructure.Interface.csproj" />
     <Project Path="Service.Interface/Service.Interface.csproj" />
     <Project Path="Service/Service.csproj" />
   </Folder>
   <Folder Name="/testes/">
     <Project Path="ControllerTests/ControllerTests.csproj" Id="d9e83580-8bee-4957-a1c8-ec04071a5762" />
     <Project Path="DomainTests/DomainTests.csproj" />
-    <Project Path="RepositoryTests/RepositoryTests.csproj" Id="5836563f-aa04-4ad3-8859-8f85ade92148" />
+    <Project Path="InfrastructureTests/InfrastructureTests.csproj" Id="5836563f-aa04-4ad3-8859-8f85ade92148" />
     <Project Path="ServiceTests/ServiceTests.csproj" Id="06e54496-48af-4245-97fb-08a74e695175" />
   </Folder>
 </Solution>

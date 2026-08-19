@@ -36,21 +36,19 @@ namespace ControllerTests
 
         private static string GenerateTestToken()
         {
-            var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
-
             var claims = new List<Claim>
             {
                 new(ClaimTypes.Name, "Admin"),
                 new(ClaimTypes.Role, "Admin")
             };
 
-            var chave = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"] ?? string.Empty));
+            var chave = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TestWebApplicationFactory.JwtKey));
 
             var credenciais = new SigningCredentials(chave, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
-                issuer: configuration["Jwt:Issuer"] ?? string.Empty,
-                audience: configuration["Jwt:Audience"] ?? string.Empty,
+                issuer: TestWebApplicationFactory.JwtIssuer,
+                audience: TestWebApplicationFactory.JwtAudience,
                 claims: claims,
                 expires: DateTime.UtcNow.AddSeconds(30),
                 signingCredentials: credenciais

@@ -1,6 +1,6 @@
-﻿using Domain.Interface.Vehicle;
+using Domain.Interface.Vehicle;
 using NSubstitute;
-using Repository.Interface;
+using Infrastructure.Interface.Persistence;
 using Service;
 using Service.Interface;
 using Service.Interface.Exceptions;
@@ -27,6 +27,12 @@ namespace ServiceTests
                 vehicle.Model.Returns("Civic");
                 vehicle.Year.Returns(2024);
                 vehicle.LicensePlate.License.Returns("CVC2024");
+                vehicle.When(current => current.UpdateDetails(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>())).Do(callInfo =>
+                {
+                    vehicle.Brand.Returns(callInfo.ArgAt<string>(0));
+                    vehicle.Model.Returns(callInfo.ArgAt<string>(1));
+                    vehicle.Year.Returns(callInfo.ArgAt<int>(2));
+                });
                 return vehicle;
             }
         }
@@ -42,6 +48,12 @@ namespace ServiceTests
                 vehicle.Model.Returns("Ka");
                 vehicle.Year.Returns(2020);
                 vehicle.LicensePlate.License.Returns("FKA0F20");
+                vehicle.When(current => current.UpdateDetails(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>())).Do(callInfo =>
+                {
+                    vehicle.Brand.Returns(callInfo.ArgAt<string>(0));
+                    vehicle.Model.Returns(callInfo.ArgAt<string>(1));
+                    vehicle.Year.Returns(callInfo.ArgAt<int>(2));
+                });
                 return vehicle;
             }
         }
@@ -218,7 +230,11 @@ namespace ServiceTests
             await VehicleService.UpdateVehicle(ExistingVehicleId, ExistingVehicleToUpdate);
 
             await Repository.Received(1).GetVehicle(id: ExistingVehicleId);
-            await Repository.ReceivedWithAnyArgs(1).UpdateVehicle(Arg.Any<IVehicle>());
+            await Repository.Received(1).UpdateVehicle(Arg.Is<IVehicle>(vehicle =>
+                vehicle.Id == ExistingVehicleId
+                && vehicle.Brand == ExistingVehicleToUpdate.Brand
+                && vehicle.Model == ExistingVehicleToUpdate.Model
+                && vehicle.Year == ExistingVehicleToUpdate.Year));
         }
 
         [Test]

@@ -6,7 +6,7 @@
 );
 
 INSERT INTO users(id, name, password, role)
-VALUES ('de0ec153-5578-430e-b530-96e4118f1721', 'Admin', 'Admin@123', 'Admin');
+VALUES ('de0ec153-5578-430e-b530-96e4118f1721', 'Admin', 'pbkdf2-sha256$100000$6MmTIW+OTlh8U8Vs3kdKug==$/ry4uV+eOUlJf416B28kH+V29/zePbdfKTdRYjPQXkU=', 'Admin');
 
 CREATE TABLE customers (
     id UUID PRIMARY KEY,

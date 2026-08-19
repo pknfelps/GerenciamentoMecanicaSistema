@@ -1,5 +1,5 @@
-﻿using Domain.Vehicle;
-using Repository.Interface;
+using Domain.Vehicle;
+using Infrastructure.Interface.Persistence;
 using Service.Interface;
 using Service.Interface.Exceptions;
 using Service.Interface.Commands.Vehicle;
@@ -47,9 +47,11 @@ namespace Service
 
         public async Task UpdateVehicle(Guid id, CreateVehicleCommand vehicle)
         {
-            _ = await Repository.GetVehicle(id: id) ?? throw new NotFoundException("Veiculo nÃ£o encontrado");
+            var vehicleToUpdate = await Repository.GetVehicle(id: id) ?? throw new NotFoundException("Veiculo nÃ£o encontrado");
 
-            var registry = await Repository.UpdateVehicle(CreateDomain(vehicle));
+            vehicleToUpdate.UpdateDetails(vehicle.Brand, vehicle.Model, vehicle.Year);
+
+            var registry = await Repository.UpdateVehicle(vehicleToUpdate);
 
             if (registry == 0)
                 throw new ApplicationFailureException("Falha ao atualizar veÃ­culo");

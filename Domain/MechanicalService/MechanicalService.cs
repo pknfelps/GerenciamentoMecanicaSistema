@@ -64,14 +64,26 @@ namespace Domain.MechanicalService
             PricePerHour = newPricePerHour;
         }
 
-        public void AddServiceAmount(int amount) => Amount += amount;
+        public void AddServiceAmount(int amount)
+        {
+            ValidatePositiveAmount(amount);
+            Amount += amount;
+        }
 
         public void RemoveServiceAmount(int amount)
         {
+            ValidatePositiveAmount(amount);
+
             if (amount > Amount)
                 throw new DomainBusinessRuleException("Não é possível remover mais serviços do que há na orodem");
 
             Amount -= amount;
+        }
+
+        private static void ValidatePositiveAmount(int amount)
+        {
+            if (amount <= 0)
+                throw new DomainValidationException("Quantidade deve ser maior que zero");
         }
     }
 }

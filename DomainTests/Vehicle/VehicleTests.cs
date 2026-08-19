@@ -74,6 +74,35 @@ namespace DomainTests.Vehicle
         {
             Assert.Catch<DomainValidationException>(() => new Domain.Vehicle.Vehicle(CostumerDocument, "Porsche", "911", 1990, ""));
         }
+
+        [Test]
+        public void MustUpdateVehicleDetailsPreservingIdentity()
+        {
+            var vehicle = new Domain.Vehicle.Vehicle(CostumerDocument, "Porsche", "911", 1990, "PRX3911");
+            var id = vehicle.Id;
+
+            vehicle.UpdateDetails("Porsche", "911 Carrera", 2002);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(vehicle.Id, Is.EqualTo(id));
+                Assert.That(vehicle.Model, Is.EqualTo("911 Carrera"));
+                Assert.That(vehicle.Year, Is.EqualTo(2002));
+            });
+        }
+
+        [Test]
+        public void MustNotUpdateVehicleWithInvalidDetails()
+        {
+            var vehicle = new Domain.Vehicle.Vehicle(CostumerDocument, "Porsche", "911", 1990, "PRX3911");
+
+            Assert.Multiple(() =>
+            {
+                Assert.Catch<DomainValidationException>(() => vehicle.UpdateDetails("", "911", 1990));
+                Assert.Catch<DomainValidationException>(() => vehicle.UpdateDetails("Porsche", "", 1990));
+                Assert.Catch<DomainValidationException>(() => vehicle.UpdateDetails("Porsche", "911", -1));
+            });
+        }
     }
 }
 

@@ -16,6 +16,9 @@ namespace Domain.Stock
 
         public Material(Guid id, string name, string brand, decimal price, int amount, int reservedAmount = 0)
         {
+            if (id == Guid.Empty)
+                throw new DomainValidationException("Id não pode ser vazio");
+
             if (string.IsNullOrEmpty(name))
                 throw new DomainValidationException("Nome deve ser preenchido");
 
@@ -39,10 +42,16 @@ namespace Domain.Stock
             ReservedAmount = reservedAmount;
         }
 
-        public void AddAmount(int amount) => Amount += amount;
+        public void AddAmount(int amount)
+        {
+            ValidatePositiveAmount(amount);
+            Amount += amount;
+        }
 
         public void RemoveAmount(int amount)
         {
+            ValidatePositiveAmount(amount);
+
             if (amount > Amount)
                 throw new DomainBusinessRuleException("Não é possível remover mais do que a quantidade em estoque");
 
@@ -51,6 +60,8 @@ namespace Domain.Stock
 
         public void ReserveAmount(int amount)
         {
+            ValidatePositiveAmount(amount);
+
             if (amount > Amount)
                 throw new DomainBusinessRuleException("Não é possível reservar mais do que a quantidade em estoque");
 
@@ -60,6 +71,8 @@ namespace Domain.Stock
 
         public void RestoreAmount(int amount)
         {
+            ValidatePositiveAmount(amount);
+
             if (amount > ReservedAmount)
                 throw new DomainBusinessRuleException("Não é possível restaurar mais do que a quantidade em reserva");
 
@@ -69,6 +82,8 @@ namespace Domain.Stock
 
         public void ConsumeReservedAmount(int amount)
         {
+            ValidatePositiveAmount(amount);
+
             if (amount > ReservedAmount)
                 throw new DomainBusinessRuleException("Não é possível consumir mais do que a quantidade em reserva");
 
@@ -81,6 +96,12 @@ namespace Domain.Stock
                 throw new DomainBusinessRuleException("Preço não pode ser menor ou igual a 0");
 
             Price = price;
+        }
+
+        private static void ValidatePositiveAmount(int amount)
+        {
+            if (amount <= 0)
+                throw new DomainValidationException("Quantidade deve ser maior que zero");
         }
     }
 }

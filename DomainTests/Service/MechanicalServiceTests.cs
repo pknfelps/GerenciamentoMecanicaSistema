@@ -165,6 +165,17 @@ namespace DomainTests.Service
         {
             Assert.Catch<DomainBusinessRuleException>(() => Service.RemoveServiceAmount(2));
         }
+
+        [TestCase(0)]
+        [TestCase(-1)]
+        public void MustNotChangeServiceAmountWithNonPositiveValue(int invalidAmount)
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.Catch<DomainValidationException>(() => Service.AddServiceAmount(invalidAmount));
+                Assert.Catch<DomainValidationException>(() => Service.RemoveServiceAmount(invalidAmount));
+            });
+        }
     }
 }
 

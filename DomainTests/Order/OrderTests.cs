@@ -161,6 +161,21 @@ namespace DomainTests.Order
             Assert.Catch<DomainBusinessRuleException>(() => OrderInExecution.AddService(Substitute.For<IMechanicalService>()));
         }
 
+        [TestCase(WorkOrderStatus.WaitingForApproval)]
+        [TestCase(WorkOrderStatus.WaitingForExecution)]
+        public void MustNotChangeItemsAfterDiagnosis(WorkOrderStatus status)
+        {
+            var order = new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate, [], [], 10.0m, status, DateTime.Now, DateTime.MinValue);
+
+            Assert.Multiple(() =>
+            {
+                Assert.Catch<DomainBusinessRuleException>(() => order.AddService(Substitute.For<IMechanicalService>()));
+                Assert.Catch<DomainBusinessRuleException>(() => order.RemoveService(Substitute.For<IMechanicalService>()));
+                Assert.Catch<DomainBusinessRuleException>(() => order.AddMaterial(Substitute.For<IMaterial>()));
+                Assert.Catch<DomainBusinessRuleException>(() => order.RemoveMaterial(Substitute.For<IMaterial>()));
+            });
+        }
+
         [Test]
         public void MustRemoveService()
         {

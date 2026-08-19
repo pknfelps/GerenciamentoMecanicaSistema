@@ -1,25 +1,27 @@
-using Repository.Interface;
+using Infrastructure.Interface.Authentication;
+using Infrastructure.Interface.Persistence;
 using Service.Interface;
 using Service.Interface.Commands.User;
 
 namespace Service
 {
-    public class AuthenticationService(IUserRepository userRepository, ITokenGenerator tokenGenerator) : IAuthenticationService
+    public class AuthenticationService(IUserRepository userRepository, ITokenGenerator tokenGenerator, IPasswordHasher passwordHasher) : IAuthenticationService
     {
         private IUserRepository UserRepository { get; set; } = userRepository;
         private ITokenGenerator TokenGenerator { get; set; } = tokenGenerator;
+        private IPasswordHasher PasswordHasher { get; set; } = passwordHasher;
 
         public async Task<string> Authenticate(CreateUserCommand user)
         {
-            var registeredUser = await UserRepository.GetUser(user.Name, user.Role);
+            var credentials = await UserRepository.GetUserCredentials(user.Name, user.Role);
 
-            if (registeredUser == null)
+            if (credentials == null)
                 return string.Empty;
 
-            if (user.Password != registeredUser.Password.Secret)
+            if (!PasswordHasher.Verify(user.Password, credentials.PasswordHash))
                 return string.Empty;
 
-            return TokenGenerator.Generate(registeredUser.Name, registeredUser.Role.ToString());
+            return TokenGenerator.Generate(credentials.User.Name, credentials.User.Role.ToString());
         }
     }
 }

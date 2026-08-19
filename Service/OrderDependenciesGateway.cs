@@ -2,7 +2,7 @@ using Domain.Interface.Custumer;
 using Domain.Interface.Service;
 using Domain.Interface.Stock;
 using Domain.Interface.Vehicle;
-using Repository.Interface;
+using Infrastructure.Interface.Persistence;
 using Service.Interface;
 
 namespace Service

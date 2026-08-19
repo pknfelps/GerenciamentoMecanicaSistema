@@ -54,6 +54,12 @@ namespace DomainTests.Parts
         }
 
         [Test]
+        public void MustNotCreatePartIfIdIsEmpty()
+        {
+            Assert.Catch<DomainValidationException>(() => new Material(Guid.Empty, "Óleo de motor", "Lubrax", 41.90m, 5));
+        }
+
+        [Test]
         public void MustAddAmount()
         {
             var item = new Material("Óleo de motor", "Lubrax", 41.90m, 25);
@@ -159,6 +165,22 @@ namespace DomainTests.Parts
             var item = new Material(Guid.NewGuid(), "Óleo de motor", "Lubrax", 41.90m, 25, 5);
 
             Assert.Catch<DomainBusinessRuleException>(() => item.ConsumeReservedAmount(10));
+        }
+
+        [TestCase(0)]
+        [TestCase(-1)]
+        public void MustNotChangeAmountsWithNonPositiveValue(int invalidAmount)
+        {
+            var item = new Material(Guid.NewGuid(), "Óleo de motor", "Lubrax", 41.90m, 25, 5);
+
+            Assert.Multiple(() =>
+            {
+                Assert.Catch<DomainValidationException>(() => item.AddAmount(invalidAmount));
+                Assert.Catch<DomainValidationException>(() => item.RemoveAmount(invalidAmount));
+                Assert.Catch<DomainValidationException>(() => item.ReserveAmount(invalidAmount));
+                Assert.Catch<DomainValidationException>(() => item.RestoreAmount(invalidAmount));
+                Assert.Catch<DomainValidationException>(() => item.ConsumeReservedAmount(invalidAmount));
+            });
         }
 
         [Test]

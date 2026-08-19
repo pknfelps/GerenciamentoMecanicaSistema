@@ -1,7 +1,7 @@
+using Infrastructure.Interface.Email;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MimeKit;
-using Service.Interface;
 
 namespace Infrastructure.Email
 {

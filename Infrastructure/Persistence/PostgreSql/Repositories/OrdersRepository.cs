@@ -1,0 +1,244 @@
+using Dapper;
+using Domain.Interface.Order;
+using Domain.Interface.Service;
+using Domain.Interface.Stock;
+using Infrastructure.Persistence.PostgreSql.Models;
+using Infrastructure.Persistence.PostgreSql.Querying;
+using Infrastructure.Persistence.PostgreSql.Transactions;
+using Infrastructure.Interface.Persistence;
+using System.Data;
+
+namespace Infrastructure.Persistence.PostgreSql.Repositories
+{
+    public class OrdersRepository(IDbConnection connection, DbTransactionContext? transactionContext = null) : BaseRepository(connection, transactionContext), IOrdersRepository
+    {
+        public static string CreateServiceSql { get; private set; } = """
+            INSERT INTO orders(id, customer_document, vehicle_license_plate, budget, status, date_created, date_finished, duration)
+            VALUES (@Id, @CustomerDocument, @VehicleLicensePlate, @Budget, @Status, @DateCreated, @DateFinished, @Duration);
+            """;
+
+        public static string GetOrdersSql { get; private set; } = """
+            SELECT 
+                os.id, 
+                os.customer_document AS CustomerDocument, 
+                os.vehicle_license_plate AS VehicleLicensePlate, 
+
+                CASE
+                    WHEN COUNT(s.id) = 0 THEN '[]'::json
+                    ELSE json_agg(DISTINCT jsonb_build_object(
+                        'id', s.id,
+                        'description', s.description,
+                        'hours', s.hours,
+                        'price_per_hour', s.price_per_hour,
+                        'amount', s.amount))
+                END AS services,
+
+                CASE
+                    WHEN COUNT(m.id) = 0 THEN '[]'::json
+                    ELSE json_agg(DISTINCT jsonb_build_object(
+                        'id', m.id,
+                        'name', m.name,
+                        'brand', m.brand,
+                        'price', m.price,
+                        'amount', m.amount))
+                    END AS materials,
+
+                os.budget, 
+                os.status, 
+                os.date_created AS DateCreated, 
+                os.date_finished AS DateFinished
+
+            FROM orders os
+            LEFT JOIN order_services s ON s.order_id = os.id
+            LEFT JOIN order_materials m ON m.order_id = os.id
+
+            {0}
+
+            GROUP BY
+                os.id,
+                os.customer_document,
+                os.vehicle_license_plate,
+                os.budget,
+                os.status,
+                os.date_created,
+                os.date_finished;
+            """;
+
+        public static string GetOperationalOrdersSql { get; private set; } = """
+            SELECT
+                os.id,
+                os.customer_document AS CustomerDocument,
+                os.vehicle_license_plate AS VehicleLicensePlate,
+                '[]'::json AS services,
+                '[]'::json AS materials,
+                os.budget,
+                os.status,
+                os.date_created AS DateCreated,
+                os.date_finished AS DateFinished
+            FROM orders os
+            WHERE os.status NOT IN (@Finished, @Delivered)
+            ORDER BY
+                CASE os.status
+                    WHEN @InExecution THEN 0
+                    WHEN @WaitingForExecution THEN 1
+                    WHEN @WaitingForApproval THEN 2
+                    WHEN @InDiagnosis THEN 3
+                    WHEN @Received THEN 4
+                    ELSE 5
+                END,
+                os.date_created ASC;
+            """;
+
+        public static string UpdateOrderSql { get; private set; } = """
+            UPDATE orders
+            SET budget = @Budget,
+                status = @Status,
+                date_finished = @DateFinished,
+                duration = @Duration
+            WHERE id = @Id;
+            """;
+
+        public static string AddServiceToOrderSql { get; private set; } = """
+            INSERT INTO order_services(id, order_id, description, hours, price_per_hour, amount)
+            VALUES (@Id, @orderId, @Description, @Hours, @PricePerHour, @Amount);
+            """;
+
+        public static string UpdateServiceAmountOfOrderSql { get; private set; } = """
+            UPDATE order_services
+            SET amount = @Amount
+            WHERE id = @Id AND order_id = @orderId;
+            """;
+
+        public static string AddMaterialToOrderSql { get; private set; } = """
+            INSERT INTO order_materials(id, order_id, name, brand, price, amount)
+            VALUES (@Id, @orderId, @Name, @Brand, @Price, @Amount);
+            """;
+
+        public static string UpdateMaterialFromOrderSql { get; private set; } = """
+            UPDATE order_materials
+            SET amount = @Amount
+            WHERE id = @Id AND order_id = @order_id;
+            """;
+
+        public static string DeleteServiceFromOrderSql { get; private set; } = """
+            DELETE FROM order_services
+            WHERE id = @serviceId AND order_id = @orderId;
+            """;
+
+        public static string RemoveMaterialFromOrderSql { get; private set; } = """
+            DELETE FROM order_materials
+            WHERE id = @materialId AND order_id = @orderId;
+            """;
+
+        public static string DeleteServicesFromOrderSql { get; private set; } = """
+            DELETE FROM order_services
+            WHERE order_id = @orderId;
+            """;
+
+        public static string RemoveMaterialsFromOrderSql { get; private set; } = """
+            DELETE FROM order_materials
+            WHERE order_id = @orderId;
+            """;
+
+        public static string DeleteOrderSql { get; private set; } = """
+            DELETE FROM orders
+            WHERE id = @orderId;
+            """;
+
+        public async Task<int> CreateOrder(IOrder serviceOrder)
+        {
+            return await Connection.ExecuteAsync(CreateServiceSql, OrderDb.Create(serviceOrder), Transaction);
+        }
+
+        public async Task<IEnumerable<IOrder>> GetOrders(Guid? id = null, string customer_document = "", string vehicle_license_plate = "")
+        {
+            var query = GetOrdersSql.BuildQuery(BuildQueryParameters(id, customer_document, vehicle_license_plate));
+            var orders = await Connection.QueryAsync<OrderDb>(query.Sql, query.Parameters, Transaction);
+
+            return orders.Select(order => order.ToDomain());
+        }
+
+        public async Task<IEnumerable<IOrder>> GetOperationalOrders()
+        {
+            var orders = await Connection.QueryAsync<OrderDb>(
+                GetOperationalOrdersSql,
+                new
+                {
+                    Finished = WorkOrderStatus.Finished.ToString(),
+                    Delivered = WorkOrderStatus.Delivered.ToString(),
+                    InExecution = WorkOrderStatus.InExecution.ToString(),
+                    WaitingForExecution = WorkOrderStatus.WaitingForExecution.ToString(),
+                    WaitingForApproval = WorkOrderStatus.WaitingForApproval.ToString(),
+                    InDiagnosis = WorkOrderStatus.InDiagnosis.ToString(),
+                    Received = WorkOrderStatus.Received.ToString()
+                },
+                Transaction);
+
+            return orders.Select(order => order.ToDomain());
+        }
+
+        public async Task<IOrder?> GetOrder(Guid? id = null, string customer_document = "", string vehicle_license_plate = "")
+        {
+            var query = GetOrdersSql.BuildQuery(BuildQueryParameters(id, customer_document, vehicle_license_plate));
+            var order = await Connection.QuerySingleOrDefaultAsync<OrderDb>(query.Sql, query.Parameters, Transaction);
+
+            if (order == null)
+                return null;
+
+            return order.ToDomain();
+        }
+
+        public async Task<int> UpdateOrder(IOrder order)
+        {
+            return await Connection.ExecuteAsync(UpdateOrderSql, order, Transaction);
+        }
+
+        public async Task<int> AddServiceToOrder(Guid orderId, IMechanicalService service)
+        {
+            return await Connection.ExecuteAsync(AddServiceToOrderSql, new { Id = service.Id, orderId = orderId, Description = service.Description, Hours = service.Hours, PricePerHour = service.PricePerHour, Amount = service.Amount }, Transaction);
+        }
+
+        public async Task<int> UpdateServiceOfOrder(Guid orderId, IMechanicalService service)
+        {
+            return await Connection.ExecuteAsync(UpdateServiceAmountOfOrderSql, new { Id = service.Id, orderId = orderId, Amount = service.Amount }, Transaction);
+        }
+
+        public async Task<int> RemoveServiceFromOrder(Guid orderId, Guid serviceId)
+        {
+            return await Connection.ExecuteAsync(DeleteServiceFromOrderSql, new { orderId, serviceId }, Transaction);
+        }
+
+        public async Task<int> AddMaterialToOrder(Guid orderId, IMaterial material)
+        {
+            var materialDb = MaterialDb.Create(material);
+
+            return await Connection.ExecuteAsync(AddMaterialToOrderSql, new { Id = materialDb.Id, orderId = orderId, Name = materialDb.Name, Brand = materialDb.Brand, Price = materialDb.Price, Amount = materialDb.Amount }, Transaction);
+        }
+
+        public async Task<int> RemoveMaterialFromOrder(Guid orderId, Guid materialId)
+        {
+            return await Connection.ExecuteAsync(RemoveMaterialFromOrderSql, new { orderId, materialId }, Transaction);
+        }
+
+        public async Task<int> UpdateMaterialFromOrder(Guid orderId, IMaterial material)
+        {
+            var materialDb = MaterialDb.Create(material);
+
+            return await Connection.ExecuteAsync(UpdateMaterialFromOrderSql, new { order_id = orderId, Id = materialDb.Id, Amount = materialDb.Amount }, Transaction);
+        }
+
+        public async Task<int> DeleteOrder(Guid orderId)
+        {
+            await Connection.ExecuteAsync(DeleteServicesFromOrderSql, new { orderId }, Transaction);
+
+            await Connection.ExecuteAsync(RemoveMaterialsFromOrderSql, new { orderId }, Transaction);
+
+            return await Connection.ExecuteAsync(DeleteOrderSql, new { orderId }, Transaction);
+        }
+
+        private static Dictionary<string, object?> BuildQueryParameters(Guid? id = null, string customer_document = "", string vehicle_license_plate = "")
+        {
+            return new() { { "os." + nameof(id), id }, { "os." + nameof(customer_document), customer_document }, { "os." + nameof(vehicle_license_plate), vehicle_license_plate } };
+        }
+    }
+}
