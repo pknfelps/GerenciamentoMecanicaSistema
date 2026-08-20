@@ -85,14 +85,13 @@ flowchart LR
 |---|---|
 | `GerenciamentoMecanicaSistema` | API HTTP, controllers, autenticação e middleware. |
 | `Domain` e `Domain.Interface` | Entidades, objetos de valor, regras e contratos do domínio. |
-| `Service` e `Service.Interface` | Casos de uso, regras de aplicação, eventos e contratos dos casos de uso. |
-| `Infrastructure.Interface` | Contratos implementados pela infraestrutura: persistência, autenticação e envio de e-mail. |
+| `Service` e `Service.Interface` | Casos de uso, regras de aplicação, eventos, contratos de entrada e portas de saída para persistência, autenticação e envio de e-mail. |
 | `Infrastructure` | Adaptadores externos: PostgreSQL, health check do banco, geração de JWT, hash de senha e envio de e-mails. |
-| `Bootstrapper` | Composition root para registro separado de aplicação, infraestrutura e persistência. |
+| `DependencyInjection` | Composition root para registro separado de aplicação, infraestrutura e persistência. |
 | `deploy` | Artefatos operacionais de Kubernetes e Terraform, fora da infraestrutura executada pela API. |
 | `ControllerTests`, `DomainTests`, `InfrastructureTests` e `ServiceTests` | Testes automatizados por camada. |
 
-As interfaces de repositório e transação ficam em `Infrastructure.Interface/Persistence`. As implementações PostgreSQL ficam em `Infrastructure/Persistence/PostgreSql`. Dessa forma, `Service` e `Infrastructure` compartilham apenas as abstrações de `Infrastructure.Interface`, sem que os casos de uso conheçam classes concretas.
+Os contratos dos casos de uso e as portas de saída para repositórios, transação, autenticação e e-mail ficam em `Service.Interface`. `Service` implementa os casos de uso contra essas abstrações, enquanto `Infrastructure` fornece os adapters concretos, incluindo as implementações PostgreSQL de `Infrastructure/Persistence/PostgreSql`. O projeto `DependencyInjection` atua como composition root e conecta os adapters aos contratos sem expor detalhes de infraestrutura aos casos de uso.
 
 No cadastro de usuários, `Password` valida a senha em texto puro antes da geração do hash. `UserCredentials`, abstraído por `IUserCredentials`, transporta somente o usuário e a string do hash nos fluxos de persistência e autenticação. Consultas comuns retornam `IUser` sem senha ou hash.
 
@@ -423,7 +422,7 @@ O fluxo executado é:
 2. Restauração, build e testes automatizados com geração de cobertura.
 3. Análise de código no SonarCloud.
 4. Build da imagem Docker.
-5. Publicação da imagem `felipejesusoliveira/gerenciamentomecanicasistema:latest` no Docker Hub.
+5. Publicação da imagem `felipejesusoliveira/gerenciamentomecanicasistema:sha-<commit-sha>` no Docker Hub.
 6. Autenticação na AWS e atualização do kubeconfig do cluster `api-cluster`.
 7. Criação ou atualização do Secret Kubernetes a partir dos secrets protegidos do repositório.
 8. Aplicação dos manifestos com `kubectl apply -k deploy/kubernetes`.

@@ -5,7 +5,7 @@ using Domain.Interface.Stock;
 using Domain.Interface.Vehicle;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using Infrastructure.Interface.Persistence;
+using Service.Interface.Persistence;
 using Service;
 using Service.Interface;
 using Service.Interface.Exceptions;

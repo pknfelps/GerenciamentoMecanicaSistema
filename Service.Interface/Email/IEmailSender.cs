@@ -1,4 +1,4 @@
-namespace Infrastructure.Interface.Email
+namespace Service.Interface.Email
 {
     public interface IEmailSender
     {

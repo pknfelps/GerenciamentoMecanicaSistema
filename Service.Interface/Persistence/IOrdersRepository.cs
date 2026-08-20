@@ -2,7 +2,7 @@ using Domain.Interface.Order;
 using Domain.Interface.Service;
 using Domain.Interface.Stock;
 
-namespace Infrastructure.Interface.Persistence
+namespace Service.Interface.Persistence
 {
     public interface IOrdersRepository
     {

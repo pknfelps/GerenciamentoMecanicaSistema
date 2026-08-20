@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Logging;
-using Infrastructure.Interface.Persistence;
+using Service.Interface.Persistence;
 using System.Data;
 
 namespace Infrastructure.Persistence.PostgreSql.Transactions

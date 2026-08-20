@@ -1,7 +1,7 @@
 using Infrastructure.Authentication;
 using Infrastructure.Email;
-using Infrastructure.Interface.Authentication;
-using Infrastructure.Interface.Email;
+using Service.Interface.Authentication;
+using Service.Interface.Email;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

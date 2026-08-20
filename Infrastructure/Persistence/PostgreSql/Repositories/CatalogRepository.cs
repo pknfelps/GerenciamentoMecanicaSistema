@@ -3,7 +3,7 @@ using Domain.Interface.Service;
 using Infrastructure.Persistence.PostgreSql.Models;
 using Infrastructure.Persistence.PostgreSql.Querying;
 using Infrastructure.Persistence.PostgreSql.Transactions;
-using Infrastructure.Interface.Persistence;
+using Service.Interface.Persistence;
 using System.Data;
 
 namespace Infrastructure.Persistence.PostgreSql.Repositories

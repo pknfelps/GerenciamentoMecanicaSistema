@@ -5,10 +5,9 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
 COPY ["GerenciamentoMecanicaSistema/GerenciamentoMecanicaSistema.csproj", "GerenciamentoMecanicaSistema/"]
-COPY ["Bootstrapper/DependencyInjection.csproj", "Bootstrapper/"]
+COPY ["DependencyInjection/DependencyInjection.csproj", "DependencyInjection/"]
 COPY ["Domain.Interface/Domain.Interface.csproj", "Domain.Interface/"]
 COPY ["Domain/Domain.csproj", "Domain/"]
-COPY ["Infrastructure.Interface/Infrastructure.Interface.csproj", "Infrastructure.Interface/"]
 COPY ["Infrastructure/Infrastructure.csproj", "Infrastructure/"]
 COPY ["Service.Interface/Service.Interface.csproj", "Service.Interface/"]
 COPY ["Service/Service.csproj", "Service/"]

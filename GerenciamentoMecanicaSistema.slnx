@@ -1,12 +1,11 @@
 <Solution>
   <Folder Name="/src/">
     <File Path="docker-compose.yaml" />
-    <Project Path="Bootstrapper/DependencyInjection.csproj" />
+    <Project Path="DependencyInjection/DependencyInjection.csproj" />
     <Project Path="Domain.Interface/Domain.Interface.csproj" />
     <Project Path="Domain/Domain.csproj" />
     <Project Path="GerenciamentoMecanicaSistema/GerenciamentoMecanicaSistema.csproj" />
     <Project Path="Infrastructure/Infrastructure.csproj" />
-    <Project Path="Infrastructure.Interface/Infrastructure.Interface.csproj" />
     <Project Path="Service.Interface/Service.Interface.csproj" />
     <Project Path="Service/Service.csproj" />
   </Folder>

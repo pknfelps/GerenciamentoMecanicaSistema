@@ -1,6 +1,6 @@
 using Domain.Interface.Service;
 using NSubstitute;
-using Infrastructure.Interface.Persistence;
+using Service.Interface.Persistence;
 using Service;
 using Service.Interface;
 using Service.Interface.Exceptions;

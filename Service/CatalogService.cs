@@ -1,6 +1,6 @@
 using Domain.Interface.Service;
 using Domain.MechanicalService;
-using Infrastructure.Interface.Persistence;
+using Service.Interface.Persistence;
 using Service.Interface;
 using Service.Interface.Exceptions;
 using Service.Interface.Commands.Catalog;

@@ -25,12 +25,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Testcontainers.PostgreSql" Version="4.11.0" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.14.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
-    <ProjectReference Include="..\Infrastructure.Interface\Infrastructure.Interface.csproj" />
     <ProjectReference Include="..\Service.Interface\Service.Interface.csproj" />
   </ItemGroup>
 

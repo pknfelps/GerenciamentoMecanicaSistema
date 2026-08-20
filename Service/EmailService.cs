@@ -1,7 +1,7 @@
 using Domain.Interface.Custumer;
 using Domain.Interface.Order;
 using Domain.Interface.Vehicle;
-using Infrastructure.Interface.Email;
+using Service.Interface.Email;
 using Service.Interface;
 using Service.Interface.Events.Order;
 

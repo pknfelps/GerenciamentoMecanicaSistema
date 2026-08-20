@@ -1,5 +1,5 @@
 using Domain.Vehicle;
-using Infrastructure.Interface.Persistence;
+using Service.Interface.Persistence;
 using Service.Interface;
 using Service.Interface.Exceptions;
 using Service.Interface.Commands.Vehicle;

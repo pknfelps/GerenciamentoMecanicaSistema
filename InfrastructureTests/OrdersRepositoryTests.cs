@@ -4,7 +4,7 @@ using Domain.Interface.Service;
 using Domain.Interface.Stock;
 using NSubstitute;
 using Infrastructure.Persistence.PostgreSql.Repositories;
-using Infrastructure.Interface.Persistence;
+using Service.Interface.Persistence;
 
 namespace InfrastructureTests
 {

@@ -1,4 +1,4 @@
-namespace Infrastructure.Interface.Persistence
+namespace Service.Interface.Persistence
 {
     public interface ITransactionManager
     {

@@ -1,4 +1,4 @@
-using Infrastructure.Interface.Email;
+using Service.Interface.Email;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MimeKit;

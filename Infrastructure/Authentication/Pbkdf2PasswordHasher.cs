@@ -1,5 +1,5 @@
 using System.Security.Cryptography;
-using Infrastructure.Interface.Authentication;
+using Service.Interface.Authentication;
 
 namespace Infrastructure.Authentication
 {

@@ -1,6 +1,6 @@
 using Domain.Interface.Custumer;
 
-namespace Infrastructure.Interface.Persistence
+namespace Service.Interface.Persistence
 {
     public interface ICustomerRepository
     {

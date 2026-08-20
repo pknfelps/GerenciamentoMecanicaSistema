@@ -4,7 +4,7 @@ using Infrastructure.Persistence.PostgreSql.Transactions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
-using Infrastructure.Interface.Persistence;
+using Service.Interface.Persistence;
 using System.Data;
 
 namespace DependencyInjection

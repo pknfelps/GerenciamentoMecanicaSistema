@@ -1,4 +1,4 @@
-namespace Infrastructure.Interface.Authentication
+namespace Service.Interface.Authentication
 {
     public interface ITokenGenerator
     {

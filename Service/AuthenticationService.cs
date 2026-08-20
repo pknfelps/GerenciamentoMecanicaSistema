@@ -1,5 +1,5 @@
-using Infrastructure.Interface.Authentication;
-using Infrastructure.Interface.Persistence;
+using Service.Interface.Authentication;
+using Service.Interface.Persistence;
 using Service.Interface;
 using Service.Interface.Commands.User;
 

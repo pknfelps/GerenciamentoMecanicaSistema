@@ -1,7 +1,7 @@
 using Domain.Interface.User;
 using Domain.User;
-using Infrastructure.Interface.Authentication;
-using Infrastructure.Interface.Persistence;
+using Service.Interface.Authentication;
+using Service.Interface.Persistence;
 using Service.Interface;
 using Service.Interface.Exceptions;
 using Service.Interface.Commands.User;

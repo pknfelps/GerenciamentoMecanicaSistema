@@ -7,7 +7,7 @@ using Domain.Stock;
 using Domain.Vehicle;
 using Domain.WorkOrder;
 using Microsoft.Extensions.Logging;
-using Infrastructure.Interface.Persistence;
+using Service.Interface.Persistence;
 using Service.Interface;
 using Service.Interface.Exceptions;
 using Service.Interface.Commands.Customer;

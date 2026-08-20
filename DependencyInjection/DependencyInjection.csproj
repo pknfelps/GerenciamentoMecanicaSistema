@@ -20,7 +20,6 @@
     <ProjectReference Include="..\Service.Interface\Service.Interface.csproj" />
     <ProjectReference Include="..\Service\Service.csproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
-    <ProjectReference Include="..\Infrastructure.Interface\Infrastructure.Interface.csproj" />
   </ItemGroup>
 
 </Project>

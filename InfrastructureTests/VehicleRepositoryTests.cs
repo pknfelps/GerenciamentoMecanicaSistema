@@ -1,7 +1,7 @@
 using Dapper;
 using Domain.Interface.Vehicle;
 using Infrastructure.Persistence.PostgreSql.Repositories;
-using Infrastructure.Interface.Persistence;
+using Service.Interface.Persistence;
 using NSubstitute;
 
 namespace InfrastructureTests

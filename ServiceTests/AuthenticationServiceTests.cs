@@ -1,8 +1,8 @@
 using Domain.Interface.User;
 using Domain.User;
-using Infrastructure.Interface.Authentication;
+using Service.Interface.Authentication;
 using NSubstitute;
-using Infrastructure.Interface.Persistence;
+using Service.Interface.Persistence;
 using Service;
 using Service.Interface;
 using Service.Interface.Commands.User;
