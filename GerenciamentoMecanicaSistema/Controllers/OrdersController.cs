@@ -25,21 +25,10 @@ namespace GerenciamentoMecanicaSistema.Controllers
             var orderId = await OrderService.CreateServiceOrder(
                 orderToCreate.Customer.ToCommand(),
                 orderToCreate.Vehicle.ToCommand(),
-                [.. orderToCreate.Services.Select(service => service.ToCommand())],
-                [.. orderToCreate.Materials.Select(material => material.ToCommand())]);
+                [.. orderToCreate.Services?.Select(service => service.ToCommand()) ?? []],
+                [.. orderToCreate.Materials?.Select(material => material.ToCommand()) ?? []]);
 
-            return CreatedAtAction(nameof(GetOrders), new { id = orderId }, new CreateOrderResponse(orderId));
-        }
-
-        [HttpGet()]
-        [EndpointDescription("Endpoint para listar as ordens de serviço")]
-        [ProducesResponseType(typeof(IEnumerable<WorkOrderResponse>), StatusCodes.Status200OK, Description = "Retorna a lista de ordens")]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        public async Task<OkObjectResult> GetOrders([FromQuery] Guid? id = null, [FromQuery] string vehicleLicensePlate = "")
-        {
-            var orders = await OrderService.GetOrders(id: id, vehicleLicensePlate: vehicleLicensePlate);
-
-            return Ok(orders.Select(WorkOrderResponse.Create));
+            return CreatedAtAction(nameof(CreateOrder), new { id = orderId }, new CreateOrderResponse(orderId));
         }
 
         [AllowAnonymous]
@@ -75,19 +64,6 @@ namespace GerenciamentoMecanicaSistema.Controllers
             var orders = await OrderService.GetOrders(id: id, vehicleLicensePlate: vehicleLicensePlate);
 
             return Ok(orders.Select(DetailedWorkOrderResponse.Create));
-        }
-
-        [AllowAnonymous]
-        [HttpGet("vehicles/{licensePlate}")]
-        [EndpointDescription("Endpoint para exibir as ordens detalhadas de um veículo. Não requer autenticação JWT para que possa ser acessado pelos clientes para acompanhar a ordem.")]
-        [ProducesResponseType(typeof(IEnumerable<DetailedWorkOrderResponse>), StatusCodes.Status200OK, Description = "Retorna todas as ordens detalhadas do cliente")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> GetVehicleOrders([FromRoute, RegularLicensePlateExpression] string licensePlate)
-        {
-            var order = await OrderService.GetOrders(vehicleLicensePlate: licensePlate);
-
-            return Ok(order.Select(DetailedWorkOrderResponse.Create));
         }
 
         [HttpPatch("{id}/diagnosis/start")]
@@ -149,7 +125,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
-        public async Task<IActionResult> RemoveMaterialOrSupplieFromOrder([FromRoute, GuidValidation] Guid id, [FromBody] UpdateOrderItemRequest<int> orderItem)
+        public async Task<IActionResult> RemoveMaterialOrSupplyFromOrder([FromRoute, GuidValidation] Guid id, [FromBody] UpdateOrderItemRequest<int> orderItem)
         {
             await OrderService.RemoveMaterialFromOrder(id, orderItem.ToCommand());
 

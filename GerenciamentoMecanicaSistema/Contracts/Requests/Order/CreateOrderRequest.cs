@@ -7,8 +7,8 @@ namespace GerenciamentoMecanicaSistema.Contracts.Requests.Order
     public class CreateOrderRequest(
         CreateCustomerRequest customer,
         CreateVehicleRequest vehicle,
-        IReadOnlyCollection<UpdateOrderItemRequest<int>> services,
-        IReadOnlyCollection<UpdateOrderItemRequest<int>> materials) : IValidatableObject
+        IReadOnlyCollection<UpdateOrderItemRequest<int>>? services = null,
+        IReadOnlyCollection<UpdateOrderItemRequest<int>>? materials = null) : IValidatableObject
     {
         [Required]
         public CreateCustomerRequest Customer { get; set; } = customer;
@@ -16,11 +16,9 @@ namespace GerenciamentoMecanicaSistema.Contracts.Requests.Order
         [Required]
         public CreateVehicleRequest Vehicle { get; set; } = vehicle;
 
-        [Required]
-        public IReadOnlyCollection<UpdateOrderItemRequest<int>> Services { get; set; } = services;
+        public IReadOnlyCollection<UpdateOrderItemRequest<int>>? Services { get; set; } = services;
 
-        [Required]
-        public IReadOnlyCollection<UpdateOrderItemRequest<int>> Materials { get; set; } = materials;
+        public IReadOnlyCollection<UpdateOrderItemRequest<int>>? Materials { get; set; } = materials;
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {

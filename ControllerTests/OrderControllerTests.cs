@@ -208,14 +208,45 @@ namespace ControllerTests
             await OrderService.Received(1).CreateServiceOrder(
                 Arg.Is<CreateCustomerCommand>(customer => customer == OrderToCreate.Customer.ToCommand()),
                 Arg.Is<CreateVehicleCommand>(vehicle => vehicle == OrderToCreate.Vehicle.ToCommand()),
-                Arg.Is<IReadOnlyCollection<UpdateOrderItemCommand<int>>>(services => services.SequenceEqual(OrderToCreate.Services.Select(service => service.ToCommand()))),
-                Arg.Is<IReadOnlyCollection<UpdateOrderItemCommand<int>>>(materials => materials.SequenceEqual(OrderToCreate.Materials.Select(material => material.ToCommand()))));
+                Arg.Is<IReadOnlyCollection<UpdateOrderItemCommand<int>>>(services => services.SequenceEqual(OrderToCreate.Services!.Select(service => service.ToCommand()))),
+                Arg.Is<IReadOnlyCollection<UpdateOrderItemCommand<int>>>(materials => materials.SequenceEqual(OrderToCreate.Materials!.Select(material => material.ToCommand()))));
 
             Assert.Multiple(() =>
             {
                 Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
                 Assert.That(createdOrder?.Id, Is.EqualTo(ExistingOrder.Id));
                 Assert.That(response.Headers.Location?.Query, Does.Contain(ExistingOrder.Id.ToString()));
+            });
+        }
+
+        [Test]
+        public async Task MustCreateOrderWithoutServicesAndMaterials()
+        {
+            OrderService.CreateServiceOrder(
+                Arg.Is<CreateCustomerCommand>(customer => customer == OrderToCreate.Customer.ToCommand()),
+                Arg.Is<CreateVehicleCommand>(vehicle => vehicle == OrderToCreate.Vehicle.ToCommand()),
+                Arg.Is<IReadOnlyCollection<UpdateOrderItemCommand<int>>>(services => services.Count == 0),
+                Arg.Is<IReadOnlyCollection<UpdateOrderItemCommand<int>>>(materials => materials.Count == 0))
+                .Returns(ExistingOrder.Id);
+
+            var response = await TestClient.PostAsJsonAsync("orders", new
+            {
+                OrderToCreate.Customer,
+                OrderToCreate.Vehicle
+            });
+
+            var createdOrder = await response.Content.ReadFromJsonAsync<CreateOrderResponse>();
+
+            await OrderService.Received(1).CreateServiceOrder(
+                Arg.Is<CreateCustomerCommand>(customer => customer == OrderToCreate.Customer.ToCommand()),
+                Arg.Is<CreateVehicleCommand>(vehicle => vehicle == OrderToCreate.Vehicle.ToCommand()),
+                Arg.Is<IReadOnlyCollection<UpdateOrderItemCommand<int>>>(services => services.Count == 0),
+                Arg.Is<IReadOnlyCollection<UpdateOrderItemCommand<int>>>(materials => materials.Count == 0));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
+                Assert.That(createdOrder?.Id, Is.EqualTo(ExistingOrder.Id));
             });
         }
 
@@ -307,37 +338,6 @@ namespace ControllerTests
         }
 
         [Test]
-        public async Task MustGetOrders()
-        {
-            var response = await TestClient.GetAsync($"orders");
-            var orders = await response.Content.ReadFromJsonAsync<List<WorkOrderResponse>>();
-
-            await OrderService.Received(1).GetOrders();
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-            Assert.That(orders, Has.Count.EqualTo(1));
-            Assert.That(orders[0], Is.Not.Null);
-            Assert.That(orders[0].Id, Is.EqualTo(ExistingOrder.Id));
-        }
-
-        [Test]
-        public async Task MustGetOrder()
-        {
-            var response = await TestClient.GetAsync($"orders?id={ExistingOrder.Id}");
-
-            var orders = await response.Content.ReadFromJsonAsync<List<WorkOrderResponse>>();
-
-            await OrderService.Received(1).GetOrders(id: ExistingOrder.Id);
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-            Assert.That(orders, Has.Count.EqualTo(1));
-
-            var order = orders[0];
-            Assert.That(order, Is.Not.Null);
-            Assert.That(order.Id, Is.EqualTo(ExistingOrder.Id));
-        }
-
-        [Test]
         public async Task MustGetDetailedOrder()
         {
             var response = await TestClient.GetAsync($"orders/details?id={ExistingOrder.Id}");
@@ -351,31 +351,6 @@ namespace ControllerTests
             var order = orders[0];
             Assert.That(order, Is.Not.Null);
             Assert.That(order.Id, Is.EqualTo(ExistingOrder.Id));
-        }
-
-        [Test]
-        public async Task MustGetVehicleOrders()
-        {
-            var response = await TestClient.GetAsync($"orders/vehicles/{ExistingOrder.VehicleLicensePlate}");
-
-            var orders = await response.Content.ReadFromJsonAsync<List<DetailedWorkOrderResponse>>();
-
-            await OrderService.Received(1).GetOrders(vehicleLicensePlate: ExistingOrder.VehicleLicensePlate);
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-            Assert.That(orders, Has.Count.EqualTo(1));
-            Assert.That(orders[0], Is.Not.Null);
-            Assert.That(orders[0].Id, Is.EqualTo(ExistingOrder.Id));
-        }
-
-        [Test]
-        public async Task MustReturnBadRequestIfTryGetVehicleOrdersWithInvalidModel()
-        {
-            var response = await TestClient.GetAsync($"orders/vehicles/0000");
-
-            await OrderService.Received(0).GetOrder(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string>());
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
 
         [Test]
@@ -724,7 +699,7 @@ namespace ControllerTests
             CreateOrderRequest request) =>
             customer == request.Customer.ToCommand()
             && vehicle == request.Vehicle.ToCommand()
-            && services.SequenceEqual(request.Services.Select(service => service.ToCommand()))
-            && materials.SequenceEqual(request.Materials.Select(material => material.ToCommand()));
+            && services.SequenceEqual(request.Services?.Select(service => service.ToCommand()) ?? [])
+            && materials.SequenceEqual(request.Materials?.Select(material => material.ToCommand()) ?? []);
     }
 }

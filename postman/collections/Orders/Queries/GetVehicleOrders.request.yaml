@@ -1,6 +1,0 @@
-$kind: http-request
-url: "{{base_url}}/orders/vehicles/:licensePlate"
-method: GET
-pathVariables:
-  licensePlate: CVC2025
-order: 5000
