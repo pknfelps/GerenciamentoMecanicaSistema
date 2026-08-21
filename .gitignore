@@ -57,6 +57,7 @@ deploy/kubernetes/db-secrets.yaml
 ~$*
 *~
 *.binlog
+StressTests
 
 # Terraform
 **/.terraform/*

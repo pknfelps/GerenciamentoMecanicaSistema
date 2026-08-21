@@ -17,22 +17,22 @@ namespace Domain.Stock
         public Material(Guid id, string name, string brand, decimal price, int amount, int reservedAmount = 0)
         {
             if (id == Guid.Empty)
-                throw new DomainValidationException("Id não pode ser vazio");
+                throw new DomainValidationException("O ID do material não pode ser vazio");
 
             if (string.IsNullOrEmpty(name))
                 throw new DomainValidationException("Nome deve ser preenchido");
 
             if (string.IsNullOrEmpty(brand))
-                throw new DomainValidationException("Marca deve ser preenchido");
+                throw new DomainValidationException("A marca deve ser preenchida");
 
             if (price <= 0)
-                throw new DomainValidationException($"Preço não pode ser menor ou igual a 0");
+                throw new DomainValidationException("O preço não pode ser menor ou igual a zero");
 
             if (amount < 0)
-                throw new DomainValidationException($"Quantidade não pode ser menor ou igual a 0");
+                throw new DomainValidationException("A quantidade não pode ser menor que zero");
 
             if (reservedAmount < 0)
-                throw new DomainValidationException($"Quantidade reservada não pode ser menor ou igual a 0");
+                throw new DomainValidationException("A quantidade reservada não pode ser menor que zero");
 
             Id = id;
             Name = name;
@@ -93,7 +93,7 @@ namespace Domain.Stock
         public void UpdatePrice(decimal price)
         {
             if (price <= 0)
-                throw new DomainBusinessRuleException("Preço não pode ser menor ou igual a 0");
+                throw new DomainBusinessRuleException("O preço não pode ser menor ou igual a zero");
 
             Price = price;
         }

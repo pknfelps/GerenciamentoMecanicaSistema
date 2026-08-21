@@ -47,7 +47,7 @@ namespace Domain.WorkOrder
         public Order(Guid id, string customerDocument, string vehicleLicensePlate, List<IMechanicalService> services, List<IMaterial> materials, decimal budget, WorkOrderStatus status, DateTime dateCreated, DateTime dateFinished)
         {
             if (id == Guid.Empty)
-                throw new DomainValidationException("Id não pode ser vazio");
+                throw new DomainValidationException("O ID da ordem não pode ser vazio");
 
             if (string.IsNullOrEmpty(customerDocument))
                 throw new DomainValidationException("Documento do cliente deve ser preenchido");
@@ -148,7 +148,7 @@ namespace Domain.WorkOrder
         public void FinalizeDiagnosis()
         {
             if (Status is not WorkOrderStatus.InDiagnosis)
-                throw new InvalidDomainStateException("Só é possível finalizar o diagnóstico enquanto a ordem Em Diagnósotico");
+                throw new InvalidDomainStateException("Só é possível finalizar o diagnóstico enquanto a ordem estiver em diagnóstico");
 
             if (services.Count <= 0)
                 throw new DomainBusinessRuleException("Não é possível finalizar o diagnóstico sem serviços");

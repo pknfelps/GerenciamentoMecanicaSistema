@@ -18,7 +18,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para registrar um veículo")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> RegisterVehicle([FromBody] CreateVehicleRequest vehicle)
         {
@@ -42,7 +42,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para atualizar os dados de um veículo")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> UpdateVehicle([FromRoute, GuidValidation] Guid id, [FromBody] CreateVehicleRequest vehicle)
         {
@@ -52,10 +52,10 @@ namespace GerenciamentoMecanicaSistema.Controllers
         }
 
         [HttpDelete("{id}")]
-        [EndpointDescription("Endpoint para deletar um veículo")]
+        [EndpointDescription("Endpoint para excluir um veículo")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> DeleteVehicle([FromRoute, GuidValidation] Guid id)
         {

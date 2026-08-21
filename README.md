@@ -377,6 +377,17 @@ O PVC permanece no projeto como referência de estudo, mas não é aplicado pelo
 
 O Secret `db-secrets` não é versionado. Na pipeline ele é criado a partir dos GitHub Secrets. Para uma aplicação manual de estudo, use [db-secrets.example.yaml](deploy/kubernetes/db-secrets.example.yaml) apenas como modelo, gere um arquivo local ignorado pelo Git ou crie o Secret diretamente com `kubectl create secret`.
 
+O Secret deve existir no namespace antes da aplicação do Kustomize. Para a configuração local por arquivo:
+
+```powershell
+Copy-Item deploy/kubernetes/db-secrets.example.yaml deploy/kubernetes/db-secrets.yaml
+# Substitua todos os valores replace-me no arquivo local.
+kubectl apply -f deploy/kubernetes/db-secrets.yaml
+kubectl get secret db-secrets
+```
+
+O manifesto mantém uma imagem publicada com tag imutável para permitir o deploy manual. Durante a pipeline, o Kustomize substitui essa referência pela tag `sha-<commit-sha>` recém-publicada.
+
 Se o cluster ainda não possuir o Metrics Server, aplique:
 
 ```bash

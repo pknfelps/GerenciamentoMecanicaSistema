@@ -33,7 +33,7 @@ namespace Service
         public async Task<MaterialResult?> GetMaterial(Guid? id = null, string name = "", string brand = "")
         {
             if (id == null && string.IsNullOrEmpty(name) && string.IsNullOrEmpty(brand))
-                throw new InvalidRequestException("Falha ao procurar item. Nenhum argumento fornecido");
+                throw new InvalidRequestException("Falha ao buscar o item: nenhum argumento foi fornecido");
 
             var material = await Repository.GetMaterial(id, name, brand);
 
@@ -107,7 +107,7 @@ namespace Service
             var result = await Repository.DeleteMaterial(material.Id);
 
             if (result == 0)
-                throw new ApplicationFailureException("Falha ao deletar o item");
+                throw new ApplicationFailureException("Falha ao excluir o item");
         }
 
         private static IMaterial CreateDomain(CreateMaterialCommand material) => new Material(material.Name, material.Brand, material.Price, material.Amount);

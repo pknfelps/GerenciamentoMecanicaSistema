@@ -7,7 +7,7 @@ namespace GerenciamentoMecanicaSistema.Contracts.Validation
     {
         public GenericValueValidationAttribute()
         {
-            ErrorMessage = "O campo {0} deve ser maior que 0 ou 0.1";
+            ErrorMessage = "O campo {0} deve ser maior que zero para valores inteiros ou maior que 0,1 para valores decimais";
         }
 
         public override bool IsValid(object? value)

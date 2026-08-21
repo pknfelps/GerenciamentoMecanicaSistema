@@ -14,12 +14,12 @@ namespace Service
         public async Task RegisterVehicle(CreateVehicleCommand vehicle)
         {
             if (await Repository.GetVehicle(license_plate: LicensePlateWrapper.CreateLicensePlate(vehicle.LicensePlate).License) != null)
-                throw new ConflictException("Veiculo jÃ¡ registrado no sistema");
+                throw new ConflictException("Veículo já registrado no sistema");
 
             var registry = await Repository.RegisterVehicle(CreateDomain(vehicle));
 
             if (registry == 0)
-                throw new ApplicationFailureException("Falha ao registrar veÃ­culo");
+                throw new ApplicationFailureException("Falha ao registrar o veículo");
         }
 
         public async Task<IEnumerable<VehicleResult>> GetVehicles(Guid? id = null, string licensePlate = "")
@@ -47,24 +47,24 @@ namespace Service
 
         public async Task UpdateVehicle(Guid id, CreateVehicleCommand vehicle)
         {
-            var vehicleToUpdate = await Repository.GetVehicle(id: id) ?? throw new NotFoundException("Veiculo nÃ£o encontrado");
+            var vehicleToUpdate = await Repository.GetVehicle(id: id) ?? throw new NotFoundException("Veículo não encontrado");
 
             vehicleToUpdate.UpdateDetails(vehicle.Brand, vehicle.Model, vehicle.Year);
 
             var registry = await Repository.UpdateVehicle(vehicleToUpdate);
 
             if (registry == 0)
-                throw new ApplicationFailureException("Falha ao atualizar veÃ­culo");
+                throw new ApplicationFailureException("Falha ao atualizar o veículo");
         }
 
         public async Task DeleteVehicle(Guid id)
         {
-            _ = await Repository.GetVehicle(id: id) ?? throw new NotFoundException("Veiculo nÃ£o encontrado");
+            _ = await Repository.GetVehicle(id: id) ?? throw new NotFoundException("Veículo não encontrado");
 
             var registry = await Repository.DeleteVehicle(id);
 
             if (registry == 0)
-                throw new ApplicationFailureException("Falha ao deletar veÃ­culo");
+                throw new ApplicationFailureException("Falha ao excluir o veículo");
         }
 
         private static Domain.Vehicle.Vehicle CreateDomain(CreateVehicleCommand vehicle) => new(vehicle.CustomerDocument, vehicle.Brand, vehicle.Model, vehicle.Year, vehicle.LicensePlate);
