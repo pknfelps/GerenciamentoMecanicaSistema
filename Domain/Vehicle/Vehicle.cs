@@ -19,7 +19,7 @@ namespace Domain.Vehicle
         public Vehicle(Guid id, string customerDocument, string brand, string model, int year, string licensePlate)
         {
             if (id == Guid.Empty)
-                throw new DomainValidationException("Id não pode ser vazio");
+                throw new DomainValidationException("O ID do veículo não pode ser vazio");
 
             if (string.IsNullOrEmpty(customerDocument))
                 throw new DomainValidationException("Documento do cliente deve ser preenchido");

@@ -7,7 +7,7 @@ namespace GerenciamentoMecanicaSistema.Contracts.Validation
     {
         public GuidValidationAttribute()
         {
-            ErrorMessage = "O campo {0} não pode ser um Guid vazio.";
+            ErrorMessage = "O campo {0} não pode ser um GUID vazio";
         }
 
         public override bool IsValid(object? value)

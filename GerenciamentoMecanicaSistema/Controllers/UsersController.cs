@@ -18,7 +18,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para registrar um usuário")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> RegisterUser([FromBody] CreateUserRequest user)
         {
@@ -31,7 +31,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para exibir um usuário")]
         [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK, Description = "Retorna o usuário")]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         [ProducesResponseType(StatusCodes.Status404NotFound, Description = "Usuário não encontrado")]
         public async Task<IActionResult> GetUser([FromQuery, RegularNonEmptyStringExpression] string name = "", [FromQuery, RegularNonEmptyStringExpression] string role = "")

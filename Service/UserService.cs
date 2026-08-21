@@ -17,13 +17,13 @@ namespace Service
         public async Task RegisterUser(CreateUserCommand user)
         {
             if (await Repository.GetUser(user.Name, user.Role.ToString()) != null)
-                throw new ConflictException("Usuario jÃ¡ cadastrado no sistema");
+                throw new ConflictException("Usuário já cadastrado no sistema");
 
             var credentials = CreateCredentials(user);
             var registry = await Repository.RegisterUser(credentials);
 
             if (registry == 0)
-                throw new ApplicationFailureException("Falha ao cadastrar o usuÃ¡rio");
+                throw new ApplicationFailureException("Falha ao cadastrar o usuário");
         }
 
         public async Task<UserResult?> GetUser(string name = "", string role = "")

@@ -16,10 +16,10 @@ namespace Domain.Customer
         public Customer(Guid id, string name, string document, string phone, string email)
         {
             if (id == Guid.Empty)
-                throw new DomainValidationException($"{nameof(id)} deve ser preenchido");
+                throw new DomainValidationException("O ID do cliente deve ser preenchido");
 
             if (string.IsNullOrWhiteSpace(name))
-                throw new DomainValidationException($"{nameof(name)} deve ser preenchido");
+                throw new DomainValidationException("O nome do cliente deve ser preenchido");
 
             Id = id;
             Name = name;

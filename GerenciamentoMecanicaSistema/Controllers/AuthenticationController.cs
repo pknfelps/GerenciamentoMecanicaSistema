@@ -11,10 +11,10 @@ namespace GerenciamentoMecanicaSistema.Controllers
         private IAuthenticationService AuthenticationService { get; set; } = authenticationService;
 
         [HttpPost()]
-        [EndpointDescription("Endpoint de authenticação do usuário")]
+        [EndpointDescription("Endpoint de autenticação do usuário")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK, Description = "Retorna o token de autenticação")]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Usuário ou senha inválidos")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         public async Task<IActionResult> Login([FromBody] CreateUserRequest user)
         {
             var token = await AuthenticationService.Authenticate(user.ToCommand());

@@ -18,7 +18,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para registrar uma ordem de serviço")]
         [ProducesResponseType(typeof(CreateOrderResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest orderToCreate)
         {
@@ -64,9 +64,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
 
         [HttpPatch("{id}/diagnosis/start")]
         [EndpointDescription("Endpoint para iniciar o diagnóstico da ordem")]
-        [ProducesResponseType(StatusCodes.Status204NoContent, Description = "Retorna todas as ordens detalhadas do cliente")]
+        [ProducesResponseType(StatusCodes.Status204NoContent, Description = "Diagnóstico iniciado com sucesso")]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         [ProducesResponseType(StatusCodes.Status404NotFound, Description = "Ordem não encontrada para o cliente")]
         public async Task<IActionResult> StartDiagnosis([FromRoute, GuidValidation] Guid id)
@@ -80,7 +80,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para adicionar serviços a uma ordem")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> AddServiceToOrder([FromRoute, GuidValidation] Guid id, [FromBody] UpdateOrderItemRequest<int> service)
         {
@@ -93,7 +93,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para remover serviços de uma ordem")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> RemoveServiceOfOrder([FromRoute, GuidValidation] Guid id, [FromBody] UpdateOrderItemRequest<int> service)
         {
@@ -106,7 +106,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para adicionar itens a uma ordem")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> AddMaterialToOrder([FromRoute, GuidValidation] Guid id, [FromBody] UpdateOrderItemRequest<int> orderItem)
         {
@@ -119,7 +119,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para remover itens de uma ordem")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> RemoveMaterialOrSupplyFromOrder([FromRoute, GuidValidation] Guid id, [FromBody] UpdateOrderItemRequest<int> orderItem)
         {
@@ -132,7 +132,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para completar o diagnóstico de uma ordem, gerar o orçamento e notificar o cliente")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> CompleteDiagnosis([FromRoute, GuidValidation] Guid id)
         {
@@ -143,9 +143,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
 
         [AllowAnonymous]
         [HttpPatch("{id}/budget")]
-        [EndpointDescription("Endpoint para aprovar ou recusar o orçamento de uma ordem. Não requer autenticação JWT para que o cliente possa aprovar sem a necessidade de um login. Autenticação será feita através do documento do cliente no corpo da request")]
+        [EndpointDescription("Endpoint para aprovar ou recusar o orçamento de uma ordem. Não requer autenticação JWT para que o cliente possa aprovar sem a necessidade de login. A autenticação é realizada por meio do documento do cliente informado no corpo da requisição")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> ApproveBudget([FromRoute, GuidValidation] Guid id, [FromBody] ApproveOrderRequest approveOrder)
         {
@@ -158,7 +158,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para iniciar a execução de uma ordem")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> StartExecution([FromRoute, GuidValidation] Guid id)
         {
@@ -171,7 +171,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para completar a execução de uma ordem")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> CompleteExecution([FromRoute, GuidValidation] Guid id)
         {
@@ -184,7 +184,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para definir o veículo como entregue e finalizar a ordem por completo")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> VehicleDelivered([FromRoute, GuidValidation] Guid id)
         {
@@ -194,10 +194,10 @@ namespace GerenciamentoMecanicaSistema.Controllers
         }
 
         [HttpDelete("{id}")]
-        [EndpointDescription("Endpoint para deletar uma ordem")]
+        [EndpointDescription("Endpoint para excluir uma ordem")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> DeleteOrder([FromRoute, GuidValidation] Guid id)
         {

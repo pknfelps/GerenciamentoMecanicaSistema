@@ -40,10 +40,10 @@ namespace Service
             ValidateOrderItems(orderToCreate.Materials, "materiais");
 
             var customer = await DependenciesGateway.GetCustomerById(orderToCreate.CustomerId)
-                ?? throw new NotFoundException($"Cliente com id \"{orderToCreate.CustomerId}\" não encontrado");
+                ?? throw new NotFoundException($"Cliente com ID \"{orderToCreate.CustomerId}\" não encontrado");
             
             var vehicle = await DependenciesGateway.GetVehicleById(orderToCreate.VehicleId)
-                ?? throw new NotFoundException($"Veículo com id \"{orderToCreate.VehicleId}\" não encontrado");
+                ?? throw new NotFoundException($"Veículo com ID \"{orderToCreate.VehicleId}\" não encontrado");
 
             if (vehicle.CustomerDocument.Id != customer.Document.Id)
                 throw new InvalidRequestException("O veículo informado não pertence ao cliente");
@@ -62,22 +62,22 @@ namespace Service
                     DateTime.Now);
 
                 if (await Repository.CreateOrder(order) == 0)
-                    throw new ApplicationFailureException("Erro ao salvar ordem");
+                    throw new ApplicationFailureException("Falha ao salvar a ordem");
 
                 foreach (var service in order.Services)
                     if (await Repository.AddServiceToOrder(order.Id, service) == 0)
-                        throw new ApplicationFailureException("Erro ao salvar serviço da ordem");
+                        throw new ApplicationFailureException("Falha ao salvar o serviço da ordem");
 
                 foreach (var material in order.Materials)
                     if (await Repository.AddMaterialToOrder(order.Id, material) == 0)
-                        throw new ApplicationFailureException("Erro ao salvar material da ordem");
+                        throw new ApplicationFailureException("Falha ao salvar o material da ordem");
 
                 createdOrder = order;
                 return order.Id;
             });
 
             await EventDispatcher.Publish(new OrderStatusChangedEvent(CreateNotificationSnapshot(
-                createdOrder ?? throw new ApplicationFailureException("Erro ao criar ordem"))));
+                createdOrder ?? throw new ApplicationFailureException("Falha ao criar a ordem"))));
 
             return orderId;
         }
@@ -88,7 +88,7 @@ namespace Service
                 throw new InvalidRequestException("A identificação da ordem deve ser informada");
 
             var order = await Repository.GetOrder(orderId)
-                ?? throw new NotFoundException($"Ordem com id \"{orderId}\" não encontrada");
+                ?? throw new NotFoundException($"Ordem com ID \"{orderId}\" não encontrada");
 
             return order.Status;
         }
@@ -116,7 +116,7 @@ namespace Service
         public async Task<DetailedWorkOrderResult?> GetOrder(Guid? id = null, string customerDocument = "", string vehicleLicensePlate = "")
         {
             if (id == null && string.IsNullOrEmpty(customerDocument) && string.IsNullOrEmpty(vehicleLicensePlate))
-                throw new InvalidRequestException("Falha ao pegar ordem. Nenhum argumento fornecido");
+                throw new InvalidRequestException("Falha ao buscar a ordem: nenhum argumento foi fornecido");
 
             if (!string.IsNullOrEmpty(customerDocument))
                 customerDocument = DocumentWrapper.CreateDocument(customerDocument).Id;
@@ -134,7 +134,7 @@ namespace Service
 
         public async Task StartDiagnosis(Guid orderId)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException("Serviço não encontrado");
+            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException("Ordem não encontrada");
 
             order.StartDiagnosis();
 
@@ -156,7 +156,7 @@ namespace Service
 
             if (orderService == null)
             {
-                var catalogService = await DependenciesGateway.GetServiceById(service.Id) ?? throw new NotFoundException($"Serviço com id \"{service.Id}\" não encontrado");
+                var catalogService = await DependenciesGateway.GetServiceById(service.Id) ?? throw new NotFoundException($"Serviço com ID \"{service.Id}\" não encontrado");
                 var serviceToAdd = CreateOrderService(catalogService, service.Value);
 
                 serviceToPersist = order.AddService(serviceToAdd);
@@ -171,7 +171,7 @@ namespace Service
             }
 
             if (registry == 0)
-                throw new ApplicationFailureException("Erro ao salvar serviço");
+                throw new ApplicationFailureException("Falha ao salvar o serviço da ordem");
         }
 
         public async Task RemoveServiceOfOrder(Guid orderId, UpdateOrderItemCommand<int> service)
@@ -189,7 +189,7 @@ namespace Service
                 registry = await Repository.UpdateServiceOfOrder(orderId, updatedService);
 
             if (registry == 0)
-                throw new ApplicationFailureException("Erro ao salvar serviço");
+                throw new ApplicationFailureException("Falha ao atualizar o serviço da ordem");
         }
 
         public async Task AddMaterialToOrder(Guid orderId, UpdateOrderItemCommand<int> orderItem)
@@ -219,7 +219,7 @@ namespace Service
                 }
 
                 if (registry == 0)
-                    throw new ApplicationFailureException("Erro ao salvar serviço");
+                    throw new ApplicationFailureException("Falha ao salvar o material da ordem");
             });
         }
 
@@ -241,7 +241,7 @@ namespace Service
                     registry = await Repository.UpdateMaterialFromOrder(orderId, updatedMaterial);
 
                 if (registry == 0)
-                    throw new ApplicationFailureException("Erro ao salvar serviço");
+                    throw new ApplicationFailureException("Falha ao atualizar o material da ordem");
             });
         }
 
@@ -267,7 +267,7 @@ namespace Service
 
         public async Task ApproveBudget(Guid orderId, ApproveOrderCommand approve)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com id \"{orderId}\" não encontrada");
+            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com ID \"{orderId}\" não encontrada");
             var customerDocument = DocumentWrapper.CreateDocument(approve.CustomerDocument).Id;
 
             if (order.CustomerDocument.Id != customerDocument)
@@ -299,21 +299,21 @@ namespace Service
 
         public async Task StartExecution(Guid orderId)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com id \"{orderId}\" não encontrada");
+            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com ID \"{orderId}\" não encontrada");
 
             order.StartService();
 
             var registry = await Repository.UpdateOrder(order);
 
             if (registry == 0)
-                throw new ApplicationFailureException("Falha ao inicar execução");
+                throw new ApplicationFailureException("Falha ao iniciar a execução");
 
             await EventDispatcher.Publish(new OrderStatusChangedEvent(CreateNotificationSnapshot(order)));
         }
 
         public async Task CompleteExecution(Guid orderId)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com id \"{orderId}\" não encontrada");
+            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com ID \"{orderId}\" não encontrada");
 
             order.CompleteService(DateTime.Now);
 
@@ -325,7 +325,7 @@ namespace Service
                 var registry = await Repository.UpdateOrder(order);
 
                 if (registry == 0)
-                    throw new ApplicationFailureException("Falha ao completar execução");
+                    throw new ApplicationFailureException("Falha ao completar a execução");
             });
 
             await EventDispatcher.Publish(new OrderStatusChangedEvent(CreateNotificationSnapshot(order)));
@@ -333,14 +333,14 @@ namespace Service
 
         public async Task DeliverVehicle(Guid orderId)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com id \"{orderId}\" não encontrada");
+            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com ID \"{orderId}\" não encontrada");
 
             order.DeliverVehicle();
 
             var registry = await Repository.UpdateOrder(order);
 
             if (registry == 0)
-                throw new ApplicationFailureException("Falha ao inicar execução");
+                throw new ApplicationFailureException("Falha ao registrar a entrega do veículo");
 
             await EventDispatcher.Publish(new OrderStatusChangedEvent(CreateNotificationSnapshot(order)));
         }
@@ -359,7 +359,7 @@ namespace Service
                     var registry = await Repository.DeleteOrder(orderId);
 
                     if (registry == 0)
-                        throw new ApplicationFailureException("Falha ao deletar ordem");
+                        throw new ApplicationFailureException("Falha ao excluir a ordem");
                 });
 
                 return;
@@ -368,7 +368,7 @@ namespace Service
             var registry = await Repository.DeleteOrder(orderId);
 
             if (registry == 0)
-                throw new ApplicationFailureException("Falha ao deletar ordem");
+                throw new ApplicationFailureException("Falha ao excluir a ordem");
         }
 
         private async Task<List<IMechanicalService>> ResolveServices(IReadOnlyCollection<UpdateOrderItemCommand<int>> requestedServices)
@@ -378,7 +378,7 @@ namespace Service
             foreach (var requestedService in requestedServices)
             {
                 var catalogService = await DependenciesGateway.GetServiceById(requestedService.Id)
-                    ?? throw new NotFoundException($"Serviço com id \"{requestedService.Id}\" não encontrado");
+                    ?? throw new NotFoundException($"Serviço com ID \"{requestedService.Id}\" não encontrado");
 
                 services.Add(new MechanicalService(
                     catalogService.Id,
@@ -398,7 +398,7 @@ namespace Service
             foreach (var requestedMaterial in requestedMaterials)
             {
                 var stockMaterial = await DependenciesGateway.GetMaterialById(requestedMaterial.Id)
-                    ?? throw new NotFoundException($"Material com id \"{requestedMaterial.Id}\" não encontrado");
+                    ?? throw new NotFoundException($"Material com ID \"{requestedMaterial.Id}\" não encontrado");
 
                 await StockService.ReserveMaterialAmount(requestedMaterial.Id, requestedMaterial.Value);
 

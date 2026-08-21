@@ -35,7 +35,7 @@ namespace Service
         public async Task<ServiceResult?> GetService(Guid? id = null, string description = "")
         {
             if (id == null && string.IsNullOrEmpty(description))
-                throw new InvalidRequestException("Falha ao procurar serviço. Nenhum argumento fornecido");
+                throw new InvalidRequestException("Falha ao buscar o serviço: nenhum argumento foi fornecido");
 
             var service = await Repository.GetService(id, description);
 
@@ -66,7 +66,7 @@ namespace Service
             var registry = await Repository.DeleteService(serviceId);
 
             if (registry == 0)
-                throw new ApplicationFailureException("Falha ao atualizar o serviço");
+                throw new ApplicationFailureException("Falha ao excluir o serviço");
         }
 
         private static ServiceResult CreateResult(IMechanicalService service)

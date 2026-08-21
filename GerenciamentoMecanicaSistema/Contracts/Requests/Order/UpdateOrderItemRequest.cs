@@ -7,7 +7,7 @@ namespace GerenciamentoMecanicaSistema.Contracts.Requests.Order
 {
     public class UpdateOrderItemRequest<T>(Guid id, T value)
     {
-        [Description("Id único do item")]
+        [Description("ID único do item")]
         [Required, GuidValidation]
         public Guid Id { get; set; } = id;
 

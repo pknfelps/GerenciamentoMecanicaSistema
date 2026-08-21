@@ -38,7 +38,7 @@ namespace Service
         public async Task<CustomerResult?> GetCustomer(Guid? id = null, string name = "", string document = "")
         {
             if (id == null && string.IsNullOrEmpty(name) && string.IsNullOrEmpty(document))
-                throw new InvalidRequestException("Erro ao buscar cliente. Nenhum parâmetro fornecido");
+                throw new InvalidRequestException("Falha ao buscar o cliente: nenhum parâmetro foi fornecido");
 
             if (!string.IsNullOrEmpty(document))
                 document = DocumentWrapper.CreateDocument(document).Id;
@@ -70,7 +70,7 @@ namespace Service
             var registry = await Repository.DeleteCustomer(id);
 
             if (registry == 0)
-                throw new ApplicationFailureException("Falha ao deletar o cliente");
+                throw new ApplicationFailureException("Falha ao excluir o cliente");
         }
 
         private static CustomerResult CreateResult(ICustomer customer)

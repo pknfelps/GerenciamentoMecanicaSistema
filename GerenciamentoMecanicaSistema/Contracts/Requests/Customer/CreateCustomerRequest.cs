@@ -19,8 +19,8 @@ namespace GerenciamentoMecanicaSistema.Contracts.Requests.Customer
         [Required, RegularExpression(@"(?:\D*\d){11}", ErrorMessage = "O campo {0} não é um número válido")]
         public string Phone { get; set; } = phone;
 
-        [Description("Endereço de email do cliente")]
-        [Required, RegularExpression(@"^[^\s]+\@[^\s]+\.[^\s]+$", ErrorMessage = "O campo {0} não é um email válido")]
+        [Description("Endereço de e-mail do cliente")]
+        [Required, RegularExpression(@"^[^\s]+\@[^\s]+\.[^\s]+$", ErrorMessage = "O campo {0} não é um e-mail válido")]
         public string Email { get; set; } = email;
 
         public CreateCustomerCommand ToCommand() => new(Name, Document, Phone, Email);

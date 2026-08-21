@@ -18,7 +18,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para registrar um cliente")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Corpo da request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Corpo da requisição malformado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> RegisterCustomer([FromBody] CreateCustomerRequest customer)
         {
@@ -42,7 +42,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para atualizar os dados de um cliente")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> UpdateCustomer([FromRoute, GuidValidation] Guid id, [FromBody] CreateCustomerRequest customer)
         {
@@ -52,10 +52,10 @@ namespace GerenciamentoMecanicaSistema.Controllers
         }
 
         [HttpDelete("{id}")]
-        [EndpointDescription("Endpoint para deletar um cliente")]
+        [EndpointDescription("Endpoint para excluir um cliente")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Request mal formado")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> DeleteCustomer([FromRoute, GuidValidation] Guid id)
         {
