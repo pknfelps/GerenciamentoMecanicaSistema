@@ -2,7 +2,6 @@ $kind: collection
 name: Vehicles
 description: API para cadastro e gerenciamento dos veículos.
 variables:
-  vehicle_id: ""
   vehicle_license_plate: ABC1D23
 auth:
   - id: fac519e5-9da5-4b9d-b8b8-1bf08ccfcf06

@@ -8,7 +8,31 @@ body:
 
     \    \"customerId\": \"{{customer_id}}\",\r
 
-    \    \"vehicleId\": \"{{vehicle_id}}\"\r
+    \    \"vehicleId\": \"{{vehicle_id}}\",\r
+
+    \    \"services\": [\r
+
+    \        {\r
+
+    \            \"id\": \"{{service_id}}\",\r
+
+    \            \"value\": 1\r
+
+    \        }\r
+
+    \    ],\r
+
+    \    \"materials\": [\r
+
+    \        {\r
+
+    \            \"id\": \"{{material_id}}\",\r
+
+    \            \"value\": 1\r
+
+    \        }\r
+
+    \    ]\r
 
     }"
 scripts:

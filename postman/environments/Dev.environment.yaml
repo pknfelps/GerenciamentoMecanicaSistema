@@ -4,4 +4,10 @@ values:
     value: 'http://localhost:8080'
   - key: token
     value: ''
+  - key: customer_document
+    value: 662.119.730-63
+  - key: customer_id
+    value: ''
+  - key: vehicle_id
+    value: ''
 color: 240

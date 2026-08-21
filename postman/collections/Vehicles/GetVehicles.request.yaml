@@ -1,9 +1,10 @@
 $kind: http-request
+name: GetVehicles
 url: "{{base_url}}/vehicles"
 method: GET
 queryParams:
   - key: id
-    value: null
+    value: ""
     disabled: true
   - key: licensePlate
     value: "{{vehicle_license_plate}}"
@@ -14,7 +15,7 @@ scripts:
         const vehicles = pm.response.json();
 
         if (vehicles.length > 0) {
-          pm.collectionVariables.set("vehicle_id", vehicles[0].id);
+          pm.environment.set("vehicle_id", vehicles[0].id);
         }
       }
     language: text/javascript
