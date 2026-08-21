@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{base_url}}/customers"
+method: GET
+queryParams:
+  - key: id
+    value: c15db2bf-af4e-4b64-90c4-3d2047cd969b
+    disabled: true
+  - key: name
+    value: Ciclano
+    disabled: true
+  - key: document
+    value: "{{customer_document}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      if (pm.response.code === 200) {
+        const customers = pm.response.json();
+
+        if (customers.length > 0) {
+          pm.collectionVariables.set("customer_id", customers[0].id);
+        }
+      }
+    language: text/javascript
+order: 2000

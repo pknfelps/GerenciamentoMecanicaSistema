@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{base_url}}/orders/{{order_id}}/budget"
+method: PATCH
+body:
+  type: json
+  content: "{\r
+
+    \    \"CustomerDocument\": \"662.119.730-63\",\r
+
+    \    \"Approved\": true\r
+
+    }"
+order: 3000

@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{base_url}}/users"
+method: GET
+queryParams:
+  - key: name
+    value: Teste
+  - key: role
+    value: Manager
+order: 2000

@@ -1,0 +1,10 @@
+$kind: collection
+description: API de gerenciamento do catalogo de serviços.
+variables:
+  service_id: 8dcc551f-5c3a-4746-8f51-a18be6107a2f
+auth:
+  - id: 5b4ae304-48b6-4d11-af69-0b1f0171aa9a
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{token}}"

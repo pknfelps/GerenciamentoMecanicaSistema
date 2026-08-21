@@ -1,0 +1,14 @@
+$kind: http-request
+name: GetDetailedOrders
+url: "{{base_url}}/orders/details?id={{order_id}}"
+method: GET
+queryParams:
+  - key: id
+    value: "{{order_id}}"
+    disabled: false
+    description: ""
+  - key: vehicleLicensePlate
+    value: ""
+    disabled: true
+    description: ""
+order: 4000

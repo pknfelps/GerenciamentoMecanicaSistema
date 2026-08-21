@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{base_url}}/stock"
+method: GET
+queryParams:
+  - key: id
+    value: null
+    disabled: true
+  - key: name
+    value: null
+    disabled: true
+  - key: brand
+    value: null
+    disabled: true
+order: 2000

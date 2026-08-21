@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{base_url}}/orders/{{order_id}}/delivery"
+method: PATCH
+order: 6000

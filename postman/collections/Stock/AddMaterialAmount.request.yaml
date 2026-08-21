@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{base_url}}/stock/amount/{{material_id}}"
+method: POST
+body:
+  type: json
+  content: "{\r\n    \"Value\": 10\r\n}"
+order: 3000

@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{base_url}}/vehicles"
+method: GET
+queryParams:
+  - key: id
+    value: null
+    disabled: true
+  - key: licensePlate
+    value: "{{vehicle_license_plate}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      if (pm.response.code === 200) {
+        const vehicles = pm.response.json();
+
+        if (vehicles.length > 0) {
+          pm.collectionVariables.set("vehicle_id", vehicles[0].id);
+        }
+      }
+    language: text/javascript
+order: 2000

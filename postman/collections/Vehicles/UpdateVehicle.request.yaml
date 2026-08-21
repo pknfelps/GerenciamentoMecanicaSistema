@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{base_url}}/vehicles/{{vehicle_id}}"
+method: PATCH
+body:
+  type: json
+  content: "{\r
+
+    \    \"CustomerDocument\": \"662.119.730-63\",\r
+
+    \    \"Brand\": \"Honda\",\r
+
+    \    \"Model\": \"Civic\",\r
+
+    \    \"Year\": 2020,\r
+
+    \    \"LicensePlate\": \"{{vehicle_license_plate}}\"\r
+
+    }"
+order: 3000

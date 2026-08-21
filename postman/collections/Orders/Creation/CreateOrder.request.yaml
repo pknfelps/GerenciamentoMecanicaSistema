@@ -1,0 +1,71 @@
+$kind: http-request
+url: "{{base_url}}/orders"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"customer\": {\r
+
+    \        \"name\": \"Fulano\",\r
+
+    \        \"document\": \"662.119.730-63\",\r
+
+    \        \"phone\": \"(11) 91234-5678\",\r
+
+    \        \"email\": \"fulano@gmail.com\"\r
+
+    \    },\r
+
+    \    \"vehicle\": {\r
+
+    \        \"customerDocument\": \"662.119.730-63\",\r
+
+    \        \"brand\": \"Honda\",\r
+
+    \        \"model\": \"Civic\",\r
+
+    \        \"year\": 2025,\r
+
+    \        \"licensePlate\": \"CVC2025\"\r
+
+    \    },\r
+
+    \    \"services\": [\r
+
+    \        {\r
+
+    \            \"id\": \"{{service_id}}\",\r
+
+    \            \"value\": 1\r
+
+    \        }\r
+
+    \    ],\r
+
+    \    \"materials\": [\r
+
+    \        {\r
+
+    \            \"id\": \"{{material_id}}\",\r
+
+    \            \"value\": 1\r
+
+    \        }\r
+
+    \    ]\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Ordem criada com sucesso", () => {
+        pm.response.to.have.status(201);
+      });
+
+      if (pm.response.code === 201) {
+        const response = pm.response.json();
+        pm.collectionVariables.set("order_id", response.id);
+      }
+    language: text/javascript
+order: 1000

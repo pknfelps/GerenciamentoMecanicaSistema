@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{base_url}}/stock/price/{{material_id}}"
+method: PATCH
+body:
+  type: json
+  content: "{\r\n    \"Value\": 14.99\r\n}"
+order: 5000

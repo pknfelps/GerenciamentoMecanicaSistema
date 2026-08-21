@@ -57,7 +57,7 @@ CREATE TABLE stock
 );
 
 INSERT INTO stock(id, name, brand, price, amount, reserved_amount)
-VALUES ('b03ae302-a3dc-40ba-a7ce-2430a7f0ee5d', 'Ã“leo de motor', 'Lubrax', 10.99, 10, 0);
+VALUES ('b03ae302-a3dc-40ba-a7ce-2430a7f0ee5d', 'Óleo de motor', 'Lubrax', 10.99, 10, 0);
 
 CREATE TABLE catalog
 (
@@ -68,7 +68,7 @@ CREATE TABLE catalog
 );
 
 INSERT INTO catalog(id, description, hours, price_per_hour)
-VALUES ('8dcc551f-5c3a-4746-8f51-a18be6107a2f', 'Troca de Ã“leo', 1, 20);
+VALUES ('8dcc551f-5c3a-4746-8f51-a18be6107a2f', 'Troca de Óleo', 1, 20);
 
 CREATE TABLE order_materials
 (

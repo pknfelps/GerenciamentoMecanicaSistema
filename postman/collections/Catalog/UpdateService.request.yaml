@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{base_url}}/catalog/{{service_id}}"
+method: PATCH
+body:
+  type: json
+  content: "{\r
+
+    \    \"Description\": \"Troca Óleo\",\r
+
+    \    \"Hours\": 2,\r
+
+    \    \"PricePerHour\": 15,\r
+
+    \    \"Amount\": 1\r
+
+    }"
+order: 3000

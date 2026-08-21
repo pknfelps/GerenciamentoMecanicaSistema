@@ -1,0 +1,10 @@
+$kind: collection
+description: API para gerenciamento de estoque.
+variables:
+  material_id: b03ae302-a3dc-40ba-a7ce-2430a7f0ee5d
+auth:
+  - id: fc1f46c9-ae8a-4746-bc7d-9fd39d731a87
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{token}}"

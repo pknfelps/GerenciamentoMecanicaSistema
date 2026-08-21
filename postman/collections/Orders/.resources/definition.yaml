@@ -1,0 +1,13 @@
+$kind: collection
+name: Orders
+description: API para cadastro e gerenciamento das ordens de serviço.
+variables:
+  order_id: ""
+  service_id: 8dcc551f-5c3a-4746-8f51-a18be6107a2f
+  material_id: b03ae302-a3dc-40ba-a7ce-2430a7f0ee5d
+auth:
+  - id: d1a93251-6fad-4d03-9aa5-9fcffc07db44
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{token}}"

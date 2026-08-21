@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{base_url}}/orders"
+method: GET
+queryParams:
+  - key: id
+    value: ""
+    disabled: true
+  - key: vehicleLicensePlate
+    value: ""
+    disabled: true
+order: 1000

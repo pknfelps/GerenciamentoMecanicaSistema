@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{base_url}}/catalog"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"Description\": \"Troca de Óleo\",\r
+
+    \    \"Hours\": 1,\r
+
+    \    \"PricePerHour\": 50,\r
+
+    \    \"Amount\": 1\r
+
+    }"
+order: 1000

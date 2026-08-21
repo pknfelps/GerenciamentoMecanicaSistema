@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{base_url}}/customers/{{customer_id}}"
+method: PATCH
+body:
+  type: json
+  content: "{\r
+
+    \    \"Name\": \"Ciclano\",\r
+
+    \    \"Document\": \"{{customer_document}}\",\r
+
+    \    \"Phone\": \"11912345678\",\r
+
+    \    \"Email\": \"ciclano.update@gmail.com\"\r
+
+    }"
+order: 3000

@@ -1,0 +1,8 @@
+$kind: collection
+description: API para gerenciamento dos usuários do sistema.
+auth:
+  - id: b518e7f5-a956-4f57-a9af-0d6cbaca28ae
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{token}}"

@@ -162,7 +162,7 @@ O Compose inicia:
 - PostgreSQL;
 - smtp4dev.
 
-A API só é iniciada depois que o PostgreSQL passa no health check. Na primeira criação do volume do banco, o script [Init.sql](InitDb/Init.sql) cria as tabelas e os dados iniciais.
+A API só é iniciada depois que o PostgreSQL passa no health check. Na primeira criação do volume do banco, o script [Init.sql](deploy/kubernetes/DbEntrypoint/Init.sql) cria as tabelas e os dados iniciais.
 
 O usuário inicial agora é armazenado com hash PBKDF2. Ambientes criados antes dessa alteração ainda possuem a senha em texto puro no volume existente; para desenvolvimento, recrie o volume com `docker compose down --volumes` antes de subir o ambiente novamente.
 

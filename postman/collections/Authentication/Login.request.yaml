@@ -1,0 +1,26 @@
+$kind: http-request
+url: "{{base_url}}/authentication"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"Name\": \"Admin\",\r
+
+    \  \"Password\": \"Admin@123\",\r
+
+    \  \"Role\": \"Admin\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Login realizado com sucesso", () => {
+        pm.response.to.have.status(200);
+      });
+
+      if (pm.response.code === 200) {
+        pm.environment.set("token", pm.response.text());
+      }
+    language: text/javascript
+order: 1000

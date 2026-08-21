@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{base_url}}/stock"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"Name\": \"Óleo de motor\",\r
+
+    \    \"Brand\": \"Lubrax\",\r
+
+    \    \"Price\": 10.99,\r
+
+    \    \"Amount\": 10\r
+
+    }"
+order: 1000

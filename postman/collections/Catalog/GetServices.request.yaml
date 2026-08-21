@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{base_url}}/catalog"
+method: GET
+queryParams:
+  - key: id
+    value: null
+    disabled: true
+  - key: description
+    value: null
+    disabled: true
+order: 2000

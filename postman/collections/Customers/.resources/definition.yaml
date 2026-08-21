@@ -1,0 +1,12 @@
+$kind: collection
+name: Customers
+description: API para cadastro e gerenciamento dos clientes.
+variables:
+  customer_id: ""
+  customer_document: "52088005005"
+auth:
+  - id: 62a2a758-94d2-4822-8c27-364357aba1a6
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{token}}"

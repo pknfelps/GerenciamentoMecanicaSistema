@@ -1,0 +1,7 @@
+name: Dev
+values:
+  - key: base_url
+    value: 'http://localhost:8080'
+  - key: token
+    value: ''
+color: 240

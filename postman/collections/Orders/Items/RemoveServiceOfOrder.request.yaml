@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{base_url}}/orders/{{order_id}}/services"
+method: PATCH
+body:
+  type: json
+  content: "{\r
+
+    \    \"Id\": \"{{service_id}}\",\r
+
+    \    \"Value\": 1\r
+
+    }"
+order: 2000

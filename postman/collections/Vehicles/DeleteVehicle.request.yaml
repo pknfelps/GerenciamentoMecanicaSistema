@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{base_url}}/vehicles/{{vehicle_id}}"
+method: DELETE
+order: 4000
