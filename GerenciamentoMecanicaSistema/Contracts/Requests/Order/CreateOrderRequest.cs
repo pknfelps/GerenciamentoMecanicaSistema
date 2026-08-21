@@ -1,24 +1,35 @@
-using GerenciamentoMecanicaSistema.Contracts.Requests.Customer;
-using GerenciamentoMecanicaSistema.Contracts.Requests.Vehicle;
+using System.ComponentModel;
+using GerenciamentoMecanicaSistema.Contracts.Validation;
+using Service.Interface.Commands.Order;
 using System.ComponentModel.DataAnnotations;
 
 namespace GerenciamentoMecanicaSistema.Contracts.Requests.Order
 {
     public class CreateOrderRequest(
-        CreateCustomerRequest customer,
-        CreateVehicleRequest vehicle,
+        Guid customerId,
+        Guid vehicleId,
         IReadOnlyCollection<UpdateOrderItemRequest<int>>? services = null,
         IReadOnlyCollection<UpdateOrderItemRequest<int>>? materials = null) : IValidatableObject
     {
-        [Required]
-        public CreateCustomerRequest Customer { get; set; } = customer;
+        [Description("Identificação do cliente")]
+        [Required, GuidValidation]
+        public Guid CustomerId { get; set; } = customerId;
 
-        [Required]
-        public CreateVehicleRequest Vehicle { get; set; } = vehicle;
+        [Description("Identificação do veículo")]
+        [Required, GuidValidation]
+        public Guid VehicleId { get; set; } = vehicleId;
 
+        [Description("Lista de serviços solicitados")]
         public IReadOnlyCollection<UpdateOrderItemRequest<int>>? Services { get; set; } = services;
 
+        [Description("Lista de materiais necessários para o serviço")]
         public IReadOnlyCollection<UpdateOrderItemRequest<int>>? Materials { get; set; } = materials;
+
+        public CreateOrderCommand ToCommand() => new(
+            CustomerId,
+            VehicleId,
+            [.. Services?.Select(service => service.ToCommand()) ?? []],
+            [.. Materials?.Select(material => material.ToCommand()) ?? []]);
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {

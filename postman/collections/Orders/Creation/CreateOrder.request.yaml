@@ -1,59 +1,14 @@
 $kind: http-request
+name: CreateOrder
 url: "{{base_url}}/orders"
 method: POST
 body:
   type: json
   content: "{\r
 
-    \    \"customer\": {\r
+    \    \"customerId\": \"{{customer_id}}\",\r
 
-    \        \"name\": \"Fulano\",\r
-
-    \        \"document\": \"662.119.730-63\",\r
-
-    \        \"phone\": \"(11) 91234-5678\",\r
-
-    \        \"email\": \"fulano@gmail.com\"\r
-
-    \    },\r
-
-    \    \"vehicle\": {\r
-
-    \        \"customerDocument\": \"662.119.730-63\",\r
-
-    \        \"brand\": \"Honda\",\r
-
-    \        \"model\": \"Civic\",\r
-
-    \        \"year\": 2025,\r
-
-    \        \"licensePlate\": \"CVC2025\"\r
-
-    \    },\r
-
-    \    \"services\": [\r
-
-    \        {\r
-
-    \            \"id\": \"{{service_id}}\",\r
-
-    \            \"value\": 1\r
-
-    \        }\r
-
-    \    ],\r
-
-    \    \"materials\": [\r
-
-    \        {\r
-
-    \            \"id\": \"{{material_id}}\",\r
-
-    \            \"value\": 1\r
-
-    \        }\r
-
-    \    ]\r
+    \    \"vehicleId\": \"{{vehicle_id}}\"\r
 
     }"
 scripts:

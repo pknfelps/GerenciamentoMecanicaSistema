@@ -10,9 +10,7 @@ using Microsoft.Extensions.Logging;
 using Service.Interface.Persistence;
 using Service.Interface;
 using Service.Interface.Exceptions;
-using Service.Interface.Commands.Customer;
 using Service.Interface.Commands.Order;
-using Service.Interface.Commands.Vehicle;
 using Service.Interface.Events;
 using Service.Interface.Events.Order;
 using Service.Interface.Results.Order;
@@ -28,61 +26,33 @@ namespace Service
         private IApplicationEventDispatcher EventDispatcher { get; set; } = eventDispatcher;
         private ILogger<OrdersService> Logger { get; set; } = logger;
 
-        public async Task CreateServiceOrder(CreateOrderCommand orderToCreate)
+        public async Task<Guid> CreateServiceOrder(CreateOrderCommand orderToCreate)
         {
             ArgumentNullException.ThrowIfNull(orderToCreate);
 
-            var customerDocument = DocumentWrapper.CreateDocument(orderToCreate.CustomerDocument).Id;
-            var vehicleLicensePlate = LicensePlateWrapper.CreateLicensePlate(orderToCreate.VehicleLicensePlate).License;
+            if (orderToCreate.CustomerId == Guid.Empty)
+                throw new InvalidRequestException("A identificação do cliente deve ser informada");
 
-            var customer = await DependenciesGateway.GetCustomerByDocument(customerDocument)
-                ?? throw new NotFoundException("Cliente não cadastrado. Realize o cadastro antes de criar a ordem de serviço");
+            if (orderToCreate.VehicleId == Guid.Empty)
+                throw new InvalidRequestException("A identificação do veículo deve ser informada");
 
-            var vehicle = await DependenciesGateway.GetVehicleByLicensePlate(vehicleLicensePlate)
-                ?? throw new NotFoundException("Veículo não cadastrado. Realize o cadastro antes de criar a ordem de serviço");
+            ValidateOrderItems(orderToCreate.Services, "serviços");
+            ValidateOrderItems(orderToCreate.Materials, "materiais");
 
-            var order = new Order(customer.Document.Id, vehicle.LicensePlate.License, DateTime.Now);
+            var customer = await DependenciesGateway.GetCustomerById(orderToCreate.CustomerId)
+                ?? throw new NotFoundException($"Cliente com id \"{orderToCreate.CustomerId}\" não encontrado");
+            
+            var vehicle = await DependenciesGateway.GetVehicleById(orderToCreate.VehicleId)
+                ?? throw new NotFoundException($"Veículo com id \"{orderToCreate.VehicleId}\" não encontrado");
 
-            if (await Repository.CreateOrder(order) == 0)
-                throw new ApplicationFailureException("Erro ao salvar ordem");
-
-            await EventDispatcher.Publish(new OrderStatusChangedEvent(CreateNotificationSnapshot(order)));
-        }
-
-        public async Task<Guid> CreateServiceOrder(
-            CreateCustomerCommand customerToCreate,
-            CreateVehicleCommand vehicleToCreate,
-            IReadOnlyCollection<UpdateOrderItemCommand<int>> servicesToAdd,
-            IReadOnlyCollection<UpdateOrderItemCommand<int>> materialsToAdd)
-        {
-            ArgumentNullException.ThrowIfNull(customerToCreate);
-            ArgumentNullException.ThrowIfNull(vehicleToCreate);
-            ValidateOrderItems(servicesToAdd, "serviços");
-            ValidateOrderItems(materialsToAdd, "materiais");
-
-            var requestedCustomer = new Customer(
-                customerToCreate.Name,
-                customerToCreate.Document,
-                customerToCreate.Phone,
-                customerToCreate.Email);
-
-            var requestedVehicle = new Vehicle(
-                vehicleToCreate.CustomerDocument,
-                vehicleToCreate.Brand,
-                vehicleToCreate.Model,
-                vehicleToCreate.Year,
-                vehicleToCreate.LicensePlate);
-
-            if (requestedVehicle.CustomerDocument.Id != requestedCustomer.Document.Id)
-                throw new InvalidRequestException("O documento do proprietário do veículo deve corresponder ao documento do cliente");
+            if (vehicle.CustomerDocument.Id != customer.Document.Id)
+                throw new InvalidRequestException("O veículo informado não pertence ao cliente");
 
             Order? createdOrder = null;
             var orderId = await TransactionManager.ExecuteInTransaction(async () =>
             {
-                var customer = await GetOrCreateCustomer(requestedCustomer);
-                var vehicle = await GetOrCreateVehicle(requestedVehicle, customer);
-                var services = await ResolveServices(servicesToAdd);
-                var materials = await ResolveAndReserveMaterials(materialsToAdd);
+                var services = await ResolveServices(orderToCreate.Services);
+                var materials = await ResolveAndReserveMaterials(orderToCreate.Materials);
 
                 var order = new Order(
                     customer.Document.Id,
@@ -401,50 +371,9 @@ namespace Service
                 throw new ApplicationFailureException("Falha ao deletar ordem");
         }
 
-        private async Task<Domain.Interface.Custumer.ICustomer> GetOrCreateCustomer(Customer requestedCustomer)
+        private async Task<List<IMechanicalService>> ResolveServices(IReadOnlyCollection<UpdateOrderItemCommand<int>> requestedServices)
         {
-            var existingCustomer = await DependenciesGateway.GetCustomerByDocument(requestedCustomer.Document.Id);
-
-            if (existingCustomer == null)
-            {
-                if (await DependenciesGateway.RegisterCustomer(requestedCustomer) == 0)
-                    throw new ApplicationFailureException("Erro ao salvar cliente da ordem");
-
-                return requestedCustomer;
-            }
-
-            if (!string.Equals(existingCustomer.Name, requestedCustomer.Name, StringComparison.OrdinalIgnoreCase)
-                || !string.Equals(existingCustomer.Phone.Number, requestedCustomer.Phone.Number, StringComparison.Ordinal)
-                || !string.Equals(existingCustomer.Email.Address, requestedCustomer.Email.Address, StringComparison.OrdinalIgnoreCase))
-                throw new ConflictException("Os dados informados não correspondem ao cliente já cadastrado");
-
-            return existingCustomer;
-        }
-
-        private async Task<Domain.Interface.Vehicle.IVehicle> GetOrCreateVehicle(Vehicle requestedVehicle, Domain.Interface.Custumer.ICustomer customer)
-        {
-            var existingVehicle = await DependenciesGateway.GetVehicleByLicensePlate(requestedVehicle.LicensePlate.License);
-
-            if (existingVehicle == null)
-            {
-                if (await DependenciesGateway.RegisterVehicle(requestedVehicle) == 0)
-                    throw new ApplicationFailureException("Erro ao salvar veículo da ordem");
-
-                return requestedVehicle;
-            }
-
-            if (!string.Equals(existingVehicle.CustomerDocument.Id, customer.Document.Id, StringComparison.OrdinalIgnoreCase)
-                || !string.Equals(existingVehicle.Brand, requestedVehicle.Brand, StringComparison.OrdinalIgnoreCase)
-                || !string.Equals(existingVehicle.Model, requestedVehicle.Model, StringComparison.OrdinalIgnoreCase)
-                || existingVehicle.Year != requestedVehicle.Year)
-                throw new ConflictException("Os dados informados não correspondem ao veículo já cadastrado");
-
-            return existingVehicle;
-        }
-
-        private async Task<List<Domain.Interface.Service.IMechanicalService>> ResolveServices(IReadOnlyCollection<UpdateOrderItemCommand<int>> requestedServices)
-        {
-            List<Domain.Interface.Service.IMechanicalService> services = [];
+            List<IMechanicalService> services = [];
 
             foreach (var requestedService in requestedServices)
             {
@@ -462,9 +391,9 @@ namespace Service
             return services;
         }
 
-        private async Task<List<Domain.Interface.Stock.IMaterial>> ResolveAndReserveMaterials(IReadOnlyCollection<UpdateOrderItemCommand<int>> requestedMaterials)
+        private async Task<List<IMaterial>> ResolveAndReserveMaterials(IReadOnlyCollection<UpdateOrderItemCommand<int>> requestedMaterials)
         {
-            List<Domain.Interface.Stock.IMaterial> materials = [];
+            List<IMaterial> materials = [];
 
             foreach (var requestedMaterial in requestedMaterials)
             {

@@ -22,11 +22,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest orderToCreate)
         {
-            var orderId = await OrderService.CreateServiceOrder(
-                orderToCreate.Customer.ToCommand(),
-                orderToCreate.Vehicle.ToCommand(),
-                [.. orderToCreate.Services?.Select(service => service.ToCommand()) ?? []],
-                [.. orderToCreate.Materials?.Select(material => material.ToCommand()) ?? []]);
+            var orderId = await OrderService.CreateServiceOrder(orderToCreate.ToCommand());
 
             return CreatedAtAction(nameof(CreateOrder), new { id = orderId }, new CreateOrderResponse(orderId));
         }

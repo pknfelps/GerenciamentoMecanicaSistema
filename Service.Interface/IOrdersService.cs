@@ -1,6 +1,4 @@
 using Service.Interface.Commands.Order;
-using Service.Interface.Commands.Customer;
-using Service.Interface.Commands.Vehicle;
 using Service.Interface.Results.Order;
 using Domain.Interface.Order;
 
@@ -8,12 +6,7 @@ namespace Service.Interface
 {
     public interface IOrdersService
     {
-        Task CreateServiceOrder(CreateOrderCommand orderToCreate);
-        Task<Guid> CreateServiceOrder(
-            CreateCustomerCommand customerToCreate,
-            CreateVehicleCommand vehicleToCreate,
-            IReadOnlyCollection<UpdateOrderItemCommand<int>> servicesToAdd,
-            IReadOnlyCollection<UpdateOrderItemCommand<int>> materialsToAdd);
+        Task<Guid> CreateServiceOrder(CreateOrderCommand orderToCreate);
         Task<WorkOrderStatus> GetOrderStatus(Guid orderId);
         Task<IEnumerable<WorkOrderResult>> GetOperationalOrders();
         Task<IEnumerable<DetailedWorkOrderResult>> GetOrders(Guid? id = null, string customerDocument = "", string vehicleLicensePlate = "");

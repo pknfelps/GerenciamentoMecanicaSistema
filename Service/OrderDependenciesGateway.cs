@@ -21,14 +21,14 @@ namespace Service
         public Task<ICustomer?> GetCustomerByDocument(string document) =>
             CustomerRepository.GetCustomer(document: document);
 
-        public Task<int> RegisterCustomer(ICustomer customer) =>
-            CustomerRepository.RegisterCustomer(customer);
+        public Task<ICustomer?> GetCustomerById(Guid id) =>
+            CustomerRepository.GetCustomer(id: id);
 
         public Task<IVehicle?> GetVehicleByLicensePlate(string licensePlate) =>
             VehicleRepository.GetVehicle(license_plate: licensePlate);
 
-        public Task<int> RegisterVehicle(IVehicle vehicle) =>
-            VehicleRepository.RegisterVehicle(vehicle);
+        public Task<IVehicle?> GetVehicleById(Guid id) =>
+            VehicleRepository.GetVehicle(id: id);
 
         public Task<IMechanicalService?> GetServiceById(Guid id) =>
             CatalogRepository.GetService(id);

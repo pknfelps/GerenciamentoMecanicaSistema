@@ -8,9 +8,9 @@ namespace Service.Interface
     public interface IOrderDependenciesGateway
     {
         Task<ICustomer?> GetCustomerByDocument(string document);
-        Task<int> RegisterCustomer(ICustomer customer);
+        Task<ICustomer?> GetCustomerById(Guid id);
         Task<IVehicle?> GetVehicleByLicensePlate(string licensePlate);
-        Task<int> RegisterVehicle(IVehicle vehicle);
+        Task<IVehicle?> GetVehicleById(Guid id);
         Task<IMechanicalService?> GetServiceById(Guid id);
         Task<IMaterial?> GetMaterialById(Guid id);
     }

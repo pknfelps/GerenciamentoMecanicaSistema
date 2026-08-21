@@ -3,6 +3,8 @@ name: Orders
 description: API para cadastro e gerenciamento das ordens de serviço.
 variables:
   order_id: ""
+  customer_id: 445b6ba5-523b-426f-9aaa-164754c203ca
+  vehicle_id: 60ec3776-ac80-47b4-a3a3-dd21e3e15361
   service_id: 8dcc551f-5c3a-4746-8f51-a18be6107a2f
   material_id: b03ae302-a3dc-40ba-a7ce-2430a7f0ee5d
 auth:
