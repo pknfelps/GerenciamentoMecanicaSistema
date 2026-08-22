@@ -1,6 +1,7 @@
 name: pipeline
 on:
-  push: 
+  push:
+  workflow_dispatch:
 
 env:
   IMAGE_NAME: felipejesusoliveira/gerenciamentomecanicasistema
