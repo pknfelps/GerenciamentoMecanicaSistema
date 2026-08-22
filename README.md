@@ -368,10 +368,10 @@ Os manifestos estão em [deploy/kubernetes](deploy/kubernetes). O Kustomize apli
 - Services `LoadBalancer` e `ClusterIP`;
 - Referências a um Secret externo com configurações da aplicação e do banco;
 - ConfigMap com o script de inicialização;
-- StorageClass de estudo;
+- StorageClass e PVC persistente baseados em Amazon EBS;
 - HPA baseado em CPU e memória.
 
-O PVC permanece no projeto como referência de estudo, mas não é aplicado pelo Kustomize nem utilizado pelo Deployment do banco. Dessa forma, os dados do PostgreSQL não são persistidos após a substituição definitiva do pod.
+O Deployment do PostgreSQL monta o PVC em `/var/lib/postgresql/data`. No EKS, o Terraform instala o EBS CSI Driver e configura sua permissão por EKS Pod Identity.
 
 ### Configuração
 
@@ -388,7 +388,7 @@ kubectl get secret db-secrets
 
 O manifesto mantém uma imagem publicada com tag imutável para permitir o deploy manual. Durante a pipeline, o Kustomize substitui essa referência pela tag `sha-<commit-sha>` recém-publicada.
 
-Se o cluster ainda não possuir o Metrics Server, aplique:
+No EKS provisionado pelo Terraform, o Metrics Server é instalado como add-on do cluster. Em outro ambiente Kubernetes que ainda não possua o componente, aplique:
 
 ```bash
 kubectl apply -f deploy/kubernetes/metrics-server.yaml

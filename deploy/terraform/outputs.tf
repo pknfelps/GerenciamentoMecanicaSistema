@@ -38,6 +38,11 @@ output "eks_node_role_arn" {
   value       = aws_iam_role.eks_nodes.arn
 }
 
+output "eks_ebs_csi_role_arn" {
+  description = "ARN da role IAM usada pelo add-on EBS CSI."
+  value       = aws_iam_role.ebs_csi.arn
+}
+
 output "eks_cluster_arn" {
   description = "ARN do cluster EKS."
   value       = aws_eks_cluster.main.arn

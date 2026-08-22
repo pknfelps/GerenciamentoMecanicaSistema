@@ -39,6 +39,8 @@ spec:
           volumeMounts:
             - name: postgres-init
               mountPath: /docker-entrypoint-initdb.d
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
           ports:
             - name: postgres
               containerPort: 5432
@@ -47,4 +49,7 @@ spec:
         - name: postgres-init
           configMap:
             name: postgres-init-script
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: pvc-gerenciamento-db
       restartPolicy: Always
