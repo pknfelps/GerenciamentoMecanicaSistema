@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+deploy/local/database/Init.sql text eol=lf
+deploy/local/database/source.json text eol=lf
+scripts/*.ps1 text eol=lf
