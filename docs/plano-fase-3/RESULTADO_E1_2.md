@@ -42,6 +42,15 @@ Terraform transferido, Service e imagem de Deployment ainda refletem a base da F
 
 ## Revisão e integração
 
-As branches permitem revisar o conjunto sem merge automático. A criação dos PRs pelo conector retornou `403 Resource not accessible by integration` nos três novos repositórios. A revisão automática bloqueou a tentativa de usar o navegador após essa negativa; uso desse caminho depende de confirmação específica do usuário. Nenhum PR foi criado nesta execução.
+Em 2026-09-18, após autorização explícita do usuário para usar sua sessão autenticada no navegador, os quatro PRs foram criados e verificados como **rascunhos**. O conector continuou retornando `403`; a restrição não foi alterada. A pendência P06 foi resolvida pelo caminho autorizado, sem merge ou ativação de auto-merge.
+
+| Repositório | PR | Base ← branch de trabalho | Estado na criação |
+|---|---|---|---|
+| Sistema | [PR #1](https://github.com/pknfelps/GerenciamentoMecanicaSistema/pull/1) | develop ← codex/e1-2-separacao | Rascunho |
+| Infraestrutura | [PR #1](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/pull/1) | main ← codex/e1-2-separacao | Rascunho |
+| BancoDados | [PR #1](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/pull/1) | main ← codex/e1-2-separacao | Rascunho |
+| Autenticacao | [PR #1](https://github.com/pknfelps/GerenciamentoMecanicaAutenticacao/pull/1) | main ← codex/e1-2-separacao | Rascunho |
+
+O PR da aplicação usa develop existente; nos três novos repositórios, main é a única base inicial. Configuração definitiva de branches/ambientes segue em E1.5. As descrições registram escopo e validações locais; checks remotos não foram considerados aprovados apenas pela criação dos PRs.
 
 Na integração, disponibilizar primeiro os artefatos do banco/infraestrutura e depois a atualização da aplicação; manter o snapshot fixo e os gatilhos sem deploy até a implementação das pipelines da Fase 3. E1.3–E1.9 continuam pendentes; READMEs introdutórios e ajustes mínimos de CI não concluem a governança de entrega.

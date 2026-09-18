@@ -3,9 +3,9 @@
 > Índice central e estado da sessão. Os detalhes estão em documentos menores; começar aqui e abrir somente a etapa e o assunto necessários.
 
 - **Estado:** E0 concluída como especificação; E1 em andamento, com E1.1 concluída e E1.2 implementada/validada em branches para revisão.
-- **Última atualização:** 2026-09-17 — artefatos distribuídos, Compose preservado e 468 testes aprovados; revisão/integração das branches pendente.
+- **Última atualização:** 2026-09-18 — quatro PRs em rascunho abertos e verificados; revisão/integração pendente. Validação local anterior: 468 testes aprovados.
 - **Etapa atual:** E1 — Quatro repositórios e governança de entrega.
-- **Próxima ação:** revisar as branches da [E1.2](docs/plano-fase-3/RESULTADO_E1_2.md). Abertura de PRs pelo navegador aguarda confirmação específica após bloqueio de acesso do conector/revisão automática. Próxima tarefa de implementação: E1.3, completar READMEs; nenhum merge ou deploy realizado.
+- **Próxima ação:** revisar os [quatro PRs da E1.2](docs/plano-fase-3/RESULTADO_E1_2.md), abertos em rascunho após autorização explícita para uso do navegador. Próxima tarefa de implementação: E1.3, completar READMEs; nenhum merge ou deploy realizado.
 - **Arquitetura consolidada:** [Diagramas, RFCs e ADRs](docs/arquitetura/README.md) — arquitetura alvo, justificativas e detalhes adiados com etapa de resolução.
 - **Especificação de acesso:** [Acesso e autenticação](docs/arquitetura/ACESSO_E_AUTENTICACAO.md) — matriz por endpoint, contratos de users, validação serverless do CPF e JWT.
 - **Perfil de uso definido:** ambiente implantado somente para testes e gravação da apresentação, sem operação contínua. Comparar bancos pelo ciclo completo de ativação/inatividade, não apenas por 730 horas de computação.

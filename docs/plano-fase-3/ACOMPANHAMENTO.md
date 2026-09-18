@@ -23,6 +23,7 @@ Preencher com referências reais conforme forem criadas. Não considerar valores
 | Inventário de repositório/acessos e artefatos | E1.1, preparação de E1.2 | [Inventário E1](INVENTARIO_E1.md) | 2026-09-17 | Atual confirmado pelo conector; destinos dos artefatos identificados. Criação dos novos inicialmente aguardou login, concluído na retomada |
 | Criação dos três repositórios | E1.1; parte inicial de R04 | URLs acima e [commits iniciais](INVENTARIO_E1.md) | 2026-09-17 | Interface GitHub confirmou README/main; conector confirmou existência, visibilidade pública e admin nos três. Sem código distribuído, pipelines ou deploy; E1.1 concluída |
 | Distribuição dos artefatos | E1.2 | [Resultado, branches e validação](RESULTADO_E1_2.md) | 2026-09-17 | 17 arquivos transferidos com origem/hash; Compose e Kustomize válidos; 468 testes aprovados. Branches para revisão; PRs/integração pendentes; sem deploy |
+| Abertura de PRs | E1.2 / P06 | [Quatro PRs e bases](RESULTADO_E1_2.md) | 2026-09-18 | Criados pela sessão autenticada do navegador após autorização explícita; Draft e bases confirmados na interface. Aplicação para develop, demais para main; sem merge/auto-merge |
 
 | ID | Pendência ou bloqueio | Impacto | Próxima ação | Estado |
 |---|---|---|---|---|
@@ -31,4 +32,4 @@ Preencher com referências reais conforme forem criadas. Não considerar valores
 | P03 | Escopo de notificações serverless pouco detalhado no enunciado | Resolvido: migração fora da implementação desta entrega | Apresentar como melhoria futura em E7.11 conforme D06.1 | Resolvida em 2026-09-14 |
 | P04 | Alcance da permissão de Remove de usuário da oficina | Resolvido: operação exclusiva de Admin, conforme D03.5 | Implementar e testar na E4 | Resolvida em 2026-09-13 |
 | P05 | Navegador integrado sem sessão GitHub para criar repositórios; conector não oferece criação | Resolvido: sessão autenticada e três repositórios criados pela interface | Prosseguir para distribuição de código na E1.2 | Resolvida em 2026-09-17 |
-| P06 | Criação de PRs pelo conector negada com 403; navegador bloqueado pela revisão automática após a negativa | Branches da E1.2 prontas, abertura de PRs não executada | Solicitar confirmação específica para criar PRs pelo navegador autenticado; preservar branches sem merge | Aberta em 2026-09-17 |
+| P06 | Criação de PRs pelo conector negada com 403; navegador inicialmente bloqueado pela revisão automática | Resolvido após autorização explícita para uso da sessão autenticada: quatro PRs em rascunho criados | Revisar o conjunto; permissões do conector não foram alteradas | Resolvida em 2026-09-18 |
