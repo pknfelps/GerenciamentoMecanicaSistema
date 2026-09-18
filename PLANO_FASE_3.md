@@ -3,7 +3,7 @@
 > Índice central e estado da sessão. Os detalhes estão em documentos menores; começar aqui e abrir somente a etapa e o assunto necessários.
 
 - **Estado:** E0 concluída como especificação; E1 em andamento, com E1.1 concluída e E1.2 implementada/validada em branches para revisão.
-- **Última atualização:** 2026-09-18 — removida inicialização SQL local da API a pedido do usuário; build de imagem restaurado no CI. PRs de API/banco já marcados pelo usuário como prontos para revisão; publicação ECR/deploy pendentes. Compose revalidado; build local bloqueado por falha de inicialização do Docker Desktop. Suíte anterior: 468 testes aprovados.
+- **Última atualização:** 2026-09-18 — removida inicialização SQL local da API; build de imagem restaurado no CI e validado localmente após reinício do Docker pelo usuário. Ajustado `.dockerignore` para excluir caches e artefatos locais. PRs de API/banco prontos para revisão; publicação ECR/deploy pendentes. Compose válido; suíte anterior: 468 testes aprovados.
 - **Etapa atual:** E1 — Quatro repositórios e governança de entrega.
 - **Próxima ação:** revisar os [quatro PRs da E1.2](docs/plano-fase-3/RESULTADO_E1_2.md), abertos em rascunho após autorização explícita para uso do navegador. Próxima tarefa de implementação: E1.3, completar READMEs; nenhum merge ou deploy realizado.
 - **Arquitetura consolidada:** [Diagramas, RFCs e ADRs](docs/arquitetura/README.md) — arquitetura alvo, justificativas e detalhes adiados com etapa de resolução.

@@ -4,6 +4,15 @@
 .vs
 .sonarqube
 .agents
+.media-tools
+.postman
+media-output
+output
+**/.terraform
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfvars
+**/*.tfvars.json
 .env
 .env.*
 **/bin
