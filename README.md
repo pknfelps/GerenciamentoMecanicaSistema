@@ -4,7 +4,7 @@ API para gerenciamento de usuários, clientes, veículos, estoque, catálogo de 
 
 A base funcional da Fase 2 está sendo reorganizada para a Fase 3. A aplicação mantém API, camadas, testes, Dockerfile, Compose e Deployment/HPA. Infraestrutura e banco foram separados em repositórios próprios; a função de autenticação será implementada na E3.
 
-Consulte o [plano vivo](PLANO_FASE_3.md) e a [arquitetura alvo](docs/arquitetura/README.md). A separação E1.2 não provisiona Aurora/Gateway nem altera permissões de negócio. Durante a transição, a pipeline da aplicação executa CI (testes/cobertura/Sonar); publicação de imagem e deploy ficam para as tarefas seguintes.
+Consulte o [plano vivo](PLANO_FASE_3.md) e a [arquitetura alvo](docs/arquitetura/README.md). A separação E1.2 não provisiona Aurora/Gateway nem altera permissões de negócio. Durante a transição, a pipeline executa testes/cobertura/Sonar e build da imagem; publicação no ECR e deploy ficam para as tarefas seguintes. O uso principal será a API na AWS; Docker local é opcional, com preparação manual do banco.
 
 ## Base funcional da Fase 2
 
@@ -43,7 +43,7 @@ flowchart LR
     INFRA["Infraestrutura: Terraform, plataforma e Service"]
     DB["BancoDados: SQL e infraestrutura de banco"]
     AUTH["Autenticacao: função a implementar"]
-    DB -->|"Snapshot SQL fixado para Compose"| APP
+    DB -.->|"Contrato de esquema do banco"| APP
     INFRA -.->|"Plataforma para deploy futuro"| APP
     AUTH -.->|"Contrato CPF/JWT futuro"| APP
 ```
@@ -63,7 +63,7 @@ O código distribuído ficará nas branches/PRs da E1.2 até integração. Os di
 | `Service` e `Service.Interface` | Casos de uso, regras de aplicação, eventos, contratos de entrada e portas de saída para persistência, autenticação e envio de e-mail. |
 | `Infrastructure` | Adaptadores externos: PostgreSQL, health check do banco, geração de JWT, hash de senha e envio de e-mails. |
 | `DependencyInjection` | Composition root para registro separado de aplicação, infraestrutura e persistência. |
-| `deploy` | Deployment/HPA da aplicação e snapshot SQL para execução local; Terraform/plataforma pertencem ao repositório de infraestrutura. |
+| `deploy` | Deployment/HPA da aplicação; Terraform/plataforma e SQL pertencem aos respectivos repositórios. |
 | `ControllerTests`, `DomainTests`, `InfrastructureTests` e `ServiceTests` | Testes automatizados por camada. |
 
 Os contratos dos casos de uso e as portas de saída para repositórios, transação, autenticação e e-mail ficam em `Service.Interface`. `Service` implementa os casos de uso contra essas abstrações, enquanto `Infrastructure` fornece os adapters concretos, incluindo as implementações PostgreSQL de `Infrastructure/Persistence/PostgreSql`. O projeto `DependencyInjection` atua como composition root e conecta os adapters aos contratos sem expor detalhes de infraestrutura aos casos de uso.
@@ -125,21 +125,21 @@ Revise principalmente `POSTGRES_PASSWORD` e `JWT_KEY`. O arquivo `.env` é ignor
 
 ### 🚀 Inicialização
 
-Construa a imagem e suba o ambiente:
+Se precisar executar localmente, inicie primeiro as dependências:
 
 ```bash
-docker compose up --build -d
+docker compose up -d db smtp
 ```
 
-O Compose inicia:
+Prepare manualmente o esquema e os dados necessários no PostgreSQL local, usando `sql/Init.sql` do [repositório de banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados) com seu cliente SQL. O script atual se destina a banco vazio. A API não mantém cópia de SQL, sincronizador ou inicialização automática do banco; volumes existentes não são alterados por esta reorganização.
 
-- API .NET;
-- PostgreSQL;
-- smtp4dev.
+Depois de preparar o banco, construa e inicie a API:
 
-A API só é iniciada depois que o PostgreSQL passa no health check. Na primeira criação do volume do banco, o script [Init.sql](deploy/local/database/Init.sql) cria as tabelas e os dados iniciais. A [origem e verificação do snapshot](deploy/local/database/README.md) permitem usar o Compose sem clonar outro repositório.
+```bash
+docker compose up --build -d api
+```
 
-O usuário inicial agora é armazenado com hash PBKDF2. Ambientes criados antes dessa alteração ainda possuem a senha em texto puro no volume existente; para desenvolvimento, recrie o volume com `docker compose down --volumes` antes de subir o ambiente novamente.
+O Compose mantém API, PostgreSQL e smtp4dev. O health check do PostgreSQL indica disponibilidade do serviço, não garante que o esquema da aplicação já exista.
 
 Verifique o estado dos serviços:
 
@@ -226,7 +226,7 @@ Em outros ambientes, configure `EmailSettings__Host`, `EmailSettings__Port`, cre
 
 O Terraform existente foi transferido para `terraform/` em [GerenciamentoMecanicaInfraestrutura](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura). A base ainda reflete a Fase 2; rede privada, Aurora, Gateway, ECR, estados remotos e ambientes serão implementados nas tarefas próprias.
 
-O esquema/seeds pertence a `sql/Init.sql` em [GerenciamentoMecanicaBancoDados](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados). A aplicação mantém um snapshot com commit e hash em `deploy/local/database/`; veja suas [instruções](deploy/local/database/README.md). Os manifestos antigos de PostgreSQL/armazenamento no EKS estão arquivados em `legacy/kubernetes/` no repositório de banco.
+O esquema/seeds pertence exclusivamente a `sql/Init.sql` em [GerenciamentoMecanicaBancoDados](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados). A inicialização AWS será responsabilidade da pipeline do banco; o uso eventual de Docker exige preparação manual. Os manifestos antigos de PostgreSQL/armazenamento no EKS estão arquivados em `legacy/kubernetes/` no repositório de banco.
 
 ## Manifestos da aplicação
 
@@ -242,7 +242,9 @@ O Deployment continua referenciando `db-secrets`, com `CONNECTION_STRING` e `JWT
 
 ## CI/CD durante a separação
 
-A [pipeline](.github/workflows/pipeline.yml) executa em pushes para main/develop, PRs destinados a essas branches e acionamento manual. Ela verifica o snapshot SQL, executa restore/build/testes com cobertura e análise SonarCloud. `SONAR_TOKEN` permanece necessário para a análise.
+A [pipeline](.github/workflows/pipeline.yml) executa em pushes para main/develop, PRs destinados a essas branches e acionamento manual. Ela executa restore/build/testes com cobertura, análise SonarCloud e, após ambos passarem, build da imagem Docker com tag baseada no SHA. `SONAR_TOKEN` permanece necessário para a análise.
+
+O build valida o Dockerfile e gera a imagem no runner; ela ainda não é publicada nem disponibilizada como artefato de entrega. A publicação no ECR precisa do repositório ECR, da role OIDC e dos parâmetros por ambiente, a implementar em E1.5–E1.7/E2.
 
 Os jobs antigos de publicação no Docker Hub, uso de chaves AWS e deploy do PostgreSQL no EKS foram retirados deste fluxo. E1.5–E1.7/E2/E3 implementarão a entrega por ambiente com ECR/OIDC/Aurora; até lá, execução manual da pipeline também não publica nem implanta recursos.
 

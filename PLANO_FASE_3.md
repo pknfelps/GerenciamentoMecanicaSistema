@@ -3,13 +3,14 @@
 > Índice central e estado da sessão. Os detalhes estão em documentos menores; começar aqui e abrir somente a etapa e o assunto necessários.
 
 - **Estado:** E0 concluída como especificação; E1 em andamento, com E1.1 concluída e E1.2 implementada/validada em branches para revisão.
-- **Última atualização:** 2026-09-18 — quatro PRs em rascunho abertos e verificados; revisão/integração pendente. Validação local anterior: 468 testes aprovados.
+- **Última atualização:** 2026-09-18 — removida inicialização SQL local da API a pedido do usuário; build de imagem restaurado no CI. PRs de API/banco já marcados pelo usuário como prontos para revisão; publicação ECR/deploy pendentes. Compose revalidado; build local bloqueado por falha de inicialização do Docker Desktop. Suíte anterior: 468 testes aprovados.
 - **Etapa atual:** E1 — Quatro repositórios e governança de entrega.
 - **Próxima ação:** revisar os [quatro PRs da E1.2](docs/plano-fase-3/RESULTADO_E1_2.md), abertos em rascunho após autorização explícita para uso do navegador. Próxima tarefa de implementação: E1.3, completar READMEs; nenhum merge ou deploy realizado.
 - **Arquitetura consolidada:** [Diagramas, RFCs e ADRs](docs/arquitetura/README.md) — arquitetura alvo, justificativas e detalhes adiados com etapa de resolução.
 - **Especificação de acesso:** [Acesso e autenticação](docs/arquitetura/ACESSO_E_AUTENTICACAO.md) — matriz por endpoint, contratos de users, validação serverless do CPF e JWT.
 - **Perfil de uso definido:** ambiente implantado somente para testes e gravação da apresentação, sem operação contínua. Comparar bancos pelo ciclo completo de ativação/inatividade, não apenas por 730 horas de computação.
 - **Ciclo dos dados:** banco educacional descartável, apagado para reduzir custos; recriar esquema e dados de demonstração em banco vazio. Sem preservação/conversão de dados de versões anteriores ou framework de migrações incremental nesta fase (D08.1).
+- **Uso local:** foco na API publicada na AWS. Docker é opcional e o banco local será preparado manualmente; SQL e inicialização ficam no repositório de banco, sem cópia/sincronizador na API.
 - **Banco escolhido:** Aurora PostgreSQL Serverless v2, mantendo probes e health checks atuais. Pausa planejada fora das janelas de uso, após encerramento dos consumidores/conexões (D01.2).
 - **Fonte de requisitos:** `13SOAT - Fase 3 - Tech Challenge.pdf`, páginas 2 a 5, fornecido pelo usuário. Local original: `C:/Users/felip/Downloads/13SOAT - Fase 3 - Tech Challenge.pdf`.
 - **Base da análise:** arquivos locais do projeto em 2026-09-05. A existência e o funcionamento dos recursos na nuvem, das pipelines e das proteções no GitHub ainda precisam ser comprovados.

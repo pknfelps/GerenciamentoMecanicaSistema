@@ -24,6 +24,7 @@ Preencher com referências reais conforme forem criadas. Não considerar valores
 | Criação dos três repositórios | E1.1; parte inicial de R04 | URLs acima e [commits iniciais](INVENTARIO_E1.md) | 2026-09-17 | Interface GitHub confirmou README/main; conector confirmou existência, visibilidade pública e admin nos três. Sem código distribuído, pipelines ou deploy; E1.1 concluída |
 | Distribuição dos artefatos | E1.2 | [Resultado, branches e validação](RESULTADO_E1_2.md) | 2026-09-17 | 17 arquivos transferidos com origem/hash; Compose e Kustomize válidos; 468 testes aprovados. Branches para revisão; PRs/integração pendentes; sem deploy |
 | Abertura de PRs | E1.2 / P06 | [Quatro PRs e bases](RESULTADO_E1_2.md) | 2026-09-18 | Criados pela sessão autenticada do navegador após autorização explícita; Draft e bases confirmados na interface. Aplicação para develop, demais para main; sem merge/auto-merge |
+| Revisão do uso local e CI | E1.2 | [Resultado atualizado](RESULTADO_E1_2.md) | 2026-09-18 | Init.sql/sincronização removidos da API; Compose revalidado; build de imagem restaurado no CI. Build local bloqueado na inicialização do Docker Desktop, sem compilação; validação remota pendente |
 
 | ID | Pendência ou bloqueio | Impacto | Próxima ação | Estado |
 |---|---|---|---|---|
