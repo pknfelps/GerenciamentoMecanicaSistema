@@ -2,9 +2,11 @@
 
 API para gerenciamento de usuários, clientes, veículos, estoque, catálogo de serviços e ordens de serviço de uma oficina mecânica.
 
-O projeto evolui a solução da Fase 1 com novos fluxos de ordem de serviço, notificações por e-mail, testes automatizados, conteinerização, orquestração com Kubernetes, infraestrutura AWS provisionada com Terraform e entrega contínua pelo GitHub Actions.
+A base funcional da Fase 2 está sendo reorganizada para a Fase 3. A aplicação mantém API, camadas, testes, Dockerfile, Compose e Deployment/HPA. Infraestrutura e banco foram separados em repositórios próprios; a função de autenticação será implementada na E3.
 
-## Objetivos da Fase 2
+Consulte o [plano vivo](PLANO_FASE_3.md) e a [arquitetura alvo](docs/arquitetura/README.md). A separação E1.2 não provisiona Aurora/Gateway nem altera permissões de negócio. Durante a transição, a pipeline executa testes/cobertura/Sonar e build da imagem; publicação no ECR e deploy ficam para as tarefas seguintes. O uso principal será a API na AWS; Docker local é opcional, com preparação manual do banco.
+
+## Base funcional da Fase 2
 
 - Manter o código organizado em camadas com responsabilidades bem definidas.
 - Disponibilizar os fluxos de abertura, consulta, aprovação, execução e entrega de ordens de serviço.
@@ -33,51 +35,24 @@ O projeto evolui a solução da Fase 1 com novos fluxos de ordem de serviço, no
 
 As rotas completas e exemplos de requisição estão disponíveis nas [collections do Postman](postman/collections).
 
-## Arquitetura da solução
+## Organização dos repositórios na Fase 3
 
 ```mermaid
 flowchart LR
-    Developer["Desenvolvedor"]
-    GitHub["Repositório GitHub"]
-    Actions["GitHub Actions"]
-    Tests["Build, testes e SonarCloud"]
-    DockerHub["Docker Hub"]
-    Terraform["Terraform"]
-    Client["Cliente / Postman"]
-
-    subgraph Aws["AWS"]
-        Network["VPC, subnets, rotas e Internet Gateway"]
-        Iam["Roles e políticas IAM"]
-        EksControl["Amazon EKS - api-cluster"]
-        LoadBalancer["AWS Load Balancer"]
-
-        subgraph Nodes["EKS Managed Node Group"]
-            ApiService["Service da API"]
-            ApiPods["Pods da API .NET"]
-            Hpa["Horizontal Pod Autoscaler"]
-            DbService["Service ClusterIP"]
-            Postgres["PostgreSQL 16"]
-        end
-    end
-
-    Developer --> GitHub
-    GitHub --> Actions
-    Actions --> Tests
-    Actions --> DockerHub
-    Actions -->|"kubectl apply -k"| EksControl
-    Terraform --> Network
-    Terraform --> Iam
-    Terraform --> EksControl
-    Network --- LoadBalancer
-    EksControl --> ApiPods
-    Client --> LoadBalancer
-    LoadBalancer --> ApiService
-    ApiService --> ApiPods
-    DockerHub --> ApiPods
-    Hpa -. "CPU e memória" .-> ApiPods
-    ApiPods --> DbService
-    DbService --> Postgres
+    APP["Sistema: API, camadas, testes, Docker e Deployment/HPA"]
+    INFRA["Infraestrutura: Terraform, plataforma e Service"]
+    DB["BancoDados: SQL e infraestrutura de banco"]
+    AUTH["Autenticacao: função a implementar"]
+    DB -.->|"Contrato de esquema do banco"| APP
+    INFRA -.->|"Plataforma para deploy futuro"| APP
+    AUTH -.->|"Contrato CPF/JWT futuro"| APP
 ```
+
+- [GerenciamentoMecanicaInfraestrutura](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura)
+- [GerenciamentoMecanicaBancoDados](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados)
+- [GerenciamentoMecanicaAutenticacao](https://github.com/pknfelps/GerenciamentoMecanicaAutenticacao)
+
+O código distribuído ficará nas branches/PRs da E1.2 até integração. Os diagramas de execução alvo estão no [índice de arquitetura](docs/arquitetura/README.md); não representam recursos já implantados.
 
 ### Organização do código
 
@@ -88,7 +63,7 @@ flowchart LR
 | `Service` e `Service.Interface` | Casos de uso, regras de aplicação, eventos, contratos de entrada e portas de saída para persistência, autenticação e envio de e-mail. |
 | `Infrastructure` | Adaptadores externos: PostgreSQL, health check do banco, geração de JWT, hash de senha e envio de e-mails. |
 | `DependencyInjection` | Composition root para registro separado de aplicação, infraestrutura e persistência. |
-| `deploy` | Artefatos operacionais de Kubernetes e Terraform, fora da infraestrutura executada pela API. |
+| `deploy` | Deployment/HPA da aplicação; Terraform/plataforma e SQL pertencem aos respectivos repositórios. |
 | `ControllerTests`, `DomainTests`, `InfrastructureTests` e `ServiceTests` | Testes automatizados por camada. |
 
 Os contratos dos casos de uso e as portas de saída para repositórios, transação, autenticação e e-mail ficam em `Service.Interface`. `Service` implementa os casos de uso contra essas abstrações, enquanto `Infrastructure` fornece os adapters concretos, incluindo as implementações PostgreSQL de `Infrastructure/Persistence/PostgreSql`. O projeto `DependencyInjection` atua como composition root e conecta os adapters aos contratos sem expor detalhes de infraestrutura aos casos de uso.
@@ -150,21 +125,21 @@ Revise principalmente `POSTGRES_PASSWORD` e `JWT_KEY`. O arquivo `.env` é ignor
 
 ### 🚀 Inicialização
 
-Construa a imagem e suba o ambiente:
+Se precisar executar localmente, inicie primeiro as dependências:
 
 ```bash
-docker compose up --build -d
+docker compose up -d db smtp
 ```
 
-O Compose inicia:
+Prepare manualmente o esquema e os dados necessários no PostgreSQL local, usando `sql/Init.sql` do [repositório de banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados) com seu cliente SQL. O script atual se destina a banco vazio. A API não mantém cópia de SQL, sincronizador ou inicialização automática do banco; volumes existentes não são alterados por esta reorganização.
 
-- API .NET;
-- PostgreSQL;
-- smtp4dev.
+Depois de preparar o banco, construa e inicie a API:
 
-A API só é iniciada depois que o PostgreSQL passa no health check. Na primeira criação do volume do banco, o script [Init.sql](deploy/kubernetes/DbEntrypoint/Init.sql) cria as tabelas e os dados iniciais.
+```bash
+docker compose up --build -d api
+```
 
-O usuário inicial agora é armazenado com hash PBKDF2. Ambientes criados antes dessa alteração ainda possuem a senha em texto puro no volume existente; para desenvolvimento, recrie o volume com `docker compose down --volumes` antes de subir o ambiente novamente.
+O Compose mantém API, PostgreSQL e smtp4dev. O health check do PostgreSQL indica disponibilidade do serviço, não garante que o esquema da aplicação já exista.
 
 Verifique o estado dos serviços:
 
@@ -235,9 +210,9 @@ Os manifestos Kubernetes usam essas rotas nas probes de startup, readiness e liv
 Os arquivos estão organizados em:
 
 - [Collections](postman/collections): autenticação, catálogo, clientes, ordens, estoque, usuários e veículos.
-- [Ambiente de desenvolvimento](postman/environments/Dev.postman_environment.json).
+- [Ambiente de desenvolvimento](postman/environments/Dev.environment.yaml).
 
-Importe o ambiente e as collections no Postman. A variável `base_url` utiliza `http://localhost:8080` por padrão. Para consumir a aplicação no EKS, altere essa variável para o endereço externo do Load Balancer.
+Importe o ambiente e as collections no Postman. A variável `base_url` utiliza `http://localhost:8080` por padrão. Na Fase 3, o endereço de nuvem será o API Gateway após sua implantação; essa entrada ainda não foi publicada.
 
 Após autenticar, armazene o JWT na variável `token` do ambiente.
 
@@ -247,213 +222,31 @@ No ambiente local, as notificações de orçamento e atualização de status sã
 
 Em outros ambientes, configure `EmailSettings__Host`, `EmailSettings__Port`, credenciais, remetente e uso de TLS de acordo com o servidor SMTP escolhido.
 
-## Infraestrutura como código com Terraform
+## Infraestrutura e banco separados
 
-Os arquivos estão em [deploy/terraform](deploy/terraform).
+O Terraform existente foi transferido para `terraform/` em [GerenciamentoMecanicaInfraestrutura](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura). A base ainda reflete a Fase 2; rede privada, Aurora, Gateway, ECR, estados remotos e ambientes serão implementados nas tarefas próprias.
 
-### Recursos provisionados
+O esquema/seeds pertence exclusivamente a `sql/Init.sql` em [GerenciamentoMecanicaBancoDados](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados). A inicialização AWS será responsabilidade da pipeline do banco; o uso eventual de Docker exige preparação manual. Os manifestos antigos de PostgreSQL/armazenamento no EKS estão arquivados em `legacy/kubernetes/` no repositório de banco.
 
-- VPC com suporte a DNS.
-- Duas subnets públicas em zonas de disponibilidade distintas.
-- Internet Gateway.
-- Tabela de rotas pública e associações com as subnets.
-- Role IAM do control plane com `AmazonEKSClusterPolicy`.
-- Role IAM dos nós com:
-  - `AmazonEKSWorkerNodePolicy`;
-  - `AmazonEC2ContainerRegistryPullOnly`;
-  - `AmazonEKS_CNI_Policy`.
-- Cluster Amazon EKS.
-- EKS Managed Node Group com capacidade e escalabilidade configuráveis.
+## Manifestos da aplicação
 
-O PostgreSQL não é provisionado como serviço gerenciado pelo Terraform. Ele é implantado dentro do cluster pelos manifestos Kubernetes.
+[deploy/kubernetes](deploy/kubernetes) contém somente Deployment e HPA, com probes e recursos preservados. Service/NLB e Metrics Server pertencem à infraestrutura. Não aplicar o manifesto opcional de Metrics Server quando o add-on já estiver instalado.
 
-### Pré-requisitos
-
-- Terraform `1.15.x` disponível no `PATH`.
-- AWS CLI configurada.
-- Identidade AWS autorizada a gerenciar VPC, EC2, IAM e EKS, incluindo `eks:DescribeCluster` e `iam:PassRole`.
-
-Confirme a identidade utilizada:
-
-```bash
-aws sts get-caller-identity
-```
-
-### Variáveis
-
-Entre na pasta do Terraform e copie o exemplo:
-
-```bash
-cd deploy/terraform
-cp terraform.tfvars.example terraform.tfvars
-```
-
-No PowerShell:
+Verifique a composição sem acessar um cluster:
 
 ```powershell
-Set-Location deploy/terraform
-Copy-Item terraform.tfvars.example terraform.tfvars
-```
-
-Revise principalmente:
-
-- `aws_region`;
-- `cluster_name`;
-- `kubernetes_version`;
-- blocos CIDR da VPC e das subnets;
-- tipos e quantidade de nós;
-- capacidade `ON_DEMAND` ou `SPOT`.
-
-O arquivo `terraform.tfvars` é local, está ignorado pelo Git e não deve conter credenciais.
-
-### Provisionamento
-
-Inicialize e valide:
-
-```bash
-terraform init
-terraform fmt -check -recursive
-terraform validate
-```
-
-Gere e revise um plano:
-
-```bash
-terraform plan -out=api-cluster
-terraform show api-cluster
-```
-
-Aplique exatamente o plano revisado:
-
-```bash
-terraform apply api-cluster
-```
-
-Ao final, consulte os outputs:
-
-```bash
-terraform output
-```
-
-O backend atual é local. Preserve o arquivo `terraform.tfstate`, não o envie ao Git e não execute o Terraform simultaneamente em mais de um terminal.
-
-### Configuração do kubeconfig
-
-Com o cluster ativo:
-
-```bash
-aws eks update-kubeconfig --region us-east-1 --name api-cluster
-kubectl get nodes
-```
-
-Se `aws_region` ou `cluster_name` forem alterados no `terraform.tfvars`, utilize os mesmos valores no comando e na pipeline.
-
-### Destruição da infraestrutura
-
-Os recursos AWS geram custos enquanto estiverem ativos. Para revisar e remover a infraestrutura gerenciada:
-
-```bash
-terraform plan -destroy -out=destroy.tfplan
-terraform show destroy.tfplan
-terraform apply destroy.tfplan
-```
-
-Revise cuidadosamente o plano de destruição antes da aplicação.
-
-## Deploy em Kubernetes
-
-Os manifestos estão em [deploy/kubernetes](deploy/kubernetes). O Kustomize aplica:
-
-- Deployments da API e do PostgreSQL;
-- Services `LoadBalancer` e `ClusterIP`;
-- Referências a um Secret externo com configurações da aplicação e do banco;
-- ConfigMap com o script de inicialização;
-- StorageClass e PVC persistente baseados em Amazon EBS;
-- HPA baseado em CPU e memória.
-
-O Deployment do PostgreSQL monta o PVC em `/var/lib/postgresql/data`. No EKS, o Terraform instala o EBS CSI Driver e configura sua permissão por EKS Pod Identity.
-
-### Configuração
-
-O Secret `db-secrets` não é versionado. Na pipeline ele é criado a partir dos GitHub Secrets. Para uma aplicação manual de estudo, use [db-secrets.example.yaml](deploy/kubernetes/db-secrets.example.yaml) apenas como modelo, gere um arquivo local ignorado pelo Git ou crie o Secret diretamente com `kubectl create secret`.
-
-O Secret deve existir no namespace antes da aplicação do Kustomize. Para a configuração local por arquivo:
-
-```powershell
-Copy-Item deploy/kubernetes/db-secrets.example.yaml deploy/kubernetes/db-secrets.yaml
-# Substitua todos os valores replace-me no arquivo local.
-kubectl apply -f deploy/kubernetes/db-secrets.yaml
-kubectl get secret db-secrets
-```
-
-O manifesto mantém uma imagem publicada com tag imutável para permitir o deploy manual. Durante a pipeline, o Kustomize substitui essa referência pela tag `sha-<commit-sha>` recém-publicada.
-
-No EKS provisionado pelo Terraform, o Metrics Server é instalado como add-on do cluster. Em outro ambiente Kubernetes que ainda não possua o componente, aplique:
-
-```bash
-kubectl apply -f deploy/kubernetes/metrics-server.yaml
-```
-
-O Metrics Server é necessário para que o HPA obtenha as métricas de CPU e memória.
-
-### Aplicação dos manifestos
-
-Na raiz do repositório:
-
-```bash
 kubectl kustomize deploy/kubernetes
-kubectl apply --dry-run=client --validate=false -k deploy/kubernetes
-kubectl apply -k deploy/kubernetes
 ```
 
-Valide os rollouts e os recursos:
+O Deployment continua referenciando `db-secrets`, com `CONNECTION_STRING` e `JWT_KEY`; o [arquivo de exemplo](deploy/kubernetes/db-secrets.example.yaml) contém apenas placeholders. Antes de qualquer deploy, banco, Secret, namespace, plataforma e imagem devem estar preparados. A imagem herdada do Docker Hub será substituída por ECR na implementação da entrega. Não há deploy automático durante esta separação.
 
-```bash
-kubectl rollout status deployment/deploy-gerenciamento-db --timeout=180s
-kubectl rollout status deployment/deploy-gerenciamento-api --timeout=180s
-kubectl get deployments,pods,services,hpa
-kubectl top pods
-```
+## CI/CD durante a separação
 
-Consulte o endereço público da API:
+A [pipeline](.github/workflows/pipeline.yml) executa em pushes para main/develop, PRs destinados a essas branches e acionamento manual. Ela executa restore/build/testes com cobertura, análise SonarCloud e, após ambos passarem, build da imagem Docker com tag baseada no SHA. `SONAR_TOKEN` permanece necessário para a análise.
 
-```bash
-kubectl get service svc-gerenciamento-api
-```
+O build valida o Dockerfile e gera a imagem no runner; ela ainda não é publicada nem disponibilizada como artefato de entrega. A publicação no ECR precisa do repositório ECR, da role OIDC e dos parâmetros por ambiente, a implementar em E1.5–E1.7/E2.
 
-Use o valor de `EXTERNAL-IP` ou hostname como `base_url` no Postman.
-
-## CI/CD
-
-A pipeline está em [.github/workflows/pipeline.yml](.github/workflows/pipeline.yml) e é disparada por `push`.
-
-O fluxo executado é:
-
-1. Checkout do repositório.
-2. Restauração, build e testes automatizados com geração de cobertura.
-3. Análise de código no SonarCloud.
-4. Build da imagem Docker.
-5. Publicação da imagem `felipejesusoliveira/gerenciamentomecanicasistema:sha-<commit-sha>` no Docker Hub.
-6. Autenticação na AWS e atualização do kubeconfig do cluster `api-cluster`.
-7. Criação ou atualização do Secret Kubernetes a partir dos secrets protegidos do repositório.
-8. Aplicação dos manifestos com `kubectl apply -k deploy/kubernetes`.
-
-O Terraform não é executado pela pipeline. O cluster deve ser provisionado manualmente antes do primeiro deploy.
-
-### Secrets do GitHub
-
-| Secret | Uso |
-|---|---|
-| `SONAR_TOKEN` | Autenticação da análise no SonarCloud. |
-| `DOCKER_TOKEN` | Publicação da imagem no Docker Hub. |
-| `AWS_ACCESS_KEY_ID` | Identificação da credencial utilizada no deploy. |
-| `AWS_ACCESS_KEY_SECRET` | Chave secreta utilizada no deploy. |
-| `POSTGRES_DB` | Nome do banco PostgreSQL no cluster. |
-| `POSTGRES_USER` | Usuário do PostgreSQL no cluster. |
-| `POSTGRES_PASSWORD` | Senha do PostgreSQL no cluster. |
-| `JWT_KEY` | Chave privada usada para assinar os tokens JWT. |
-
-A identidade AWS da pipeline precisa consultar o cluster EKS e estar autorizada a acessar a API Kubernetes.
+Os jobs antigos de publicação no Docker Hub, uso de chaves AWS e deploy do PostgreSQL no EKS foram retirados deste fluxo. E1.5–E1.7/E2/E3 implementarão a entrega por ambiente com ECR/OIDC/Aurora; até lá, execução manual da pipeline também não publica nem implanta recursos.
 
 ## Evidências e entrega
 
@@ -462,4 +255,4 @@ A identidade AWS da pipeline precisa consultar o cluster EKS e estar autorizada 
 - Pipeline: [GitHub Actions](https://github.com/pknfelps/GerenciamentoMecanicaSistema/actions).
 - Vídeo demonstrativo: adicionar o link após a gravação.
 
-O vídeo deve demonstrar o deploy da aplicação, a execução do CI/CD, o consumo das APIs e a escalabilidade automática do HPA.
+A evidência final da Fase 3 seguirá a E7 do plano, com autenticação serverless, entrega por ambiente e observabilidade; a demonstração ainda não foi realizada.
