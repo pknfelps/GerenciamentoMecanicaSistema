@@ -1,98 +1,59 @@
-# 🔧 Sistema de Gerenciamento de Mecânica
+# Sistema de Gerenciamento de Mecânica
 
-API para gerenciamento de usuários, clientes, veículos, estoque, catálogo de serviços e ordens de serviço de uma oficina mecânica.
+API do sistema de oficina: usuários, clientes, veículos, catálogo, estoque e ciclo de ordens de serviço (OS). Mantém as regras de negócio, persistência, autenticação interna, notificações SMTP, testes, imagem Docker e Deployment/HPA.
 
-A base funcional da Fase 2 está sendo reorganizada para a Fase 3. A aplicação mantém API, camadas, testes, Dockerfile, Compose e Deployment/HPA. Infraestrutura e banco foram separados em repositórios próprios; a função de autenticação será implementada na E3.
+## Estado da implementação
 
-Consulte a [arquitetura alvo](docs/arquitetura/README.md). A separação E1.2 não provisiona Aurora/Gateway nem altera permissões de negócio. Durante a transição, a pipeline executa testes/cobertura/Sonar e build da imagem; publicação no ECR e deploy ficam para as tarefas seguintes. O uso principal será a API na AWS; Docker local é opcional, com preparação manual do banco.
+A separação em quatro repositórios está integrada. A API e os testes existentes são executáveis; a pipeline valida testes/cobertura, SonarCloud e build da imagem. A arquitetura AWS da Fase 3 está documentada, mas sua implantação ainda está pendente.
 
-## Base funcional da Fase 2
+| Disponível | A implementar |
+|---|---|
+| API .NET, JWT interno, PostgreSQL, SMTP e health checks | Validação serverless de CPF e permissões Admin/Mechanic/Customer |
+| Dockerfile, Compose opcional e Deployment/HPA | Imagem no ECR, entrega por OIDC e ambientes hom/prd |
+| CI com testes, cobertura, SonarCloud e build Docker | Aurora, API Gateway e observabilidade OpenTelemetry/New Relic |
 
-- Manter o código organizado em camadas com responsabilidades bem definidas.
-- Disponibilizar os fluxos de abertura, consulta, aprovação, execução e entrega de ordens de serviço.
-- Notificar o cliente por e-mail nas principais alterações de status da OS.
-- Executar build e testes automatizados de forma contínua.
-- Empacotar a aplicação com Docker.
-- Executar a API e o PostgreSQL em Kubernetes.
-- Escalar a API horizontalmente conforme o consumo de CPU e memória.
-- Provisionar a infraestrutura do cluster EKS com Terraform.
-- Automatizar a publicação da imagem e a aplicação dos manifestos no cluster.
+O foco de uso será a API na AWS. A URL do Gateway ainda não foi publicada. A [arquitetura alvo](docs/arquitetura/README.md) descreve contratos futuros; as [collections](postman/collections) e o OpenAPI gerado pela API representam as operações atuais.
 
-## Funcionalidades
+## Componentes e repositórios
 
-- Autenticação com JWT.
-- Cadastro e consulta de usuários.
-- Cadastro, consulta, alteração e exclusão de clientes.
-- Cadastro, consulta, alteração e exclusão de veículos.
-- Gerenciamento do catálogo de serviços.
-- Gerenciamento de materiais e estoque.
-- Abertura de ordem de serviço com dados do cliente, veículo, serviços e materiais.
-- Consulta do status atual de uma ordem de serviço.
-- Listagem operacional priorizada por status e antiguidade.
-- Diagnóstico, orçamento, aprovação, execução, finalização e entrega da OS.
-- Envio de notificações de atualização de status por e-mail.
-- Health checks de inicialização, prontidão e disponibilidade.
-
-As rotas completas e exemplos de requisição estão disponíveis nas [collections do Postman](postman/collections).
-
-## Organização dos repositórios na Fase 3
+Diagrama da aplicação existente:
 
 ```mermaid
 flowchart LR
-    APP["Sistema: API, camadas, testes, Docker e Deployment/HPA"]
-    INFRA["Infraestrutura: Terraform, plataforma e Service"]
-    DB["BancoDados: SQL e infraestrutura de banco"]
-    AUTH["Autenticacao: função a implementar"]
-    DB -.->|"Contrato de esquema do banco"| APP
-    INFRA -.->|"Plataforma para deploy futuro"| APP
-    AUTH -.->|"Contrato CPF/JWT futuro"| APP
+    CLIENT["Cliente HTTP"] --> API["ASP.NET Core / Controllers"]
+    API --> SERVICE["Service: casos de uso"]
+    SERVICE --> DOMAIN["Domain: regras"]
+    SERVICE --> PORTS["Service.Interface: contratos"]
+    PORTS --> INFRA["Infrastructure: adaptadores"]
+    INFRA --> PG[("PostgreSQL")]
+    INFRA --> SMTP["Servidor SMTP"]
+    DI["DependencyInjection"] -.-> API
+    DI -.-> INFRA
 ```
 
-- [GerenciamentoMecanicaInfraestrutura](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura)
-- [GerenciamentoMecanicaBancoDados](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados)
-- [GerenciamentoMecanicaAutenticacao](https://github.com/pknfelps/GerenciamentoMecanicaAutenticacao)
-
-O código distribuído ficará nas branches/PRs da E1.2 até integração. Os diagramas de execução alvo estão no [índice de arquitetura](docs/arquitetura/README.md); não representam recursos já implantados.
-
-### Organização do código
-
-| Projeto | Responsabilidade |
+| Repositório | Responsabilidade |
 |---|---|
-| `GerenciamentoMecanicaSistema` | API HTTP, controllers, autenticação e middleware. |
-| `Domain` e `Domain.Interface` | Entidades, objetos de valor, regras e contratos do domínio. |
-| `Service` e `Service.Interface` | Casos de uso, regras de aplicação, eventos, contratos de entrada e portas de saída para persistência, autenticação e envio de e-mail. |
-| `Infrastructure` | Adaptadores externos: PostgreSQL, health check do banco, geração de JWT, hash de senha e envio de e-mails. |
-| `DependencyInjection` | Composition root para registro separado de aplicação, infraestrutura e persistência. |
-| `deploy` | Deployment/HPA da aplicação; Terraform/plataforma e SQL pertencem aos respectivos repositórios. |
-| `ControllerTests`, `DomainTests`, `InfrastructureTests` e `ServiceTests` | Testes automatizados por camada. |
+| Este repositório | API, camadas, testes, Dockerfile/Compose e Deployment/HPA |
+| [Infraestrutura](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/tree/develop) | Terraform, plataforma Kubernetes, Service e futura entrada Gateway/NLB |
+| [Banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/tree/develop) | SQL/seeds e futura infraestrutura Aurora/Job de inicialização |
+| [Autenticação](https://github.com/pknfelps/GerenciamentoMecanicaAutenticacao/tree/develop) | Futura Lambda de validação de CPF e emissão de JWT |
 
-Os contratos dos casos de uso e as portas de saída para repositórios, transação, autenticação e e-mail ficam em `Service.Interface`. `Service` implementa os casos de uso contra essas abstrações, enquanto `Infrastructure` fornece os adapters concretos, incluindo as implementações PostgreSQL de `Infrastructure/Persistence/PostgreSql`. O projeto `DependencyInjection` atua como composition root e conecta os adapters aos contratos sem expor detalhes de infraestrutura aos casos de uso.
+Os projetos `Domain.Interface` e `Service.Interface` definem contratos; `Infrastructure` implementa persistência PostgreSQL, JWT, hash de senha e SMTP; `DependencyInjection` registra os componentes. Consultas comuns de usuários não retornam senha/hash; os fluxos de credenciais usam `UserCredentials`.
 
-No cadastro de usuários, `Password` valida a senha em texto puro antes da geração do hash. `UserCredentials`, abstraído por `IUserCredentials`, transporta somente o usuário e a string do hash nos fluxos de persistência e autenticação. Consultas comuns retornam `IUser` sem senha ou hash.
+## Tecnologias e pré-requisitos
 
-## 🛠️ Tecnologias
+- .NET SDK 10 / ASP.NET Core 10.
+- PostgreSQL 16 para uso local; acesso por Npgsql/Dapper.
+- Docker com engine Linux e Compose v2; smtp4dev para e-mails locais.
+- Docker ativo para a suíte completa: os testes de persistência usam Testcontainers e criam seus próprios containers PostgreSQL.
+- kubectl com Kustomize para renderizar os manifestos.
+- GitHub Actions e SonarCloud no CI.
 
-- .NET 10 e ASP.NET Core 10.
-- PostgreSQL 16.
-- Docker e Docker Compose.
-- Kubernetes e Kustomize.
-- Horizontal Pod Autoscaler e Metrics Server.
-- Amazon Web Services: VPC, IAM, EC2 e EKS.
-- Terraform 1.15.
-- GitHub Actions.
-- Docker Hub.
-- SonarCloud.
-- Postman.
-- smtp4dev para captura local dos e-mails.
+AWS EKS, Aurora, ECR, API Gateway e Lambda compõem o destino da Fase 3. Terraform pertence ao repositório de infraestrutura.
 
-## Build e testes sem Docker
+## Build e testes
 
-### Pré-requisitos
-
-- .NET SDK 10.
-- PostgreSQL acessível para os testes que dependem de persistência.
-
-Na raiz do repositório:
+Na raiz, com .NET 10 e Docker ativo para os testes de persistência:
 
 ```bash
 dotnet restore GerenciamentoMecanicaSistema.slnx
@@ -100,159 +61,115 @@ dotnet build GerenciamentoMecanicaSistema.slnx --no-restore
 dotnet test GerenciamentoMecanicaSistema.slnx --no-build --no-restore
 ```
 
-## ▶️ Execução local com Docker Compose
+Restore/build não precisam de um banco em execução. Os testes de persistência preparam suas próprias tabelas e não usam o banco do Compose.
 
-### ✅ Pré-requisitos
-
-- Docker Desktop com Docker Compose v2.
-- Portas `8080`, `5432`, `3000` e `2525` disponíveis, ou alteradas no arquivo `.env`.
-
-### Configuração
-
-Crie o arquivo local de variáveis a partir do exemplo:
+Para validar somente a imagem, sem iniciar a aplicação:
 
 ```bash
-cp .env.example .env
+docker build --file GerenciamentoMecanicaSistema/Dockerfile --tag gerenciamento-mecanica-api:local .
 ```
 
-No PowerShell:
+## Execução local opcional
 
-```powershell
-Copy-Item .env.example .env
-```
+1. Copie [.env.example](.env.example) para `.env`:
 
-Revise principalmente `POSTGRES_PASSWORD` e `JWT_KEY`. O arquivo `.env` é ignorado pelo Git e não deve ser enviado ao repositório.
+   ```powershell
+   Copy-Item .env.example .env
+   ```
 
-### 🚀 Inicialização
+   Em Bash, use `cp .env.example .env`. Defina `POSTGRES_PASSWORD` e uma `JWT_KEY` com pelo menos 32 caracteres. O arquivo local é ignorado pelo Git.
 
-Se precisar executar localmente, inicie primeiro as dependências:
+2. Inicie as dependências:
 
-```bash
-docker compose up -d db smtp
-```
+   ```bash
+   docker compose up -d db smtp
+   ```
 
-Prepare manualmente o esquema e os dados necessários no PostgreSQL local, usando `sql/Init.sql` do [repositório de banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados) com seu cliente SQL. O script atual se destina a banco vazio. A API não mantém cópia de SQL, sincronizador ou inicialização automática do banco; volumes existentes não são alterados por esta reorganização.
+3. Prepare manualmente o banco vazio seguindo o [README do banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/tree/develop#execução-local-opcional). O SQL fica exclusivamente nesse repositório. O Compose não cria tabelas/seeds e não sincroniza scripts.
 
-Depois de preparar o banco, construa e inicie a API:
+4. Inicie a API:
 
-```bash
-docker compose up --build -d api
-```
+   ```bash
+   docker compose up --build -d api
+   docker compose ps
+   docker compose logs -f api
+   ```
 
-O Compose mantém API, PostgreSQL e smtp4dev. O health check do PostgreSQL indica disponibilidade do serviço, não garante que o esquema da aplicação já exista.
+A disponibilidade do PostgreSQL não comprova que o esquema foi preparado. A API pode iniciar com banco vazio, mas as operações de negócio dependem das tabelas.
 
-Verifique o estado dos serviços:
-
-```bash
-docker compose ps
-```
-
-Consulte os logs da API:
-
-```bash
-docker compose logs -f api
-```
-
-### 🌐 Endereços locais
-
-| Serviço | Endereço padrão |
+| Serviço | Endereço local padrão |
 |---|---|
-| API | `http://localhost:8080` |
-| Swagger UI | `http://localhost:8080/swagger` |
-| Health check | `http://localhost:8080/health/ready` |
-| PostgreSQL | `localhost:5432` |
-| Painel do smtp4dev | `http://localhost:3000` |
-| SMTP | `localhost:2525` |
+| API | http://localhost:8080 |
+| Swagger UI (Development) | http://localhost:8080/swagger |
+| OpenAPI (Development) | http://localhost:8080/openapi/v1.json |
+| Readiness | http://localhost:8080/health/ready |
+| PostgreSQL | localhost:5432 |
+| Painel smtp4dev | http://localhost:3000 |
+| SMTP | localhost:2525 |
 
-As portas podem ser alteradas no `.env` sem modificar o Compose.
+As portas do host podem ser ajustadas no `.env`. O Compose usa `ASPNETCORE_ENVIRONMENT=Development`; Swagger/OpenAPI não são expostos pelo código atual em outros ambientes.
 
-### Encerramento
+Para encerrar preservando os dados, use `docker compose down`. Se optar por apagar os dados locais, `docker compose down --volumes` remove os volumes de PostgreSQL e smtp4dev; depois repita os passos 2–4, incluindo a preparação manual do banco.
 
-Para parar os containers preservando os dados:
+## Autenticação e uso da API
 
-```bash
-docker compose down
+Após aplicar os seeds, o usuário educacional é `Admin`, senha `Admin@123`, role `Admin`. A senha é armazenada como hash PBKDF2. Esses dados são somente para demonstração.
+
+O login atual é `POST /authentication`:
+
+```json
+{
+  "name": "Admin",
+  "password": "Admin@123",
+  "role": "Admin"
+}
 ```
 
-Para recriar completamente o banco e o armazenamento do smtp4dev:
+Use o token retornado como `Authorization: Bearer <token>`. Importe as [collections](postman/collections) e o [ambiente Postman](postman/environments/Dev.environment.yaml); configure `base_url` e `token`.
 
-```bash
-docker compose down --volumes
-docker compose up --build -d
-```
+A API cobre usuários, clientes, veículos, catálogo, materiais/estoque e criação, diagnóstico, orçamento, execução e entrega de OS. A futura rota `POST /customers/validate` será atendida pela Lambda. Novas permissões e operações de usuários ainda serão implementadas conforme o [contrato de acesso](docs/arquitetura/ACESSO_E_AUTENTICACAO.md).
 
-O uso de `--volumes` remove permanentemente os dados locais dos volumes do projeto.
+## Configuração e saúde
 
-## 🔑 Dados iniciais
-
-O script de inicialização registra um usuário administrativo:
-
-| Campo | Valor |
+| Configuração | Uso |
 |---|---|
-| Nome | `Admin` |
-| Senha | `Admin@123` |
-| Perfil | `Admin` |
+| `ConnectionStrings__DefaultConnection` | Conexão PostgreSQL |
+| `Jwt__Issuer`, `Jwt__Audience`, `Jwt__Key` | Emissão e validação JWT compatíveis no ambiente |
+| `EmailSettings__Host`, `EmailSettings__Port` | Servidor SMTP |
+| `EmailSettings__Username`, `EmailSettings__Password`, `EmailSettings__UseTls` | Autenticação/TLS do SMTP |
+| `EmailSettings__SenderName`, `EmailSettings__SenderEmail` | Identificação do remetente |
 
-Também são criados cliente, veículo, serviço e material para testes das APIs. Essas credenciais são destinadas somente aos ambientes de estudo e desenvolvimento.
-
-## Health checks
+O Compose mapeia essas configurações a partir do `.env` e dos serviços locais. E-mails enviados ao smtp4dev ficam no painel local. Para outro destino, configure o servidor SMTP apropriado.
 
 | Rota | Finalidade |
 |---|---|
-| `/health/startup` | Confirma que a inicialização da API foi concluída. |
-| `/health/ready` | Verifica se a API está pronta para receber requisições e acessar o banco. |
-| `/health/live` | Verifica se o processo da API está ativo. |
+| `/health/startup` | Inicialização da API |
+| `/health/ready` | Prontidão e acesso ao banco |
+| `/health/live` | Processo ativo |
 
-Os manifestos Kubernetes usam essas rotas nas probes de startup, readiness e liveness.
+As probes do Deployment usam essas rotas. Não houve alteração de probes na separação dos repositórios.
 
-## 🧪 Postman
+## Kubernetes, CI e deploy
 
-Os arquivos estão organizados em:
+[deploy/kubernetes](deploy/kubernetes) contém Deployment e HPA. O Service pertence à infraestrutura. Para conferir a composição sem acessar o cluster:
 
-- [Collections](postman/collections): autenticação, catálogo, clientes, ordens, estoque, usuários e veículos.
-- [Ambiente de desenvolvimento](postman/environments/Dev.environment.yaml).
-
-Importe o ambiente e as collections no Postman. A variável `base_url` utiliza `http://localhost:8080` por padrão. Na Fase 3, o endereço de nuvem será o API Gateway após sua implantação; essa entrada ainda não foi publicada.
-
-Após autenticar, armazene o JWT na variável `token` do ambiente.
-
-## 📧 Notificações por e-mail
-
-No ambiente local, as notificações de orçamento e atualização de status são enviadas para o smtp4dev. Elas não saem do ambiente e podem ser visualizadas em `http://localhost:3000`.
-
-Em outros ambientes, configure `EmailSettings__Host`, `EmailSettings__Port`, credenciais, remetente e uso de TLS de acordo com o servidor SMTP escolhido.
-
-## Infraestrutura e banco separados
-
-O Terraform existente foi transferido para `terraform/` em [GerenciamentoMecanicaInfraestrutura](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura). A base ainda reflete a Fase 2; rede privada, Aurora, Gateway, ECR, estados remotos e ambientes serão implementados nas tarefas próprias.
-
-O esquema/seeds pertence exclusivamente a `sql/Init.sql` em [GerenciamentoMecanicaBancoDados](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados). A inicialização AWS será responsabilidade da pipeline do banco; o uso eventual de Docker exige preparação manual. Os manifestos antigos de PostgreSQL/armazenamento no EKS estão arquivados em `legacy/kubernetes/` no repositório de banco.
-
-## Manifestos da aplicação
-
-[deploy/kubernetes](deploy/kubernetes) contém somente Deployment e HPA, com probes e recursos preservados. Service/NLB e Metrics Server pertencem à infraestrutura. Não aplicar o manifesto opcional de Metrics Server quando o add-on já estiver instalado.
-
-Verifique a composição sem acessar um cluster:
-
-```powershell
+```bash
 kubectl kustomize deploy/kubernetes
 ```
 
-O Deployment continua referenciando `db-secrets`, com `CONNECTION_STRING` e `JWT_KEY`; o [arquivo de exemplo](deploy/kubernetes/db-secrets.example.yaml) contém apenas placeholders. Antes de qualquer deploy, banco, Secret, namespace, plataforma e imagem devem estar preparados. A imagem herdada do Docker Hub será substituída por ECR na implementação da entrega. Não há deploy automático durante esta separação.
+O Deployment ainda referencia uma imagem da fase anterior no Docker Hub e o Secret `db-secrets`, com `CONNECTION_STRING` e `JWT_KEY`. O [exemplo de Secret](deploy/kubernetes/db-secrets.example.yaml) contém placeholders. O deploy requer plataforma/namespace, banco com esquema, Secret, imagem e Service preparados; a entrega da Fase 3 ainda não está operacional.
 
-## CI/CD durante a separação
+A [pipeline](.github/workflows/pipeline.yml) executa em PRs e pushes para `develop`/`main`, além de acionamento manual. Os jobs são `unit-tests`, `code-analysis` e `build-image`; a análise usa `SONAR_TOKEN`. O build Docker ocorre após testes/análise e gera tag `sha-<commit>` no runner. Não há push de imagem, artefato de imagem disponível para download ou deploy nesse workflow.
 
-A [pipeline](.github/workflows/pipeline.yml) executa em pushes para main/develop, PRs destinados a essas branches e acionamento manual. Ela executa restore/build/testes com cobertura, análise SonarCloud e, após ambos passarem, build da imagem Docker com tag baseada no SHA. `SONAR_TOKEN` permanece necessário para a análise.
+A entrega planejada publicará no ECR e implantará por OIDC, após provisionar dependências. Consulte a [RFC de entrega](docs/arquitetura/rfcs/002-ENTREGA.md) para a ordem entre os quatro repositórios.
 
-O build valida o Dockerfile e gera a imagem no runner; ela ainda não é publicada nem disponibilizada como artefato de entrega. A publicação no ECR precisa do repositório ECR, da role OIDC e dos parâmetros por ambiente, a implementar em E1.5–E1.7/E2.
+## Desenvolvimento e ambientes
 
-Os jobs antigos de publicação no Docker Hub, uso de chaves AWS e deploy do PostgreSQL no EKS foram retirados deste fluxo. E1.5–E1.7/E2/E3 implementarão a entrega por ambiente com ECR/OIDC/Aurora; até lá, execução manual da pipeline também não publica nem implanta recursos.
+Crie branches de trabalho a partir da `develop` atualizada e direcione os PRs para `develop`. A promoção `develop -> main` ocorre quando a entrega estiver concluída. `develop` corresponde a **hom** e `main` a **prd** na arquitetura planejada; os ambientes poderão coexistir. Proteções, Environments e deploy automático ainda precisam ser configurados.
 
-## Evidências e entrega
+## Referências
 
-- Repositório: [github.com/pknfelps/GerenciamentoMecanicaSistema](https://github.com/pknfelps/GerenciamentoMecanicaSistema).
-- Collections: [postman/collections](postman/collections).
-- Pipeline: [GitHub Actions](https://github.com/pknfelps/GerenciamentoMecanicaSistema/actions).
-- Vídeo demonstrativo: adicionar o link após a gravação.
-
-A evidência final da Fase 3 seguirá a E7 do plano, com autenticação serverless, entrega por ambiente e observabilidade; a demonstração ainda não foi realizada.
+- [Arquitetura, diagramas, RFCs e ADRs](docs/arquitetura/README.md).
+- [Contrato de autenticação e permissões](docs/arquitetura/ACESSO_E_AUTENTICACAO.md).
+- [GitHub Actions](https://github.com/pknfelps/GerenciamentoMecanicaSistema/actions).
+- Demonstração final e vídeo: pendentes.
