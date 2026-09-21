@@ -38,6 +38,6 @@ Destruir em ordem inversa das dependências, removendo Service e aguardando limp
 
 ## Validação e trabalho seguinte
 
-[E1](../../plano-fase-3/etapas/E1.md) concretiza repositórios, contratos operacionais e governança; [E2](../../plano-fase-3/etapas/E2.md) implementa provisionamento; [E6](../../plano-fase-3/etapas/E6.md) comprova entrega e isolamento. Antes de operações concorrentes no mesmo ambiente, definir coordenação entre repositórios: lock S3 protege somente um estado, e concurrency do GitHub é local ao repositório.
+Concretizar repositórios, contratos operacionais e governança; implementar provisionamento; comprovar entrega e isolamento. Antes de operações concorrentes no mesmo ambiente, definir coordenação entre repositórios: lock S3 protege somente um estado, e concurrency do GitHub é local ao repositório.
 
-**Fonte dos detalhes:** [D05/D09](../../plano-fase-3/decisoes/REPOSITORIOS_E_AMBIENTES.md). **Justificativa:** [ADR 004](../adrs/004-ENTREGA-E-AMBIENTES.md). O documento operacional de contratos previsto em E1.8 ampliará estas interfaces com campos e referências reais.
+**Justificativa:** [ADR 004](../adrs/004-ENTREGA-E-AMBIENTES.md). O documento operacional de contratos ampliará estas interfaces com campos e referências reais.

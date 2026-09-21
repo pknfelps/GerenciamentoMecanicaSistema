@@ -22,6 +22,6 @@ Ver [componentes](../diagramas/COMPONENTES.md), [validação de CPF](../diagrama
 
 ## Implementação e aceitação
 
-[E3](../../plano-fase-3/etapas/E3.md) implementa função/Gateway; [E4](../../plano-fase-3/etapas/E4.md), permissões e ajustes da API; [E6](../../plano-fase-3/etapas/E6.md), a comprovação integrada. Demonstrar token da função aceito pela API, rejeição de acesso cruzado entre clientes/ambientes, permissões de usuários e criação exclusiva por Mechanic. Protocolos da integração, versões e exposição de documentação serão concretizados nessas etapas.
+A implementação abrange função/Gateway, permissões e ajustes da API, seguida da comprovação integrada. Demonstrar token da função aceito pela API, rejeição de acesso cruzado entre clientes/ambientes, permissões de usuários e criação exclusiva por Mechanic. Protocolos da integração, versões e exposição de documentação serão concretizados durante a implementação.
 
 **Fundamentação:** [ADR 001](../adrs/001-IDENTIDADE.md), [ADR 002](../adrs/002-REDE-AWS.md) e [ADR 006](../adrs/006-NOTIFICACOES.md).

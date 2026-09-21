@@ -1,6 +1,6 @@
 # ADR 005 — OpenTelemetry com centralização no New Relic
 
-**Estado:** aceito como arquitetura; compatibilidade a comprovar em E5. **Formalização:** 2026-09-16. **Origem:** [D04](../../plano-fase-3/decisoes/OBSERVABILIDADE.md). [Índice](../README.md)
+**Estado:** aceito como arquitetura; compatibilidade a comprovar em E5. **Formalização:** 2026-09-16. [Índice](../README.md)
 
 **Contexto:** demonstrar métricas, logs correlacionados, traces, indicadores de OS e alertas com padrão OpenTelemetry. Gateway possui caminhos nativos AWS distintos da instrumentação da aplicação.
 

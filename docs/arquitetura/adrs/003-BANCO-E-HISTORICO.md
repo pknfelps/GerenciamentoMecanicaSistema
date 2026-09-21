@@ -1,6 +1,6 @@
 # ADR 003 — Aurora Serverless e histórico transacional de OS
 
-**Estado:** aceito como arquitetura; implementação pendente. **Formalização:** 2026-09-16. **Origem:** [D01.2](../../plano-fase-3/decisoes/INFRAESTRUTURA.md), [D07/D08](../../plano-fase-3/decisoes/NEGOCIO_E_PERSISTENCIA.md). [Índice](../README.md)
+**Estado:** aceito como arquitetura; implementação pendente. **Formalização:** 2026-09-16. [Índice](../README.md)
 
 **Contexto:** PostgreSQL existente, foco educacional/serverless e uso intermitente. Os indicadores exigem tempos por etapa e tratamento correto de recusas, exclusões e períodos desligados.
 

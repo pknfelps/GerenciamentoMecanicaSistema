@@ -1,6 +1,6 @@
 # ADR 001 — Separar identidade interna e acesso do cliente
 
-**Estado:** aceito como arquitetura; implementação pendente. **Formalização:** 2026-09-16. **Origem:** [D02/D03](../../plano-fase-3/decisoes/ACESSO.md), com histórico das aprovações. [Índice](../README.md)
+**Estado:** aceito como arquitetura; implementação pendente. **Formalização:** 2026-09-16. [Índice](../README.md)
 
 **Contexto:** o uso de Admin para toda operação não distingue gestão de usuários, trabalho da oficina e decisão do cliente. A fase exige validação de CPF em função serverless.
 

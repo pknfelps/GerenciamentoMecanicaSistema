@@ -1,6 +1,6 @@
 # ADR 006 — Manter notificações na API nesta entrega
 
-**Estado:** aceito. **Formalização:** 2026-09-16. **Origem:** [D06.1](../../plano-fase-3/decisoes/NEGOCIO_E_PERSISTENCIA.md), decisão de escopo do usuário. [Índice](../README.md)
+**Estado:** aceito. **Formalização:** 2026-09-16. [Índice](../README.md)
 
 **Contexto:** o envio de notificações já ocorre por eventos tratados na API. A migração desse fluxo não foi considerada obrigatória para a entrega e ampliaria a implementação.
 

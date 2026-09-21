@@ -2,7 +2,7 @@
 
 - **Data:** 2026-09-13.
 - **Estado:** especificação consolidada para implementação em E3/E4; não representa funcionalidade já implantada.
-- **Referências:** [índice central](../../PLANO_FASE_3.md), [etapa E0](../plano-fase-3/etapas/E0.md) e [decisões D02/D03](../plano-fase-3/decisoes/ACESSO.md).
+- **Referências:** [arquitetura](README.md), [identidade e permissões](adrs/001-IDENTIDADE.md) e [integração em execução](rfcs/001-EXECUCAO.md).
 - **Origem:** regras de negócio definidas pelo usuário nesta sessão; detalhes de contrato abaixo concretizam essas regras com base no código atual.
 
 ## 1. Identidades e responsabilidades
@@ -150,7 +150,7 @@ CPF ilustrativo para contrato/teste, sem associação a pessoa real.
 
 1. Validar corpo e CPF obrigatório em string. Aceitar 11 dígitos ou a máscara de CPF do projeto; rejeitar CNPJ, letras, espaços, formato incorreto e dígitos verificadores inválidos.
 2. Reutilizar as regras de CPF existentes; normalizar para comparação/consulta compatível com o cadastro atual (`XXX.XXX.XXX-XX`). Não aplicar apenas a validação genérica de documento, que também aceita CNPJ.
-3. Consultar diretamente o cliente e seu status no Aurora PostgreSQL, via Lambda .NET 10 com credencial de leitura limitada ([decisão D01.5](../plano-fase-3/decisoes/INFRAESTRUTURA.md#d01-5)). Usar o mesmo formato canônico de CPF do domínio.
+3. Consultar diretamente o cliente e seu status no Aurora PostgreSQL, via Lambda .NET 10 com credencial de leitura limitada ([integração da função](rfcs/001-EXECUCAO.md)). Usar o mesmo formato canônico de CPF do domínio.
 4. Cliente existente e Ativo recebe JWT de perfil Customer, conforme seção 6. Não exigir senha nem cadastrar um usuário interno para ele.
 
 | Código | Significado |

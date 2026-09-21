@@ -1,6 +1,6 @@
 # ADR 002 — Gateway REST com backend privado no EKS
 
-**Estado:** aceito como arquitetura; implementação pendente. **Formalização:** 2026-09-16. **Origem:** [D01/D09.2](../../plano-fase-3/decisoes/INFRAESTRUTURA.md). [Índice](../README.md)
+**Estado:** aceito como arquitetura; implementação pendente. **Formalização:** 2026-09-16. [Índice](../README.md)
 
 **Contexto:** reaproveitar EKS/Terraform e oferecer entrada gerenciada, mantendo workloads e banco privados. O ambiente será usado em janelas de testes/gravação.
 

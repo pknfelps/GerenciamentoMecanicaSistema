@@ -1,5 +1,9 @@
 ## .NET build outputs, local tooling and environment files
 
+# Local implementation plan and session history
+/PLANO_FASE_3.md
+/docs/plano-fase-3/
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/

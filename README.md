@@ -4,7 +4,7 @@ API para gerenciamento de usuários, clientes, veículos, estoque, catálogo de 
 
 A base funcional da Fase 2 está sendo reorganizada para a Fase 3. A aplicação mantém API, camadas, testes, Dockerfile, Compose e Deployment/HPA. Infraestrutura e banco foram separados em repositórios próprios; a função de autenticação será implementada na E3.
 
-Consulte o [plano vivo](PLANO_FASE_3.md) e a [arquitetura alvo](docs/arquitetura/README.md). A separação E1.2 não provisiona Aurora/Gateway nem altera permissões de negócio. Durante a transição, a pipeline executa testes/cobertura/Sonar e build da imagem; publicação no ECR e deploy ficam para as tarefas seguintes. O uso principal será a API na AWS; Docker local é opcional, com preparação manual do banco.
+Consulte a [arquitetura alvo](docs/arquitetura/README.md). A separação E1.2 não provisiona Aurora/Gateway nem altera permissões de negócio. Durante a transição, a pipeline executa testes/cobertura/Sonar e build da imagem; publicação no ECR e deploy ficam para as tarefas seguintes. O uso principal será a API na AWS; Docker local é opcional, com preparação manual do banco.
 
 ## Base funcional da Fase 2
 

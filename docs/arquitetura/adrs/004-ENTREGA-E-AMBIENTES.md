@@ -1,6 +1,6 @@
 # ADR 004 — Quatro repositórios e ambientes independentes
 
-**Estado:** aceito como arquitetura; implementação pendente. **Formalização:** 2026-09-16. **Origem:** [D05/D09](../../plano-fase-3/decisoes/REPOSITORIOS_E_AMBIENTES.md), [ECR em D01.3](../../plano-fase-3/decisoes/INFRAESTRUTURA.md). [Índice](../README.md)
+**Estado:** aceito como arquitetura; implementação pendente. **Formalização:** 2026-09-16. [Índice](../README.md)
 
 **Contexto:** a entrega exige quatro repositórios/pipelines e hom/prd capazes de coexistir. Desligamento para economia não pode destruir dependências compartilhadas nem o outro ambiente.
 

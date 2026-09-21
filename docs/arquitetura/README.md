@@ -1,6 +1,6 @@
 # Arquitetura da Fase 3
 
-[Plano vivo](../../PLANO_FASE_3.md) · [Decisões detalhadas](../plano-fase-3/DECISOES.md)
+[README do projeto](../../README.md)
 
 **Estado em 2026-09-16:** arquitetura aceita e documentação inicial da E0.7 concluída. Estes documentos descrevem o destino da implementação; não comprovam recursos implantados. A revisão contra o sistema entregue permanece na E7.
 
@@ -16,7 +16,7 @@
 | [RFC 002 — Entrega](rfcs/002-ENTREGA.md) | Responsabilidades, contratos entre pipelines e ciclo dos ambientes |
 | [RFC 003 — Dados e observabilidade](rfcs/003-DADOS-E-OBSERVABILIDADE.md) | Histórico, métricas, coleta e critérios de validação |
 
-As RFCs organizam como a solução deve funcionar. Os ADRs registram por que as escolhas foram feitas. Parâmetros e regras detalhadas continuam nos documentos de decisão vinculados; não manter cópias integrais desses contratos aqui.
+As RFCs organizam como a solução deve funcionar. Os ADRs registram por que as escolhas foram feitas. O contrato de acesso detalha os formatos HTTP, JWT e as permissões por endpoint.
 
 ## Rastreabilidade das decisões
 
@@ -44,4 +44,4 @@ Os diagramas, RFCs e ADRs iniciam as evidências de R12. O ER definitivo e a com
 | Publicação/reconciliação de métricas após commit, deduplicação e falhas de exportação | E4/E5 | Não prometer entrega exatamente uma vez; comparar dashboard com histórico persistido |
 | Conta/região New Relic, limites e destinatário de alertas | E5/E6 | Configurar sem publicar credenciais; validar notificações durante janela ativa |
 
-Mudanças arquiteturais devem atualizar a decisão de origem, o ADR correspondente e os diagramas afetados. Tarefas e evidências continuam exclusivamente no [plano](../../PLANO_FASE_3.md).
+Mudanças arquiteturais devem atualizar o ADR correspondente, as RFCs, os contratos e os diagramas afetados.

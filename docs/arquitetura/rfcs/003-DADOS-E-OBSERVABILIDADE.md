@@ -17,7 +17,7 @@ Excluir uma OS individualmente preserva seu histórico; não usar exclusão em c
 | Tempo total de atendimento | Criação até Finished por serviço concluído; inclui esperas anteriores, exclui retirada e recusas |
 | Erros de integração | Tentativas técnicas com falha sobre tentativas totais; cada retry conta; CPF inválido e recusa não são erro técnico |
 
-Intervalos usam tempo contínuo, incluindo período desligado, e pertencem ao dia de saída da etapa. Médias usam intervalos encerrados; ausência de amostra não significa zero. As regras completas permanecem em [D07/D08](../../plano-fase-3/decisoes/NEGOCIO_E_PERSISTENCIA.md).
+Intervalos usam tempo contínuo, incluindo período desligado, e pertencem ao dia de saída da etapa. Médias usam intervalos encerrados; ausência de amostra não significa zero.
 
 Não há migração/backfill: versionar SQL e seeds para banco vazio, executados por Job da pipeline do banco. Não resetar o esquema ao iniciar pods. ER, índices e mecanismo de preservação do vínculo histórico serão detalhados em E2/E4.
 
@@ -35,6 +35,6 @@ Três dashboards cobrem operação, OS e integrações, com filtro por ambiente.
 
 A exportação possui filas limitadas em memória: pode perder dados e não participa da transação de negócio. Publicar métricas após commit e implementar/verificar deduplicação e reconciliação com o histórico antes de considerá-las evidência confiável. Não foi escolhido outbox ou um novo serviço para isso.
 
-[E4](../../plano-fase-3/etapas/E4.md) trata modelo/negócio; [E5](../../plano-fase-3/etapas/E5.md), instrumentação, compatibilidade do receiver CloudWatch e layer Lambda, dashboards e correlação; [E6](../../plano-fase-3/etapas/E6.md), demonstração integrada. Comparar amostras conhecidas no banco com indicadores e verificar ausência de duplicação/dados pessoais. Os parâmetros operacionais aceitos estão em [D04](../../plano-fase-3/decisoes/OBSERVABILIDADE.md).
+A implementação abrange modelo/negócio, instrumentação, compatibilidade do receiver CloudWatch e layer Lambda, dashboards e correlação, seguida da demonstração integrada. Comparar amostras conhecidas no banco com indicadores e verificar ausência de duplicação/dados pessoais.
 
 **Justificativas:** [ADR 003](../adrs/003-BANCO-E-HISTORICO.md) e [ADR 005](../adrs/005-OBSERVABILIDADE.md).
