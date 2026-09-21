@@ -2,15 +2,5 @@
 kind: Kustomization
 
 resources:
-  - storageclass-ebs-gp3.yaml
   - deploy-gerenciamento-api.yaml
-  - deploy-gerenciamento-db.yaml
-  - svc-gerenciamento-api.yaml
-  - svc-gerenciamento-db.yaml
   - hpa-gerenciamento-api.yaml
-  - pvc-gerenciamento-db.yaml
-
-configMapGenerator:
-  - name: postgres-init-script
-    files:
-      - Init.sql=DbEntrypoint/Init.sql
