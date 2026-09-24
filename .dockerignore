@@ -4,6 +4,17 @@
 .vs
 .sonarqube
 .agents
+PLANO_FASE_3.md
+docs/plano-fase-3
+.media-tools
+.postman
+media-output
+output
+**/.terraform
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfvars
+**/*.tfvars.json
 .env
 .env.*
 **/bin
