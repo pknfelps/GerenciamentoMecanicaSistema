@@ -1,0 +1,126 @@
+name: auth-contracts
+
+on:
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'GerenciamentoMecanica.Auth.Contracts/**'
+      - 'Auth.Contracts.Tests/**'
+      - 'Domain/**'
+      - 'DomainTests/**'
+      - 'Infrastructure/Authentication/**'
+      - 'ControllerTests/**'
+      - 'scripts/*AuthContracts.ps1'
+      - 'scripts/tests/*AuthContracts*.ps1'
+      - '.github/workflows/auth-contracts.yml'
+  push:
+    branches: [develop, main]
+    paths:
+      - 'GerenciamentoMecanica.Auth.Contracts/**'
+      - 'Auth.Contracts.Tests/**'
+      - 'Domain/**'
+      - 'DomainTests/**'
+      - 'Infrastructure/Authentication/**'
+      - 'ControllerTests/**'
+      - 'scripts/*AuthContracts.ps1'
+      - 'scripts/tests/*AuthContracts*.ps1'
+      - '.github/workflows/auth-contracts.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment (develop = hom, main = prd)'
+        type: choice
+        required: true
+        default: hom
+        options: [hom, prd]
+      publish:
+        description: 'Publicar a versão imutável no S3'
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Test standalone contracts
+        run: dotnet test Auth.Contracts.Tests -c Release
+      - name: Test domain compatibility
+        run: dotnet test DomainTests -c Release
+      - name: Test actual API JWT validation
+        run: dotnet test ControllerTests -c Release --filter FullyQualifiedName~JwtContractCompatibilityTests
+      - name: Pack version and checksum
+        shell: pwsh
+        run: ./scripts/Pack-AuthContracts.ps1
+      - name: Test immutable publication offline
+        shell: pwsh
+        run: ./scripts/tests/Test-AuthContractsDistribution.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: auth-contracts
+          path: artifacts/auth-contracts/*
+          if-no-files-found: error
+
+  publish:
+    if: github.event_name == 'workflow_dispatch' && inputs.publish
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: ${{ inputs.environment }}
+    concurrency:
+      group: auth-contracts-publish
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      TARGET_ENVIRONMENT: ${{ inputs.environment }}
+      CONFIGURED_REGION: ${{ vars.AWS_REGION }}
+      CONFIGURED_ROLE: ${{ vars.AWS_ROLE_ARN }}
+      ARTIFACTS_BUCKET: ${{ vars.ARTIFACTS_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check target
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$TARGET_ENVIRONMENT" in
+            hom) expected_ref="refs/heads/develop" ;;
+            prd) expected_ref="refs/heads/main" ;;
+            *) exit 1 ;;
+          esac
+          [[ "$GITHUB_REPOSITORY" == "pknfelps/GerenciamentoMecanicaSistema" ]]
+          [[ "$GITHUB_REF" == "$expected_ref" ]]
+          [[ "$CONFIGURED_REGION" == "us-east-1" ]]
+          [[ "$CONFIGURED_ROLE" == "arn:aws:iam::121754142617:role/mecanica/pipelines/mecanica-${TARGET_ENVIRONMENT}-api-github" ]]
+          [[ "$ARTIFACTS_BUCKET" == "mecanica-artifacts-121754142617-us-east-1" ]]
+      - uses: actions/download-artifact@v4
+        with:
+          name: auth-contracts
+          path: artifacts/auth-contracts
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          aws-region: ${{ env.CONFIGURED_REGION }}
+          role-to-assume: ${{ env.CONFIGURED_ROLE }}
+          allowed-account-ids: '121754142617'
+          role-duration-seconds: 900
+          unset-current-credentials: true
+          use-existing-credentials: false
+          output-credentials: false
+          translate-env-variables: false
+          disable-retry: true
+          action-timeout-s: 60
+      - name: Publish immutable package
+        shell: pwsh
+        run: |
+          $packages = @(Get-ChildItem artifacts/auth-contracts -Filter *.nupkg)
+          if ($packages.Count -ne 1) { throw 'Expected exactly one package.' }
+          ./scripts/Publish-AuthContracts.ps1 -PackagePath $packages[0].FullName -Bucket $env:ARTIFACTS_BUCKET -Region $env:CONFIGURED_REGION

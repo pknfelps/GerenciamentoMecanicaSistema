@@ -13,16 +13,15 @@
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.8" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.8" />
-    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.18.0" />
     <PackageReference Include="Npgsql" Version="10.0.2" />
     <PackageReference Include="SonarAnalyzer.CSharp" Version="10.26.0.140279">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\GerenciamentoMecanica.Auth.Contracts\GerenciamentoMecanica.Auth.Contracts.csproj" />
     <ProjectReference Include="..\Domain.Interface\Domain.Interface.csproj" />
     <ProjectReference Include="..\Domain\Domain.csproj" />
     <ProjectReference Include="..\Service.Interface\Service.Interface.csproj" />

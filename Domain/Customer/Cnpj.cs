@@ -1,20 +1,9 @@
-﻿namespace Domain.Customer
+using GerenciamentoMecanica.Auth.Contracts;
+
+namespace Domain.Customer
 {
-    public class Cnpj : Document
+    public class Cnpj(string id) : Document(id, CnpjRules.Normalize, "CNPJ")
     {
-        public const int DigitCount = 14;
-
-        protected override int DocumentDigitCount { get; set; } = DigitCount;
-        protected override int InitialVerifierDigitMultiplier { get; set; } = 5;
-
-        public Cnpj(string id) : base(id)
-        {
-            Id = NormalizeDocument(id);
-        }
-
-        protected sealed override string NormalizeDocument(string document)
-        {
-            return $"{document[..2]}.{document[2..5]}.{document[5..8]}/{document[8..12]}-{document[12..]}";
-        }
+        public const int DigitCount = CnpjRules.DigitCount;
     }
 }

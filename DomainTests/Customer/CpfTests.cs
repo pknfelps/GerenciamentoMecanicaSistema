@@ -45,6 +45,7 @@ namespace DomainTests.Customer
             Assert.That(cpf, Is.Not.Null);
             Assert.That(cpf.Id, Is.Not.Null);
             Assert.That(cpf.Id, Is.Not.Empty);
+            Assert.That(cpf.Id, Is.EqualTo("662.119.730-63"));
         }
 
         [Test]

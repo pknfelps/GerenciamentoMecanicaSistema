@@ -44,6 +44,7 @@ namespace DomainTests.Customer
             Assert.That(cnpj, Is.Not.Null);
             Assert.That(cnpj.Id, Is.Not.Null);
             Assert.That(cnpj.Id, Is.Not.Empty);
+            Assert.That(cnpj.Id, Is.EqualTo("10.359.666/0001-94"));
         }
 
         [Test]

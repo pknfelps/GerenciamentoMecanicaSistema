@@ -6,6 +6,8 @@
 
 Este documento é a fonte central das interfaces entre os quatro repositórios. Define o que implementar; não comprova que os publicadores ou consumidores já existem. Bootstrap S3/ECR/OIDC disponível e testes positivos de autenticação confirmados; metadados SSM, secrets de aplicação, manifestos, publicação de artefatos e deploys dos componentes ainda serão implementados. Detalhes de campos definidos aqui complementam as decisões da RFC de entrega.
 
+**Implementação parcial em 2026-09-24:** pacote Auth.Contracts 1.0.0, integração local à API, consumidor NuGet independente e workflows/scripts preparados. [Procedimentos e limites](PACOTE_AUTH_CONTRACTS.md). Publicação/consumo reais no S3 ainda pendentes; demais contratos continuam como especificação.
+
 ## 1. Escopo e propriedade
 
 | Componente lógico | Repositório proprietário | Publica | Consome |
@@ -119,7 +121,7 @@ A primeira versão formal do SQL será definida e versionada junto da implementa
 | openapi-version | SemVer | R | Gateway; contrato HTTP implantado |
 | openapi-key | chave S3 | R | Gateway; contracts/api/<commit>/openapi.json |
 | openapi-sha256 | hash SHA-256 | R | Gateway; conferir os bytes |
-| auth-contracts-version | SemVer exata | R após extração do pacote | Compatibilidade JWT/CPF |
+| auth-contracts-version | SemVer exata | R após extração do pacote | Compatibilidade JWT/documentos |
 | smtp-secret-arn | ARN Secrets Manager | C: SMTP autenticado | Runtime da API |
 
 Release pronta exige rollout concluído, readiness existente aprovada e imagem/digest verificados. A API não cria o Service, não publica ARN do NLB, não inicializa SQL e não precisa de URL pública do Gateway para seu primeiro deploy.
@@ -298,7 +300,7 @@ Consulta de metadados está limitada ao ambiente, mas não deve ser usada para d
 
 | Entrega | Responsável |
 |---|---|
-| Pacote CPF/JWT, versão exata e testes de compatibilidade | API; consumidor no repo da função |
+| Pacote CPF/CNPJ e JWT, versão exata e testes de compatibilidade | API; consumidor no repo da função |
 | Publicadores SSM, verificação de manifests e preparação de secrets | Cada produtor |
 | Infraestrutura privada, NLB, acesso EKS e roles de execução | Infraestrutura |
 | Aurora, usuários/permissões SQL, versão/hash, Job e CA/TLS | Banco |

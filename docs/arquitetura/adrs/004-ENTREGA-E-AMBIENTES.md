@@ -4,7 +4,7 @@
 
 **Contexto:** a entrega exige quatro repositórios/pipelines e hom/prd capazes de coexistir. Desligamento para economia não pode destruir dependências compartilhadas nem o outro ambiente.
 
-**Decisão:** separar aplicação, infraestrutura, banco e autenticação; develop entrega em hom, main em prd. Usar estados S3 versionados com lock nativo por componente/ambiente, OIDC, metadados SSM e secrets no Secrets Manager. ECR e bucket separado de artefatos guardam versões fixas; contratos OpenAPI e pacote CPF/JWT têm produtores definidos. Bootstrap compartilhado tem ciclo independente.
+**Decisão:** separar aplicação, infraestrutura, banco e autenticação; develop entrega em hom, main em prd. Usar estados S3 versionados com lock nativo por componente/ambiente, OIDC, metadados SSM e secrets no Secrets Manager. ECR e bucket separado de artefatos guardam versões fixas; contratos OpenAPI e pacote CPF/CNPJ e JWT têm produtores definidos. Bootstrap compartilhado tem ciclo independente.
 
 **Alternativas:** estado local dificulta coordenação/auditoria; credenciais AWS duráveis no CI foram substituídas por OIDC; DynamoDB não é necessário para o locking escolhido. Reutilizar os mesmos recursos para hom/prd ou impor exclusão global entre ambientes contraria a coexistência. Docker Hub foi substituído por ECR.
 

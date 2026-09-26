@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="GerenciamentoMecanica.Auth.Contracts/GerenciamentoMecanica.Auth.Contracts.csproj" />
     <File Path="docker-compose.yaml" />
     <Project Path="DependencyInjection/DependencyInjection.csproj" />
     <Project Path="Domain.Interface/Domain.Interface.csproj" />
@@ -10,6 +11,7 @@
     <Project Path="Service/Service.csproj" />
   </Folder>
   <Folder Name="/testes/">
+    <Project Path="Auth.Contracts.Tests/Auth.Contracts.Tests.csproj" />
     <Project Path="ControllerTests/ControllerTests.csproj" Id="d9e83580-8bee-4957-a1c8-ec04071a5762" />
     <Project Path="DomainTests/DomainTests.csproj" />
     <Project Path="InfrastructureTests/InfrastructureTests.csproj" Id="5836563f-aa04-4ad3-8859-8f85ade92148" />
