@@ -81,3 +81,7 @@ finally {
     Remove-Item -LiteralPath $package, "$package.sha256" -Force -ErrorAction SilentlyContinue
     Remove-Item -LiteralPath $taskDirectory -Force
 }
+
+# Os erros esperados do mock não são o resultado da suíte. O runner pwsh do GitHub
+# usa LASTEXITCODE ao encerrar o step; só sinalizar sucesso após testes e cleanup.
+$global:LASTEXITCODE = 0
