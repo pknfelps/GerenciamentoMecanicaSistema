@@ -8,15 +8,19 @@
 
 | Documento | Conteúdo |
 |---|---|
+| [Pacote Auth.Contracts](PACOTE_AUTH_CONTRACTS.md) | CPF/CNPJ e JWT compartilhados, testes, empacotamento e publicação/consumo independente |
 | [Acesso e autenticação](ACESSO_E_AUTENTICACAO.md) | Fonte dos contratos HTTP, JWT e permissões por endpoint |
+| [Contratos entre repositórios](CONTRATOS_ENTRE_REPOSITORIOS.md) | Catálogo SSM, secrets por referência, artefatos, manifesto, prontidão e responsabilidades de cada produtor/consumidor |
 | [Componentes](diagramas/COMPONENTES.md) | Rede, serviços, ambientes e caminhos de observabilidade |
-| [Validação de CPF](diagramas/VALIDACAO_CPF.md) | Emissão do token do cliente e autorização da consulta de OS |
+| [Validação de documento](diagramas/VALIDACAO_CPF.md) | Emissão do token do cliente e autorização da consulta de OS |
 | [Abertura de OS](diagramas/ABERTURA_OS.md) | Login interno, criação transacional e notificação |
 | [RFC 001 — Execução](rfcs/001-EXECUCAO.md) | Integração entre Gateway, função, aplicação e banco |
 | [RFC 002 — Entrega](rfcs/002-ENTREGA.md) | Responsabilidades, contratos entre pipelines e ciclo dos ambientes |
 | [RFC 003 — Dados e observabilidade](rfcs/003-DADOS-E-OBSERVABILIDADE.md) | Histórico, métricas, coleta e critérios de validação |
 
 As RFCs organizam como a solução deve funcionar. Os ADRs registram por que as escolhas foram feitas. O contrato de acesso detalha os formatos HTTP, JWT e as permissões por endpoint.
+
+**Complemento em 2026-09-24:** contratos operacionais v1 documentados e referenciados pelos quatro repositórios. Bootstrap e diagnóstico positivo OIDC estão disponíveis; os publicadores SSM, manifestos e deploys descritos no contrato continuam como trabalho de implementação.
 
 ## Rastreabilidade das decisões
 
@@ -35,7 +39,7 @@ Os diagramas, RFCs e ADRs iniciam as evidências de R12. O ER definitivo e a com
 
 | Detalhe | Responsável / etapa | Impacto e condição de avanço |
 |---|---|---|
-| URLs, permissões reais, proteções e CI dos quatro repositórios | E1 | Verificar recursos existentes antes de distribuir artefatos; documentar contratos operacionais em E1.8 |
+| Publicadores/consumidores de contratos, permissões de workloads e CI da função | E1/E2/E3 | Implementar a especificação v1; diagnóstico OIDC não comprova deploy ou consumo dos metadados |
 | Coordenação de alterações do mesmo ambiente entre repositórios | E1/E2 | Lock de estado e concurrency local do GitHub não bastam para serializar quatro pipelines; concretizar coordenação antes de deploys concorrentes |
 | Versões de Terraform/providers, EKS/add-ons, Aurora com pausa e integração Gateway/NLB | E2/E3 | Fixar versões suportadas, target do NLB e protocolos/TLS; comprovar conectividade antes de publicar rotas |
 | SQL, índices, restrições, preservação do histórico após excluir OS e ER | E2/E4 | Esquema inicial reproduzível e transações corretas antes da validação integrada |

@@ -1,12 +1,14 @@
 # RFC 002 — Entrega e contratos entre componentes
 
-**Estado:** arquitetura aceita; implementação pendente. **Registro:** 2026-09-16. [Índice](../README.md)
+**Estado:** arquitetura aceita; implementação parcial. **Registro:** 2026-09-16; detalhamento em 2026-09-24. [Índice](../README.md)
+
+Os [contratos entre repositórios](../CONTRATOS_ENTRE_REPOSITORIOS.md) especificam nomes, tipos, produtores/consumidores, checksums e publicação de releases. Bootstrap e diagnóstico OIDC estão disponíveis; a integração dos componentes continua pendente. O documento de contratos é a fonte do detalhamento operacional, sem duplicação das tabelas nesta RFC.
 
 ## Responsabilidades
 
 | Repositório | Produz e mantém |
 |---|---|
-| GerenciamentoMecanicaSistema | API, domínio, testes, imagem ECR por digest, Deployment/HPA, OpenAPI e pacote CPF/JWT |
+| GerenciamentoMecanicaSistema | API, domínio, testes, imagem ECR por digest, Deployment/HPA, OpenAPI e pacote CPF/CNPJ e JWT |
 | GerenciamentoMecanicaInfraestrutura | Rede/EKS, add-ons, Collector, Service e configuração que solicita NLB; unidade separada de Gateway/VPC Link/OpenAPI/permissão de invocação Lambda |
 | GerenciamentoMecanicaBancoDados | Aurora, acesso e secrets de banco, esquema/seeds e Job de inicialização |
 | GerenciamentoMecanicaAutenticacao | Código/testes/ZIP da Lambda, Terraform/IAM da função e contrato Validate |
@@ -40,4 +42,4 @@ Destruir em ordem inversa das dependências, removendo Service e aguardando limp
 
 Concretizar repositórios, contratos operacionais e governança; implementar provisionamento; comprovar entrega e isolamento. Antes de operações concorrentes no mesmo ambiente, definir coordenação entre repositórios: lock S3 protege somente um estado, e concurrency do GitHub é local ao repositório.
 
-**Justificativa:** [ADR 004](../adrs/004-ENTREGA-E-AMBIENTES.md). O documento operacional de contratos ampliará estas interfaces com campos e referências reais.
+**Justificativa:** [ADR 004](../adrs/004-ENTREGA-E-AMBIENTES.md). O [documento operacional](../CONTRATOS_ENTRE_REPOSITORIOS.md) amplia estas interfaces com campos, formatos e referências do bootstrap. IDs dos workloads serão publicados quando os recursos existirem.

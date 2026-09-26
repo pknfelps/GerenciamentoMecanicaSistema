@@ -8,8 +8,8 @@ A separação em quatro repositórios está integrada. A API e os testes existen
 
 | Disponível | A implementar |
 |---|---|
-| API .NET, JWT interno, PostgreSQL, SMTP e health checks | Validação serverless de CPF e permissões Admin/Mechanic/Customer |
-| Dockerfile, Compose opcional e Deployment/HPA | Imagem no ECR, entrega por OIDC e ambientes hom/prd |
+| API .NET, JWT interno, PostgreSQL, SMTP e health checks | Validação serverless de documentos CPF/CNPJ e permissões Admin/Mechanic/Customer |
+| Dockerfile, Compose opcional e Deployment/HPA | Publicação da imagem no ECR e deploy nos ambientes hom/prd |
 | CI com testes, cobertura, SonarCloud e build Docker | Aurora, API Gateway e observabilidade OpenTelemetry/New Relic |
 
 O foco de uso será a API na AWS. A URL do Gateway ainda não foi publicada. A [arquitetura alvo](docs/arquitetura/README.md) descreve contratos futuros; as [collections](postman/collections) e o OpenAPI gerado pela API representam as operações atuais.
@@ -36,7 +36,7 @@ flowchart LR
 | Este repositório | API, camadas, testes, Dockerfile/Compose e Deployment/HPA |
 | [Infraestrutura](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/tree/develop) | Terraform, plataforma Kubernetes, Service e futura entrada Gateway/NLB |
 | [Banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/tree/develop) | SQL/seeds e futura infraestrutura Aurora/Job de inicialização |
-| [Autenticação](https://github.com/pknfelps/GerenciamentoMecanicaAutenticacao/tree/develop) | Futura Lambda de validação de CPF e emissão de JWT |
+| [Autenticação](https://github.com/pknfelps/GerenciamentoMecanicaAutenticacao/tree/develop) | Futura Lambda de validação de documentos CPF/CNPJ e emissão de JWT |
 
 Os projetos `Domain.Interface` e `Service.Interface` definem contratos; `Infrastructure` implementa persistência PostgreSQL, JWT, hash de senha e SMTP; `DependencyInjection` registra os componentes. Consultas comuns de usuários não retornam senha/hash; os fluxos de credenciais usam `UserCredentials`.
 
@@ -163,9 +163,28 @@ A [pipeline](.github/workflows/pipeline.yml) executa em PRs e pushes para `devel
 
 A entrega planejada publicará no ECR e implantará por OIDC, após provisionar dependências. Consulte a [RFC de entrega](docs/arquitetura/rfcs/002-ENTREGA.md) para a ordem entre os quatro repositórios.
 
+## Contratos de integração
+
+A [especificação central](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md) define campos, versões, artefatos, secrets e falhas. Este repositório é o produtor do componente lógico **api** e do pacote **GerenciamentoMecanica.Auth.Contracts**. O pacote e seus scripts de publicação/consumo já foram implementados e validados localmente; publicadores SSM e integrações de deploy ainda serão implementados. Consulte [operação do Auth.Contracts](docs/arquitetura/PACOTE_AUTH_CONTRACTS.md).
+
+| Interface | Responsabilidade da API |
+|---|---|
+| Produz para implantação | Imagem ECR identificada por digest; o Deployment não usa latest |
+| Produz para Gateway | contracts/api/<commit>/openapi.json e seu .sha256, gerados da mesma revisão implantada |
+| Produz para a função | Pacote NuGet de versão fixa em packages/GerenciamentoMecanica.Auth.Contracts/<versao>/, com .sha256 |
+| Publica em SSM | /mecanica/<ambiente>/api/v1/: image-uri, deployment-name, OpenAPI, versão do pacote, release e tentativas; smtp-secret-arn quando aplicável |
+| Consome da base | Cluster/namespace/Service, ECR, referência JWT, issuer/audience e endpoint OTel quando habilitado |
+| Consome do banco | Writer/porta/database/TLS, versão/hash SQL e api-secret-arn |
+| Resolve no runtime | Sua credencial de banco, JWT e SMTP autenticado; nunca a credencial administrativa do banco |
+| Solicita após deploy | Recomposição do Gateway, via workflow da infraestrutura fixado por SHA, com a nova release da API e a release da função já implantada |
+
+Build/testes e publicação do pacote são independentes de banco/EKS. Publicação e deploy são resultados distintos: dependência ausente deixa a implantação bloqueada, sem sinalizar sucesso nem criar infraestrutura implicitamente. Release pronta exige rollout/readiness aprovados e dependências compatíveis. A API não inicializa SQL nem administra o Service/NLB.
+
+O [workflow manual OIDC](.github/workflows/aws-oidc-check.yml) verifica a role api do Environment selecionado, em develop/hom ou main/prd. Ele não testa permissões de deploy, publicação de artefatos ou consumo de secrets. As variáveis de entrada são AWS_REGION, AWS_ROLE_ARN e ARTIFACTS_BUCKET; os demais identificadores vêm dos contratos publicados.
+
 ## Desenvolvimento e ambientes
 
-Crie branches de trabalho a partir da `develop` atualizada e direcione os PRs para `develop`. A promoção `develop -> main` ocorre quando a entrega estiver concluída. `develop` corresponde a **hom** e `main` a **prd** na arquitetura planejada; os ambientes poderão coexistir. Proteções, Environments e deploy automático ainda precisam ser configurados.
+Crie branches de trabalho a partir da `develop` atualizada e direcione os PRs para `develop`. A promoção `develop -> main` ocorre quando a entrega estiver concluída. `develop` corresponde a **hom** e `main` a **prd** na arquitetura planejada; os ambientes poderão coexistir. Proteções, Environments e autenticação OIDC foram preparados; a integração do deploy automático ainda será implementada.
 
 ## Referências
 

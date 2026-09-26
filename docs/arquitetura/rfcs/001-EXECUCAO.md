@@ -6,19 +6,19 @@
 
 A fase exige uma entrada gerenciada e validação serverless de CPF sem transferir o gerenciamento de OS para o cliente. A REST API Regional do API Gateway encaminha `/customers/validate` à Lambda .NET 10 em ZIP e as rotas da aplicação ao EKS por VPC Link/NLB interno. O banco compartilhado entre API e função é o Aurora PostgreSQL Serverless v2 do respectivo ambiente.
 
-A função consulta diretamente clientes com credencial restrita à leitura necessária, conexão sem pooling e encerramento garantido. Ela normaliza o CPF para a representação atual do banco, verifica existência/estado e emite JWT. A API continua responsável por validar JWT, role e propriedade da OS; não haverá um segundo mecanismo de autorização no Gateway nesta arquitetura.
+A função consulta diretamente clientes com credencial restrita à leitura necessária, conexão sem pooling e encerramento garantido. Ela normaliza o documento (CPF/CNPJ) para a representação atual do banco, verifica existência/estado e emite JWT. A API continua responsável por validar JWT, role e propriedade da OS; não haverá um segundo mecanismo de autorização no Gateway nesta arquitetura.
 
 ## Contratos e limites
 
 O [contrato de acesso](../ACESSO_E_AUTENTICACAO.md) é a fonte dos formatos e códigos HTTP. Admin cadastra/remove usuários internos; Mechanic opera a oficina; ambos atualizam apenas o próprio registro. Customer não é usuário da tabela interna e só acessa status/decisão de orçamento das próprias OS. Abertura permanece exclusivamente na oficina.
 
-As regras comuns de CPF/JWT serão extraídas para `GerenciamentoMecanica.Auth.Contracts`. O pacote não contém controllers, entidades de OS ou acesso ao banco. Não haverá refresh token, lista de revogação nem invalidação adicional de sessões por Update/Remove/inativação. Cadastro de cliente nasce Ativo; a fase não introduz um endpoint de inativação.
+As regras comuns de CPF/CNPJ e JWT serão extraídas para `GerenciamentoMecanica.Auth.Contracts`. O pacote não contém controllers, entidades de OS ou acesso ao banco. Não haverá refresh token, lista de revogação nem invalidação adicional de sessões por Update/Remove/inativação. Cadastro de cliente nasce Ativo; a fase não introduz um endpoint de inativação.
 
 Segredos JWT e credenciais ficam no Secrets Manager por ambiente. API e função usam configurações JWT compatíveis dentro do mesmo ambiente. A integração REST será composta a partir dos contratos OpenAPI versionados dos dois produtores, com extensões AWS na infraestrutura.
 
 ## Fluxos e falhas
 
-Ver [componentes](../diagramas/COMPONENTES.md), [validação de CPF](../diagramas/VALIDACAO_CPF.md) e [abertura de OS](../diagramas/ABERTURA_OS.md). Falha técnica de banco/secrets não equivale a CPF inelegível. Falha de telemetria não deve impedir uma operação de negócio. SMTP permanece na API, com falhas posteriores ao commit tratadas separadamente.
+Ver [componentes](../diagramas/COMPONENTES.md), [validação de CPF](../diagramas/VALIDACAO_CPF.md) e [abertura de OS](../diagramas/ABERTURA_OS.md). Falha técnica de banco/secrets não equivale a documento inelegível. Falha de telemetria não deve impedir uma operação de negócio. SMTP permanece na API, com falhas posteriores ao commit tratadas separadamente.
 
 ## Implementação e aceitação
 

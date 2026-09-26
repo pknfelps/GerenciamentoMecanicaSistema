@@ -26,6 +26,7 @@ coverage.xml
 *.suo
 *.binlog
 ControllerTests
+Auth.Contracts.Tests
 DomainTests
 RepositoryTests
 ServiceTests
