@@ -8,7 +8,7 @@ Os [contratos entre repositórios](../CONTRATOS_ENTRE_REPOSITORIOS.md) especific
 
 | Repositório | Produz e mantém |
 |---|---|
-| GerenciamentoMecanicaSistema | API, domínio, testes, imagem ECR por digest, Deployment/HPA, OpenAPI e pacote CPF/JWT |
+| GerenciamentoMecanicaSistema | API, domínio, testes, imagem ECR por digest, Deployment/HPA, OpenAPI e pacote CPF/CNPJ e JWT |
 | GerenciamentoMecanicaInfraestrutura | Rede/EKS, add-ons, Collector, Service e configuração que solicita NLB; unidade separada de Gateway/VPC Link/OpenAPI/permissão de invocação Lambda |
 | GerenciamentoMecanicaBancoDados | Aurora, acesso e secrets de banco, esquema/seeds e Job de inicialização |
 | GerenciamentoMecanicaAutenticacao | Código/testes/ZIP da Lambda, Terraform/IAM da função e contrato Validate |

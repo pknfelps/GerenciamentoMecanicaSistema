@@ -8,10 +8,11 @@
 
 | Documento | Conteúdo |
 |---|---|
+| [Pacote Auth.Contracts](PACOTE_AUTH_CONTRACTS.md) | CPF/CNPJ e JWT compartilhados, testes, empacotamento e publicação/consumo independente |
 | [Acesso e autenticação](ACESSO_E_AUTENTICACAO.md) | Fonte dos contratos HTTP, JWT e permissões por endpoint |
 | [Contratos entre repositórios](CONTRATOS_ENTRE_REPOSITORIOS.md) | Catálogo SSM, secrets por referência, artefatos, manifesto, prontidão e responsabilidades de cada produtor/consumidor |
 | [Componentes](diagramas/COMPONENTES.md) | Rede, serviços, ambientes e caminhos de observabilidade |
-| [Validação de CPF](diagramas/VALIDACAO_CPF.md) | Emissão do token do cliente e autorização da consulta de OS |
+| [Validação de documento](diagramas/VALIDACAO_CPF.md) | Emissão do token do cliente e autorização da consulta de OS |
 | [Abertura de OS](diagramas/ABERTURA_OS.md) | Login interno, criação transacional e notificação |
 | [RFC 001 — Execução](rfcs/001-EXECUCAO.md) | Integração entre Gateway, função, aplicação e banco |
 | [RFC 002 — Entrega](rfcs/002-ENTREGA.md) | Responsabilidades, contratos entre pipelines e ciclo dos ambientes |

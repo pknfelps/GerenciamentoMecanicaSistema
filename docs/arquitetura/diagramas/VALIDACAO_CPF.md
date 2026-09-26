@@ -1,4 +1,4 @@
-# Validação de CPF e acesso à própria OS
+# Validação de documento (CPF/CNPJ) e acesso à própria OS
 
 [Arquitetura](../README.md) · [Contrato completo](../ACESSO_E_AUTENTICACAO.md)
 
@@ -12,16 +12,16 @@ sequenceDiagram
     participant S as Secrets Manager
     participant D as Aurora
     participant A as API via VPC Link e NLB
-    C->>G: POST /customers/validate (CPF)
+    C->>G: POST /customers/validate (document: CPF ou CNPJ)
     G->>F: Encaminhar requisição
     F->>F: Validar formato/checksum e normalizar máscara
-    alt CPF inválido
+    alt Documento inválido
         F-->>G: 400
         G-->>C: 400
-    else CPF válido
+    else Documento válido
         F->>S: Obter configuração secreta quando necessária
         S-->>F: Credenciais de leitura e configuração JWT
-        F->>D: Consulta parametrizada por CPF (Pooling=false)
+        F->>D: Consulta parametrizada por documento (Pooling=false)
         D-->>F: Cadastro/status ou erro técnico
         F->>F: Encerrar conexão em todos os caminhos
         alt Cadastro ausente ou Inativo
@@ -52,6 +52,6 @@ sequenceDiagram
     end
 ```
 
-Falha ao obter secrets também é técnica e interrompe o fluxo com 5xx. Não registrar CPF, token ou valores de secrets. A elegibilidade Ativo é verificada na emissão: inativação/remoção posterior não revoga automaticamente uma sessão existente. A consulta ainda depende da existência dos recursos e do vínculo com a OS.
+Falha ao obter secrets também é técnica e interrompe o fluxo com 5xx. Não registrar CPF/CNPJ, token ou valores de secrets. A elegibilidade Ativo é verificada na emissão: inativação/remoção posterior não revoga automaticamente uma sessão existente. A consulta ainda depende da existência dos recursos e do vínculo com a OS.
 
-O JWT segue o contrato atual, com expiração emitida em UTC + 10 minutos e ID estável; cada ambiente tem sua configuração. API e função compartilharão as regras de CPF/JWT pelo pacote de contratos, sem dependência do domínio de OS. A autorização de aprovação/recusa segue a mesma verificação de propriedade e é exclusiva de Customer.
+O JWT segue o contrato atual, com expiração emitida em UTC + 10 minutos e ID estável; cada ambiente tem sua configuração. API e função compartilharão as regras de documentos CPF/CNPJ/CNPJ e JWT pelo pacote de contratos, sem dependência do domínio de OS. A autorização de aprovação/recusa segue a mesma verificação de propriedade e é exclusiva de Customer.

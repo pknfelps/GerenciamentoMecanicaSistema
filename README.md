@@ -8,7 +8,7 @@ A separação em quatro repositórios está integrada. A API e os testes existen
 
 | Disponível | A implementar |
 |---|---|
-| API .NET, JWT interno, PostgreSQL, SMTP e health checks | Validação serverless de CPF e permissões Admin/Mechanic/Customer |
+| API .NET, JWT interno, PostgreSQL, SMTP e health checks | Validação serverless de documentos CPF/CNPJ e permissões Admin/Mechanic/Customer |
 | Dockerfile, Compose opcional e Deployment/HPA | Publicação da imagem no ECR e deploy nos ambientes hom/prd |
 | CI com testes, cobertura, SonarCloud e build Docker | Aurora, API Gateway e observabilidade OpenTelemetry/New Relic |
 
@@ -36,7 +36,7 @@ flowchart LR
 | Este repositório | API, camadas, testes, Dockerfile/Compose e Deployment/HPA |
 | [Infraestrutura](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/tree/develop) | Terraform, plataforma Kubernetes, Service e futura entrada Gateway/NLB |
 | [Banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/tree/develop) | SQL/seeds e futura infraestrutura Aurora/Job de inicialização |
-| [Autenticação](https://github.com/pknfelps/GerenciamentoMecanicaAutenticacao/tree/develop) | Futura Lambda de validação de CPF e emissão de JWT |
+| [Autenticação](https://github.com/pknfelps/GerenciamentoMecanicaAutenticacao/tree/develop) | Futura Lambda de validação de documentos CPF/CNPJ e emissão de JWT |
 
 Os projetos `Domain.Interface` e `Service.Interface` definem contratos; `Infrastructure` implementa persistência PostgreSQL, JWT, hash de senha e SMTP; `DependencyInjection` registra os componentes. Consultas comuns de usuários não retornam senha/hash; os fluxos de credenciais usam `UserCredentials`.
 
@@ -165,7 +165,7 @@ A entrega planejada publicará no ECR e implantará por OIDC, após provisionar 
 
 ## Contratos de integração
 
-A [especificação central](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md) define campos, versões, artefatos, secrets e falhas. Este repositório é o produtor do componente lógico **api** e do pacote **GerenciamentoMecanica.Auth.Contracts**. Os publicadores/consumidores descritos abaixo ainda serão implementados.
+A [especificação central](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md) define campos, versões, artefatos, secrets e falhas. Este repositório é o produtor do componente lógico **api** e do pacote **GerenciamentoMecanica.Auth.Contracts**. O pacote e seus scripts de publicação/consumo já foram implementados e validados localmente; publicadores SSM e integrações de deploy ainda serão implementados. Consulte [operação do Auth.Contracts](docs/arquitetura/PACOTE_AUTH_CONTRACTS.md).
 
 | Interface | Responsabilidade da API |
 |---|---|
