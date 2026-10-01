@@ -165,7 +165,7 @@ A entrega planejada publicará no ECR e implantará por OIDC, após provisionar 
 
 ## Contratos de integração
 
-A [especificação central](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md) define campos, versões, artefatos, secrets e falhas. Este repositório é o produtor do componente lógico **api** e do pacote **GerenciamentoMecanica.Auth.Contracts**. O pacote e seus scripts de publicação/consumo já foram implementados e validados localmente; publicadores SSM e integrações de deploy ainda serão implementados. Consulte [operação do Auth.Contracts](docs/arquitetura/PACOTE_AUTH_CONTRACTS.md).
+A [especificação central](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md) define campos, versões, artefatos, secrets e falhas. Este repositório é o produtor do componente lógico **api** e do pacote **GerenciamentoMecanica.Auth.Contracts**. A versão 1.0.0 foi publicada no S3 via OIDC; o sucesso do workflow de consumo na autenticação foi confirmado pelo mantenedor. Publicadores SSM e integrações de deploy ainda serão implementados. Consulte [operação do Auth.Contracts](docs/arquitetura/PACOTE_AUTH_CONTRACTS.md).
 
 | Interface | Responsabilidade da API |
 |---|---|
@@ -192,3 +192,5 @@ Crie branches de trabalho a partir da `develop` atualizada e direcione os PRs pa
 - [Contrato de autenticação e permissões](docs/arquitetura/ACESSO_E_AUTENTICACAO.md).
 - [GitHub Actions](https://github.com/pknfelps/GerenciamentoMecanicaSistema/actions).
 - Demonstração final e vídeo: pendentes.
+
+Os workflows de CI pipeline/auth-contracts validam PRs para develop/main e permitem execução manual; não repetem os checks no push da mesma revisão. Commits novos substituem checks antigos do mesmo PR, preservando nomes dos jobs e isolando publicações manuais.

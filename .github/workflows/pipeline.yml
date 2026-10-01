@@ -1,13 +1,16 @@
 name: pipeline
 on:
-  push:
-    branches: [main, develop]
   pull_request:
     branches: [main, develop]
   workflow_dispatch:
 
 permissions:
   contents: read
+
+# Uma execução por PR; commits novos substituem somente os checks desse PR.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # E1.2: testes, análise e build da imagem. Publicação ECR/deploy via OIDC seguem na E1–E3.
 

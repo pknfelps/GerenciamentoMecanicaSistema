@@ -4,10 +4,12 @@
 
 **Contexto:** reaproveitar EKS/Terraform e oferecer entrada gerenciada, mantendo workloads e banco privados. O ambiente será usado em janelas de testes/gravação.
 
-**Decisão:** API Gateway REST Regional, OpenAPI composto, VPC Link e NLB interno solicitado por Service LoadBalancer. Usar VPC por ambiente com duas AZs, um nó t3.medium, um NAT zonal e endpoint gateway S3. Manter HPA/probes. Acesso administrativo EKS público e privado, autenticado/autorizado para CI via OIDC. Lambda em ZIP gerenciado usa conectividade privada ao Aurora.
+**Decisão:** API Gateway REST Regional, OpenAPI composto, VPC Link e NLB interno solicitado por Service LoadBalancer. Usar VPC por ambiente com duas AZs, um nó t3.small, um NAT zonal e endpoint gateway S3. Manter HPA/probes. Acesso administrativo EKS público e privado, autenticado/autorizado para CI via OIDC. Lambda em ZIP gerenciado usa conectividade privada ao Aurora.
 
 **Alternativas:** HTTP API foi preterida pelos recursos de tracing, logs e cache potencial da REST API, além do fluxo OpenAPI escolhido. Cache permanece desligado. Remover o balanceador do EKS não atende à integração privada escolhida. Escala automática de nós, vários nós/NATs e endpoints de interface adicionais não foram adotados inicialmente.
 
 **Consequências:** REST API, NLB, EKS e NAT têm custos próprios mesmo com pouco tráfego; desligar ambientes exige destruição coordenada. Um nó/NAT limita disponibilidade. HPA não cria capacidade de nós. Tipo de target e protocolos serão fixados e testados em E2/E3.
 
 **Comprovação:** demonstrar entrada pelo Gateway, backend privado, acesso do CI e independência hom/prd em E2/E3/E6. [Componentes](../diagramas/COMPONENTES.md) · [RFC 001](../rfcs/001-EXECUCAO.md).
+
+**Ajuste de capacidade em 2026-09-28:** usuário escolheu t3.small (2 vCPU, 2 GiB, x86_64) após falha de criação do t3.medium por elegibilidade ao Free Tier. Mantido um nó On-Demand por ambiente. Validar memória disponível e saúde dos add-ons/API/observabilidade no provisionamento.
