@@ -13,18 +13,6 @@ on:
       - 'scripts/*AuthContracts.ps1'
       - 'scripts/tests/*AuthContracts*.ps1'
       - '.github/workflows/auth-contracts.yml'
-  push:
-    branches: [develop, main]
-    paths:
-      - 'GerenciamentoMecanica.Auth.Contracts/**'
-      - 'Auth.Contracts.Tests/**'
-      - 'Domain/**'
-      - 'DomainTests/**'
-      - 'Infrastructure/Authentication/**'
-      - 'ControllerTests/**'
-      - 'scripts/*AuthContracts.ps1'
-      - 'scripts/tests/*AuthContracts*.ps1'
-      - '.github/workflows/auth-contracts.yml'
   workflow_dispatch:
     inputs:
       environment:
@@ -41,6 +29,11 @@ on:
 
 permissions:
   contents: read
+
+# Publicações manuais têm grupo próprio e não são canceladas por atualização de PR.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   verify:

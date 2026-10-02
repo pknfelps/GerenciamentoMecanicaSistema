@@ -2,7 +2,7 @@
 
 [Arquitetura](README.md) · [Contrato entre repositórios](CONTRATOS_ENTRE_REPOSITORIOS.md) · [API do pacote](../../GerenciamentoMecanica.Auth.Contracts/README.md)
 
-Implementação inicial: **GerenciamentoMecanica.Auth.Contracts 1.0.0**, .NET 10. API referencia o projeto local; autenticação consome o nupkg com `Version="[1.0.0]"`. A extração abrange CPF e CNPJ por definição do usuário em 2026-09-25. A versão permanece 1.0.0, ainda não publicada. A extração não implementa Lambda, autorização de rotas, alteração de perfis ou acesso a banco.
+Implementação inicial: **GerenciamentoMecanica.Auth.Contracts 1.0.0**, .NET 10. API referencia o projeto local; autenticação consome o nupkg com `Version="[1.0.0]"`. A extração abrange CPF e CNPJ. A versão 1.0.0 foi publicada no S3 em 2026-09-25; o sucesso do workflow de consumo remoto foi confirmado pelo mantenedor. A extração não implementa Lambda, autorização de rotas, alteração de perfis ou acesso a banco.
 
 ## Conteúdo e compatibilidade
 
@@ -30,7 +30,7 @@ O nuspec registra o commit do checkout. Um pacote local com alterações não co
 
 ## Publicar
 
-O [workflow auth-contracts](../../.github/workflows/auth-contracts.yml) executa verificação/empacotamento nos PRs/pushes relevantes, sem autenticar AWS. Publicação é manual, com publish=true, usando develop/hom ou main/prd e as variáveis AWS_REGION, AWS_ROLE_ARN e ARTIFACTS_BUCKET existentes.
+O [workflow auth-contracts](../../.github/workflows/auth-contracts.yml) executa verificação/empacotamento nos PRs relevantes e por execução manual, sem autenticar AWS no job de verificação. O push não dispara um segundo CI. Commits novos cancelam os checks antigos do mesmo PR; publicações manuais ficam isoladas dessa concorrência. Publicação é manual, com publish=true, usando develop/hom ou main/prd e as variáveis AWS_REGION, AWS_ROLE_ARN e ARTIFACTS_BUCKET existentes.
 
 O GitHub exige que o workflow com workflow_dispatch esteja na branch padrão para disponibilizar a execução manual; integrar o arquivo conforme a governança do repositório antes de executar. Não alterar a branch padrão nem promover código à main automaticamente para contornar isso.
 
@@ -48,7 +48,7 @@ O artefato é compartilhado pelos ambientes: publicar uma versão uma vez e cons
 
 Os scripts podem ser executados nesta máquina com PowerShell 7 e AWS CLI autenticada com permissões no bucket. Eles não dependem de branch Git nem usam OIDC do GitHub. Uma execução local comprova o acesso da identidade da CLI; não comprova o acesso das roles das pipelines.
 
-Para a versão definitiva, integrar os repositórios à develop e aguardar a verificação auth-contracts da API. Baixar o artefato auth-contracts dessa execução e extrair o nupkg e o sidecar juntos. Publicar esses mesmos bytes, sem recompilar, preserva o vínculo com o CI e evita diferenças de pacote entre máquinas/commits.
+Para a versão definitiva, validar auth-contracts no PR da API e integrar os repositórios à develop. Baixar o artefato auth-contracts dessa execução e extrair o nupkg e o sidecar juntos. Publicar esses mesmos bytes, sem recompilar, preserva o vínculo com o CI e evita diferenças de pacote entre máquinas/commits.
 
 Na raiz da API, ajustando o caminho do artefato baixado:
 
@@ -74,7 +74,7 @@ pwsh -File scripts/Test-AuthContracts.ps1 -Bucket mecanica-artifacts-12175414261
 pwsh -File scripts/Test-AuthContracts.ps1 -PackagePath C:/artefatos/GerenciamentoMecanica.Auth.Contracts.1.0.0.nupkg
 ```
 
-O workflow manual auth-contracts-check executa o consumo com a role auth. O sucesso local não comprova permissões remotas S3; publicação e download reais continuam como validação posterior à integração dos workflows.
+O workflow manual auth-contracts-check executa o consumo com a role auth. A publicação inicial foi comprovada no [run 36205335338](https://github.com/pknfelps/GerenciamentoMecanicaSistema/actions/runs/36205335338), em develop/hom. SHA-256 do nupkg 1.0.0: b9080cea9d303722ac072e89421505d728126cdb52d57549da4328b1e18ab4e9. O mantenedor confirmou o sucesso do workflow de consumo remoto após essa publicação. Essa validação do pacote não comprova implantação da função nem validação em prd.
 
 ## Referências
 

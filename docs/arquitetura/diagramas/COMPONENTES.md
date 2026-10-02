@@ -14,7 +14,7 @@ flowchart LR
             NLB["NLB interno"] --> SVC["Service LoadBalancer"]
             SVC --> API["API .NET no EKS"]
             HPA["HPA 1–10 pods"] -.-> API
-            NODE["Um nó t3.medium"] -.-> API
+            NODE["Um nó t3.small"] -.-> API
             LNET["Conectividade VPC da Lambda"]
         end
         subgraph DATA["Subnets privadas de banco"]
