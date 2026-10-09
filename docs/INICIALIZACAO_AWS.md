@@ -1,12 +1,12 @@
 # Inicialização da API e conexão RDS
 
-Inicialização/conexão e configuração declarativa da E2.6 implementadas em 2026-10-08. Policy Terraform e overlays hom/prd estão preparados; a etapa permanece aberta até aplicar o plano aprovado, publicar a imagem e validar o deploy no EKS. Nenhum apply ou deploy faz parte desta implementação.
+Inicialização/conexão e configuração declarativa da E2.6 implementadas em 2026-10-08. Policy Terraform e overlays hom/prd estão preparados; o mantenedor confirmou o sucesso do deploy da infra hom. A etapa permanece aberta até publicar a imagem e validar a API no EKS. O workflow manual está implementado, aguardando disparo pelo mantenedor.
 
 ## Ativação
 
 Sem `Runtime__Environment`, a API usa sua configuração local e não cria clientes AWS. Para ativar o carregamento remoto, definir `Runtime__Environment=hom` ou `prd` e `AWS_REGION=us-east-1`. Campo presente vazio, nulo ou com outro valor impede a inicialização.
 
-O SDK utiliza a cadeia padrão de credenciais. No EKS, a integração é Pod Identity para o ServiceAccount `default/gerenciamento-api`; não fornecer chaves de acesso no Deployment. A associação existe na base. Os overlays criam o ServiceAccount e configuram o Deployment; a nova policy de leitura do banco deve ser aplicada pelo Terraform da base antes do deploy. Não usar os overlays com a imagem provisória `:pending`.
+O SDK utiliza a cadeia padrão de credenciais. No EKS, a integração é Pod Identity para o ServiceAccount `default/gerenciamento-api`; não fornecer chaves de acesso no Deployment. A associação existe na base. Os overlays criam o ServiceAccount e configuram o Deployment; a policy de leitura do banco deve estar aplicada pelo Terraform da base antes do deploy (sucesso da infra hom informado pelo mantenedor). Não usar os overlays com a imagem provisória `:pending`.
 
 ## Leitura e configuração
 
@@ -53,4 +53,4 @@ kubectl kustomize deploy/kubernetes/overlays/prd
 
 Testes .NET usam clientes AWS substituídos e valores fictícios. Cobrem modo local, configuração hom/prd, precedência, parâmetros/Secrets inválidos, TLS, erros sem exposição de valores, cancelamento e prazo real de 45 segundos. Build/publish e testes de compatibilidade JWT verificam a integração local e a inclusão do certificado. Não acessam Secrets ou RDS reais.
 
-Para publicar: versionar as alterações dos dois repositórios, revisar/aplicar o plano da base com somente a nova policy, publicar a imagem no ECR e preparar o deploy com digest. Depois validar Pod Identity, conexão TLS, probes e targets do NLB. Esta implementação não cria workflow de deploy nem executa publicação, apply ou comandos de alteração Kubernetes. E2.6 permanece aberta até a validação real.
+Para publicar: seguir o [procedimento de deploy manual](DEPLOY_API.md). O workflow API deploy executa publicação ECR e implantação por digest sem aprovação intermediária, usando OIDC e o mesmo SHA nos dois jobs. Publicar o arquivo também em main e iniciar a primeira execução em develop/hom. Depois validar Pod Identity, conexão TLS, probes e targets do NLB. Nenhuma execução AWS foi iniciada nesta implementação; E2.6 permanece aberta até a validação real.
