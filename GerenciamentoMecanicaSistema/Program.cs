@@ -1,5 +1,6 @@
 using DependencyInjection;
 using GerenciamentoMecanicaSistema.Middleware;
+using Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -8,9 +9,16 @@ namespace GerenciamentoMecanicaSistema
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            var runtimeConfiguration = await AwsRuntimeConfigurationLoader.LoadIfConfiguredAsync(
+                builder.Configuration,
+                Path.Combine(AppContext.BaseDirectory, "Certificates", "rds-ca.pem"));
+            
+            if (runtimeConfiguration is not null)
+                builder.Configuration.AddInMemoryCollection(runtimeConfiguration);
 
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
@@ -58,14 +66,16 @@ namespace GerenciamentoMecanicaSistema
                 app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "mechanic api" ));
             }
 
-            app.UseHttpsRedirection();
+            // Cloud traffic reaches this pod over HTTP; public TLS belongs to the Gateway.
+            if (runtimeConfiguration is null)
+                app.UseHttpsRedirection();
 
             app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllers();
 
-            app.Run();
+            await app.RunAsync();
         }
     }
 }

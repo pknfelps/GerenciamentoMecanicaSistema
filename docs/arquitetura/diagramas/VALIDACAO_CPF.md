@@ -10,7 +10,7 @@ sequenceDiagram
     participant G as API Gateway
     participant F as Lambda Validate
     participant S as Secrets Manager
-    participant D as Aurora
+    participant D as RDS PostgreSQL
     participant A as API via VPC Link e NLB
     C->>G: POST /customers/validate (document: CPF ou CNPJ)
     G->>F: Encaminhar requisição

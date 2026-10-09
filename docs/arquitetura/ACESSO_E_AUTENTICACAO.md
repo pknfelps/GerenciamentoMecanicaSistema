@@ -150,7 +150,7 @@ Documento ilustrativo para contrato/teste, sem associação a pessoa real. O mes
 
 1. Validar corpo e document obrigatório em string. Aceitar CPF de 11 dígitos ou CNPJ numérico de 14 dígitos, com ou sem as respectivas máscaras do projeto. Rejeitar letras, espaços, formato incorreto, tamanho não suportado e dígitos verificadores inválidos.
 2. Reutilizar DocumentRules do pacote compartilhado, que identifica CPF/CNPJ e normaliza para comparação/consulta compatível com o cadastro: `XXX.XXX.XXX-XX` ou `XX.XXX.XXX/XXXX-XX`. Validar o formato HTTP antes da normalização; não restringir o fluxo somente a CPF.
-3. Consultar diretamente o cliente e seu status no Aurora PostgreSQL, via Lambda .NET 10 com credencial de leitura limitada ([integração da função](rfcs/001-EXECUCAO.md)). Usar o mesmo formato canônico de documento do domínio.
+3. Consultar diretamente o cliente e seu status no RDS PostgreSQL, via Lambda .NET 10 com credencial de leitura limitada ([integração da função](rfcs/001-EXECUCAO.md)). Usar o mesmo formato canônico de documento do domínio.
 4. Cliente existente e Ativo recebe JWT de perfil Customer, conforme seção 6. Não exigir senha nem cadastrar um usuário interno para ele.
 
 | Código | Significado |
@@ -168,7 +168,7 @@ O JWT segue `Infrastructure/Authentication/JwtTokenGenerator.cs` e a validação
 - Assinatura simétrica **HS256** com a configuração `Jwt:Key`; manter a exigência atual de chave com pelo menos 32 caracteres na API.
 - Emissão com expiração em **UTC + 10 minutos**, também para clientes. Preservar as opções de validação atuais, incluindo a tolerância de relógio do middleware; 10 minutos é o `exp` emitido, sem introduzir mudança implícita dessa tolerância.
 - Validar assinatura, issuer, audience e lifetime como hoje. Função e API devem ter configurações compatíveis por ambiente.
-- A API mantém a validação do Bearer token e a autorização por rota. A REST API do Gateway roteia a validação de documento à Lambda e as operações à API via VPC Link/NLB interno (D01.3–D01.5). Não introduzir authorizer JWT nativo incompatível com HS256. A chave compartilhada fica no Secrets Manager; detalhar sua disponibilização à API/função na infraestrutura.
+- A API mantém a validação do Bearer token e a autorização por rota. A REST API do Gateway roteia a validação de documento à Lambda e as operações à API via VPC Link/NLB interno (D01.3–D01.5). Não introduzir authorizer JWT nativo incompatível com HS256. A chave compartilhada fica no Secrets Manager, com referências públicas SSM v2. A infraestrutura da E2.12 prepara Pod Identity da API; API/função carregarão AWSCURRENT pelo SDK .NET na inicialização e manterão em memória, sem fallback local ou cópia para Secret Kubernetes. Implementação da infraestrutura preparada; aplicação e consumo dos runtimes permanecem pendentes. [Detalhamento](CONTRATOS_ENTRE_REPOSITORIOS.md).
 - Preservar as claims Name/Role e acrescentar o ID estável como NameIdentifier, ajuste mínimo derivado da regra de Update próprio já registrada em D03.4. Para internos: ID da tabela users, nome e role Admin/Mechanic. Para cliente: ID da tabela customers, nome e role Customer.
 - Gerar claims a partir do cadastro consultado. Payload de validação de documento não escolhe ID, role, issuer, audience ou expiração.
 - Não adicionar refresh token, blacklist, armazenamento de sessão nem revogação por atualização, remoção ou inativação.
@@ -202,6 +202,6 @@ O login **interno** continua em `POST /authentication`, com `name/password/role`
 
 E0.2 e E0.3 ficam concluídas **como especificação**, com esta matriz e estes contratos. A implementação e a comprovação operacional permanecem em E3/E4/E6.
 
-Atualização em 2026-09-16: a E0 foi concluída como especificação. Componentes, comunicação, observabilidade e responsabilidades estão no [índice de arquitetura](README.md); o próximo trabalho é a E1. A consulta direta da Lambda ao Aurora foi consolidada em D01.5. Essas decisões de infraestrutura não reabrem as regras de negócio deste documento.
+Atualização em 2026-09-16: a E0 foi concluída como especificação. Componentes, comunicação, observabilidade e responsabilidades estão no [índice de arquitetura](README.md); o próximo trabalho é a E1. A consulta direta da Lambda ao banco foi consolidada em D01.5. Em 2026-10-02, D01.6 mudou o motor para RDS PostgreSQL sem reabrir as regras de negócio deste documento.
 
 Atualização em 2026-09-25, solicitada pelo usuário: a validação é do documento do cliente (CPF ou CNPJ), ampliando o requisito mínimo de CPF. O campo planejado da requisição passa de cpf para document. Esta definição substitui a restrição anterior a CPF; cadastro/status, JWT e permissões permanecem iguais.
