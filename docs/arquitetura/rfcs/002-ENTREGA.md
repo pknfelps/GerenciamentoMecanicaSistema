@@ -1,45 +1,32 @@
 # RFC 002 — Entrega e contratos entre componentes
 
-**Estado:** arquitetura aceita; implementação parcial. **Registro:** 2026-09-16; detalhamento em 2026-09-24. [Índice](../README.md)
-
-Os [contratos entre repositórios](../CONTRATOS_ENTRE_REPOSITORIOS.md) especificam nomes, tipos, produtores/consumidores, checksums e publicação de releases. Bootstrap e diagnóstico OIDC estão disponíveis; a integração dos componentes continua pendente. O documento de contratos é a fonte do detalhamento operacional, sem duplicação das tabelas nesta RFC.
+**Estado:** arquitetura aceita; reformulação autorizada em 2026-10-07. [ADR 008](../adrs/008-INFRAESTRUTURA-DECLARATIVA.md) substitui a operação por releases/controller. [Contratos v2](../CONTRATOS_ENTRE_REPOSITORIOS.md) são a referência operacional.
 
 ## Responsabilidades
 
-| Repositório | Produz e mantém |
-|---|---|
-| GerenciamentoMecanicaSistema | API, domínio, testes, imagem ECR por digest, Deployment/HPA, OpenAPI e pacote CPF/CNPJ e JWT |
-| GerenciamentoMecanicaInfraestrutura | Rede/EKS, add-ons, Collector, Service e configuração que solicita NLB; unidade separada de Gateway/VPC Link/OpenAPI/permissão de invocação Lambda |
-| GerenciamentoMecanicaBancoDados | Aurora, acesso e secrets de banco, esquema/seeds e Job de inicialização |
-| GerenciamentoMecanicaAutenticacao | Código/testes/ZIP da Lambda, Terraform/IAM da função e contrato Validate |
+API mantém negócio/testes, imagem, Deployment/HPA, OpenAPI e Auth.Contracts. Infra mantém AWS em Terraform: rede/EKS/add-ons/SGs/NLB e unidade Gateway separada; Service NodePort e namespace são manifestos próprios. Banco mantém RDS/secrets/SQL/Job. Autenticação mantém código/testes/ZIP/Terraform da função. Bootstrap mantém S3/OIDC/ECR persistentes.
 
-Terraform não gerencia em duplicidade o NLB criado pelo AWS Load Balancer Controller. A aplicação não cria um segundo Service de entrada. O bootstrap compartilhado mantém identidade OIDC, backend de estado, ECR e bucket separado de artefatos.
+NLB TCP 80 encaminha para instâncias do ASG na porta 30080. Service NodePort encaminha a 8080; health HTTP `/health/ready`. AWS acompanha entrada/saída das instâncias. Sem controller/Helm e sem EBS CSI sem uso; manter Pod Identity Agent/Metrics Server e t3.small 1/1/1.
 
-## Integração das pipelines
+## Pipelines e configuração
 
-Estados Terraform ficam no S3 versionado, separados por componente/ambiente, com locking nativo. GitHub Actions assume roles AWS por OIDC, restritas ao contexto de repositório/ambiente. O endpoint administrativo EKS público e privado permite operação pelo runner hospedado, com autorização IAM/EKS/RBAC.
+Estados próprios S3 versionados, locking nativo, hom/prd independentes, OIDC por componente. Configuração SSM v2 em recursos Terraform, consumo por data sources; secrets apenas referenciados, valores resolvidos em runtime ou em campos ephemeral/write-only. Não usar estado remoto de outro repositório como interface.
 
-Metadados prontos para consumo são publicados no SSM em `/mecanica/<hom|prd>/<component>/v1/<field>`; valores secretos permanecem no Secrets Manager, referenciados por ARN. Publicar uma revisão somente após recursos prontos e invalidar referências ao destruir. Existência de parâmetro não comprova que o recurso existe.
+Provisionamento e destroy manuais, três jobs: plan salva binário e texto, aprovação em hom-approval/prd-approval sem AWS, apply baixa o artefato daquela execução e usa o mesmo commit. Retenção sete dias; plano obsoleto requer nova execução. Nenhum replan, fingerprint, publicação por scripts ou apply automático em push. CI de infra/banco somente fmt/validate/Kustomize. Bootstrap administrativo usa comandos Terraform diretos e revisão do plano salvo.
 
-API/função publicam OpenAPI do mesmo commit do backend em `contracts/api|auth/<commit>/openapi.json`. A infraestrutura compõe versões fixas e extensões AWS. Workflow reutilizável da infraestrutura, fixado por SHA, é chamado após o deploy de cada produtor, preservando a versão já implantada do outro. O contexto de permissões/OIDC do chamador deve ser tratado explicitamente.
+Banco: apply entrega ConfigMap e Secrets temporários no namespace reservado; kubectl remove Job antigo, aplica YAML e aguarda Complete. Falha mostra diagnóstico/logs. Etapa always remove Secrets temporários; próximo refresh planeja recriação. Preservar senhas existentes na primeira adoção, gerar novas para ambientes novos sem rotacionar em cada apply. Init.sql/marcador/grants mantidos; sem smokes operacionais. Testes de negócio permanecem.
 
-ZIP, pacote NuGet e contratos no bucket de artefatos têm versão, checksum e prevenção de sobrescrita. O S3 não é um feed NuGet nativo: a função baixa a versão fixa do pacote para um feed local antes do restore. Sua publicação é independente do deploy e da existência do banco. O manifesto de implantação registra revisões de código/infraestrutura/esquema, contratos e artefatos efetivamente implantados; falha não promove um manifesto para sucesso.
+OpenAPI/ZIP/NuGet continuam imutáveis e versionados com SHA-256 no S3. Não há protocolo de releases de infraestrutura. Gateway é planejado e aplicado manualmente com contratos fixos após implantação dos backends.
 
-## Ativação, atualização e destruição
+## Ordem e aceitação
 
-1. Preparar bootstrap persistente de estado/identidade.
-2. Provisionar base AWS, acesso ao cluster, add-ons e Service/NLB.
-3. Provisionar Aurora e executar Job de esquema/seeds em banco vazio.
-4. Implantar API e função após suas dependências.
-5. Aplicar unidade Gateway e permissão de invocação, após os dois backends iniciais.
-6. Executar verificações funcionais e observar os sinais antes da demonstração.
+1. Bootstrap: revisar/aplicar permissões, mantendo apenas descarte legado durante migração.
+2. Se houver controller/NLB legado, remover Service, esperar exclusão e só então remover controller.
+3. Base: plan/aprovação/apply AWS; kubectl aplica namespace e NodePort.
+4. Banco: plan/adotar credenciais/aprovação/apply; executar Job e limpar Secrets.
+5. Migrar consumidores para v2; aplicar runtimes/JWT/Gateway nas respectivas etapas.
+6. Adotar e retirar SSM v1 ativo em planos dedicados, preservando histórico; retirar permissões de limpeza legada.
 
-Destruir em ordem inversa das dependências, removendo Service e aguardando limpeza do NLB enquanto o controller ainda funciona. Preservar bootstrap e outro ambiente. Desligar alertas da janela e drenar telemetria antes de encerrar coletores. O banco educacional não exige snapshot final, mas isso não autoriza remover snapshots existentes sem avaliar sua origem.
+Mantenedor coordena operações sequenciais por ambiente. Dependência alterada exige novo plano dos consumidores; não haverá outro mecanismo de coordenação. SSM é configuração, não prontidão. Validar health depois da API, marcador/hash do Job, ausência de senhas em estados/logs e isolamento dos Secrets.
 
-`develop` entrega em **hom** e `main` em **prd**, com PR/checks. Os ambientes podem coexistir e não se bloqueiam globalmente. Deploy com ambiente desligado fica pendente até ativação explícita; não criar infraestrutura implicitamente em um CI de PR. Rollback de código exige compatibilidade com o esquema e não promete reversão de dados.
-
-## Validação e trabalho seguinte
-
-Concretizar repositórios, contratos operacionais e governança; implementar provisionamento; comprovar entrega e isolamento. Antes de operações concorrentes no mesmo ambiente, definir coordenação entre repositórios: lock S3 protege somente um estado, e concurrency do GitHub é local ao repositório.
-
-**Justificativa:** [ADR 004](../adrs/004-ENTREGA-E-AMBIENTES.md). O [documento operacional](../CONTRATOS_ENTRE_REPOSITORIOS.md) amplia estas interfaces com campos, formatos e referências do bootstrap. IDs dos workloads serão publicados quando os recursos existirem.
+Descarte: consumidores/Gateway → banco → base. Job sai antes do banco, manifestos antes de EKS; Terraform remove NLB e associação. Preservar bootstrap e outro ambiente. Não executar destroy para testar esta reformulação.

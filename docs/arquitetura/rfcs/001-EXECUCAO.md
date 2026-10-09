@@ -4,7 +4,7 @@
 
 ## Problema e solução
 
-A fase exige uma entrada gerenciada e validação serverless de CPF sem transferir o gerenciamento de OS para o cliente. A REST API Regional do API Gateway encaminha `/customers/validate` à Lambda .NET 10 em ZIP e as rotas da aplicação ao EKS por VPC Link/NLB interno. O banco compartilhado entre API e função é o Aurora PostgreSQL Serverless v2 do respectivo ambiente.
+A fase exige uma entrada gerenciada e validação serverless de CPF sem transferir o gerenciamento de OS para o cliente. A REST API Regional do API Gateway encaminha `/customers/validate` à Lambda .NET 10 em ZIP e as rotas da aplicação ao EKS por VPC Link/NLB interno. O banco compartilhado entre API e função é o RDS PostgreSQL `db.t3.micro` Single-AZ do respectivo ambiente (D01.6).
 
 A função consulta diretamente clientes com credencial restrita à leitura necessária, conexão sem pooling e encerramento garantido. Ela normaliza o documento (CPF/CNPJ) para a representação atual do banco, verifica existência/estado e emite JWT. A API continua responsável por validar JWT, role e propriedade da OS; não haverá um segundo mecanismo de autorização no Gateway nesta arquitetura.
 
@@ -19,6 +19,10 @@ Segredos JWT e credenciais ficam no Secrets Manager por ambiente. API e função
 ## Fluxos e falhas
 
 Ver [componentes](../diagramas/COMPONENTES.md), [validação de CPF](../diagramas/VALIDACAO_CPF.md) e [abertura de OS](../diagramas/ABERTURA_OS.md). Falha técnica de banco/secrets não equivale a documento inelegível. Falha de telemetria não deve impedir uma operação de negócio. SMTP permanece na API, com falhas posteriores ao commit tratadas separadamente.
+
+## Infraestrutura declarativa
+
+Conforme [ADR 008](../adrs/008-INFRAESTRUTURA-DECLARATIVA.md), Terraform cria o NLB interno TCP 80 e associa o ASG do EKS ao target group TCP 30080. Service NodePort encaminha a 8080; health HTTP `/health/ready`. SSM v2 publica configuração; sucesso é demonstrado pelos workflows/Job e integração funcional.
 
 ## Implementação e aceitação
 
