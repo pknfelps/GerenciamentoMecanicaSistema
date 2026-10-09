@@ -66,7 +66,9 @@ namespace GerenciamentoMecanicaSistema
                 app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "mechanic api" ));
             }
 
-            app.UseHttpsRedirection();
+            // Cloud traffic reaches this pod over HTTP; public TLS belongs to the Gateway.
+            if (runtimeConfiguration is null)
+                app.UseHttpsRedirection();
 
             app.UseAuthentication();
             app.UseAuthorization();

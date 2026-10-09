@@ -40,6 +40,12 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore GerenciamentoMecanicaSistema.slnx
 
+      - name: Render Kubernetes manifests
+        run: |
+          kubectl kustomize deploy/kubernetes/base
+          kubectl kustomize deploy/kubernetes/overlays/hom
+          kubectl kustomize deploy/kubernetes/overlays/prd
+
       - name: Build
         run: dotnet build GerenciamentoMecanicaSistema.slnx --no-restore
 

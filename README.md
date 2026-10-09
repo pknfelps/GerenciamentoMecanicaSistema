@@ -143,7 +143,7 @@ A API cobre usuários, clientes, veículos, catálogo, materiais/estoque e cria�
 
 O Compose mapeia essas configurações a partir do `.env` e dos serviços locais. E-mails enviados ao smtp4dev ficam no painel local. Para outro destino, configure o servidor SMTP apropriado.
 
-O carregamento inicial AWS está implementado: lê os parâmetros SSM v2 e a versão `AWSCURRENT` dos Secrets JWT e da credencial `mecanica_api`, mantendo os valores em memória. A conexão usa TLS `VerifyFull` com o certificado público RDS incluído no publish. Falha de leitura, configuração inválida ou prazo de 45 segundos excedido impede a inicialização, sem fallback local. Sem `Runtime__Environment`, o fluxo local permanece; campo vazio ou diferente de `hom`/`prd` é inválido. Consulte [inicialização e conexão AWS](docs/INICIALIZACAO_AWS.md). IAM, ServiceAccount/Deployment e validação real no EKS permanecem pendentes da próxima entrega.
+O carregamento inicial AWS está implementado: lê os parâmetros SSM v2 e a versão `AWSCURRENT` dos Secrets JWT e da credencial `mecanica_api`, mantendo os valores em memória. A conexão usa TLS `VerifyFull` com o certificado público RDS incluído no publish. Falha de leitura, configuração inválida ou prazo de 45 segundos excedido impede a inicialização, sem fallback local. Sem `Runtime__Environment`, o fluxo local permanece; campo vazio ou diferente de `hom`/`prd` é inválido. Consulte [inicialização e conexão AWS](docs/INICIALIZACAO_AWS.md). Policy Terraform e ServiceAccount/overlays estão preparados; apply aprovado, publicação e validação real no EKS permanecem pendentes.
 
 | Rota | Finalidade |
 |---|---|
@@ -157,13 +157,15 @@ As probes do Deployment usam essas rotas. Não houve alteração de probes na se
 
 A [decisão declarativa](docs/arquitetura/adrs/008-INFRAESTRUTURA-DECLARATIVA.md) mantém Terraform para AWS e manifestos próprios Kubernetes. Infra/banco usam provisionamento manual com plan salvo, aprovação e apply; CI e testes de negócio da API permanecem. Service da base é NodePort 30080, ligado ao NLB Terraform.
 
-[deploy/kubernetes](deploy/kubernetes) contém Deployment e HPA. O Service pertence à infraestrutura. Para conferir a composição sem acessar o cluster:
+[deploy/kubernetes/base](deploy/kubernetes/base) contém Deployment e HPA e é o ponto de entrada do Kustomize local. Os overlays hom/prd referenciam essa base e declaram diretamente os ajustes AWS de cada ambiente. Há somente três arquivos kustomization; o Service pertence à infraestrutura. Para conferir a composição sem acessar o cluster:
 
 ```bash
-kubectl kustomize deploy/kubernetes
+kubectl kustomize deploy/kubernetes/base
+kubectl kustomize deploy/kubernetes/overlays/hom
+kubectl kustomize deploy/kubernetes/overlays/prd
 ```
 
-O Deployment ainda referencia uma imagem da fase anterior no Docker Hub e o Secret `db-secrets`, com `CONNECTION_STRING` e `JWT_KEY`. O [exemplo de Secret](deploy/kubernetes/db-secrets.example.yaml) contém placeholders. O deploy requer plataforma/namespace, banco com esquema, Secret, imagem e Service preparados; a entrega da Fase 3 ainda não está operacional.
+A composição local mantém a imagem anterior no Docker Hub e o Secret `db-secrets`, com `CONNECTION_STRING` e `JWT_KEY`; o [exemplo de Secret](deploy/kubernetes/db-secrets.example.yaml) contém placeholders. Os overlays hom/prd retiram essas referências, habilitam a leitura AWS e usam o ServiceAccount `default/gerenciamento-api`, com startup probe de 60 segundos. A imagem ECR `:pending` é provisória e deve ser substituída por digest na publicação antes de aplicar os overlays. Policy de leitura do banco no Terraform da base, publicação/deploy e validação real ainda precisam ser aplicados/executados; a E2.6 permanece aberta.
 
 A [pipeline](.github/workflows/pipeline.yml) executa em PRs e pushes para `develop`/`main`, além de acionamento manual. Os jobs são `unit-tests`, `code-analysis` e `build-image`; a análise usa `SONAR_TOKEN`. O build Docker ocorre após testes/análise e gera tag `sha-<commit>` no runner. Não há push de imagem, artefato de imagem disponível para download ou deploy nesse workflow.
 
@@ -203,4 +205,4 @@ Os workflows de CI pipeline/auth-contracts validam PRs para develop/main e permi
 
 ### Infraestrutura JWT da E2.12
 
-A base implementa Secret JWT por ambiente e publica jwt-secret-arn, jwt-issuer e jwt-audience em /mecanica/<ambiente>/base/v2/. Base JWT hom aplicada e conferida em 08/10: Secret/SSM/Pod Identity, No changes e isolamento IAM simulado. A API já implementa a leitura inicial pelo SDK .NET; permissões de banco, ServiceAccount/Deployment, validação no EKS, Lambda e prd permanecem pendentes. A role e a associação Pod Identity para default/gerenciamento-api são administradas pela base. A chave AWSCURRENT fica em memória, sem fallback local ou cópia para Secret Kubernetes. Os manifestos atuais permanecem até a próxima entrega. HS256, dez minutos e tolerância de relógio são preservados. [Contrato](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md).
+A base implementa Secret JWT por ambiente e publica jwt-secret-arn, jwt-issuer e jwt-audience em /mecanica/<ambiente>/base/v2/. Base JWT hom aplicada e conferida em 08/10: Secret/SSM/Pod Identity, No changes e isolamento IAM simulado. A API já implementa leitura inicial pelo SDK .NET, overlays com ServiceAccount e policy Terraform para leitura do banco. Apply dessa policy, publicação/deploy, validação no EKS, Lambda e prd permanecem pendentes. A role e a associação Pod Identity para default/gerenciamento-api são administradas pela base. A chave AWSCURRENT fica em memória, sem fallback local ou cópia para Secret Kubernetes. HS256, dez minutos e tolerância de relógio são preservados. [Contrato](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md).
