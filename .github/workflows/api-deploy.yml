@@ -185,7 +185,7 @@ jobs:
       - name: Instalar Kustomize 5.8.3
         run: |
           mkdir -p "$RUNNER_TEMP/kustomize"
-          curl --fail --silent --show-error --location \
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' \
             https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.8.3/kustomize_v5.8.3_linux_amd64.tar.gz \
             --output "$RUNNER_TEMP/kustomize.tar.gz"
           tar -xzf "$RUNNER_TEMP/kustomize.tar.gz" -C "$RUNNER_TEMP/kustomize"
