@@ -66,3 +66,22 @@ Em outro terminal, `curl --fail http://localhost:8080/health/startup`, `/health/
 Para NLB, ler `nlb-arn` da base v2 e usar `aws elbv2 describe-target-groups --load-balancer-arn <arn>` e `aws elbv2 describe-target-health --target-group-arn <arn>`. Targets devem estar saudáveis na porta `30080`. O NLB é interno: conferir `/health/ready` por seu DNS a partir de uma origem com acesso à VPC, usando `curl --fail`. Essas verificações usam credenciais de operador com as permissões correspondentes; não ampliar a role da pipeline para executá-las. Ajustes de recursos/réplicas/HPA pertencem à E2.7.
 
 E2.6/E2.11 permanecem abertas até comprovação do deploy e conexão reais. OpenAPI, parâmetros SSM do componente API, Gateway, integração Lambda e validação prd continuam nas etapas posteriores. Este workflow não provisiona AWS nem inicializa o banco.
+
+## Réplicas e validação de capacidade
+
+O HPA mantém mínimo de uma e máximo de três réplicas em base/hom/prd; o Deployment inicia com uma réplica e o HPA ajusta conforme as métricas. A alteração deve ser publicada e aplicada pelo workflow API deploy. Três é o limite escolhido para a configuração atual de um nó t3.small, considerando as reservas de memória observadas na validação hom de 08/10; não representa capacidade comprovada sob carga. Por decisão do mantenedor, não serão realizados testes de carga com a API hospedada na AWS. Acompanhar métricas, probes, eventos e pods pendentes durante o uso.
+
+## Descartar o ambiente
+
+O [workflow API destroy](../.github/workflows/api-destroy.yml) remove o consumidor antes do banco, mantendo o descarte completo acessível por workflows. Tem um único job manual, sem aprovação intermediária; o disparo autoriza a remoção. Exige develop/hom ou main/prd, autentica por OIDC no Environment existente e valida repositório, conta, região, role, cluster e namespace default. Reutiliza as permissões SSM/EKS da API. Publicar o arquivo também em main para disponibilizar Run workflow.
+
+Com kubectl 1.36.1, executa `kubectl delete -k` do overlay, ignora somente recursos já ausentes e aguarda até 600 segundos com cascade foreground para remover também ReplicaSets/pods dependentes. Confere ausência de Deployment/HPA/ServiceAccount e de pods com o seletor da API. Falhas de acesso, SSM ou cluster não são tratadas como sucesso; em falha Kubernetes, mostra recursos/eventos limitados. Repetir com o cluster existente e overlay já removido é permitido. API deploy e API destroy compartilham o mesmo grupo de concurrency por ambiente, sem cancelar a execução em curso.
+
+O workflow remove apenas os objetos do overlay, sem Terraform, leitura de Secrets ou exclusão de recursos AWS. Service/NLB, RDS, JWT/credenciais, IAM e ECR permanecem com seus proprietários. Para descartar todo o ambiente:
+
+1. Interromper novos disparos de deploy/provisionamento do ambiente e aguardar as execuções em curso.
+2. Executar **API destroy** neste repositório, selecionando develop/hom (ou main/prd), e aguardar sucesso. Deployment, HPA, ServiceAccount e pods dependentes são removidos; Service/NLB continuam pertencendo à base.
+3. Executar **database-destroy** no repositório de banco, no mesmo ambiente: revisar e aprovar seu plano salvo. Ele remove o Job e descarta RDS/configuração/credenciais administrados pelo Terraform.
+4. Após concluir o banco, executar **base-destroy** no repositório de infraestrutura, revisando/aprovando o plano salvo. Ele remove seus manifestos Kubernetes antes de excluir EKS/rede/NLB e demais recursos da base.
+
+A ordem é **api-destroy → database-destroy → base-destroy**, coordenada pelo mantenedor; não há disparo automático entre repositórios. Executar API destroy antes de remover a base: ele depende dos parâmetros SSM e do cluster existentes. Para remover somente a aplicação, executar apenas API destroy; API deploy pode implantá-la novamente usando as dependências preservadas. Bootstrap, backend, repositório ECR/imagens e o outro ambiente são preservados. Se Gateway/Lambda ou outros consumidores forem implantados depois, eles devem ser descartados antes do banco/base conforme seus procedimentos. Nenhum workflow foi disparado para validar esta implementação.

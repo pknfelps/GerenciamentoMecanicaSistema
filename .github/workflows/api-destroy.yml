@@ -1,0 +1,119 @@
+name: API destroy
+run-name: API destroy / ${{ inputs.environment }} / ${{ github.ref_name }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Destino: develop/hom ou main/prd'
+        required: true
+        type: choice
+        options: [hom, prd]
+
+permissions:
+  contents: read
+
+# Mesmo grupo do api-deploy: publicação/deploy e descarte não se sobrepõem.
+concurrency:
+  group: api-deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  destroy:
+    name: Remover API
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        shell: bash
+    env:
+      DEPLOY_ENVIRONMENT: ${{ inputs.environment }}
+      AWS_ACCOUNT_ID: '121754142617'
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      AWS_PAGER: ''
+      KUBECONFIG: /tmp/mecanica-api-kubeconfig
+    steps:
+      - name: Checkout da revisão da execução
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Validar contexto
+        run: |
+          test "$GITHUB_REPOSITORY" = pknfelps/GerenciamentoMecanicaSistema
+          case "$DEPLOY_ENVIRONMENT:$GITHUB_REF" in
+            hom:refs/heads/develop|prd:refs/heads/main) ;;
+            *) echo '::error::Use develop/hom ou main/prd'; exit 1 ;;
+          esac
+          test "$AWS_REGION" = us-east-1
+          test "$AWS_ROLE_ARN" = "arn:aws:iam::$AWS_ACCOUNT_ID:role/mecanica/pipelines/mecanica-$DEPLOY_ENVIRONMENT-api-github"
+
+      - name: Autenticar na AWS por OIDC
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          allowed-account-ids: '121754142617'
+          role-session-name: api-destroy-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Conferir identidade e destino
+        id: target
+        run: |
+          test "$(aws sts get-caller-identity --query Account --output text)" = "$AWS_ACCOUNT_ID"
+          identity="$(aws sts get-caller-identity --query Arn --output text)"
+          case "$identity" in
+            "arn:aws:sts::$AWS_ACCOUNT_ID:assumed-role/mecanica-$DEPLOY_ENVIRONMENT-api-github/"*) ;;
+            *) echo '::error::Role AWS inesperada'; exit 1 ;;
+          esac
+          cluster="$(aws ssm get-parameter --name "/mecanica/$DEPLOY_ENVIRONMENT/base/v2/cluster-name" --query Parameter.Value --output text)"
+          namespace="$(aws ssm get-parameter --name "/mecanica/$DEPLOY_ENVIRONMENT/base/v2/namespace" --query Parameter.Value --output text)"
+          test "$cluster" = "mecanica-$DEPLOY_ENVIRONMENT-eks"
+          test "$namespace" = default
+          echo "cluster=$cluster" >> "$GITHUB_OUTPUT"
+          echo "namespace=$namespace" >> "$GITHUB_OUTPUT"
+
+      - name: Instalar kubectl
+        uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
+        with:
+          version: v1.36.1
+
+      - name: Configurar acesso ao cluster
+        id: kubeconfig
+        env:
+          CLUSTER_NAME: ${{ steps.target.outputs.cluster }}
+        run: aws eks update-kubeconfig --name "$CLUSTER_NAME" --kubeconfig "$KUBECONFIG"
+
+      - name: Remover overlay da API e aguardar dependentes
+        env:
+          NAMESPACE: ${{ steps.target.outputs.namespace }}
+        run: |
+          kubectl delete -k "deploy/kubernetes/overlays/$DEPLOY_ENVIRONMENT" \
+            --namespace "$NAMESPACE" --ignore-not-found=true --cascade=foreground --wait=true --timeout=600s
+
+      - name: Conferir remoção
+        env:
+          NAMESPACE: ${{ steps.target.outputs.namespace }}
+        run: |
+          remaining="$(kubectl get deployment/deploy-gerenciamento-api horizontalpodautoscaler/hpa-gerenciamento-api serviceaccount/gerenciamento-api \
+            --namespace "$NAMESPACE" --ignore-not-found=true -o name)"
+          test -z "$remaining"
+          pods="$(kubectl get pods --namespace "$NAMESPACE" -l app=gerenciamento-api -o name)"
+          test -z "$pods"
+          printf 'API removida de `%s/default`.\n\nCommit do manifesto: `%s`\n\nPróximo: database-destroy, depois base-destroy no mesmo ambiente.\n' \
+            "$DEPLOY_ENVIRONMENT" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Diagnóstico de falha
+        if: ${{ failure() && steps.kubeconfig.outcome == 'success' }}
+        run: |
+          kubectl get deployment/deploy-gerenciamento-api horizontalpodautoscaler/hpa-gerenciamento-api serviceaccount/gerenciamento-api \
+            --namespace default --ignore-not-found=true -o wide || true
+          kubectl get pods --namespace default -l app=gerenciamento-api -o wide || true
+          kubectl describe pods --namespace default -l app=gerenciamento-api | tail -n 200 || true
+          kubectl get events --namespace default --sort-by=.metadata.creationTimestamp | tail -n 40 || true
+          exit 1
