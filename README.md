@@ -4,13 +4,13 @@ API do sistema de oficina: usuários, clientes, veículos, catálogo, estoque e 
 
 ## Estado da implementação
 
-A separação em quatro repositórios está integrada. A API e os testes existentes são executáveis; a pipeline valida testes/cobertura, SonarCloud e build da imagem. A arquitetura AWS da Fase 3 está documentada, mas sua implantação ainda está pendente.
+A separação em quatro repositórios está integrada. A API e os testes existentes são executáveis; o CI valida testes/cobertura, SonarCloud e build da imagem. Base e banco hom estão provisionados. O workflow manual de publicação ECR e deploy EKS está implementado; sua primeira execução e validação real da API permanecem pendentes.
 
 | Disponível | A implementar |
 |---|---|
 | API .NET, JWT interno, PostgreSQL, SMTP e health checks | Validação serverless de documentos CPF/CNPJ e permissões Admin/Mechanic/Customer |
-| Dockerfile, Compose opcional e Deployment/HPA | Publicação da imagem no ECR e deploy nos ambientes hom/prd |
-| CI com testes, cobertura, SonarCloud e build Docker | RDS PostgreSQL, API Gateway e observabilidade OpenTelemetry/New Relic |
+| Dockerfile, Compose opcional, Deployment/HPA e workflow manual ECR/EKS | Executar e validar deploy nos ambientes hom/prd |
+| CI com testes, cobertura, SonarCloud e build Docker; RDS hom provisionado | API Gateway, validação prd e observabilidade OpenTelemetry/New Relic |
 
 O foco de uso será a API na AWS. A URL do Gateway ainda não foi publicada. A [arquitetura alvo](docs/arquitetura/README.md) descreve contratos futuros; as [collections](postman/collections) e o OpenAPI gerado pela API representam as operações atuais.
 
@@ -143,7 +143,7 @@ A API cobre usuários, clientes, veículos, catálogo, materiais/estoque e cria�
 
 O Compose mapeia essas configurações a partir do `.env` e dos serviços locais. E-mails enviados ao smtp4dev ficam no painel local. Para outro destino, configure o servidor SMTP apropriado.
 
-O carregamento inicial AWS está implementado: lê os parâmetros SSM v2 e a versão `AWSCURRENT` dos Secrets JWT e da credencial `mecanica_api`, mantendo os valores em memória. A conexão usa TLS `VerifyFull` com o certificado público RDS incluído no publish. Falha de leitura, configuração inválida ou prazo de 45 segundos excedido impede a inicialização, sem fallback local. Sem `Runtime__Environment`, o fluxo local permanece; campo vazio ou diferente de `hom`/`prd` é inválido. Consulte [inicialização e conexão AWS](docs/INICIALIZACAO_AWS.md). Policy Terraform e ServiceAccount/overlays estão preparados; apply aprovado, publicação e validação real no EKS permanecem pendentes.
+O carregamento inicial AWS está implementado: lê os parâmetros SSM v2 e a versão `AWSCURRENT` dos Secrets JWT e da credencial `mecanica_api`, mantendo os valores em memória. A conexão usa TLS `VerifyFull` com o certificado público RDS incluído no publish. Falha de leitura, configuração inválida ou prazo de 45 segundos excedido impede a inicialização, sem fallback local. Sem `Runtime__Environment`, o fluxo local permanece; campo vazio ou diferente de `hom`/`prd` é inválido. Consulte [inicialização e conexão AWS](docs/INICIALIZACAO_AWS.md). Policy Terraform e ServiceAccount/overlays estão preparados; o mantenedor confirmou o deploy da infra hom. Publicação da API e validação real no EKS permanecem pendentes.
 
 | Rota | Finalidade |
 |---|---|
@@ -165,15 +165,15 @@ kubectl kustomize deploy/kubernetes/overlays/hom
 kubectl kustomize deploy/kubernetes/overlays/prd
 ```
 
-A composição local mantém a imagem anterior no Docker Hub e o Secret `db-secrets`, com `CONNECTION_STRING` e `JWT_KEY`; o [exemplo de Secret](deploy/kubernetes/db-secrets.example.yaml) contém placeholders. Os overlays hom/prd retiram essas referências, habilitam a leitura AWS e usam o ServiceAccount `default/gerenciamento-api`, com startup probe de 60 segundos. A imagem ECR `:pending` é provisória e deve ser substituída por digest na publicação antes de aplicar os overlays. Policy de leitura do banco no Terraform da base, publicação/deploy e validação real ainda precisam ser aplicados/executados; a E2.6 permanece aberta.
+A composição local mantém a imagem anterior no Docker Hub e o Secret `db-secrets`, com `CONNECTION_STRING` e `JWT_KEY`; o [exemplo de Secret](deploy/kubernetes/db-secrets.example.yaml) contém placeholders. Os overlays hom/prd retiram essas referências, habilitam a leitura AWS e usam o ServiceAccount `default/gerenciamento-api`, com startup probe de 60 segundos. A imagem ECR `:pending` é substituída por digest pelo workflow no checkout temporário, antes de aplicar o overlay. O mantenedor confirmou o sucesso do deploy da infra hom com a policy de leitura do banco; publicação/deploy da API e validação real ainda estão pendentes, mantendo a E2.6 aberta.
 
-A [pipeline](.github/workflows/pipeline.yml) executa em PRs e pushes para `develop`/`main`, além de acionamento manual. Os jobs são `unit-tests`, `code-analysis` e `build-image`; a análise usa `SONAR_TOKEN`. O build Docker ocorre após testes/análise e gera tag `sha-<commit>` no runner. Não há push de imagem, artefato de imagem disponível para download ou deploy nesse workflow.
+A [pipeline](.github/workflows/pipeline.yml) executa em PRs para `develop`/`main`, além de acionamento manual. Os jobs são `unit-tests`, `code-analysis` e `build-image`; a análise usa `SONAR_TOKEN`. O build Docker ocorre após testes/análise e gera tag `sha-<commit>` no runner. Não há push de imagem, artefato de imagem disponível para download ou deploy nesse workflow.
 
-A entrega planejada publicará no ECR e implantará por OIDC, após provisionar dependências. Consulte a [RFC de entrega](docs/arquitetura/rfcs/002-ENTREGA.md) para a ordem entre os quatro repositórios.
+O [API deploy](.github/workflows/api-deploy.yml) é manual e separado do CI: **Publicar → Implantar**, sem aprovação intermediária. Exige `develop/hom` ou `main/prd`, testa em Release, publica `linux/amd64` no ECR com tag `sha-<commit>-<run_id>-<run_attempt>` e aplica o overlay usando o digest retornado. Ambos os jobs usam o mesmo SHA e OIDC; a pipeline não lê Secrets. Aguarda rollout por 600 segundos e, em falha, exibe diagnóstico limitado sem rollback automático. Consulte o [procedimento de deploy](docs/DEPLOY_API.md) para pré-requisitos, publicação do workflow também em `main`, primeiro disparo `develop/hom` e validação RDS/probes/NLB. A [RFC de entrega](docs/arquitetura/rfcs/002-ENTREGA.md) mantém a ordem entre os repositórios.
 
 ## Contratos de integração
 
-A [especificação central](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md) define campos, versões, artefatos, secrets e falhas. Este repositório é o produtor do componente lógico **api** e do pacote **GerenciamentoMecanica.Auth.Contracts**. A versão 1.0.0 foi publicada no S3 via OIDC; o sucesso do workflow de consumo na autenticação foi confirmado pelo mantenedor. Publicadores SSM e integrações de deploy ainda serão implementados. Consulte [operação do Auth.Contracts](docs/arquitetura/PACOTE_AUTH_CONTRACTS.md).
+A [especificação central](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md) define campos, versões, artefatos, secrets e falhas. Este repositório é o produtor do componente lógico **api** e do pacote **GerenciamentoMecanica.Auth.Contracts**. A versão 1.0.0 foi publicada no S3 via OIDC; o sucesso do workflow de consumo na autenticação foi confirmado pelo mantenedor. O deploy manual está implementado; configuração SSM da API, OpenAPI e Gateway permanecem posteriores. Consulte [operação do Auth.Contracts](docs/arquitetura/PACOTE_AUTH_CONTRACTS.md).
 
 | Interface | Responsabilidade da API |
 |---|---|
@@ -192,7 +192,7 @@ O [workflow manual OIDC](.github/workflows/aws-oidc-check.yml) verifica a role a
 
 ## Desenvolvimento e ambientes
 
-Crie branches de trabalho a partir da `develop` atualizada e direcione os PRs para `develop`. A promoção `develop -> main` ocorre quando a entrega estiver concluída. `develop` corresponde a **hom** e `main` a **prd** na arquitetura planejada; os ambientes poderão coexistir. Proteções, Environments e autenticação OIDC foram preparados; a integração do deploy automático ainda será implementada.
+Crie branches de trabalho a partir da `develop` atualizada e direcione os PRs para `develop`. A promoção `develop -> main` ocorre quando a entrega estiver concluída. `develop` corresponde a **hom** e `main` a **prd**; os ambientes poderão coexistir. Proteções, Environments e autenticação OIDC foram preparados. O deploy da API é disparado manualmente, executando publicação e implantação completas; não ocorre por push. O arquivo do workflow também deve existir em `main` para disponibilizar Run workflow.
 
 ## Referências
 
@@ -205,4 +205,4 @@ Os workflows de CI pipeline/auth-contracts validam PRs para develop/main e permi
 
 ### Infraestrutura JWT da E2.12
 
-A base implementa Secret JWT por ambiente e publica jwt-secret-arn, jwt-issuer e jwt-audience em /mecanica/<ambiente>/base/v2/. Base JWT hom aplicada e conferida em 08/10: Secret/SSM/Pod Identity, No changes e isolamento IAM simulado. A API já implementa leitura inicial pelo SDK .NET, overlays com ServiceAccount e policy Terraform para leitura do banco. Apply dessa policy, publicação/deploy, validação no EKS, Lambda e prd permanecem pendentes. A role e a associação Pod Identity para default/gerenciamento-api são administradas pela base. A chave AWSCURRENT fica em memória, sem fallback local ou cópia para Secret Kubernetes. HS256, dez minutos e tolerância de relógio são preservados. [Contrato](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md).
+A base implementa Secret JWT por ambiente e publica jwt-secret-arn, jwt-issuer e jwt-audience em /mecanica/<ambiente>/base/v2/. Base JWT hom aplicada e conferida em 08/10: Secret/SSM/Pod Identity, No changes e isolamento IAM simulado. A API já implementa leitura inicial pelo SDK .NET, overlays com ServiceAccount e policy Terraform para leitura do banco. Deploy da infra hom com essa policy foi confirmado pelo mantenedor. Publicação/deploy da API, validação no EKS, Lambda e prd permanecem pendentes. A role e a associação Pod Identity para default/gerenciamento-api são administradas pela base. A chave AWSCURRENT fica em memória, sem fallback local ou cópia para Secret Kubernetes. HS256, dez minutos e tolerância de relógio são preservados. [Contrato](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md).
