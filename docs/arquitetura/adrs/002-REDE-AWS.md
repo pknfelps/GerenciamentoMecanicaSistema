@@ -1,10 +1,12 @@
 # ADR 002 — Gateway REST com backend privado no EKS
 
+> **Revisão vigente (2026-10-07):** [ADR 008](008-INFRAESTRUTURA-DECLARATIVA.md) substitui controller e protocolo de releases/prontidão por NLB Terraform, NodePort, SSM v2 e planos salvos com aprovação. Os complementos anteriores abaixo são histórico; demais decisões permanecem.
+
 **Estado:** aceito como arquitetura; implementação pendente. **Formalização:** 2026-09-16. [Índice](../README.md)
 
 **Contexto:** reaproveitar EKS/Terraform e oferecer entrada gerenciada, mantendo workloads e banco privados. O ambiente será usado em janelas de testes/gravação.
 
-**Decisão:** API Gateway REST Regional, OpenAPI composto, VPC Link e NLB interno solicitado por Service LoadBalancer. Usar VPC por ambiente com duas AZs, um nó t3.small, um NAT zonal e endpoint gateway S3. Manter HPA/probes. Acesso administrativo EKS público e privado, autenticado/autorizado para CI via OIDC. Lambda em ZIP gerenciado usa conectividade privada ao Aurora.
+**Decisão:** API Gateway REST Regional, OpenAPI composto, VPC Link e NLB interno solicitado por Service LoadBalancer. Usar VPC por ambiente com duas AZs, um nó t3.small, um NAT zonal e endpoint gateway S3. Manter HPA/probes. Acesso administrativo EKS público e privado, autenticado/autorizado para CI via OIDC. Lambda em ZIP gerenciado usa conectividade privada ao RDS PostgreSQL (D01.6).
 
 **Alternativas:** HTTP API foi preterida pelos recursos de tracing, logs e cache potencial da REST API, além do fluxo OpenAPI escolhido. Cache permanece desligado. Remover o balanceador do EKS não atende à integração privada escolhida. Escala automática de nós, vários nós/NATs e endpoints de interface adicionais não foram adotados inicialmente.
 

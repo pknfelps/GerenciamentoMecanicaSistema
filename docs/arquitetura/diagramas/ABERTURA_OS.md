@@ -9,7 +9,7 @@ sequenceDiagram
     actor M as Mecânico
     participant G as API Gateway
     participant A as API via VPC Link e NLB
-    participant D as Aurora
+    participant D as RDS PostgreSQL
     participant O as OpenTelemetry
     participant N as Handler de notificação na API
     participant S as SMTP

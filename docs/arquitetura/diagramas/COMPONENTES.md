@@ -11,14 +11,14 @@ flowchart LR
     GW -->|"Rotas da aplicação"| VL["VPC Link"]
     subgraph VPC["VPC exclusiva do ambiente — duas AZs"]
         subgraph PRIV["Subnets privadas de workloads"]
-            NLB["NLB interno"] --> SVC["Service LoadBalancer"]
+            NLB["NLB interno Terraform — TCP 80"] -->|"Instancias do ASG: 30080"| SVC["Service NodePort — 30080 → 8080"]
             SVC --> API["API .NET no EKS"]
             HPA["HPA 1–10 pods"] -.-> API
             NODE["Um nó t3.small"] -.-> API
             LNET["Conectividade VPC da Lambda"]
         end
         subgraph DATA["Subnets privadas de banco"]
-            DB[("Aurora PostgreSQL Serverless v2 — um writer")]
+            DB[("RDS PostgreSQL db.t3.micro — Single-AZ")]
         end
         subgraph PUB["Subnet pública de suporte"]
             NAT["Um NAT Gateway + EIP"] --> IGW["Internet Gateway"]
@@ -40,11 +40,11 @@ flowchart LR
     ECR["ECR privado compartilhado"] -.->|"Imagem por digest"| API
 ```
 
-O Service representa o recurso Kubernetes que solicita o NLB ao AWS Load Balancer Controller, não um segundo balanceador físico. O destino exato do NLB (nó/pod) e os protocolos serão fixados em E2/E3. A Lambda é um serviço gerenciado: o bloco de conectividade representa seu acesso à VPC, não uma execução dentro do EKS.
+Terraform cria NLB/listener/target group e associação ao ASG. A AWS registra/remove suas instâncias; o Service NodePort encaminha para a API, sem controller. Health HTTP em `/health/ready` pela porta 30080; `externalTrafficPolicy: Cluster`. A Lambda é um serviço gerenciado: o bloco de conectividade representa seu acesso à VPC, não uma execução dentro do EKS.
 
-O Gateway é a entrada pública de negócio. O endpoint administrativo do EKS é outra superfície, autenticada por IAM e autorizada no cluster. NAT atende saída; Aurora não recebe rota de internet. O HPA escala pods dentro da capacidade disponível: o nó único não oferece alta disponibilidade nem escalonamento automático de nós.
+O Gateway é a entrada pública de negócio. O endpoint administrativo do EKS é outra superfície, autenticada por IAM e autorizada no cluster. NAT atende saída; RDS não recebe rota de internet. O HPA escala pods dentro da capacidade disponível: o nó único não oferece alta disponibilidade nem escalonamento automático de nós.
 
-S3 de estado, identidade OIDC, ECR e bucket separado de artefatos pertencem ao bootstrap compartilhado. VPC, EKS, Aurora, função, Gateway, NLB e segredos de cada ambiente são independentes. A destruição de hom não remove prd nem o bootstrap.
+S3 de estado, identidade OIDC, ECR e bucket separado de artefatos pertencem ao bootstrap compartilhado. VPC, EKS, RDS, função, Gateway, NLB e segredos de cada ambiente são independentes. A destruição de hom não remove prd nem o bootstrap.
 
 ## Caminhos de observabilidade
 
@@ -54,7 +54,7 @@ flowchart LR
     K8S["Kubelet + API Kubernetes"] -->|"CPU, memória e estado"| COL
     FN["Lambda instrumentada"] --> LCOL["Extensão Collector local"]
     GW["API Gateway"] --> CW["CloudWatch: logs do Gateway e métricas AWS"]
-    AWS["Lambda / Aurora: métricas AWS"] --> CW
+    AWS["Lambda / RDS: métricas AWS"] --> CW
     CW -->|"Polling pelo receiver"| COL
     GW --> XR["X-Ray: tracing nativo do Gateway"]
     XR -->|"Integração oficial com polling"| NR["New Relic"]

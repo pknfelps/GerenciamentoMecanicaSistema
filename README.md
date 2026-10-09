@@ -10,7 +10,7 @@ A separação em quatro repositórios está integrada. A API e os testes existen
 |---|---|
 | API .NET, JWT interno, PostgreSQL, SMTP e health checks | Validação serverless de documentos CPF/CNPJ e permissões Admin/Mechanic/Customer |
 | Dockerfile, Compose opcional e Deployment/HPA | Publicação da imagem no ECR e deploy nos ambientes hom/prd |
-| CI com testes, cobertura, SonarCloud e build Docker | Aurora, API Gateway e observabilidade OpenTelemetry/New Relic |
+| CI com testes, cobertura, SonarCloud e build Docker | RDS PostgreSQL, API Gateway e observabilidade OpenTelemetry/New Relic |
 
 O foco de uso será a API na AWS. A URL do Gateway ainda não foi publicada. A [arquitetura alvo](docs/arquitetura/README.md) descreve contratos futuros; as [collections](postman/collections) e o OpenAPI gerado pela API representam as operações atuais.
 
@@ -35,7 +35,7 @@ flowchart LR
 |---|---|
 | Este repositório | API, camadas, testes, Dockerfile/Compose e Deployment/HPA |
 | [Infraestrutura](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/tree/develop) | Terraform, plataforma Kubernetes, Service e futura entrada Gateway/NLB |
-| [Banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/tree/develop) | SQL/seeds e futura infraestrutura Aurora/Job de inicialização |
+| [Banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/tree/develop) | SQL/seeds, infraestrutura RDS PostgreSQL e Job de inicialização planejados |
 | [Autenticação](https://github.com/pknfelps/GerenciamentoMecanicaAutenticacao/tree/develop) | Futura Lambda de validação de documentos CPF/CNPJ e emissão de JWT |
 
 Os projetos `Domain.Interface` e `Service.Interface` definem contratos; `Infrastructure` implementa persistência PostgreSQL, JWT, hash de senha e SMTP; `DependencyInjection` registra os componentes. Consultas comuns de usuários não retornam senha/hash; os fluxos de credenciais usam `UserCredentials`.
@@ -49,7 +49,7 @@ Os projetos `Domain.Interface` e `Service.Interface` definem contratos; `Infrast
 - kubectl com Kustomize para renderizar os manifestos.
 - GitHub Actions e SonarCloud no CI.
 
-AWS EKS, Aurora, ECR, API Gateway e Lambda compõem o destino da Fase 3. Terraform pertence ao repositório de infraestrutura.
+AWS EKS, RDS PostgreSQL, ECR, API Gateway e Lambda compõem o destino da Fase 3. Terraform da base e entrada pertence ao repositório de infraestrutura; Terraform do banco pertence ao repositório de banco. A escolha RDS `db.t3.micro` Single-AZ substituiu Aurora após a restrição do AWS Free Plan ([ADR 007](docs/arquitetura/adrs/007-RDS-FREE-PLAN.md)); implementação e validação ainda pendentes.
 
 ## Build e testes
 
@@ -135,11 +135,15 @@ A API cobre usuários, clientes, veículos, catálogo, materiais/estoque e cria�
 |---|---|
 | `ConnectionStrings__DefaultConnection` | Conexão PostgreSQL |
 | `Jwt__Issuer`, `Jwt__Audience`, `Jwt__Key` | Emissão e validação JWT compatíveis no ambiente |
+| `Runtime__Environment` | Ausente: configuração local. `hom` ou `prd`: carregar JWT e conexão RDS pela AWS na inicialização |
+| `AWS_REGION` | Região dos clientes AWS quando o carregamento remoto estiver habilitado (`us-east-1` nos ambientes previstos) |
 | `EmailSettings__Host`, `EmailSettings__Port` | Servidor SMTP |
 | `EmailSettings__Username`, `EmailSettings__Password`, `EmailSettings__UseTls` | Autenticação/TLS do SMTP |
 | `EmailSettings__SenderName`, `EmailSettings__SenderEmail` | Identificação do remetente |
 
 O Compose mapeia essas configurações a partir do `.env` e dos serviços locais. E-mails enviados ao smtp4dev ficam no painel local. Para outro destino, configure o servidor SMTP apropriado.
+
+O carregamento inicial AWS está implementado: lê os parâmetros SSM v2 e a versão `AWSCURRENT` dos Secrets JWT e da credencial `mecanica_api`, mantendo os valores em memória. A conexão usa TLS `VerifyFull` com o certificado público RDS incluído no publish. Falha de leitura, configuração inválida ou prazo de 45 segundos excedido impede a inicialização, sem fallback local. Sem `Runtime__Environment`, o fluxo local permanece; campo vazio ou diferente de `hom`/`prd` é inválido. Consulte [inicialização e conexão AWS](docs/INICIALIZACAO_AWS.md). IAM, ServiceAccount/Deployment e validação real no EKS permanecem pendentes da próxima entrega.
 
 | Rota | Finalidade |
 |---|---|
@@ -150,6 +154,8 @@ O Compose mapeia essas configurações a partir do `.env` e dos serviços locais
 As probes do Deployment usam essas rotas. Não houve alteração de probes na separação dos repositórios.
 
 ## Kubernetes, CI e deploy
+
+A [decisão declarativa](docs/arquitetura/adrs/008-INFRAESTRUTURA-DECLARATIVA.md) mantém Terraform para AWS e manifestos próprios Kubernetes. Infra/banco usam provisionamento manual com plan salvo, aprovação e apply; CI e testes de negócio da API permanecem. Service da base é NodePort 30080, ligado ao NLB Terraform.
 
 [deploy/kubernetes](deploy/kubernetes) contém Deployment e HPA. O Service pertence à infraestrutura. Para conferir a composição sem acessar o cluster:
 
@@ -172,11 +178,11 @@ A [especificação central](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md) de
 | Produz para implantação | Imagem ECR identificada por digest; o Deployment não usa latest |
 | Produz para Gateway | contracts/api/<commit>/openapi.json e seu .sha256, gerados da mesma revisão implantada |
 | Produz para a função | Pacote NuGet de versão fixa em packages/GerenciamentoMecanica.Auth.Contracts/<versao>/, com .sha256 |
-| Publica em SSM | /mecanica/<ambiente>/api/v1/: image-uri, deployment-name, OpenAPI, versão do pacote, release e tentativas; smtp-secret-arn quando aplicável |
+| Publica em SSM | /mecanica/<ambiente>/api/v2/: configuração administrada pelo Terraform, sem releases/tentativas; smtp-secret-arn quando aplicável |
 | Consome da base | Cluster/namespace/Service, ECR, referência JWT, issuer/audience e endpoint OTel quando habilitado |
 | Consome do banco | Writer/porta/database/TLS, versão/hash SQL e api-secret-arn |
 | Resolve no runtime | Sua credencial de banco, JWT e SMTP autenticado; nunca a credencial administrativa do banco |
-| Solicita após deploy | Recomposição do Gateway, via workflow da infraestrutura fixado por SHA, com a nova release da API e a release da função já implantada |
+| Solicita após deploy | Plano e aprovação do Gateway com versões fixas dos contratos API/função; operações sequenciais pelo mantenedor |
 
 Build/testes e publicação do pacote são independentes de banco/EKS. Publicação e deploy são resultados distintos: dependência ausente deixa a implantação bloqueada, sem sinalizar sucesso nem criar infraestrutura implicitamente. Release pronta exige rollout/readiness aprovados e dependências compatíveis. A API não inicializa SQL nem administra o Service/NLB.
 
@@ -194,3 +200,7 @@ Crie branches de trabalho a partir da `develop` atualizada e direcione os PRs pa
 - Demonstração final e vídeo: pendentes.
 
 Os workflows de CI pipeline/auth-contracts validam PRs para develop/main e permitem execução manual; não repetem os checks no push da mesma revisão. Commits novos substituem checks antigos do mesmo PR, preservando nomes dos jobs e isolando publicações manuais.
+
+### Infraestrutura JWT da E2.12
+
+A base implementa Secret JWT por ambiente e publica jwt-secret-arn, jwt-issuer e jwt-audience em /mecanica/<ambiente>/base/v2/. Base JWT hom aplicada e conferida em 08/10: Secret/SSM/Pod Identity, No changes e isolamento IAM simulado. A API já implementa a leitura inicial pelo SDK .NET; permissões de banco, ServiceAccount/Deployment, validação no EKS, Lambda e prd permanecem pendentes. A role e a associação Pod Identity para default/gerenciamento-api são administradas pela base. A chave AWSCURRENT fica em memória, sem fallback local ou cópia para Secret Kubernetes. Os manifestos atuais permanecem até a próxima entrega. HS256, dez minutos e tolerância de relógio são preservados. [Contrato](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md).

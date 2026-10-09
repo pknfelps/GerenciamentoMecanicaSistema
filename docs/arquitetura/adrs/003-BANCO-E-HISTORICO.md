@@ -1,6 +1,6 @@
 # ADR 003 — Aurora Serverless e histórico transacional de OS
 
-**Estado:** aceito como arquitetura; implementação pendente. **Formalização:** 2026-09-16. [Índice](../README.md)
+**Estado:** escolha Aurora/auto-pause substituída pelo [ADR 007](007-RDS-FREE-PLAN.md) em 2026-10-02; decisões de histórico transacional e banco descartável preservadas. **Formalização original:** 2026-09-16. [Índice](../README.md)
 
 **Contexto:** PostgreSQL existente, foco educacional/serverless e uso intermitente. Os indicadores exigem tempos por etapa e tratamento correto de recusas, exclusões e períodos desligados.
 
