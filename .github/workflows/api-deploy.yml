@@ -65,7 +65,7 @@ jobs:
       - name: Restore, build e testes Release
         run: |
           dotnet restore GerenciamentoMecanicaSistema.slnx
-          dotnet build GerenciamentoMecanicaSistema.slnx --configuration Release --no-restore
+          dotnet build GerenciamentoMecanicaSistema.slnx --configuration Release --no-restore -p:OpenApiGenerateDocuments=true
           dotnet test GerenciamentoMecanicaSistema.slnx --configuration Release --no-build --no-restore
 
       - name: Autenticar na AWS por OIDC
@@ -88,6 +88,33 @@ jobs:
           repository="$(aws ssm get-parameter --name "/mecanica/$DEPLOY_ENVIRONMENT/base/v2/ecr-repository-url" --query Parameter.Value --output text)"
           test "$repository" = "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY"
           echo "url=$repository" >> "$GITHUB_OUTPUT"
+
+      - name: Publicar OpenAPI e checksum imutáveis
+        working-directory: artifacts/openapi
+        run: |
+          test -s openapi.json
+          sha256sum openapi.json > openapi.json.sha256
+          for file in openapi.json openapi.json.sha256; do
+            key="contracts/api/$GITHUB_SHA/$file"
+            if version="$(aws s3api put-object --bucket mecanica-artifacts-121754142617-us-east-1 \
+              --expected-bucket-owner "$AWS_ACCOUNT_ID" --key "$key" --body "$file" \
+              --if-none-match '*' --checksum-algorithm SHA256 \
+              --metadata "commit=$GITHUB_SHA,repository=$GITHUB_REPOSITORY" \
+              --query VersionId --output text 2> "$RUNNER_TEMP/openapi-upload.err")"; then
+              echo "Publicado: $key"
+            elif grep -q '(PreconditionFailed)' "$RUNNER_TEMP/openapi-upload.err"; then
+              version="$(aws s3api get-object --bucket mecanica-artifacts-121754142617-us-east-1 \
+                --expected-bucket-owner "$AWS_ACCOUNT_ID" --key "$key" \
+                --query VersionId --output text "$RUNNER_TEMP/existing-openapi")"
+              cmp "$file" "$RUNNER_TEMP/existing-openapi" || { echo '::error::Contrato imutável divergente'; exit 1; }
+              echo "Artefato idêntico já publicado: $key"
+            else
+              cat "$RUNNER_TEMP/openapi-upload.err" >&2
+              exit 1
+            fi
+            printf -- '- %s; SHA-256: %s; S3 version: %s\n' \
+              "$key" "$(sha256sum "$file" | cut -d ' ' -f 1)" "$version" >> "$GITHUB_STEP_SUMMARY"
+          done
 
       - name: Login no ECR
         uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
@@ -114,7 +141,7 @@ jobs:
           [[ "$IMAGE_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
           image="$REPOSITORY_URL@$IMAGE_DIGEST"
           echo "uri=$image" >> "$GITHUB_OUTPUT"
-          printf 'Ambiente: `%s`\n\nCommit: `%s`\n\nImagem: `%s`\n\nTag: `sha-%s-%s-%s`\n' \
+          printf 'Ambiente: %s\n\nCommit: %s\n\nImagem: %s\n\nTag: sha-%s-%s-%s\n' \
             "$DEPLOY_ENVIRONMENT" "$GITHUB_SHA" "$image" "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
@@ -213,7 +240,7 @@ jobs:
           kubectl rollout status deployment/deploy-gerenciamento-api --namespace "$NAMESPACE" --timeout=600s
           configured="$(kubectl get deployment deploy-gerenciamento-api --namespace "$NAMESPACE" -o 'jsonpath={.spec.template.spec.containers[?(@.name=="gerenciamento-api")].image}')"
           test "$configured" = "$IMAGE_URI"
-          printf 'Deploy concluído em `%s/default`.\n\nCommit: `%s`\n\nImagem: `%s`\n' \
+          printf 'Deploy concluído em %s/default.\n\nCommit: %s\n\nImagem: %s\n' \
             "$DEPLOY_ENVIRONMENT" "$GITHUB_SHA" "$IMAGE_URI" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Diagnóstico de falha

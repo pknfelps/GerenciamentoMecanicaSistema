@@ -158,8 +158,23 @@ Documento ilustrativo para contrato/teste, sem associação a pessoa real. O mes
 | 200 | Token válido no corpo, como string, seguindo a resposta atual de autenticação |
 | 401 | Documento válido sem cliente elegível: cadastro inexistente ou Inativo |
 | 400 | Corpo ou documento inválido |
+| 500 | Falha técnica tratada pelo handler, incluindo configuração, persistência e cancelamento pelo prazo disponível |
 
 Exemplo lógico do valor retornado em 200: `"<jwt>"`. Reutilizar a convenção de resposta de token da autenticação interna, sem introduzir envelope com campos de sessão/refresh token. Falhas inesperadas da função ou de sua integração continuam sujeitas a respostas 5xx de infraestrutura; não mascará-las como 401/400.
+
+**Contrato do handler — parte 4:** exigir `application/json`, aceitando `charset=utf-8` e nomes de cabeçalhos sem distinção de maiúsculas. O corpo contém exatamente uma propriedade `document`, em string obrigatória; rejeitar propriedades extras/duplicadas, nomes diferentes, valores nulos ou de outro tipo e JSON malformado. O transporte Base64 do evento REST proxy é aceito com UTF-8 estrito; erros de parsing retornam 400 antes de carregar configuração ou consultar o banco. Formato/dígitos do documento continuam validados pelo caso de uso.
+
+200 usa `application/json` com token como string JSON. 400/401/500 usam `application/problem+json` com `type: about:blank`, `status` correspondente, `instance: /customers/validate` e mensagens fixas:
+
+| Código | title | detail |
+|---|---|---|
+| 400 | Requisição inválida | O corpo ou documento informado é inválido. |
+| 401 | Autenticação não autorizada | Não foi possível autenticar o cliente. |
+| 500 | Erro interno do servidor | Não foi possível processar a autenticação. |
+
+Cadastro inexistente e Inativo produzem exatamente a mesma negativa. Todas as respostas do handler incluem `Cache-Control: no-store` e `isBase64Encoded: false`. Não expor documento, token, chave, senha, configuração ou exceções nos logs/erros. Falhas técnicas e cancelamento nunca são convertidos em documento inválido ou cliente inelegível. Respostas produzidas pelo próprio Gateway/runtime podem seguir outros formatos 5xx.
+
+O contrato estático do produtor fica em [contracts/openapi.json](https://github.com/pknfelps/GerenciamentoMecanicaAutenticacao/blob/develop/contracts/openapi.json), sem extensões AWS ou destinos de ambiente nesta entrega. Handler e fluxo estão preparados para validação local; IAM/rede/deploy/Gateway e aceitação real do JWT pela API permanecem pendentes.
 
 ## 6. JWT e autenticação interna
 

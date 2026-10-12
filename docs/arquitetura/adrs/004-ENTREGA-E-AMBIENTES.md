@@ -1,5 +1,7 @@
 # ADR 004 — Quatro repositórios e ambientes independentes
 
+> **Revisão de 2026-10-11:** auth usa SAM/ZIP conforme [ADR 009](009-SAM-AUTENTICACAO.md), com deploy/descarte manuais completos e sem aprovação intermediária. SAM conduz deploy/descarte; sam delete remove ZIP atual/templates operacionais, preservando outras revisões/contratos/bucket/IAM. Sem comandos CloudFormation diretos. Bootstrap/base/banco/Gateway continuam Terraform/plan aprovado. Inventário sem recursos/estado auth permitiu retirar seu código Terraform sem destroy. Bootstrap CI/SAM aplicado e conferido; primeira implantação SAM pendente.
+
 > **Revisão vigente (2026-10-07):** [ADR 008](008-INFRAESTRUTURA-DECLARATIVA.md) substitui controller e protocolo de releases/prontidão por NLB Terraform, NodePort, SSM v2 e planos salvos com aprovação. Os complementos anteriores abaixo são histórico; demais decisões permanecem.
 
 **Estado:** aceito como arquitetura; implementação pendente. **Formalização:** 2026-09-16. [Índice](../README.md)

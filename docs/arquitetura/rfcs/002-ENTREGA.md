@@ -4,21 +4,23 @@
 
 ## Responsabilidades
 
-API mantém negócio/testes, imagem, Deployment/HPA, OpenAPI e Auth.Contracts. Infra mantém AWS em Terraform: rede/EKS/add-ons/SGs/NLB e unidade Gateway separada; Service NodePort e namespace são manifestos próprios. Banco mantém RDS/secrets/SQL/Job. Autenticação mantém código/testes/ZIP/Terraform da função. Bootstrap mantém S3/OIDC/ECR persistentes.
+API mantém negócio/testes, imagem, Deployment/HPA, OpenAPI e Auth.Contracts. Infra mantém Terraform para rede/EKS/add-ons/SGs/NLB e Gateway; Service NodePort/namespace em manifestos. Banco mantém RDS/secrets/SQL/Job. Auth usa SAM com ZIP para função/versão/alias/logs/egress/SSM ([ADR 009](../adrs/009-SAM-AUTENTICACAO.md)), implantação pendente. Bootstrap mantém S3/OIDC/ECR, role CI e IAM runtime persistentes.
 
 NLB TCP 80 encaminha para instâncias do ASG na porta 30080. Service NodePort encaminha a 8080; health HTTP `/health/ready`. AWS acompanha entrada/saída das instâncias. Sem controller/Helm e sem EBS CSI sem uso; manter Pod Identity Agent/Metrics Server e t3.small 1/1/1.
 
 ## Pipelines e configuração
 
-Estados próprios S3 versionados, locking nativo, hom/prd independentes, OIDC por componente. Configuração SSM v2 em recursos Terraform, consumo por data sources; secrets apenas referenciados, valores resolvidos em runtime ou em campos ephemeral/write-only. Não usar estado remoto de outro repositório como interface.
+Unidades Terraform usam estados próprios S3 versionados e locking nativo; auth terá stacks CloudFormation. Hom/prd independentes, OIDC por componente. Configuração SSM v2 em recursos Terraform, exceto auth/v2 com destino CloudFormation; consumidores usam somente parâmetros públicos, sem estado remoto de outro repositório. Secrets apenas referenciados, valores resolvidos em runtime ou em campos ephemeral/write-only nas unidades Terraform.
 
-Provisionamento e destroy manuais, três jobs: plan salva binário e texto, aprovação em hom-approval/prd-approval sem AWS, apply baixa o artefato daquela execução e usa o mesmo commit. Retenção sete dias; plano obsoleto requer nova execução. Nenhum replan, fingerprint, publicação por scripts ou apply automático em push. CI de infra/banco somente fmt/validate/Kustomize. Bootstrap administrativo usa comandos Terraform diretos e revisão do plano salvo.
+Provisionamento e destroy das unidades Terraform manuais, três jobs: plan salva binário e texto, aprovação em hom-approval/prd-approval sem AWS, apply baixa o artefato daquela execução e usa o mesmo commit. Retenção sete dias; plano obsoleto requer nova execução. Nenhum replan, fingerprint, publicação por scripts ou apply automático em push. CI de infra/banco somente fmt/validate/Kustomize. Bootstrap administrativo usa comandos Terraform diretos e revisão do plano salvo.
+
+Auth: template estático, código/infraestrutura da mesma revisão e publicação em dois jobs: testes/build SAM → upload nativo ZIP/contratos. Provisionamento tem um job sam deploy, sem aprovação intermediária; disparo manual autoriza todas as alterações e o SAM aguarda conclusão. Descarte tem um job sam delete --no-prompts: remove ZIP atual e templates operacionais, preservando outras revisões/contratos/bucket/IAM. O prefixo operacional é sam/auth/<ambiente>/changesets. Exclusão S3 mantém versões históricas; republicar antes de recriar o deploy. Não há comandos CloudFormation diretos. Rollback padrão e logs SAM; alterações vazias têm sucesso. Quota permanece pré-requisito; Terraform auth retirado após inventário sem recursos/estado. Demais unidades mantêm plan/aprovação/apply.
 
 API: [workflow manual](../../../.github/workflows/api-deploy.yml) separado do CI, com dois jobs Publicar → Implantar. O disparo autoriza ambos, sem aprovação intermediária; usar develop/hom ou main/prd e Environments hom/prd existentes. Checkout do mesmo SHA, testes Release, push ECR linux/amd64 com tag sha-<commit>-<run_id>-<run_attempt> e deploy pelo digest retornado. O segundo job confirma o digest por BatchGetImage, troca a imagem via Kustomize nativo e aplica o overlay diretamente, aguardando rollout por 600 segundos. Falha exibe diagnóstico limitado sem rollback automático. Nenhuma leitura de Secrets pela pipeline, publicação SSM da API ou OpenAPI nessa entrega. [Operação](../../DEPLOY_API.md).
 
 Banco: apply entrega ConfigMap e Secrets temporários no namespace reservado; kubectl remove Job antigo, aplica YAML e aguarda Complete. Falha mostra diagnóstico/logs. Etapa always remove Secrets temporários; próximo refresh planeja recriação. Preservar senhas existentes na primeira adoção, gerar novas para ambientes novos sem rotacionar em cada apply. Init.sql/marcador/grants mantidos; sem smokes operacionais. Testes de negócio permanecem.
 
-OpenAPI/ZIP/NuGet continuam imutáveis e versionados com SHA-256 no S3. Não há protocolo de releases de infraestrutura. Gateway é planejado e aplicado manualmente com contratos fixos após implantação dos backends.
+OpenAPI/NuGet e template SAM empacotado continuam imutáveis/versionados com SHA-256 e escrita condicional no S3. ZIP nativo usa sam/auth/<ambiente>/<commit>/, com deduplicação/versionamento e exceção localizada à escrita condicional; não tem garantia de gravação única. Não há protocolo de releases de infraestrutura. Gateway será aplicado manualmente após implantação dos backends.
 
 ## Ordem e aceitação
 

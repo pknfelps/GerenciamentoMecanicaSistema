@@ -1,5 +1,7 @@
 # ADR 002 — Gateway REST com backend privado no EKS
 
+> **Revisão auth — 2026-10-11:** [ADR 009](009-SAM-AUTENTICACAO.md) implementa SAM/CloudFormation com ZIP, mantendo conectividade privada e propriedade Terraform do Gateway/rede. O workflow resolve quatro parâmetros públicos e confere VPC, subnets e SGs antes de preparar o change set; implantação ainda pendente.
+
 > **Revisão vigente (2026-10-07):** [ADR 008](008-INFRAESTRUTURA-DECLARATIVA.md) substitui controller e protocolo de releases/prontidão por NLB Terraform, NodePort, SSM v2 e planos salvos com aprovação. Os complementos anteriores abaixo são histórico; demais decisões permanecem.
 
 **Estado:** aceito como arquitetura; implementação pendente. **Formalização:** 2026-09-16. [Índice](../README.md)

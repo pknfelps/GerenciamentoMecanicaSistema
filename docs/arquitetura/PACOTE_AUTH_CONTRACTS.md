@@ -74,7 +74,7 @@ pwsh -File scripts/Test-AuthContracts.ps1 -Bucket mecanica-artifacts-12175414261
 pwsh -File scripts/Test-AuthContracts.ps1 -PackagePath C:/artefatos/GerenciamentoMecanica.Auth.Contracts.1.0.0.nupkg
 ```
 
-O workflow manual auth-contracts-check executa o consumo com a role auth. A publicação inicial foi comprovada no [run 36205335338](https://github.com/pknfelps/GerenciamentoMecanicaSistema/actions/runs/36205335338), em develop/hom. SHA-256 do nupkg 1.0.0: b9080cea9d303722ac072e89421505d728126cdb52d57549da4328b1e18ab4e9. O mantenedor confirmou o sucesso do workflow de consumo remoto após essa publicação. Essa validação do pacote não comprova implantação da função nem validação em prd.
+Na parte 6, auth-ci e auth-publish substituem auth-contracts-check no consumidor, usando role CI restrita a leitura do pacote/checksum. O produtor API permanece com seu fluxo atual. A publicação inicial foi comprovada no [run 36205335338](https://github.com/pknfelps/GerenciamentoMecanicaSistema/actions/runs/36205335338), em develop/hom. SHA-256 do nupkg 1.0.0: b9080cea9d303722ac072e89421505d728126cdb52d57549da4328b1e18ab4e9. O mantenedor confirmou o sucesso do workflow de consumo remoto após essa publicação. Essa validação do pacote não comprova implantação da função nem validação em prd.
 
 ## Referências
 

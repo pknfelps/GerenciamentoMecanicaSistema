@@ -26,7 +26,24 @@ A aplicação lê seus parâmetros e Secrets usando o SDK .NET e Pod Identity, c
 
 Cada job faz checkout do SHA da execução, mesmo que a branch avance enquanto o workflow estiver rodando. As execuções deste workflow são agrupadas por ambiente com `cancel-in-progress: false`; o mantenedor continua coordenando operações entre repositórios. A configuração padrão de concurrency do GitHub admite somente uma execução pendente por grupo: um novo disparo pode substituir outro que ainda não começou. Evitar disparos duplicados. [Semântica da concurrency](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency).
 
-**Publicar:** restore/build/test da solução `.slnx` em Release com .NET 10, autenticação OIDC, conferência STS/SSM, build Docker `linux/amd64` e push no ECR. A tag é `sha-<commit completo>-<run_id>-<run_attempt>`. O digest retornado pela action de build é entregue ao job seguinte; a imagem não é reconstruída. O CI de PR, cobertura e Sonar permanecem separados.
+**Publicar:** restore/build da solução `.slnx` em Release com .NET 10 e `-p:OpenApiGenerateDocuments=true`, testes, autenticação OIDC e conferência STS/SSM. Publica OpenAPI/checksum no S3 antes do build Docker `linux/amd64` e push no ECR. A tag é `sha-<commit completo>-<run_id>-<run_attempt>`. O digest retornado pela action de build é entregue ao job seguinte; a imagem não é reconstruída. O CI de PR, cobertura e Sonar permanecem separados.
+
+### Publicação do contrato
+
+`Microsoft.Extensions.ApiDescription.Server 10.0.9` gera somente `v1`, em OpenAPI 3.0, como `artifacts/openapi/openapi.json`. A geração é optativa; builds comuns/Docker permanecem desabilitados por padrão. O `Program` reconhece o entry assembly oficial `GetDocument.Insider` e registra somente controllers/OpenAPI, sem carregar AWS, configurar credenciais JWT ou registrar persistência. A inicialização normal mantém todas as validações. Development serve o mesmo formato 3.0.
+
+O contrato tem título **API da oficina** e versão **1.0.0**, sem destinos AWS, extensões de integração ou exemplos de tokens. Bearer JWT é descrito por operação com `Authorize`, inclusive herdado do controller; `AllowAnonymous` prevalece. Não há exigência global. Autenticação interna e health checks são públicos, assim como status/orçamento atualmente anônimos. Esta entrega não muda essas permissões. `/customers/validate` continua no contrato da Lambda.
+
+No bucket `mecanica-artifacts-121754142617-us-east-1`, a revisão da execução determina as chaves:
+
+| Objeto | Chave |
+|---|---|
+| Contrato | `contracts/api/<commit>/openapi.json` |
+| Checksum | `contracts/api/<commit>/openapi.json.sha256` |
+
+`sha256sum openapi.json` produz o sidecar com hash e nome relativo. A AWS CLI envia os dois arquivos com proprietário esperado, checksum SHA-256 e `--if-none-match '*'`. Em `PreconditionFailed`, baixa o objeto existente e compara os bytes; divergência ou qualquer outro erro interrompe o fluxo. Repetir após um upload parcial aceita o arquivo já publicado somente se idêntico. O commit não tem prefixo de ambiente: hom/prd compartilham o mesmo contrato da revisão. Uma alteração de conteúdo exige nova revisão.
+
+As permissões atuais da role API já cobrem leitura/escrita em `contracts/api`; não há novo IAM, Secret de pipeline ou parâmetro SSM. O resumo registra commit, chaves, hashes, versões S3 e digest. Contratos publicados permanecem se o build da imagem ou implantação falhar e também após API destroy. Sua existência representa um artefato disponível, sem declarar prontidão operacional.
 
 **Implantar:** nova autenticação OIDC, leitura de cluster/namespace e confirmação do digest com `BatchGetImage`. Instala kubectl `1.36.1` e Kustomize `5.8.3`; no checkout descartável do runner, substitui a imagem provisória com o comando nativo:
 
@@ -41,7 +58,7 @@ O workflow confere a imagem desejada do container `gerenciamento-api` no Deploym
 
 ## Falhas e nova tentativa
 
-Falha de teste/autenticação/configuração/publicação impede o job de implantação. Digest ausente ou configuração inesperada impede o apply. Falha de apply/rollout/conferência encerra a execução com erro e mostra Deployment, pods, últimos eventos e logs atuais/anteriores limitados. Não há rollback automático. Uma imagem publicada pode permanecer no ECR mesmo quando a implantação falha; nenhuma retenção ECR é alterada.
+Falha de geração/teste/autenticação/configuração/publicação impede o job de implantação. Digest ausente ou configuração inesperada impede o apply. Falha de apply/rollout/conferência encerra a execução com erro e mostra Deployment, pods, últimos eventos e logs atuais/anteriores limitados. Não há rollback automático. Uma imagem publicada pode permanecer no ECR mesmo quando a implantação falha; nenhuma retenção ECR é alterada.
 
 Corrigir a causa e iniciar nova execução. Ao repetir apenas o job de implantação na mesma execução, ele reutiliza os outputs da publicação; ao repetir a publicação, a tag inclui o novo `run_attempt`. Não editar/reutilizar tags imutáveis. Diagnósticos não devem incluir consultas a valores dos Secrets, dumps de configuração ou strings de conexão.
 
@@ -65,7 +82,9 @@ Em outro terminal, `curl --fail http://localhost:8080/health/startup`, `/health/
 
 Para NLB, ler `nlb-arn` da base v2 e usar `aws elbv2 describe-target-groups --load-balancer-arn <arn>` e `aws elbv2 describe-target-health --target-group-arn <arn>`. Targets devem estar saudáveis na porta `30080`. O NLB é interno: conferir `/health/ready` por seu DNS a partir de uma origem com acesso à VPC, usando `curl --fail`. Essas verificações usam credenciais de operador com as permissões correspondentes; não ampliar a role da pipeline para executá-las. Ajustes de recursos/réplicas/HPA pertencem à E2.7.
 
-E2.6/E2.11 permanecem abertas até comprovação do deploy e conexão reais. OpenAPI, parâmetros SSM do componente API, Gateway, integração Lambda e validação prd continuam nas etapas posteriores. Este workflow não provisiona AWS nem inicializa o banco.
+O ciclo hom de deploy/conexão/descarte foi validado anteriormente. A publicação do OpenAPI foi validada localmente em 12/10/2026: restore/build Release, 600 testes aprovados (incluindo PostgreSQL em Docker e 16 testes do documento), geração sem AWS/banco com Runtime hom e configurações locais inválidas, repetição com bytes idênticos, build da imagem e actionlint/ShellCheck. O contrato gerado é OpenAPI 3.0.4; SHA-256 local `60885f42d4c54ee600ee20ad08065bb1e06484319846d44c6a6dfdadb381d59b`. Não houve upload ou deploy AWS nesta entrega.
+
+Após os PRs, o mantenedor executará API deploy em hom. Conferir no resumo as duas chaves e versões S3; baixar contrato/sidecar com AWS CLI e executar `sha256sum --check openapi.json.sha256` na pasta dos arquivos. Conferir também metadado `commit` por `aws s3api head-object` e sua correspondência com o SHA e a tag/digest da imagem implantada. Aplicar proprietário esperado `121754142617` nas consultas S3. Essa conferência AWS ainda está pendente. Parâmetros SSM do componente API, Gateway, integração HTTP, aceitação real do JWT da Lambda pela API e validação prd continuam nas etapas posteriores; E3.11 permanece aberta. Este workflow não provisiona AWS nem inicializa o banco.
 
 ## Réplicas e validação de capacidade
 
