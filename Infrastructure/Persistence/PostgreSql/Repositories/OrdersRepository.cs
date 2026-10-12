@@ -13,8 +13,8 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
     public class OrdersRepository(IDbConnection connection, DbTransactionContext? transactionContext = null) : BaseRepository(connection, transactionContext), IOrdersRepository
     {
         public static string CreateServiceSql { get; private set; } = """
-            INSERT INTO orders(id, customer_document, vehicle_license_plate, budget, status, date_created, date_finished, duration)
-            VALUES (@Id, @CustomerDocument, @VehicleLicensePlate, @Budget, @Status, @DateCreated, @DateFinished, @Duration);
+            INSERT INTO orders(id, customer_document, vehicle_license_plate, budget, status)
+            VALUES (@Id, @CustomerDocument, @VehicleLicensePlate, @Budget, @Status);
             """;
 
         public static string GetOrdersSql { get; private set; } = """
@@ -45,12 +45,19 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
 
                 os.budget, 
                 os.status, 
-                os.date_created AS DateCreated, 
-                os.date_finished AS DateFinished
+                history.date_created AS DateCreated,
+                history.date_finished AS DateFinished
 
             FROM orders os
             LEFT JOIN order_services s ON s.order_id = os.id
             LEFT JOIN order_materials m ON m.order_id = os.id
+            LEFT JOIN LATERAL (
+                SELECT
+                    MIN(occurred_at) FILTER (WHERE sequence = 1) AS date_created,
+                    MIN(occurred_at) FILTER (WHERE new_status = 'Finished' AND reason = 'ServiceCompleted') AS date_finished
+                FROM order_status_history
+                WHERE order_id = os.id
+            ) history ON TRUE
 
             {0}
 
@@ -60,8 +67,8 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
                 os.vehicle_license_plate,
                 os.budget,
                 os.status,
-                os.date_created,
-                os.date_finished;
+                history.date_created,
+                history.date_finished;
             """;
 
         public static string GetOperationalOrdersSql { get; private set; } = """
@@ -73,9 +80,16 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
                 '[]'::json AS materials,
                 os.budget,
                 os.status,
-                os.date_created AS DateCreated,
-                os.date_finished AS DateFinished
+                history.date_created AS DateCreated,
+                history.date_finished AS DateFinished
             FROM orders os
+            LEFT JOIN LATERAL (
+                SELECT
+                    MIN(occurred_at) FILTER (WHERE sequence = 1) AS date_created,
+                    MIN(occurred_at) FILTER (WHERE new_status = 'Finished' AND reason = 'ServiceCompleted') AS date_finished
+                FROM order_status_history
+                WHERE order_id = os.id
+            ) history ON TRUE
             WHERE os.status NOT IN (@Finished, @Delivered)
             ORDER BY
                 CASE os.status
@@ -86,16 +100,19 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
                     WHEN @Received THEN 4
                     ELSE 5
                 END,
-                os.date_created ASC;
+                history.date_created ASC;
             """;
 
         public static string UpdateOrderSql { get; private set; } = """
             UPDATE orders
             SET budget = @Budget,
-                status = @Status,
-                date_finished = @DateFinished,
-                duration = @Duration
+                status = @Status
             WHERE id = @Id;
+            """;
+
+        private const string InsertHistorySql = """
+            INSERT INTO order_status_history(id, order_id, sequence, previous_status, new_status, occurred_at, reason)
+            VALUES (@EventId, @OrderId, @Sequence, @PreviousStatus, @NewStatus, @OccurredAt, @Reason);
             """;
 
         public static string AddServiceToOrderSql { get; private set; } = """
@@ -147,7 +164,24 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
 
         public async Task<int> CreateOrder(IOrder serviceOrder)
         {
-            return await Connection.ExecuteAsync(CreateServiceSql, OrderDb.Create(serviceOrder), Transaction);
+            if (serviceOrder.Status != WorkOrderStatus.Received || serviceOrder.DateCreated == DateTime.MinValue)
+                throw new ArgumentException("A criação da ordem exige estado Received e instante de abertura.", nameof(serviceOrder));
+
+            return await ExecuteWithHistoryTransaction(async transaction =>
+            {
+                var affected = await Connection.ExecuteAsync(CreateServiceSql, OrderDb.Create(serviceOrder), transaction);
+                await Connection.ExecuteAsync(InsertHistorySql, new
+                {
+                    EventId = Guid.NewGuid(),
+                    OrderId = serviceOrder.Id,
+                    Sequence = 1,
+                    PreviousStatus = (string?)null,
+                    NewStatus = serviceOrder.Status.ToString(),
+                    OccurredAt = serviceOrder.DateCreated.ToUniversalTime(),
+                    Reason = (string?)null
+                }, transaction);
+                return affected;
+            });
         }
 
         public async Task<IEnumerable<IOrder>> GetOrders(Guid? id = null, string customer_document = "", string vehicle_license_plate = "")
@@ -190,7 +224,67 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
 
         public async Task<int> UpdateOrder(IOrder order)
         {
-            return await Connection.ExecuteAsync(UpdateOrderSql, order, Transaction);
+            return await ExecuteWithHistoryTransaction(async transaction =>
+            {
+                var previousStatus = await Connection.QuerySingleOrDefaultAsync<string>(
+                    "SELECT status FROM orders WHERE id = @Id FOR UPDATE;", new { order.Id }, transaction);
+                if (previousStatus is null)
+                    return 0;
+
+                var newStatus = order.Status.ToString();
+                if (previousStatus != newStatus)
+                {
+                    var latest = await Connection.QuerySingleOrDefaultAsync<OrderStatusHistoryDb>(
+                        """
+                        SELECT sequence, new_status AS NewStatus, occurred_at AS OccurredAt
+                        FROM order_status_history WHERE order_id = @Id
+                        ORDER BY sequence DESC LIMIT 1;
+                        """, new { order.Id }, transaction);
+                    if (latest is null || latest.NewStatus != previousStatus)
+                        throw new InvalidOperationException("O histórico da ordem não corresponde ao estado atual.");
+
+                    var completed = order.Status == WorkOrderStatus.Finished && previousStatus == WorkOrderStatus.InExecution.ToString();
+                    var occurredAt = completed ? order.DateFinished.ToUniversalTime() : DateTime.UtcNow;
+                    if (occurredAt == DateTime.MinValue || occurredAt < latest.OccurredAt)
+                        throw new InvalidOperationException("O instante da transição da ordem é inválido.");
+
+                    string? reason = null;
+                    if (order.Status == WorkOrderStatus.Finished)
+                        reason = completed ? "ServiceCompleted" : "BudgetRejected";
+
+                    await Connection.ExecuteAsync(InsertHistorySql, new
+                    {
+                        EventId = Guid.NewGuid(),
+                        OrderId = order.Id,
+                        Sequence = checked(latest.Sequence + 1),
+                        PreviousStatus = previousStatus,
+                        NewStatus = newStatus,
+                        OccurredAt = occurredAt,
+                        Reason = reason
+                    }, transaction);
+                }
+
+                return await Connection.ExecuteAsync(UpdateOrderSql, new { order.Id, order.Budget, Status = newStatus }, transaction);
+            });
+        }
+
+        private async Task<int> ExecuteWithHistoryTransaction(Func<IDbTransaction, Task<int>> operation)
+        {
+            if (Transaction is not null)
+                return await operation(Transaction);
+
+            using var transaction = Connection.BeginTransaction();
+            try
+            {
+                var affected = await operation(transaction);
+                transaction.Commit();
+                return affected;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
 
         public async Task<int> AddServiceToOrder(Guid orderId, IMechanicalService service)

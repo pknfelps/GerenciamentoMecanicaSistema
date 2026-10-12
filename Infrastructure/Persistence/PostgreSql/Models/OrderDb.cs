@@ -27,11 +27,9 @@ namespace Infrastructure.Persistence.PostgreSql.Models
         public DateTime DateCreated { get; private set; }
         [JsonPropertyName("date_finished")]
         public DateTime DateFinished { get; private set; }
-        [JsonPropertyName("duration")]
-        public TimeSpan Duration { get; private set; }
 
         // Used by GetOrders or GetCustomerOrders that returns the detailed order
-        public OrderDb(Guid id, string customerDocument, string vehicleLicensePlate, string services, string materials, decimal budget, string status, DateTime dateCreated, DateTime dateFinished)
+        public OrderDb(Guid id, string customerDocument, string vehicleLicensePlate, string services, string materials, decimal budget, string status, DateTime? dateCreated, DateTime? dateFinished)
         {
             Id = id;
             CustomerDocument = customerDocument;
@@ -40,11 +38,11 @@ namespace Infrastructure.Persistence.PostgreSql.Models
             Materials = JsonSerializer.Deserialize<List<MaterialDb>>(materials) ?? [];
             Budget = budget;
             Status = status;
-            DateCreated = dateCreated;
-            DateFinished = dateFinished;
+            DateCreated = dateCreated ?? throw new InvalidOperationException("A ordem não possui evento de criação no histórico.");
+            DateFinished = dateFinished ?? DateTime.MinValue;
         }
 
-        public OrderDb(Guid id, string customerDocument, string vehicleLicensePlate, List<MechanicalServiceDb> services, List<MaterialDb> materials, decimal budget, string status, DateTime dateCreated, DateTime dateFinished, TimeSpan duration)
+        public OrderDb(Guid id, string customerDocument, string vehicleLicensePlate, List<MechanicalServiceDb> services, List<MaterialDb> materials, decimal budget, string status, DateTime dateCreated, DateTime dateFinished)
         {
             Id = id;
             CustomerDocument = customerDocument;
@@ -55,10 +53,9 @@ namespace Infrastructure.Persistence.PostgreSql.Models
             Status = status;
             DateCreated = dateCreated;
             DateFinished = dateFinished;
-            Duration = duration;
         }
 
-        public static OrderDb Create(IOrder order) => new(order.Id, order.CustomerDocument.Id, order.VehicleLicensePlate.License, [.. order.Services.Select(MechanicalServiceDb.Create)], [.. order.Materials.Select(MaterialDb.Create)], order.Budget, order.Status.ToString(), order.DateCreated, order.DateFinished, order.Duration);
+        public static OrderDb Create(IOrder order) => new(order.Id, order.CustomerDocument.Id, order.VehicleLicensePlate.License, [.. order.Services.Select(MechanicalServiceDb.Create)], [.. order.Materials.Select(MaterialDb.Create)], order.Budget, order.Status.ToString(), order.DateCreated, order.DateFinished);
 
         public IOrder ToDomain()
         {

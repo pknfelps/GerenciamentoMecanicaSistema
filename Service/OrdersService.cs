@@ -59,7 +59,7 @@ namespace Service
                     vehicle.LicensePlate.License,
                     services,
                     materials,
-                    DateTime.Now);
+                    DateTime.UtcNow);
 
                 if (await Repository.CreateOrder(order) == 0)
                     throw new ApplicationFailureException("Falha ao salvar a ordem");
@@ -315,7 +315,7 @@ namespace Service
         {
             var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com ID \"{orderId}\" não encontrada");
 
-            order.CompleteService(DateTime.Now);
+            order.CompleteService(DateTime.UtcNow);
 
             await TransactionManager.ExecuteInTransaction(async () =>
             {

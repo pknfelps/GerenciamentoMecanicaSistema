@@ -1,5 +1,7 @@
 # ADR 008 — Infraestrutura e banco declarativos
 
+> **Complemento aprovado — 12/10/2026:** [ADR 010](010-GATEWAY-REST-V2.md) define VPC Link V2 com SG reservado, substituindo a exceção inbound PrivateLink off por on. Gateway possui estado/workflows separados e contratos no artefato do plano salvo; base continua proprietária dos SGs/NLB.
+
 > **Revisão de 2026-10-11:** [ADR 009](009-SAM-AUTENTICACAO.md) substitui exclusivamente o provisionamento Terraform de auth por SAM/CloudFormation com ZIP. Bootstrap/base/banco/Gateway permanecem Terraform; auth/v2 pertence à stack e role auth-runtime ao bootstrap persistente. Template/workflows validados localmente; novo bootstrap e implantação pendentes. Registros de plan/apply Terraform auth abaixo são históricos; seu código foi retirado após inventário sem recursos/estado, sem destroy ou exclusão de estado.
 
 **Estado:** aceito pelo mantenedor; implementação local autorizada em 2026-10-07. Aplicações AWS dependem de plano e aprovação.

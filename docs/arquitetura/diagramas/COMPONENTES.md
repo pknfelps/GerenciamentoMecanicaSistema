@@ -8,12 +8,12 @@ Arquitetura alvo. O conjunto abaixo existe separadamente em **hom** e **prd**, n
 flowchart LR
     U["Oficina / cliente"] --> GW["API Gateway REST Regional"]
     GW -->|"POST /customers/validate"| FN["Lambda .NET 10 — SAM/CloudFormation"]
-    GW -->|"Rotas da aplicação"| VL["VPC Link"]
+    GW -->|"Rotas da aplicação"| VL["VPC Link V2 — SG reservado"]
     subgraph VPC["VPC exclusiva do ambiente — duas AZs"]
         subgraph PRIV["Subnets privadas de workloads"]
             NLB["NLB interno Terraform — TCP 80"] -->|"Instancias do ASG: 30080"| SVC["Service NodePort — 30080 → 8080"]
             SVC --> API["API .NET no EKS"]
-            HPA["HPA 1–10 pods"] -.-> API
+            HPA["HPA 1–3 pods"] -.-> API
             NODE["Um nó t3.small"] -.-> API
             LNET["Conectividade VPC da Lambda"]
         end
@@ -30,7 +30,7 @@ flowchart LR
         S3EP["Gateway endpoint S3"]
         API -.-> S3EP
     end
-    VL --> NLB
+    VL -->|"TCP 80"| NLB
     FN -.-> LNET
     IGW --> EXT["New Relic / APIs AWS / SMTP"]
     SM["Secrets Manager por ambiente"] -.-> API
@@ -63,3 +63,5 @@ flowchart LR
 ```
 
 Logs da aplicação/função têm um único caminho remoto via OTel; não duplicar sua ingestão por stdout/CloudWatch. O caminho CloudWatch do Gateway depende do Collector ativo. X-Ray possui atraso de polling e não alimenta alertas imediatos. A continuidade entre contextos W3C/AWS deve ser demonstrada, não presumida. Compatibilidade do receiver CloudWatch e da extensão Lambda será comprovada em E5.
+
+**Gateway — 12/10/2026:** código local usa VPC Link V2 com SG reservado da base e NLB interno TCP 80; bootstrap fornece logging regional persistente. Gateway possui access logs JSON básicos/sete dias. O diagrama de observabilidade é alvo da E5 e não comprova Collector/New Relic/X-Ray implantados. [ADR 010](../adrs/010-GATEWAY-REST-V2.md).

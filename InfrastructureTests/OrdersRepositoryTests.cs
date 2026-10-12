@@ -5,6 +5,8 @@ using Domain.Interface.Stock;
 using NSubstitute;
 using Infrastructure.Persistence.PostgreSql.Repositories;
 using Service.Interface.Persistence;
+using Infrastructure.Persistence.PostgreSql.Transactions;
+using Npgsql;
 
 namespace InfrastructureTests
 {
@@ -55,14 +57,15 @@ namespace InfrastructureTests
                 order.Materials.Returns([]);
                 order.Budget.Returns(0);
                 order.Status.Returns(WorkOrderStatus.Received);
-                order.DateCreated.Returns(DateTime.Now);
+                order.Id.Returns(Guid.NewGuid());
+                order.DateCreated.Returns(DateTime.UtcNow);
                 order.DateFinished.Returns(DateTime.MinValue);
                 return order;
             }
         }
 
         private static readonly Guid ExistingOrderId = Guid.NewGuid();
-        private static readonly DateTime ExistingOrderDateCreated = DateTime.Now.AddMinutes(-5);
+        private static readonly DateTime ExistingOrderDateCreated = DateTime.UtcNow.AddMinutes(-5);
         private static IOrder ExistingOrder
         {
             get
@@ -108,10 +111,18 @@ namespace InfrastructureTests
                 customer_document VARCHAR(100) NOT NULL REFERENCES customers(document),
                 vehicle_license_plate VARCHAR(100) NOT NULL REFERENCES vehicles(license_plate),
                 budget NUMERIC NOT NULL,
-                status VARCHAR(50) NOT NULL,
-                date_created TIMESTAMP NOT NULL DEFAULT NOW(),
-                date_finished TIMESTAMP NOT NULL,
-                duration INTERVAL NOT NULL);
+                status VARCHAR(50) NOT NULL);
+                """);
+
+            await Connection.ExecuteAsync("""
+                CREATE TABLE IF NOT EXISTS order_status_history (
+                id UUID PRIMARY KEY,
+                order_id UUID NOT NULL,
+                sequence INTEGER NOT NULL,
+                previous_status VARCHAR(50),
+                new_status VARCHAR(50) NOT NULL,
+                occurred_at TIMESTAMPTZ NOT NULL,
+                reason VARCHAR(30));
                 """);
 
             await Connection.ExecuteAsync("""
@@ -174,7 +185,13 @@ namespace InfrastructureTests
 
             Repository = new OrdersRepository(Connection);
 
-            await Repository.CreateOrder(ExistingOrder);
+            var existingOrder = ExistingOrder;
+            existingOrder.Status.Returns(WorkOrderStatus.Received);
+            await Repository.CreateOrder(existingOrder);
+            existingOrder.Status.Returns(WorkOrderStatus.InDiagnosis);
+            await Repository.UpdateOrder(existingOrder);
+            existingOrder.Status.Returns(WorkOrderStatus.WaitingForApproval);
+            await Repository.UpdateOrder(existingOrder);
             await Repository.AddServiceToOrder(ExistingOrderId, Service);
 
             var part = Part;
@@ -189,6 +206,169 @@ namespace InfrastructureTests
             var registry = await Repository.CreateOrder(OrderToCreate);
 
             Assert.That(registry, Is.Not.EqualTo(0));
+        }
+
+        [Test]
+        public async Task MustPersistCreationInHistoryWithUtcTimestamp()
+        {
+            var order = OrderToCreate;
+            order.DateCreated.Returns(DateTime.Now);
+
+            await Repository.CreateOrder(order);
+            var loaded = await Repository.GetOrder(order.Id);
+            var sequence = await Connection.QuerySingleAsync<int>(
+                "SELECT sequence FROM order_status_history WHERE order_id = @Id;", new { order.Id });
+            var initial = await Connection.QuerySingleAsync<bool>(
+                """
+                SELECT previous_status IS NULL AND new_status = 'Received' AND reason IS NULL
+                FROM order_status_history WHERE order_id = @Id;
+                """, new { order.Id });
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(sequence, Is.EqualTo(1));
+                Assert.That(initial, Is.True);
+                Assert.That(loaded!.DateCreated.Kind, Is.EqualTo(DateTimeKind.Utc));
+                Assert.That(loaded.DateCreated, Is.EqualTo(order.DateCreated.ToUniversalTime()).Within(TimeSpan.FromMilliseconds(1)));
+                Assert.That(loaded.DateFinished, Is.EqualTo(DateTime.MinValue));
+                Assert.That(loaded.Duration, Is.EqualTo(TimeSpan.Zero));
+            });
+        }
+
+        [Test]
+        public async Task MustRollbackCreationWhenHistoryCannotBeSaved()
+        {
+            var order = OrderToCreate;
+            await Connection.ExecuteAsync("ALTER TABLE order_status_history RENAME TO unavailable_history;");
+
+            Assert.ThrowsAsync<PostgresException>(async () => await Repository.CreateOrder(order));
+
+            var count = await Connection.QuerySingleAsync<int>(
+                "SELECT COUNT(*) FROM orders WHERE id = @Id;", new { order.Id });
+            Assert.That(count, Is.Zero);
+        }
+
+        [Test]
+        public async Task MustReuseAmbientTransactionForCreationAndHistory()
+        {
+            var order = OrderToCreate;
+            using var transaction = Connection.BeginTransaction();
+            var repository = new OrdersRepository(Connection, new DbTransactionContext { Current = transaction });
+
+            await repository.CreateOrder(order);
+            transaction.Rollback();
+
+            var count = await Connection.QuerySingleAsync<int>(
+                """
+                SELECT (SELECT COUNT(*) FROM orders WHERE id = @Id)
+                    + (SELECT COUNT(*) FROM order_status_history WHERE order_id = @Id);
+                """, new { order.Id });
+            Assert.That(count, Is.Zero);
+        }
+
+        [Test]
+        public async Task MustProjectCompletionAndDurationFromHistoryAfterDelivery()
+        {
+            var order = ExistingOrder;
+            order.Status.Returns(WorkOrderStatus.WaitingForExecution);
+            await Repository.UpdateOrder(order);
+            order.Status.Returns(WorkOrderStatus.InExecution);
+            await Repository.UpdateOrder(order);
+            order.Status.Returns(WorkOrderStatus.Finished);
+            var finishedAt = DateTime.UtcNow;
+            order.DateFinished.Returns(finishedAt);
+            await Repository.UpdateOrder(order);
+            order.Status.Returns(WorkOrderStatus.Delivered);
+            await Repository.UpdateOrder(order);
+
+            var loaded = await Repository.GetOrder(order.Id);
+            var history = (await Connection.QueryAsync<string>(
+                "SELECT new_status FROM order_status_history WHERE order_id = @Id ORDER BY sequence;",
+                new { order.Id })).ToList();
+            var reason = await Connection.QuerySingleAsync<string>(
+                "SELECT reason FROM order_status_history WHERE order_id = @Id AND new_status = 'Finished';", new { order.Id });
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(history, Is.EqualTo(new[] { "Received", "InDiagnosis", "WaitingForApproval", "WaitingForExecution", "InExecution", "Finished", "Delivered" }));
+                Assert.That(reason, Is.EqualTo("ServiceCompleted"));
+                Assert.That(loaded!.Status, Is.EqualTo(WorkOrderStatus.Delivered));
+                Assert.That(loaded.DateCreated, Is.EqualTo(ExistingOrderDateCreated).Within(TimeSpan.FromMilliseconds(1)));
+                Assert.That(loaded.DateFinished, Is.EqualTo(finishedAt).Within(TimeSpan.FromMilliseconds(1)));
+                Assert.That(loaded.Duration, Is.EqualTo(finishedAt - ExistingOrderDateCreated).Within(TimeSpan.FromMilliseconds(1)));
+            });
+        }
+
+        [Test]
+        public async Task MustKeepBudgetRejectionOutOfServiceCompletionDate()
+        {
+            var order = ExistingOrder;
+            order.Status.Returns(WorkOrderStatus.Finished);
+            await Repository.UpdateOrder(order);
+
+            var loaded = await Repository.GetOrder(order.Id);
+            var reason = await Connection.QuerySingleAsync<string>(
+                "SELECT reason FROM order_status_history WHERE order_id = @Id AND new_status = 'Finished';", new { order.Id });
+            Assert.Multiple(() =>
+            {
+                Assert.That(reason, Is.EqualTo("BudgetRejected"));
+                Assert.That(loaded!.DateFinished, Is.EqualTo(DateTime.MinValue));
+                Assert.That(loaded.Duration, Is.EqualTo(TimeSpan.Zero));
+            });
+        }
+
+        [Test]
+        public async Task MustNotAppendHistoryWhenOnlyBudgetChanges()
+        {
+            var order = ExistingOrder;
+            order.Budget.Returns(200);
+            await Repository.UpdateOrder(order);
+            await Repository.UpdateOrder(order);
+
+            var count = await Connection.QuerySingleAsync<int>(
+                "SELECT COUNT(*) FROM order_status_history WHERE order_id = @Id;", new { order.Id });
+            var loaded = await Repository.GetOrder(order.Id);
+            Assert.Multiple(() =>
+            {
+                Assert.That(count, Is.EqualTo(3));
+                Assert.That(loaded!.Budget, Is.EqualTo(200));
+            });
+        }
+
+        [Test]
+        public async Task MustRollbackHistoryWhenOrderUpdateFails()
+        {
+            await Connection.ExecuteAsync("ALTER TABLE orders ADD CONSTRAINT test_budget_limit CHECK (budget < 200);");
+            var order = ExistingOrder;
+            order.Status.Returns(WorkOrderStatus.WaitingForExecution);
+            order.Budget.Returns(200);
+
+            Assert.ThrowsAsync<PostgresException>(async () => await Repository.UpdateOrder(order));
+
+            var loaded = await Repository.GetOrder(order.Id);
+            var count = await Connection.QuerySingleAsync<int>(
+                "SELECT COUNT(*) FROM order_status_history WHERE order_id = @Id;", new { order.Id });
+            Assert.Multiple(() =>
+            {
+                Assert.That(loaded!.Status, Is.EqualTo(WorkOrderStatus.WaitingForApproval));
+                Assert.That(loaded.Budget, Is.EqualTo(100));
+                Assert.That(count, Is.EqualTo(3));
+            });
+        }
+
+        [Test]
+        public async Task MustNotCreateHistoryForMissingOrderOnUpdate()
+        {
+            var order = OrderToCreate;
+            order.Status.Returns(WorkOrderStatus.InDiagnosis);
+            var affected = await Repository.UpdateOrder(order);
+            var count = await Connection.QuerySingleAsync<int>(
+                "SELECT COUNT(*) FROM order_status_history WHERE order_id = @Id;", new { order.Id });
+            Assert.Multiple(() =>
+            {
+                Assert.That(affected, Is.Zero);
+                Assert.That(count, Is.Zero);
+            });
         }
 
         [Test]
@@ -239,19 +419,16 @@ namespace InfrastructureTests
                 new { Id = deliveredId, Status = WorkOrderStatus.Delivered.ToString(), DateCreated = baseDate }
             };
 
-            await Connection.ExecuteAsync(
-                """
-                INSERT INTO orders(id, customer_document, vehicle_license_plate, budget, status, date_created, date_finished, duration)
-                VALUES (@Id, '417.384.220-11', 'CVC2026', 0, @Status, @DateCreated, @DateFinished, @Duration);
-                """,
-                ordersToInsert.Select(order => new
-                {
-                    order.Id,
-                    order.Status,
-                    order.DateCreated,
-                    DateFinished = DateTime.MinValue,
-                    Duration = TimeSpan.Zero
-                }));
+            foreach (var order in ordersToInsert)
+            {
+                await Connection.ExecuteAsync(
+                    """
+                    INSERT INTO orders(id, customer_document, vehicle_license_plate, budget, status)
+                    VALUES (@Id, '417.384.220-11', 'CVC2026', 0, @Status);
+                    INSERT INTO order_status_history(id, order_id, sequence, previous_status, new_status, occurred_at)
+                    VALUES (@EventId, @Id, 1, NULL, 'Received', @DateCreated);
+                    """, new { order.Id, order.Status, order.DateCreated, EventId = Guid.NewGuid() });
+            }
 
             var orders = (await Repository.GetOperationalOrders()).ToList();
 
@@ -493,7 +670,7 @@ namespace InfrastructureTests
             order.Budget.Returns(200);
             order.Status.Returns(WorkOrderStatus.Finished);
             order.DateCreated.Returns(ExistingOrderDateCreated);
-            order.DateFinished.Returns(DateTime.Now);
+            order.DateFinished.Returns(DateTime.UtcNow);
             order.Duration.Returns(TimeSpan.FromHours(6));
 
             var registry = await Repository.UpdateOrder(order);
@@ -561,6 +738,9 @@ namespace InfrastructureTests
             var registry = await Repository.DeleteOrder(ExistingOrderId);
 
             Assert.That(registry, Is.Not.EqualTo(0));
+            var historyCount = await Connection.QuerySingleAsync<int>(
+                "SELECT COUNT(*) FROM order_status_history WHERE order_id = @Id;", new { Id = ExistingOrderId });
+            Assert.That(historyCount, Is.EqualTo(3));
         }
     }
 }

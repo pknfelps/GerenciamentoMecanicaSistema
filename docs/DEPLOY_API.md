@@ -18,6 +18,12 @@ O workflow exige conta `121754142617`, região `us-east-1`, repositório GitHub 
 
 A aplicação lê seus parâmetros e Secrets usando o SDK .NET e Pod Identity, conforme [inicialização AWS](INICIALIZACAO_AWS.md). A pipeline não lê seus valores.
 
+### Compatibilidade das ordens com o esquema 1.0.0
+
+A API grava em `orders` somente identidade, cliente, veículo, orçamento e status. A abertura vem do primeiro evento de `order_status_history`; a conclusão vem do evento `Finished` com motivo `ServiceCompleted`. A duração continua calculada, sem coluna própria. Os instantes são enviados em UTC, e criação/transição e histórico são gravados na mesma transação, reutilizando a transação do serviço quando existente. Recusa usa `BudgetRejected` e não é tratada como serviço concluído; excluir a ordem preserva o histórico.
+
+Os campos de resposta atuais são preservados: sem conclusão do serviço, `DateFinished` mantém `DateTime.MinValue` e `Duration` permanece zero. A revisão desses contratos e dos indicadores pertence à E4. Após publicar esta correção pelo `api-deploy`, reconferir no Gateway que a consulta de uma ordem inexistente retorna 404. Não é necessário alterar ou reinicializar o banco para esta correção.
+
 ## Executar
 
 1. Publicar as alterações via PR nas branches necessárias, incluindo `main` para disponibilizar o disparo manual, conforme a [documentação do GitHub](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
@@ -84,7 +90,7 @@ Para NLB, ler `nlb-arn` da base v2 e usar `aws elbv2 describe-target-groups --lo
 
 O ciclo hom de deploy/conexão/descarte foi validado anteriormente. A publicação do OpenAPI foi validada localmente em 12/10/2026: restore/build Release, 600 testes aprovados (incluindo PostgreSQL em Docker e 16 testes do documento), geração sem AWS/banco com Runtime hom e configurações locais inválidas, repetição com bytes idênticos, build da imagem e actionlint/ShellCheck. O contrato gerado é OpenAPI 3.0.4; SHA-256 local `60885f42d4c54ee600ee20ad08065bb1e06484319846d44c6a6dfdadb381d59b`. Não houve upload ou deploy AWS nesta entrega.
 
-Após os PRs, o mantenedor executará API deploy em hom. Conferir no resumo as duas chaves e versões S3; baixar contrato/sidecar com AWS CLI e executar `sha256sum --check openapi.json.sha256` na pasta dos arquivos. Conferir também metadado `commit` por `aws s3api head-object` e sua correspondência com o SHA e a tag/digest da imagem implantada. Aplicar proprietário esperado `121754142617` nas consultas S3. Essa conferência AWS ainda está pendente. Parâmetros SSM do componente API, Gateway, integração HTTP, aceitação real do JWT da Lambda pela API e validação prd continuam nas etapas posteriores; E3.11 permanece aberta. Este workflow não provisiona AWS nem inicializa o banco.
+Após os PRs, o mantenedor executará API deploy em hom. Conferir no resumo as duas chaves e versões S3; baixar contrato/sidecar com AWS CLI e executar `sha256sum --check openapi.json.sha256` na pasta dos arquivos. Conferir também metadado `commit` por `aws s3api head-object` e sua correspondência com o SHA e a tag/digest da imagem implantada. Aplicar proprietário esperado `121754142617` nas consultas S3. Conferência AWS concluída em 12/10/2026 para c96e86d840f35616f1dcc666f45269233e831896, execução 38262895558: dois objetos/checksums/metadados corretos, digest ECR igual ao Deployment/pod, startup/live/ready 200 Healthy e target NLB healthy. Pod Ready sem reinícios e HPA com métricas válidas. Não houve alterações de recursos pelo agente. Parâmetros SSM do componente API, Gateway, integração HTTP, aceitação real do JWT da Lambda pela API e validação prd continuam nas etapas posteriores; E3.11 permanece aberta. Este workflow não provisiona AWS nem inicializa o banco.
 
 ## Réplicas e validação de capacidade
 
@@ -104,3 +110,7 @@ O workflow remove apenas os objetos do overlay, sem Terraform, leitura de Secret
 4. Após concluir o banco, executar **base-destroy** no repositório de infraestrutura, revisando/aprovando o plano salvo. Ele remove seus manifestos Kubernetes antes de excluir EKS/rede/NLB e demais recursos da base.
 
 A ordem é **api-destroy → database-destroy → base-destroy**, coordenada pelo mantenedor; não há disparo automático entre repositórios. Executar API destroy antes de remover a base: ele depende dos parâmetros SSM e do cluster existentes. Para remover somente a aplicação, executar apenas API destroy; API deploy pode implantá-la novamente usando as dependências preservadas. Bootstrap, backend, repositório ECR/imagens e o outro ambiente são preservados. Se Gateway/Lambda ou outros consumidores forem implantados depois, eles devem ser descartados antes do banco/base conforme seus procedimentos. Nenhum workflow foi disparado para validar esta implementação.
+
+## Integração com o Gateway
+
+Após publicar/implantar a API, informar seu commit completo em api_commit do workflow gateway-provision no repositório de infraestrutura. auth_commit corresponde à autenticação implantada; ambos fixam contratos publicados. Gateway tem estado/workflow próprio e não é disparado pelo api-deploy. Mudanças de contrato exigem novo plano Gateway. A rede exige novo SG reservado na base, conforme [ADR 010](arquitetura/adrs/010-GATEWAY-REST-V2.md). Descartar Gateway antes da API/auth e antes de banco/base.

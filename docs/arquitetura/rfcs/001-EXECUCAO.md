@@ -1,5 +1,7 @@
 # RFC 001 — Execução, identidade e integração
 
+> **Revisão Gateway — 12/10/2026:** [ADR 010](../adrs/010-GATEWAY-REST-V2.md). REST Regional → VPC Link V2/SG reservado → NLB TCP 80 → NodePort 30080 → API 8080. Lambda integrada por versão numérica, sem authorizer Gateway. Contratos projetados em Terraform para roteamento, sem health/ANY/modelos Bearer incompatíveis. Logs de acesso básicos/sete dias; implantação e compatibilidade JWT real pendentes. Regras de autorização da API continuam atuais, com evolução na E4.
+
 **Estado:** arquitetura aceita; implementação pendente. **Registro:** 2026-09-16. [Índice](../README.md)
 
 ## Problema e solução

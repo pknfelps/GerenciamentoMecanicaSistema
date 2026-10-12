@@ -1,5 +1,7 @@
 # Arquitetura da Fase 3
 
+> **Gateway — 12/10/2026:** [ADR 010](adrs/010-GATEWAY-REST-V2.md) implementado e validado localmente, com unidade/workflows Terraform separados, VPC Link V2 e logs básicos. Plano bootstrap preparado; apply e validação HTTP/JWT pendentes. As validações anteriores de API/auth hom permanecem registradas; os backends estão atualmente descartados.
+
 > **Decisão vigente para auth — 2026-10-11:** [ADR 009 — SAM](adrs/009-SAM-AUTENTICACAO.md). Template/workflows SAM com ZIP implementados e validados localmente. Bootstrap/base/banco/Gateway continuam Terraform; novo plano do bootstrap, quota e primeira implantação ainda pendentes. Os registros anteriores são históricos.
 
 > **Operação vigente:** [ADR 008 — Infraestrutura declarativa](adrs/008-INFRAESTRUTURA-DECLARATIVA.md) e [contratos SSM v2](CONTRATOS_ENTRE_REPOSITORIOS.md). NLB Terraform/NodePort, Job próprio, plan salvo → aprovação → apply. Registros datados de releases/candidatos v1 abaixo são históricos e foram substituídos. Aplicação da reformulação ainda pendente.
@@ -39,6 +41,7 @@ As RFCs organizam como a solução deve funcionar. Os ADRs registram por que as 
 | D02/D03 | [ADR 001 — Identidade e permissões](adrs/001-IDENTIDADE.md) | R02/R03; U01–U03 |
 | D01/D09.2 | [ADR 002 — Entrada e rede AWS](adrs/002-REDE-AWS.md) | R01/R08 |
 | D01.2/D07/D08 | [ADR 003 — Decisão anterior de banco e histórico](adrs/003-BANCO-E-HISTORICO.md) | R07/R11/R12 |
+| D01/D09 (Gateway) | [ADR 010 — REST/VPC Link V2](adrs/010-GATEWAY-REST-V2.md) | E3.3/E3.4/E3.8/E3.11; local validado, AWS pendente |
 | D01/D09 (revisão) | [ADR 008 — Infraestrutura declarativa](adrs/008-INFRAESTRUTURA-DECLARATIVA.md) | E2.4/E2.10/E2.14 |
 | D01.5/D05/D09 (auth) | [ADR 009 — SAM na autenticação](adrs/009-SAM-AUTENTICACAO.md) | E3.6/E3.9; código validado localmente, implantação pendente |
 | D01.6 | [ADR 007 — RDS no Free Plan](adrs/007-RDS-FREE-PLAN.md) | R01/R07/R12 |
