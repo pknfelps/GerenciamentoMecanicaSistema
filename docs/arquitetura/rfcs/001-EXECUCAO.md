@@ -4,7 +4,7 @@
 
 ## Problema e solução
 
-A fase exige uma entrada gerenciada e validação serverless de CPF sem transferir o gerenciamento de OS para o cliente. A REST API Regional do API Gateway encaminha `/customers/validate` à Lambda .NET 10 em ZIP e as rotas da aplicação ao EKS por VPC Link/NLB interno. O banco compartilhado entre API e função é o RDS PostgreSQL `db.t3.micro` Single-AZ do respectivo ambiente (D01.6).
+A fase exige entrada gerenciada e validação serverless de CPF/CNPJ. A REST API Regional do API Gateway encaminha /customers/validate à Lambda .NET 10 e as rotas da aplicação ao EKS por VPC Link/NLB interno. API/função compartilham RDS PostgreSQL db.t3.micro Single-AZ do ambiente (D01.6). A função usa SAM/CloudFormation com ZIP ([ADR 009](../adrs/009-SAM-AUTENTICACAO.md)); template/workflows validados localmente, implantação pendente. Fluxo HTTP/rede/JWT preservado.
 
 A função consulta diretamente clientes com credencial restrita à leitura necessária, conexão sem pooling e encerramento garantido. Ela normaliza o documento (CPF/CNPJ) para a representação atual do banco, verifica existência/estado e emite JWT. A API continua responsável por validar JWT, role e propriedade da OS; não haverá um segundo mecanismo de autorização no Gateway nesta arquitetura.
 

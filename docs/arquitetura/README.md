@@ -1,5 +1,7 @@
 # Arquitetura da Fase 3
 
+> **Decisão vigente para auth — 2026-10-11:** [ADR 009 — SAM](adrs/009-SAM-AUTENTICACAO.md). Template/workflows SAM com ZIP implementados e validados localmente. Bootstrap/base/banco/Gateway continuam Terraform; novo plano do bootstrap, quota e primeira implantação ainda pendentes. Os registros anteriores são históricos.
+
 > **Operação vigente:** [ADR 008 — Infraestrutura declarativa](adrs/008-INFRAESTRUTURA-DECLARATIVA.md) e [contratos SSM v2](CONTRATOS_ENTRE_REPOSITORIOS.md). NLB Terraform/NodePort, Job próprio, plan salvo → aprovação → apply. Registros datados de releases/candidatos v1 abaixo são históricos e foram substituídos. Aplicação da reformulação ainda pendente.
 
 [README do projeto](../../README.md)
@@ -38,6 +40,7 @@ As RFCs organizam como a solução deve funcionar. Os ADRs registram por que as 
 | D01/D09.2 | [ADR 002 — Entrada e rede AWS](adrs/002-REDE-AWS.md) | R01/R08 |
 | D01.2/D07/D08 | [ADR 003 — Decisão anterior de banco e histórico](adrs/003-BANCO-E-HISTORICO.md) | R07/R11/R12 |
 | D01/D09 (revisão) | [ADR 008 — Infraestrutura declarativa](adrs/008-INFRAESTRUTURA-DECLARATIVA.md) | E2.4/E2.10/E2.14 |
+| D01.5/D05/D09 (auth) | [ADR 009 — SAM na autenticação](adrs/009-SAM-AUTENTICACAO.md) | E3.6/E3.9; código validado localmente, implantação pendente |
 | D01.6 | [ADR 007 — RDS no Free Plan](adrs/007-RDS-FREE-PLAN.md) | R01/R07/R12 |
 | D01.3/D05/D09.1/D09.3 | [ADR 004 — Entrega e ambientes](adrs/004-ENTREGA-E-AMBIENTES.md) | R04/R05/R06 |
 | D04 | [ADR 005 — Observabilidade](adrs/005-OBSERVABILIDADE.md) | R09/R10/R11 |

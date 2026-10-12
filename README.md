@@ -63,6 +63,20 @@ dotnet test GerenciamentoMecanicaSistema.slnx --no-build --no-restore
 
 Restore/build não precisam de um banco em execução. Os testes de persistência preparam suas próprias tabelas e não usam o banco do Compose.
 
+## Contrato OpenAPI
+
+Para gerar o contrato a partir dos controllers, execute:
+
+```bash
+dotnet build GerenciamentoMecanicaSistema.slnx --configuration Release -p:OpenApiGenerateDocuments=true
+```
+
+O gerador oficial produz somente `artifacts/openapi/openapi.json`, em OpenAPI 3.0, com título **API da oficina** e versão **1.0.0**. A pasta é ignorada pelo Git e pelo Docker. Builds comuns e Docker não geram o documento. A geração registra controllers/OpenAPI sem carregar AWS, credenciais JWT ou persistência, inclusive com `Runtime__Environment=hom`; a inicialização normal mantém suas validações.
+
+O documento servido em Development também usa OpenAPI 3.0. Bearer JWT é exigido somente nas operações protegidas por `Authorize`; `AllowAnonymous` prevalece. Autenticação interna, health checks, status e orçamento permanecem públicos conforme os atributos atuais. Permissões de cliente serão tratadas na E4; `/customers/validate` pertence exclusivamente à autenticação.
+
+O [API deploy](docs/DEPLOY_API.md) gera e testa o contrato, publica `contracts/api/<commit>/openapi.json` e seu `.sha256` no S3 e então publica a imagem. Objetos existentes só são aceitos com bytes idênticos. O resumo registra commit, hashes, versões S3 e digest da imagem. A publicação não comprova prontidão; composição e implantação do Gateway permanecem pendentes.
+
 Para validar somente a imagem, sem iniciar a aplicação:
 
 ```bash
@@ -155,7 +169,7 @@ As probes do Deployment usam essas rotas. Não houve alteração de probes na se
 
 ## Kubernetes, CI e deploy
 
-A [decisão declarativa](docs/arquitetura/adrs/008-INFRAESTRUTURA-DECLARATIVA.md) mantém Terraform para AWS e manifestos próprios Kubernetes. Infra/banco usam provisionamento manual com plan salvo, aprovação e apply; CI e testes de negócio da API permanecem. Service da base é NodePort 30080, ligado ao NLB Terraform.
+A [decisão declarativa](docs/arquitetura/adrs/008-INFRAESTRUTURA-DECLARATIVA.md) mantém Terraform para bootstrap/base/banco/Gateway e manifestos Kubernetes próprios. Auth usa SAM com ZIP ([ADR 009](docs/arquitetura/adrs/009-SAM-AUTENTICACAO.md)), template/workflows validados localmente e implantação pendente. O disparo manual autoriza deploy/descarte auth completos, sem aprovação intermediária; sam deploy executa diretamente. Infra/banco mantêm plan salvo, aprovação e apply. CI/testes de negócio da API preservados; Service NodePort 30080 ligado ao NLB Terraform.
 
 [deploy/kubernetes/base](deploy/kubernetes/base) contém Deployment e HPA e é o ponto de entrada do Kustomize local. Os overlays hom/prd referenciam essa base e declaram diretamente os ajustes AWS de cada ambiente. Há somente três arquivos kustomization; o Service pertence à infraestrutura. Para conferir a composição sem acessar o cluster:
 
@@ -175,7 +189,7 @@ O [API destroy](.github/workflows/api-destroy.yml) remove Deployment, HPA, Servi
 
 ## Contratos de integração
 
-A [especificação central](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md) define campos, versões, artefatos, secrets e falhas. Este repositório é o produtor do componente lógico **api** e do pacote **GerenciamentoMecanica.Auth.Contracts**. A versão 1.0.0 foi publicada no S3 via OIDC; o sucesso do workflow de consumo na autenticação foi confirmado pelo mantenedor. O deploy manual está implementado; configuração SSM da API, OpenAPI e Gateway permanecem posteriores. Consulte [operação do Auth.Contracts](docs/arquitetura/PACOTE_AUTH_CONTRACTS.md).
+A [especificação central](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md) define campos, versões, artefatos, secrets e falhas. Este repositório é o produtor do componente lógico **api** e do pacote **GerenciamentoMecanica.Auth.Contracts**. A versão 1.0.0 foi publicada no S3 via OIDC; o sucesso do workflow de consumo na autenticação foi confirmado pelo mantenedor. O deploy manual e a publicação do OpenAPI estão implementados; conferir os objetos S3 após publicar esta revisão pelo workflow. Configuração SSM da API e Gateway permanecem posteriores. Consulte [operação do Auth.Contracts](docs/arquitetura/PACOTE_AUTH_CONTRACTS.md).
 
 | Interface | Responsabilidade da API |
 |---|---|

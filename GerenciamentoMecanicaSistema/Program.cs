@@ -1,8 +1,11 @@
 using DependencyInjection;
 using GerenciamentoMecanicaSistema.Middleware;
+using GerenciamentoMecanicaSistema.OpenApi;
 using Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
+using System.Reflection;
 using System.Text;
 
 namespace GerenciamentoMecanicaSistema
@@ -12,16 +15,51 @@ namespace GerenciamentoMecanicaSistema
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            var generatingDocument = Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
 
+            builder.Services.AddControllers();
+            builder.Services.AddOpenApi(options =>
+            {
+                options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
+                options.AddDocumentTransformer<ApiDocumentTransformer>();
+                options.AddOperationTransformer<BearerSecurityOperationTransformer>();
+            });
+
+            var usesAwsConfiguration = !generatingDocument && await ConfigureRuntimeAsync(builder);
+            var app = builder.Build();
+
+            if (!generatingDocument)
+                app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+            if (app.Environment.IsDevelopment())
+            {
+                app.MapOpenApi();
+                app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "mechanic api" ));
+            }
+
+            if (!generatingDocument)
+            {
+                // Cloud traffic reaches this pod over HTTP; public TLS belongs to the Gateway.
+                if (!usesAwsConfiguration)
+                    app.UseHttpsRedirection();
+
+                app.UseAuthentication();
+                app.UseAuthorization();
+            }
+
+            app.MapControllers();
+
+            await app.RunAsync();
+        }
+
+        private static async Task<bool> ConfigureRuntimeAsync(WebApplicationBuilder builder)
+        {
             var runtimeConfiguration = await AwsRuntimeConfigurationLoader.LoadIfConfiguredAsync(
                 builder.Configuration,
                 Path.Combine(AppContext.BaseDirectory, "Certificates", "rds-ca.pem"));
             
             if (runtimeConfiguration is not null)
                 builder.Configuration.AddInMemoryCollection(runtimeConfiguration);
-
-            builder.Services.AddControllers();
-            builder.Services.AddOpenApi();
 
             var jwtIssuer = builder.Configuration["Jwt:Issuer"]
                 ?? throw new InvalidOperationException("JWT issuer not configured.");
@@ -56,26 +94,7 @@ namespace GerenciamentoMecanicaSistema
                 .AddInfrastructure(builder.Configuration)
                 .AddPersistence(builder.Configuration);
 
-            var app = builder.Build();
-
-            app.UseMiddleware<ExceptionHandlingMiddleware>();
-
-            if (app.Environment.IsDevelopment())
-            {
-                app.MapOpenApi();
-                app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "mechanic api" ));
-            }
-
-            // Cloud traffic reaches this pod over HTTP; public TLS belongs to the Gateway.
-            if (runtimeConfiguration is null)
-                app.UseHttpsRedirection();
-
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            app.MapControllers();
-
-            await app.RunAsync();
+            return runtimeConfiguration is not null;
         }
     }
 }
