@@ -11,15 +11,15 @@ sequenceDiagram
     participant F as Lambda Validate
     participant S as Secrets Manager
     participant D as RDS PostgreSQL
-    participant A as API via VPC Link e NLB
+    participant A as API via VPC Link V2 e NLB
     C->>G: POST /customers/validate (document: CPF ou CNPJ)
-    G->>F: Encaminhar requisição
+    G->>F: Proxy para versão numérica publicada
     F->>F: Validar formato/checksum e normalizar máscara
     alt Documento inválido
         F-->>G: 400
         G-->>C: 400
     else Documento válido
-        F->>S: Obter configuração secreta quando necessária
+        F->>S: Carregar SSM/Secrets na primeira inicialização válida
         S-->>F: Credenciais de leitura e configuração JWT
         F->>D: Consulta parametrizada por documento (Pooling=false)
         D-->>F: Cadastro/status ou erro técnico
@@ -38,7 +38,7 @@ sequenceDiagram
     end
     opt Cliente recebeu token e solicita status
         C->>G: GET de status da OS + Bearer JWT
-        G->>A: Encaminhar para aplicação
+        G->>A: HTTP proxy preservando Bearer, caminho e corpo
         A->>A: Validar assinatura, issuer, audience, validade e role
         alt JWT/permissão inválidos
             A-->>G: Erro de autenticação/autorização

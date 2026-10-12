@@ -1,6 +1,6 @@
 # Contratos entre repositórios
 
-**Versão:** 2.5.3 — 2026-10-12. ADR 008 define infraestrutura declarativa; [ADR 009](adrs/009-SAM-AUTENTICACAO.md) implementa SAM/ZIP e disparo manual auth sem aprovação intermediária. Bootstrap CI/SAM aplicado e conferido; publicação/deploy e invocação direta auth hom validados sem reserva de concorrência. Ciclo hom base/banco/JWT/API/destroy validado. Geração/publicação do OpenAPI da API implementadas e validadas localmente; upload dessa revisão e integração Gateway/API continuam pendentes.
+**Versão:** 2.6.0 — 2026-10-12. ADR 008 define infraestrutura declarativa; [ADR 009](adrs/009-SAM-AUTENTICACAO.md) implementa SAM/ZIP e disparo manual auth sem aprovação intermediária. Bootstrap CI/SAM aplicado e conferido; publicação/deploy e invocação direta auth hom validados sem reserva de concorrência. Ciclo hom base/banco/JWT/API/destroy validado. Geração/publicação do OpenAPI da API validadas localmente e na AWS em 12/10/2026; contrato/checksum/commit versus imagem hom conferidos. Gateway REST/VPC Link V2 implementado e validado localmente ([ADR 010](adrs/010-GATEWAY-REST-V2.md)); bootstrap/apply e integração HTTP/JWT pendentes.
 
 ## Propriedade e ambientes
 
@@ -48,6 +48,7 @@ Os parâmetros representam configuração, sem status ready, release, candidato,
 | namespace, init-namespace | default para API; database-init para banco |
 | api-security-group-id, init-security-group-id | SG efetivo do EKS, podem coincidir |
 | auth-security-group-id | SG reservado para Lambda |
+| gateway-security-group-id | SG reservado do VPC Link V2; base possui também suas regras |
 | api-service-name, api-service-port, api-node-port | svc-gerenciamento-api, 80, 30080 |
 | nlb-arn, nlb-dns-name, nlb-security-group-id, nlb-target-group-arn | Referências do NLB Terraform |
 | nlb-listener-port, nlb-listener-protocol, api-integration-uri | 80, TCP, URI HTTP privada para Gateway |
@@ -82,9 +83,9 @@ ConfigMap `database-init-input` contém SQL/hash/host/CA pública. Secrets tempo
 
 Job `k8s/database-init.yaml`: banco vazio cria esquema/seeds e marcador na mesma transação; marcador idêntico preserva data original e apenas provisiona roles/grants; SQL/hash/versão incompatível ou tabelas sem marcador interrompem. O ConfigMap e seu hash usam LF, como o SQL versionado no Git, preservando o marcador entre Windows/Linux sem modificar Init.sql. Não há SQL de smoke nem manifesto de release. Reiniciar API não inicializa banco.
 
-### API, autenticação e Gateway (integração posterior)
+### API, autenticação e Gateway
 
-API mantém Deployment/probes/testes de negócio; runtime resolve credencial restrita e JWT em default. Função consome subnets/SG da base, endpoint e auth-secret-arn do banco e JWT; Gateway consome nlb-arn/URI e ARN qualificado da versão Lambda. Campos futuros da API: image-uri/deployment-name/openapi-key/auth-contracts-version; Gateway: API/VPC Link/endpoint. Sem releases ou tentativas.
+API mantém Deployment/probes/testes de negócio; runtime resolve credencial restrita e JWT em default. Função consome subnets/SG da base, endpoint e auth-secret-arn do banco e JWT; Gateway consome nlb-arn/URI e ARN qualificado da versão Lambda. Campos futuros da API: image-uri/deployment-name/openapi-key/auth-contracts-version; campos implementados do Gateway estão descritos abaixo. Sem releases ou tentativas.
 
 #### Auth — SAM/CloudFormation com ZIP e IAM persistente
 
@@ -118,7 +119,7 @@ HTTP/JWT, CPF/CNPJ, claims, códigos, roles e vínculo da OS permanecem no [cont
 
 API: o contrato é gerado dos controllers pelo gerador oficial .NET, somente `v1`, OpenAPI 3.0, título `API da oficina` e versão inicial `1.0.0`. A geração explícita `OpenApiGenerateDocuments=true` escreve `artifacts/openapi/openapi.json` sem inicializar AWS/JWT/persistência; builds comuns/Docker não geram. Development serve formato 3.0. Esquema Bearer HTTP/JWT e segurança por operação refletem `Authorize`/`AllowAnonymous`, sem requisito global ou mudança de permissões. Não inclui destinos/extensões AWS; `/customers/validate` pertence exclusivamente ao produtor auth. O futuro Gateway comporá os contratos e aplicará os destinos por ambiente.
 
-API publica `contracts/api/<commit>/openapi.json` e `openapi.json.sha256` no bucket compartilhado; sidecar contém SHA-256 e nome relativo `openapi.json`. Ambos usam checksum S3, proprietário esperado e escrita condicional. Só `PreconditionFailed` permite baixar/comparar bytes existentes; divergência ou outro erro falham. Objetos permanecem após falha de imagem/deploy ou descarte da API. Resumo contém chaves/hashes/versões S3, commit e digest ECR; disponibilidade do contrato não representa readiness. Conferência AWS após execução manual ainda pendente. Nenhuma publicação de SSM API v2 nesta entrega.
+API publica `contracts/api/<commit>/openapi.json` e `openapi.json.sha256` no bucket compartilhado; sidecar contém SHA-256 e nome relativo `openapi.json`. Ambos usam checksum S3, proprietário esperado e escrita condicional. Só `PreconditionFailed` permite baixar/comparar bytes existentes; divergência ou outro erro falham. Objetos permanecem após falha de imagem/deploy ou descarte da API. Resumo contém chaves/hashes/versões S3, commit e digest ECR; disponibilidade do contrato não representa readiness. Conferência AWS concluída em 12/10/2026: execução 38262895558/c96e86d840f35616f1dcc666f45269233e831896, objetos/checksums/metadados corretos e commit correspondente ao digest ECR/Deployment/pod; saúde HTTP/RDS/NLB comprovada. Nenhuma publicação de SSM API v2 nesta entrega.
 
 ## Operação e migração
 
@@ -141,3 +142,23 @@ auth-provision: environment e artifact_commit ancestral da branch; código/templ
 auth-destroy: somente environment, um job e nenhuma aprovação intermediária. sam delete --no-prompts reutiliza samconfig.toml: remove ZIP referenciado pelo deploy atual, templates operacionais em sam/auth/<ambiente>/changesets e recursos da stack. Preservar ZIPs de outras revisões, contracts/auth/, pacote, bucket versionado, IAM runtime/CI/deploy, SG da base e outro ambiente. Stack ausente segue sucesso nativo; erros interrompem o workflow. DeleteObject exclusivo do prefixo SAM do ambiente, sem excluir versões históricas; republicar antes de recriar o deploy. Uma falha de stack pode ocorrer após remover artefatos, sem restauração automática. Conferir ENIs via EC2 pelo nome do SG antes de banco/base, sem depender de configuração da stack/SSM. Não há comandos CloudFormation diretos no workflow.
 
 Workflows auth usam hom/prd com OIDC/variáveis e develop/hom ou main/prd, fila auth-<ambiente> sem cancelamento. Não referenciam Environments de aprovação; disparo manual autoriza operação completa. Bootstrap/base/banco/Gateway continuam com revisão/aprovação Terraform. Quota é pré-requisito administrativo; conferir Lambda/SSM/JWT/RDS após implantação. [Operação](https://github.com/pknfelps/GerenciamentoMecanicaAutenticacao/blob/develop/docs/DEPLOY.md).
+
+## Gateway — Terraform e contratos fixos
+
+`gateway/` no repositório infra administra REST API Regional, VPC Link V2, stage hom/prd, permissão Lambda da versão numérica, logs e sete parâmetros gateway/v2. A base possui SG reservado sem ingresso, saída TCP 80 ao SG NLB e ingresso NLB correspondente. Bootstrap possui service-linked role, role de logs e configuração regional API Gateway persistentes.
+
+| Campo gateway/v2 | Valor |
+|---|---|
+| rest-api-id, vpc-link-id | IDs do ambiente |
+| stage-name, endpoint | hom/prd e URL HTTPS pública |
+| api-openapi-key | contracts/api/<api_commit>/openapi.json |
+| auth-openapi-key | contracts/auth/<auth_commit>/openapi.json |
+| auth-invocation-arn | ARN da versão numérica auth utilizada |
+
+Consumidor lê oito campos base/v2: vpc-id, workload-subnet-ids, gateway-security-group-id, nlb-arn, nlb-security-group-id, nlb-listener-port, nlb-listener-protocol e api-integration-uri; cinco auth/v2: function-name, function-version, invocation-arn, openapi-key e auth-contracts-version. Sem estado remoto ou Secrets. Auth precisa estar implantada; API precisa do contrato publicado e estar saudável para a validação HTTP.
+
+Workflows manuais separados gateway-provision/gateway-destroy, com inputs environment/api_commit/auth_commit; develop/hom ou main/prd. SHA da execução fixa Terraform; dois SHAs completos fixam contratos de outros repositórios. Plan baixa contratos/sidecars S3, confere SHA-256 e publica tfplan/tfplan.txt/contratos no mesmo artefato GitHub sete dias. Aprovação protegida sem AWS; apply usa mesmo checkout e artefato por ID, sem replan ou novo download S3.
+
+Terraform projeta somente roteamento AWS por jsondecode/jsonencode: métodos/caminhos/parametrização e descrições de respostas, HTTP_PROXY à API e AWS_PROXY à Lambda. Original OpenAPI/Bearer/schemas preservado no S3; importador REST não suporta HTTP Bearer. Sem authorizer ou mudança de autorização da API. Excluir os três health checks; não criar ANY/{proxy+}. Logs básicos JSON sete dias, sem corpo/token/documento/IP; observabilidade E5 posterior.
+
+Mudanças nas dependências exigem novo plano Gateway. Descarte Gateway → auth/API → banco → base, conferindo liberação de ENIs antes da rede. Código validado localmente; import/deploy/HTTP/JWT na AWS pendentes. [ADR 010](adrs/010-GATEWAY-REST-V2.md) · [Operação](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/GATEWAY.md).

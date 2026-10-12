@@ -4,7 +4,7 @@ API do sistema de oficina: usuários, clientes, veículos, catálogo, estoque e 
 
 ## Estado da implementação
 
-A separação em quatro repositórios está integrada. A API e os testes existentes são executáveis; o CI valida testes/cobertura, SonarCloud e build da imagem. Base e banco hom estão provisionados. O workflow manual de publicação ECR e deploy EKS está implementado; sua primeira execução e validação real da API permanecem pendentes.
+A separação em quatro repositórios está integrada. A API e os testes existentes são executáveis; o CI valida testes/cobertura, SonarCloud e build da imagem. O ciclo base/banco/API hom e a publicação OpenAPI foram validados na AWS; os ambientes estão atualmente descartados. Gateway implementado localmente, com bootstrap e validação integrada pendentes.
 
 | Disponível | A implementar |
 |---|---|
@@ -189,7 +189,7 @@ O [API destroy](.github/workflows/api-destroy.yml) remove Deployment, HPA, Servi
 
 ## Contratos de integração
 
-A [especificação central](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md) define campos, versões, artefatos, secrets e falhas. Este repositório é o produtor do componente lógico **api** e do pacote **GerenciamentoMecanica.Auth.Contracts**. A versão 1.0.0 foi publicada no S3 via OIDC; o sucesso do workflow de consumo na autenticação foi confirmado pelo mantenedor. O deploy manual e a publicação do OpenAPI estão implementados; conferir os objetos S3 após publicar esta revisão pelo workflow. Configuração SSM da API e Gateway permanecem posteriores. Consulte [operação do Auth.Contracts](docs/arquitetura/PACOTE_AUTH_CONTRACTS.md).
+A [especificação central](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md) define campos, versões, artefatos, secrets e falhas. Este repositório é o produtor do componente lógico **api** e do pacote **GerenciamentoMecanica.Auth.Contracts**. A versão 1.0.0 foi publicada no S3 via OIDC; o sucesso do workflow de consumo na autenticação foi confirmado pelo mantenedor. O deploy manual e a publicação do OpenAPI estão implementados; publicação S3, checksum e correspondência com a imagem hom conferidos em 12/10/2026, execução 38262895558. Configuração SSM da API e Gateway permanecem posteriores. Consulte [operação do Auth.Contracts](docs/arquitetura/PACOTE_AUTH_CONTRACTS.md).
 
 | Interface | Responsabilidade da API |
 |---|---|
@@ -222,3 +222,5 @@ Os workflows de CI pipeline/auth-contracts validam PRs para develop/main e permi
 ### Infraestrutura JWT da E2.12
 
 A base implementa Secret JWT por ambiente e publica jwt-secret-arn, jwt-issuer e jwt-audience em /mecanica/<ambiente>/base/v2/. Base JWT hom aplicada e conferida em 08/10: Secret/SSM/Pod Identity, No changes e isolamento IAM simulado. A API já implementa leitura inicial pelo SDK .NET, overlays com ServiceAccount e policy Terraform para leitura do banco. Deploy da infra hom com essa policy foi confirmado pelo mantenedor. Publicação/deploy da API, validação no EKS, Lambda e prd permanecem pendentes. A role e a associação Pod Identity para default/gerenciamento-api são administradas pela base. A chave AWSCURRENT fica em memória, sem fallback local ou cópia para Secret Kubernetes. HS256, dez minutos e tolerância de relógio são preservados. [Contrato](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md).
+
+Gateway REST/VPC Link V2 implementado localmente no repositório de infraestrutura, com unidade/workflows separados e plano bootstrap para revisão. A API continua privada atrás do NLB e suas permissões não foram alteradas. [Decisão e dependências](docs/arquitetura/adrs/010-GATEWAY-REST-V2.md); deploy e validação HTTP/JWT pendentes.

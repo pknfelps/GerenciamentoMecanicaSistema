@@ -1,5 +1,7 @@
 # RFC 002 — Entrega e contratos entre componentes
 
+> **Gateway — 12/10/2026:** unidade e workflows gateway-provision/gateway-destroy separados no repositório infra; environment + api_commit + auth_commit. Plan com contratos S3 verificados → Environment protegido → apply do mesmo SHA/plano/contratos baixados por ID, sete dias, sem replan. Bootstrap → base → banco/Job → API/auth → Gateway. Descarte inverso e conferência de ENIs antes da base. [ADR 010](../adrs/010-GATEWAY-REST-V2.md).
+
 **Estado:** arquitetura aceita; reformulação autorizada em 2026-10-07. [ADR 008](../adrs/008-INFRAESTRUTURA-DECLARATIVA.md) substitui a operação por releases/controller. [Contratos v2](../CONTRATOS_ENTRE_REPOSITORIOS.md) são a referência operacional.
 
 ## Responsabilidades
