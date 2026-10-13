@@ -136,6 +136,21 @@ public sealed class OpenApiContractTests
     private JsonElement Operation(string path, string method) =>
         document.RootElement.GetProperty("paths").GetProperty(path).GetProperty(method);
 
+    [Test]
+    public void OwnUserPatchDescribesOptionalFieldsBearerAndResponses()
+    {
+        var operation = Operation("/Users", "patch");
+        Assert.That(operation.GetProperty("security")[0].TryGetProperty("Bearer", out _), Is.True);
+        foreach (var code in new[] { "204", "400", "401", "403", "404", "409", "500" })
+            Assert.That(operation.GetProperty("responses").TryGetProperty(code, out _), Is.True, code);
+        var schema = document.RootElement.GetProperty("components").GetProperty("schemas").GetProperty("UpdateOwnUserRequest");
+        Assert.That(schema.GetProperty("properties").EnumerateObject().Select(p => p.Name), Is.EquivalentTo(new[] { "name", "password" }));
+        Assert.That(!schema.TryGetProperty("required", out var required) || required.GetArrayLength() == 0, Is.True);
+        Assert.That(schema.GetProperty("additionalProperties").GetBoolean(), Is.False);
+        Assert.That(schema.GetProperty("properties").GetProperty("name").GetProperty("maxLength").GetInt32(), Is.EqualTo(100));
+        Assert.That(operation.GetProperty("responses").GetProperty("204").TryGetProperty("content", out _), Is.False);
+    }
+
     [TestCase("/Users", "post", new[] { "401", "403" })]
     [TestCase("/Users", "get", new[] { "401", "403", "404" })]
     [TestCase("/Orders/{id}/status", "get", new[] { "401", "403", "404" })]

@@ -8,7 +8,7 @@ A separação em quatro repositórios está integrada. O CI valida testes/cobert
 
 | Disponível | A implementar |
 |---|---|
-| API .NET, JWT interno, PostgreSQL, adaptador SMTP e health checks | PATCH/DELETE de usuários, validação da autorização pelo Gateway e SMTP na AWS |
+| API .NET, JWT interno, PostgreSQL, adaptador SMTP e health checks | DELETE de usuários, validação da autorização pelo Gateway e SMTP na AWS |
 | Dockerfile, Compose opcional, Deployment/HPA e workflow manual ECR/EKS | Executar e validar deploy nos ambientes hom/prd |
 | CI, autenticação serverless e API Gateway validados em hom | Validação prd e observabilidade OpenTelemetry/New Relic |
 
@@ -22,7 +22,15 @@ O foco de uso é a API na AWS. O endpoint do ambiente é publicado em SSM `/meca
 - O status persistido é convertido explicitamente, sem fallback para Active. Os mapeadores constroem o domínio diretamente, sem try/catch; validações de identidade/perfil do usuário propagam DomainValidationException (400 no middleware atual). Não há conversão de perfis antigos. O SQL do banco já contém os campos/seeds necessários.
 - Mechanic opera clientes, veículos, catálogo, estoque e OS; Admin não herda essas permissões. POST Users exige Admin. GET Users permite consulta administrativa por name/role para Admin e consulta exclusivamente própria por UUID para Mechanic. Filtros próprios divergentes retornam 403; cadastro próprio ausente retorna 404. Senha/hash não são retornados.
 - Status de OS exige Mechanic ou Customer; orçamento exige Customer. O cliente é resolvido pelo UUID do token, e a OS é consultada com seu documento cadastrado antes de qualquer alteração de ordem, histórico, estoque ou evento. OS ausente, de outro cliente ou cliente ausente produzem o mesmo 404 genérico. Documento divergente na OS própria retorna 422; documento inválido retorna 400.
-- GET próprio de Mechanic e operações de Customer exigem exatamente um NameIdentifier UUID válido e não vazio, retornando 401 antes do serviço se inválido. Outras rotas não exigem ID globalmente. Um token emitido antes da inativação continua válido até expirar; essas operações não revalidam Active. Login interno e health checks continuam públicos. PATCH/DELETE Users e operação de inativação permanecem pendentes.
+- GET próprio de Mechanic, PATCH próprio de Admin/Mechanic e operações de Customer exigem exatamente um NameIdentifier UUID válido e não vazio, retornando 401 antes do serviço se inválido. Outras rotas não exigem ID globalmente. Um token emitido antes da inativação continua válido até expirar; essas operações não revalidam Active. Login interno e health checks continuam públicos. DELETE Users e operação de inativação permanecem pendentes.
+
+### Atualização da própria conta
+
+`PATCH /Users` aceita Admin/Mechanic com exatamente um UUID válido no JWT. O corpo JSON contém somente `name` e/ou `password`; pelo menos um campo é obrigatório. Omitir preserva o valor atual; nulo/vazio explícito, campos desconhecidos (incluindo id/role) e valores inválidos retornam 400. O nome segue a validação atual e tem no máximo 100 caracteres; senha segue as regras do cadastro. ID e perfil são preservados. A atualização usa UUID, mesmo que o nome do token esteja desatualizado.
+
+Sucesso retorna 204 sem corpo. Token/identidade inválidos retornam 401, perfil sem permissão 403, conta inexistente 404 e nome em conflito com outro usuário do mesmo perfil 409. A senha é gravada como hash; omitir password preserva o hash existente. Tokens já emitidos continuam válidos até expirar; o próximo login usa os dados novos. Reutilizar o nome antigo em outra conta não transfere o token anterior.
+
+Os exemplos Postman `UpdateOwnUserAdmin`/`UpdateOwnUserMechanic` usam os tokens correspondentes, inicialmente vazios. Esta entrega foi preparada para validação local; PR/deploy/conferência AWS ficam com o mantenedor. DELETE permanece fora desta parte.
 
 ## Componentes e repositórios
 
@@ -151,7 +159,7 @@ O login atual é `POST /authentication`:
 
 Use o token retornado como `Authorization: Bearer <token>`. Importe as [collections](postman/collections) e o [ambiente Postman](postman/environments/Dev.environment.yaml); configure `base_url` e `gateway_url` (incluindo o stage). Os logins Admin/Mechanic preenchem `admin_token`/`mechanic_token`; a chamada `ValidateCustomerDocument` ao Gateway preenche `customer_token`. As três variáveis começam vazias. Operações da oficina usam Mechanic, administração usa Admin e status/orçamento usam Customer; `GetOwnUser` consulta a conta do Mechanic sem filtros.
 
-A API cobre usuários, clientes, veículos, catálogo, materiais/estoque e criação, diagnóstico, orçamento, execução e entrega de OS. A rota `POST /customers/validate` é atendida exclusivamente pela Lambda via Gateway. PATCH/DELETE de usuários ainda serão implementados conforme o [contrato de acesso](docs/arquitetura/ACESSO_E_AUTENTICACAO.md).
+A API cobre usuários, clientes, veículos, catálogo, materiais/estoque e criação, diagnóstico, orçamento, execução e entrega de OS. A rota `POST /customers/validate` é atendida exclusivamente pela Lambda via Gateway. DELETE de usuários ainda será implementado conforme o [contrato de acesso](docs/arquitetura/ACESSO_E_AUTENTICACAO.md).
 
 ## Configuração e saúde
 

@@ -2,6 +2,7 @@ using Domain.Interface.User;
 using Domain.Interface.Exceptions;
 using Service.Interface.Authentication;
 using NSubstitute;
+using NSubstitute.Extensions;
 using Service.Interface.Persistence;
 using Service;
 using Service.Interface;
@@ -13,6 +14,109 @@ namespace ServiceTests
 {
     public class UserServiceTests
     {
+        private Domain.User.User PrepareOwnAccount()
+        {
+            var user = new Domain.User.User(ExistingUserId, "Original mechanic", "Mechanic");
+            UserRepository.GetUserById(user.Id).Returns(user);
+            UserRepository.UpdateUser(Arg.Any<Guid>(), Arg.Any<string?>(), Arg.Any<string?>()).Returns(1);
+            return user;
+        }
+
+        [TestCase("Changed mechanic", null)]
+        [TestCase(null, "Changed@Test123")]
+        [TestCase("Changed mechanic", "Changed@Test123")]
+        public async Task UpdateOwnAccountPreservesOmittedFields(string? name, string? password)
+        {
+            var user = PrepareOwnAccount();
+            await UserService.UpdateOwnUser(user.Id, new(name, password));
+            await UserRepository.Received(1).GetUserById(user.Id);
+            await UserRepository.Received(1).UpdateUser(user.Id, name, password is null ? null : PasswordHash);
+            PasswordHasher.Received(password is null ? 0 : 1).Hash(Arg.Any<string>());
+            if (name is null) await UserRepository.DidNotReceiveWithAnyArgs().GetUser(default!, default!);
+            else await UserRepository.Received(1).GetUser(name, "Mechanic");
+        }
+
+        [Test]
+        public async Task OwnNameIsNotAConflict()
+        {
+            var user = PrepareOwnAccount();
+            UserRepository.Configure().GetUser(user.Name, "Mechanic").Returns(user);
+            await UserService.UpdateOwnUser(user.Id, new(user.Name, null));
+            await UserRepository.Received(1).UpdateUser(user.Id, user.Name, null);
+        }
+
+        [Test]
+        public async Task AnotherAccountNameIsAConflictWithoutHashingOrWriting()
+        {
+            var user = PrepareOwnAccount();
+            UserRepository.Configure().GetUser("Other mechanic", "Mechanic").Returns(new Domain.User.User("Other mechanic", "Mechanic"));
+            Assert.ThrowsAsync<ConflictException>(() => UserService.UpdateOwnUser(user.Id, new("Other mechanic", "Changed@Test123")));
+            await UserRepository.DidNotReceiveWithAnyArgs().UpdateUser(Guid.Empty, null, null);
+            PasswordHasher.DidNotReceiveWithAnyArgs().Hash(default!);
+        }
+
+        [TestCase(null, null)]
+        [TestCase("", null)]
+        [TestCase("   ", null)]
+        public async Task InvalidUpdateDoesNotQueryOrWrite(string? name, string? password)
+        {
+            Assert.ThrowsAsync<InvalidRequestException>(() => UserService.UpdateOwnUser(ExistingUserId, new(name, password)));
+            await UserRepository.DidNotReceiveWithAnyArgs().GetUserById(Guid.Empty);
+            await UserRepository.DidNotReceiveWithAnyArgs().UpdateUser(Guid.Empty, null, null);
+        }
+
+        [TestCase("")]
+        [TestCase("   ")]
+        [TestCase("invalid")]
+        [TestCase("NoDigit@")]
+        [TestCase("NoSymbol123")]
+        public async Task InvalidNewPasswordDoesNotHashOrWrite(string password)
+        {
+            var user = PrepareOwnAccount();
+            Assert.ThrowsAsync<DomainValidationException>(() => UserService.UpdateOwnUser(user.Id, new(null, password)));
+            await UserRepository.DidNotReceiveWithAnyArgs().UpdateUser(Guid.Empty, null, null);
+            PasswordHasher.DidNotReceiveWithAnyArgs().Hash(default!);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task MissingAccountBeforeOrDuringUpdateIsNotFound(bool deletedDuringUpdate)
+        {
+            var userId = ExistingUserId;
+            if (deletedDuringUpdate)
+            {
+                PrepareOwnAccount();
+                UserRepository.UpdateUser(userId, "Changed mechanic", null).Returns(0);
+            }
+            else UserRepository.GetUserById(userId).Returns((IUser?)null);
+            Assert.ThrowsAsync<NotFoundException>(() => UserService.UpdateOwnUser(userId, new("Changed mechanic", null)));
+            if (!deletedDuringUpdate) await UserRepository.DidNotReceiveWithAnyArgs().UpdateUser(Guid.Empty, null, null);
+        }
+
+        [Test]
+        public async Task EmptyIdentityAndOverlongNameDoNotUpdate()
+        {
+            Assert.ThrowsAsync<InvalidRequestException>(() => UserService.UpdateOwnUser(Guid.Empty, new("Changed mechanic", null)));
+            Assert.ThrowsAsync<InvalidRequestException>(() => UserService.UpdateOwnUser(ExistingUserId, new(new string('a', 101), null)));
+            await UserRepository.DidNotReceiveWithAnyArgs().UpdateUser(Guid.Empty, null, null);
+        }
+
+        [Test]
+        public async Task UnexpectedFailurePropagatesWithoutWriting()
+        {
+            var user = PrepareOwnAccount();
+            PasswordHasher.Hash("Changed@Test123").Returns(_ => throw new InvalidOperationException("test failure"));
+            Assert.ThrowsAsync<InvalidOperationException>(() => UserService.UpdateOwnUser(user.Id, new(null, "Changed@Test123")));
+            await UserRepository.DidNotReceiveWithAnyArgs().UpdateUser(Guid.Empty, null, null);
+        }
+
+        [Test]
+        public void UpdateCommandDoesNotExposePasswordInToString()
+        {
+            var command = new UpdateOwnUserCommand("Changed mechanic", "Changed@Test123");
+            Assert.That(command.ToString(), Does.Not.Contain(command.Password));
+        }
+
         [Test]
         public async Task OwnAccountUsesIdAndReturnsCurrentName()
         {

@@ -15,6 +15,7 @@ public sealed class AuthorizationMatrixTests
     private static readonly (string Method, string Path, string Roles)[] Routes =
     [
         ("POST", "/Users", "Admin"), ("GET", "/Users", "Admin,Mechanic"),
+        ("PATCH", "/Users", "Admin,Mechanic"),
         ("POST", "/Customers", "Mechanic"), ("GET", "/Customers", "Mechanic"),
         ("PATCH", $"/Customers/{OrderId}", "Mechanic"), ("DELETE", $"/Customers/{OrderId}", "Mechanic"),
         ("POST", "/Vehicles", "Mechanic"), ("GET", "/Vehicles", "Mechanic"),

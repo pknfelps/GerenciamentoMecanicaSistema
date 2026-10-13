@@ -61,5 +61,36 @@ namespace Service
 
             return UserResult.Create(user);
         }
+
+        public async Task UpdateOwnUser(Guid userId, UpdateOwnUserCommand command)
+        {
+            if (userId == Guid.Empty)
+                throw new InvalidRequestException("A identificação do usuário deve ser informada");
+            if (command.Name is null && command.Password is null)
+                throw new InvalidRequestException("Informe nome ou senha para atualizar a conta");
+            if (command.Name is not null && (string.IsNullOrWhiteSpace(command.Name) || command.Name.Length > 100))
+                throw new InvalidRequestException("O nome deve ser preenchido e ter no máximo 100 caracteres");
+
+            var current = await Repository.GetUserById(userId)
+                ?? throw new NotFoundException("Usuário não encontrado");
+            var user = new User(current.Id, command.Name ?? current.Name, current.Role.ToString());
+
+            if (command.Name is not null)
+            {
+                var existing = await Repository.GetUser(user.Name, user.Role.ToString());
+                if (existing is not null && existing.Id != user.Id)
+                    throw new ConflictException("Nome já utilizado por outro usuário deste perfil");
+            }
+
+            string? passwordHash = null;
+            if (command.Password is not null)
+            {
+                var password = new Password(command.Password, user);
+                passwordHash = PasswordHasher.Hash(password.Value);
+            }
+
+            if (await Repository.UpdateUser(user.Id, command.Name, passwordHash) == 0)
+                throw new NotFoundException("Usuário não encontrado");
+        }
     }
 }

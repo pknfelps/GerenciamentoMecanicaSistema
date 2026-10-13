@@ -7,6 +7,8 @@ using Service.Interface.Commands.User;
 using Service.Interface.Results.User;
 using System.Net;
 using System.Net.Http.Json;
+using System.Net.Http.Headers;
+using System.Text;
 
 namespace ControllerTests
 {
@@ -53,6 +55,100 @@ namespace ControllerTests
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
 
             await UserService.Received(1).RegisterUser(UserToRegister.ToCommand());
+        }
+
+        [TestCase("Admin", "{\"name\":\"Changed user\"}", "Changed user", null)]
+        [TestCase("Mechanic", "{\"password\":\"Changed@Test123\"}", null, "Changed@Test123")]
+        [TestCase("Admin", "{\"Name\":\"Changed user\",\"Password\":\"Changed@Test123\"}", "Changed user", "Changed@Test123")]
+        [TestCase("Mechanic", "{\"name\":\"Changed user\",\"password\":\"Changed@Test123\"}", "Changed user", "Changed@Test123")]
+        public async Task UpdatesOwnAccountUsingOnlyTokenIdentity(string role, string body, string? name, string? password)
+        {
+            UseToken(role);
+            using var response = await TestClient.PatchAsync("/Users", new StringContent(body, Encoding.UTF8, "application/json"));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+            Assert.That(await response.Content.ReadAsStringAsync(), Is.Empty);
+            await UserService.Received(1).UpdateOwnUser(TestIdentityId,
+                Arg.Is<UpdateOwnUserCommand>(c => c.Name == name && c.Password == password));
+        }
+
+        [TestCase("{}")]
+        [TestCase("null")]
+        [TestCase("[]")]
+        [TestCase("{bad json")]
+        [TestCase("{\"name\":null}")]
+        [TestCase("{\"name\":\"\"}")]
+        [TestCase("{\"name\":\"   \"}")]
+        [TestCase("{\"name\":\"ab\"}")]
+        [TestCase("{\"name\":\"invalid123\"}")]
+        [TestCase("{\"name\":12}")]
+        [TestCase("{\"password\":null}")]
+        [TestCase("{\"password\":\"\"}")]
+        [TestCase("{\"password\":\"   \"}")]
+        [TestCase("{\"name\":null,\"password\":\"Changed@Test123\"}")]
+        [TestCase("{\"name\":\"Changed user\",\"password\":null}")]
+        [TestCase("{\"name\":\"Changed user\",\"id\":\"11111111-1111-1111-1111-111111111111\"}")]
+        [TestCase("{\"name\":\"Changed user\",\"Role\":\"Admin\"}")]
+        [TestCase("{\"name\":\"Changed user\",\"extra\":true}")]
+        [TestCase("{\"NameProvided\":true}")]
+        [TestCase("{\"name\":\"Changed user\",\"NameProvided\":true}")]
+        public async Task InvalidPatchDoesNotCallService(string body)
+        {
+            using var response = await TestClient.PatchAsync("/Users", new StringContent(body, Encoding.UTF8, "application/json"));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+            await UserService.DidNotReceiveWithAnyArgs().UpdateOwnUser(Guid.Empty, default!);
+        }
+
+        [Test]
+        public async Task OverlongNameDoesNotCallService()
+        {
+            using var response = await TestClient.PatchAsJsonAsync("/Users", new { name = new string('a', 101) });
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+            await UserService.DidNotReceiveWithAnyArgs().UpdateOwnUser(Guid.Empty, default!);
+        }
+
+        [TestCase(null, false)]
+        [TestCase("invalid", false)]
+        [TestCase("00000000-0000-0000-0000-000000000000", false)]
+        [TestCase("11111111-1111-1111-1111-111111111111", true)]
+        public async Task InvalidPatchIdentityIsChallengedBeforeService(string? id, bool duplicate)
+        {
+            TestClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthorizationTestTokens.Create("Admin", id, duplicate));
+            using var response = await TestClient.PatchAsJsonAsync("/Users", new { name = "Changed user" });
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+            await UserService.DidNotReceiveWithAnyArgs().UpdateOwnUser(Guid.Empty, default!);
+        }
+
+        [TestCase("Customer", HttpStatusCode.Forbidden)]
+        [TestCase("User", HttpStatusCode.Forbidden)]
+        [TestCase("Other", HttpStatusCode.Forbidden)]
+        [TestCase("missing", HttpStatusCode.Unauthorized)]
+        [TestCase("invalid", HttpStatusCode.Unauthorized)]
+        [TestCase("expired", HttpStatusCode.Unauthorized)]
+        public async Task UnauthorizedPatchDoesNotCallService(string scenario, HttpStatusCode expected)
+        {
+            var token = AuthorizationTestTokens.Create(scenario, TestIdentityId.ToString(),
+                expires: scenario == "expired" ? DateTime.UtcNow.AddMinutes(-6) : null);
+            if (scenario == "invalid") token += "x";
+            TestClient.DefaultRequestHeaders.Authorization = scenario == "missing" ? null : new AuthenticationHeaderValue("Bearer", token);
+            using var response = await TestClient.PatchAsJsonAsync("/Users", new { name = "Changed user" });
+            Assert.That(response.StatusCode, Is.EqualTo(expected));
+            await UserService.DidNotReceiveWithAnyArgs().UpdateOwnUser(Guid.Empty, default!);
+        }
+
+        [TestCase("missing", HttpStatusCode.NotFound)]
+        [TestCase("conflict", HttpStatusCode.Conflict)]
+        [TestCase("unexpected", HttpStatusCode.InternalServerError)]
+        public async Task MapsPatchFailuresWithoutExposingSecrets(string failure, HttpStatusCode expected)
+        {
+            UserService.UpdateOwnUser(Arg.Any<Guid>(), Arg.Any<UpdateOwnUserCommand>()).Returns(_ => throw (failure switch
+            {
+                "missing" => new NotFoundException("Usuário não encontrado"),
+                "conflict" => new ConflictException("Nome já utilizado por outro usuário deste perfil"),
+                _ => new InvalidOperationException("Changed@Test123 internal error")
+            }));
+            using var response = await TestClient.PatchAsJsonAsync("/Users", new { password = "Changed@Test123" });
+            Assert.That(response.StatusCode, Is.EqualTo(expected));
+            Assert.That(await response.Content.ReadAsStringAsync(), Does.Not.Contain("Changed@Test123").And.Not.Contain("internal error"));
         }
 
         [Test]

@@ -40,6 +40,17 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
             return user?.ToDomain();
         }
 
+        public static string UpdateUserSql { get; private set; } = """
+                UPDATE users
+                SET name = COALESCE(@Name, name), password = COALESCE(@PasswordHash, password)
+                WHERE id = @Id;
+                """;
+
+        public async Task<int> UpdateUser(Guid id, string? name, string? passwordHash)
+        {
+            return await Connection.ExecuteAsync(UpdateUserSql, new { Id = id, Name = name, PasswordHash = passwordHash }, Transaction);
+        }
+
         public async Task<int> RegisterUser(IUserCredentials credentials)
         {
             return await Connection.ExecuteAsync(RegisterUserSql, UserDb.Create(credentials), Transaction);

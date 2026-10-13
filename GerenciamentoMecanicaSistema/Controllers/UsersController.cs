@@ -56,5 +56,24 @@ namespace GerenciamentoMecanicaSistema.Controllers
 
             return Ok(UserResponse.Create(usuario));
         }
+
+        [HttpPatch()]
+        [Authorize(Roles = "Admin,Mechanic")]
+        [EndpointDescription("Endpoint para atualizar nome ou senha da própria conta")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token ou identidade inválida")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden, Description = "Perfil sem permissão para esta operação")]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Description = "Usuário não encontrado")]
+        [ProducesResponseType(StatusCodes.Status409Conflict, Description = "Nome já utilizado por outro usuário deste perfil")]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
+        public async Task<IActionResult> UpdateOwnUser([FromBody] UpdateOwnUserRequest request)
+        {
+            if (!AuthenticatedIdentity.TryGetId(User, out var userId))
+                return Challenge();
+
+            await UsersService.UpdateOwnUser(userId, request.ToCommand());
+            return NoContent();
+        }
     }
 }

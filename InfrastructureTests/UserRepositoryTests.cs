@@ -9,6 +9,29 @@ namespace InfrastructureTests
 {
     public class UserRepositoryTests : BaseRepositoryTests
     {
+        [TestCase("Changed name", null)]
+        [TestCase(null, "Changed-password-hash")]
+        [TestCase("Changed name", "Changed-password-hash")]
+        public async Task UpdatePreservesIdentityRoleAndOmittedFields(string? name, string? hash)
+        {
+            Assert.That(await Repository.UpdateUser(ExistingUser.User.Id, name, hash), Is.EqualTo(1));
+            var credentials = await Repository.GetUserCredentials(name ?? ExistingUser.User.Name, "Admin");
+            Assert.That(credentials!.User.Id, Is.EqualTo(ExistingUser.User.Id));
+            Assert.That(credentials.User.Role, Is.EqualTo(Roles.Admin));
+            Assert.That(credentials.PasswordHash, Is.EqualTo(hash ?? ExistingUser.PasswordHash));
+        }
+
+        [Test]
+        public async Task UpdateTargetsOnlyItsUuidAndUsesParameters()
+        {
+            await Repository.RegisterUser(UserToRegister);
+            const string name = "Changed'; DROP TABLE users; --";
+            await Repository.UpdateUser(ExistingUser.User.Id, name, null);
+            Assert.That((await Repository.GetUserById(ExistingUser.User.Id))!.Name, Is.EqualTo(name));
+            Assert.That((await Repository.GetUserById(UserToRegister.User.Id))!.Name, Is.EqualTo(UserToRegister.User.Name));
+            Assert.That(await Repository.UpdateUser(Guid.NewGuid(), "Missing", null), Is.Zero);
+        }
+
         [Test]
         public async Task FindsIdentityByIdWithoutCredentials()
         {
