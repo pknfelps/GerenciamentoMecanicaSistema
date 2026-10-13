@@ -13,7 +13,7 @@ namespace ControllerTests
 
         private readonly CreateUserRequest UsuarioExistente = new("Ciclano", "Ciclano@123", "Admin");
         private readonly CreateUserRequest UsuarioExistenteComSenhaErrada = new("Ciclano", "Ciclano@321", "Admin");
-        private readonly CreateUserRequest UsuarioInexistente = new("Fulano", "Fulano@123", "Usuario");
+        private readonly CreateUserRequest UsuarioInexistente = new("Fulano", "Fulano@123", "Admin");
         private readonly string TokenValido = "TokenvalidoCriadocomsUcessoaPartirDetestedeController";
         private readonly string UnauthorizedMessage = "Usuário ou senha inválidos";
 
@@ -100,6 +100,19 @@ namespace ControllerTests
             await AuthenticationService.ReceivedWithAnyArgs(0).Authenticate(Arg.Any<CreateUserCommand>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        }
+        
+        [TestCase("User")]
+        [TestCase("Manager")]
+        [TestCase("Customer")]
+        [TestCase("1")]
+        [TestCase("Admin, Mechanic")]
+        [TestCase("admin")]
+        public async Task InvalidRoleIsBadRequestBeforeService(string role)
+        {
+            using var response = await TestClient.PostAsJsonAsync("authentication", new { name = "Fulano", password = "Fulano@123", role });
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+            await AuthenticationService.DidNotReceiveWithAnyArgs().Authenticate(default!);
         }
     }
 }

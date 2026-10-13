@@ -11,12 +11,12 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
     public class CustomerRepository(IDbConnection connection, DbTransactionContext? transactionContext = null) : BaseRepository(connection, transactionContext), ICustomerRepository
     {
         public static string RegisterCustomerSql { get; private set; } = """
-                INSERT INTO customers(id, name, document, phone, email)
-                VALUES (@Id, @Name, @Document, @Phone, @Email);
+                INSERT INTO customers(id, name, document, phone, email, status)
+                VALUES (@Id, @Name, @Document, @Phone, @Email, @Status);
                 """;
 
         public static string GetCustomersSql { get; private set; } = """
-                SELECT id, name, document, phone, email
+                SELECT id, name, document, phone, email, status
                 FROM customers
                 {0}
                 LIMIT 50;

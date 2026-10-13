@@ -1,6 +1,10 @@
 $kind: http-request
 url: "{{base_url}}/catalog"
 method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{mechanic_token}}"
 queryParams:
   - key: id
     value: null

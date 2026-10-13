@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{base_url}}/users"
+method: PATCH
+auth:
+  type: bearer
+  credentials:
+    token: "{{admin_token}}"
+body:
+  type: json
+  content: '{"name": "Admin atualizado", "password": "NovaSenha@123"}'
+order: 4000

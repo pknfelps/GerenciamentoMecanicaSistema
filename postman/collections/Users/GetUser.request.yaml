@@ -1,9 +1,13 @@
 $kind: http-request
 url: "{{base_url}}/users"
 method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{admin_token}}"
 queryParams:
   - key: name
     value: Teste
   - key: role
-    value: Manager
+    value: Mechanic
 order: 2000

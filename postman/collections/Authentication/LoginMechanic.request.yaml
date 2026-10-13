@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{base_url}}/authentication"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"Name\": \"Mechanic\",\r
+
+    \  \"Password\": \"Mechanic@123\",\r
+
+    \  \"Role\": \"Mechanic\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Login realizado com sucesso", () => {
+        pm.response.to.have.status(200);
+      });
+
+      if (pm.response.code === 200) {
+        const body = pm.response.text();
+        const token = body.startsWith('"') ? pm.response.json() : body;
+        pm.environment.set("mechanic_token", token);
+      }
+    language: text/javascript
+order: 2000

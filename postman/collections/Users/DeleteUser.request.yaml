@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{base_url}}/users"
+method: DELETE
+auth:
+  type: bearer
+  credentials:
+    token: "{{admin_token}}"
+queryParams:
+  - key: id
+    value: "{{user_id}}"
+order: 6000

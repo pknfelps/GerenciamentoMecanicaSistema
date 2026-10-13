@@ -4,15 +4,39 @@ API do sistema de oficina: usuários, clientes, veículos, catálogo, estoque e 
 
 ## Estado da implementação
 
-A separação em quatro repositórios está integrada. A API e os testes existentes são executáveis; o CI valida testes/cobertura, SonarCloud e build da imagem. O ciclo base/banco/API hom e a publicação OpenAPI foram validados na AWS; os ambientes estão atualmente descartados. Gateway implementado localmente, com bootstrap e validação integrada pendentes.
+A separação em quatro repositórios está integrada. O CI valida testes/cobertura, SonarCloud e build da imagem. Base/banco/API, autenticação Lambda, Gateway e compatibilidade JWT foram validados em hom, incluindo o ciclo de OS e expiração real. A E4 acrescenta status consultável de clientes, perfis internos Admin/Mechanic, ID estável no JWT e autorização por perfil/vínculo com a OS. Esta entrega foi validada localmente; PR/deploy e conferência pelo Gateway serão conduzidos pelo mantenedor.
 
 | Disponível | A implementar |
 |---|---|
-| API .NET, JWT interno, PostgreSQL, SMTP e health checks | Validação serverless de documentos CPF/CNPJ e permissões Admin/Mechanic/Customer |
+| API .NET, JWT interno, PostgreSQL, adaptador SMTP e health checks | Validação da autorização pelo Gateway e SMTP na AWS |
 | Dockerfile, Compose opcional, Deployment/HPA e workflow manual ECR/EKS | Executar e validar deploy nos ambientes hom/prd |
-| CI com testes, cobertura, SonarCloud e build Docker; RDS hom provisionado | API Gateway, validação prd e observabilidade OpenTelemetry/New Relic |
+| CI, autenticação serverless e API Gateway validados em hom | Validação prd e observabilidade OpenTelemetry/New Relic |
 
-O foco de uso será a API na AWS. A URL do Gateway ainda não foi publicada. A [arquitetura alvo](docs/arquitetura/README.md) descreve contratos futuros; as [collections](postman/collections) e o OpenAPI gerado pela API representam as operações atuais.
+O foco de uso é a API na AWS. O endpoint do ambiente é publicado em SSM `/mecanica/<ambiente>/gateway/v2/endpoint` e pode mudar após recriação. A [especificação de acesso](docs/arquitetura/ACESSO_E_AUTENTICACAO.md) distingue as regras alvo das permissões ainda pendentes; as [collections](postman/collections) e o OpenAPI gerado representam as operações atuais.
+
+### Identidade, status e autorização — E4
+
+- `POST /Authentication` mantém `name/password/role` e retorna o token no formato existente. Cadastro e login internos aceitam somente os nomes exatos `Admin` e `Mechanic`; perfis antigos, numéricos ou `Customer` retornam 400. Credenciais incorretas ou usuário inexistente retornam 401.
+- O JWT interno contém Name, Role e NameIdentifier (UUID lido da tabela users). O consumidor não escolhe o ID. HS256, expiração de dez minutos, issuer/audience e tolerância de relógio permanecem; não há revogação ou nova exigência global de ID para tokens anteriores.
+- `GET /Customers` acrescenta `status` como string `Active` ou `Inactive`. Novos clientes são Active; o PATCH preserva o estado existente. Status não faz parte dos requests: campos extras não permitem criar Inactive ou reativá-lo. DELETE continua excluindo o cadastro.
+- O status persistido é convertido explicitamente, sem fallback para Active. Os mapeadores constroem o domínio diretamente, sem try/catch; validações de identidade/perfil do usuário propagam DomainValidationException (400 no middleware atual). Não há conversão de perfis antigos. O SQL do banco já contém os campos/seeds necessários.
+- Mechanic opera clientes, veículos, catálogo, estoque e OS; Admin não herda essas permissões. POST Users exige Admin. GET Users permite consulta administrativa por name/role para Admin e consulta exclusivamente própria por UUID para Mechanic. Filtros próprios divergentes retornam 403; cadastro próprio ausente retorna 404. Senha/hash não são retornados.
+- Status de OS exige Mechanic ou Customer; orçamento exige Customer. O cliente é resolvido pelo UUID do token, e a OS é consultada com seu documento cadastrado antes de qualquer alteração de ordem, histórico, estoque ou evento. OS ausente, de outro cliente ou cliente ausente produzem o mesmo 404 genérico. Documento divergente na OS própria retorna 422; documento inválido retorna 400.
+- GET próprio de Mechanic, PATCH próprio de Admin/Mechanic e operações de Customer exigem exatamente um NameIdentifier UUID válido e não vazio, retornando 401 antes do serviço se inválido. Outras rotas não exigem ID globalmente. Um token emitido antes da inativação continua válido até expirar; essas operações não revalidam Active. Login interno e health checks continuam públicos. DELETE Users está implementado localmente; operação de inativação permanece pendente.
+
+### Atualização da própria conta
+
+`PATCH /Users` aceita Admin/Mechanic com exatamente um UUID válido no JWT. O corpo JSON contém somente `name` e/ou `password`; pelo menos um campo é obrigatório. Omitir preserva o valor atual; nulo/vazio explícito, campos desconhecidos (incluindo id/role) e valores inválidos retornam 400. O nome segue a validação atual e tem no máximo 100 caracteres; senha segue as regras do cadastro. ID e perfil são preservados. A atualização usa UUID, mesmo que o nome do token esteja desatualizado.
+
+Sucesso retorna 204 sem corpo. Token/identidade inválidos retornam 401, perfil sem permissão 403, conta inexistente 404 e nome em conflito com outro usuário do mesmo perfil 409. A senha é gravada como hash; omitir password preserva o hash existente. Tokens já emitidos continuam válidos até expirar; o próximo login usa os dados novos. Reutilizar o nome antigo em outra conta não transfere o token anterior.
+
+Os exemplos Postman `UpdateOwnUserAdmin`/`UpdateOwnUserMechanic` usam os tokens correspondentes, inicialmente vazios. Esta entrega foi preparada para validação local; PR/deploy/conferência AWS ficam com o mantenedor. O DELETE está descrito a seguir.
+
+### Exclusão de usuários internos
+
+`DELETE /Users?id=<uuid>` exige Admin e um UUID não vazio na query, sem corpo. Exclui somente o cadastro users e retorna 204 sem conteúdo; repetir a exclusão retorna 404. Token inválido/ausente/expirado retorna 401, perfil sem permissão 403 e ID ausente/malformado/vazio 400. NameIdentifier do Admin não é exigido nesta rota. Não há bloqueio de autoexclusão ou exclusão do último Admin.
+
+Após excluir, o usuário não pode fazer novo login, mas JWTs anteriores continuam válidos até expirar nas rotas permitidas pelo perfil. GET próprio de Mechanic e PATCH próprio retornam 404 porque o cadastro não existe. Recriar uma conta com o mesmo nome não transfere a identidade do token antigo. O exemplo Postman `DeleteUser` usa admin_token e user_id inicialmente vazios; preencher user_id com o UUID alvo retornado pela consulta. Validação desta entrega é local; deploy/conferência AWS permanecem sob condução do mantenedor.
 
 ## Componentes e repositórios
 
@@ -34,9 +58,9 @@ flowchart LR
 | Repositório | Responsabilidade |
 |---|---|
 | Este repositório | API, camadas, testes, Dockerfile/Compose e Deployment/HPA |
-| [Infraestrutura](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/tree/develop) | Terraform, plataforma Kubernetes, Service e futura entrada Gateway/NLB |
-| [Banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/tree/develop) | SQL/seeds, infraestrutura RDS PostgreSQL e Job de inicialização planejados |
-| [Autenticação](https://github.com/pknfelps/GerenciamentoMecanicaAutenticacao/tree/develop) | Futura Lambda de validação de documentos CPF/CNPJ e emissão de JWT |
+| [Infraestrutura](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/tree/develop) | Terraform, plataforma Kubernetes, Service e entrada Gateway/NLB |
+| [Banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/tree/develop) | SQL/seeds, infraestrutura RDS PostgreSQL e Job de inicialização |
+| [Autenticação](https://github.com/pknfelps/GerenciamentoMecanicaAutenticacao/tree/develop) | Lambda/SAM de validação CPF/CNPJ e emissão de JWT Customer |
 
 Os projetos `Domain.Interface` e `Service.Interface` definem contratos; `Infrastructure` implementa persistência PostgreSQL, JWT, hash de senha e SMTP; `DependencyInjection` registra os componentes. Consultas comuns de usuários não retornam senha/hash; os fluxos de credenciais usam `UserCredentials`.
 
@@ -49,7 +73,7 @@ Os projetos `Domain.Interface` e `Service.Interface` definem contratos; `Infrast
 - kubectl com Kustomize para renderizar os manifestos.
 - GitHub Actions e SonarCloud no CI.
 
-AWS EKS, RDS PostgreSQL, ECR, API Gateway e Lambda compõem o destino da Fase 3. Terraform da base e entrada pertence ao repositório de infraestrutura; Terraform do banco pertence ao repositório de banco. A escolha RDS `db.t3.micro` Single-AZ substituiu Aurora após a restrição do AWS Free Plan ([ADR 007](docs/arquitetura/adrs/007-RDS-FREE-PLAN.md)); implementação e validação ainda pendentes.
+AWS EKS, RDS PostgreSQL, ECR, API Gateway e Lambda compõem o destino da Fase 3, validado em hom. Terraform da base e entrada pertence ao repositório de infraestrutura; Terraform do banco pertence ao repositório de banco. A escolha RDS `db.t3.micro` Single-AZ substituiu Aurora após a restrição do AWS Free Plan ([ADR 007](docs/arquitetura/adrs/007-RDS-FREE-PLAN.md)).
 
 ## Build e testes
 
@@ -73,7 +97,7 @@ dotnet build GerenciamentoMecanicaSistema.slnx --configuration Release -p:OpenAp
 
 O gerador oficial produz somente `artifacts/openapi/openapi.json`, em OpenAPI 3.0, com título **API da oficina** e versão **1.0.0**. A pasta é ignorada pelo Git e pelo Docker. Builds comuns e Docker não geram o documento. A geração registra controllers/OpenAPI sem carregar AWS, credenciais JWT ou persistência, inclusive com `Runtime__Environment=hom`; a inicialização normal mantém suas validações.
 
-O documento servido em Development também usa OpenAPI 3.0. Bearer JWT é exigido somente nas operações protegidas por `Authorize`; `AllowAnonymous` prevalece. Autenticação interna, health checks, status e orçamento permanecem públicos conforme os atributos atuais. Permissões de cliente serão tratadas na E4; `/customers/validate` pertence exclusivamente à autenticação.
+O documento servido em Development também usa OpenAPI 3.0. Bearer JWT é exigido somente nas operações protegidas por `Authorize`; `AllowAnonymous` prevalece. Autenticação interna e health checks permanecem públicos; status e orçamento agora exigem Bearer e descrevem as respostas 401/403/404/422 aplicáveis; `/customers/validate` pertence exclusivamente à autenticação.
 
 O [API deploy](docs/DEPLOY_API.md) gera e testa o contrato, publica `contracts/api/<commit>/openapi.json` e seu `.sha256` no S3 e então publica a imagem. Objetos existentes só são aceitos com bytes idênticos. O resumo registra commit, hashes, versões S3 e digest da imagem. A publicação não comprova prontidão; composição e implantação do Gateway permanecem pendentes.
 
@@ -127,7 +151,7 @@ Para encerrar preservando os dados, use `docker compose down`. Se optar por apag
 
 ## Autenticação e uso da API
 
-Após aplicar os seeds, o usuário educacional é `Admin`, senha `Admin@123`, role `Admin`. A senha é armazenada como hash PBKDF2. Esses dados são somente para demonstração.
+Após aplicar os seeds, os usuários educacionais são `Admin` / `Admin@123` (Admin) e `Mechanic` / `Mechanic@123` (Mechanic). A senha é armazenada como hash PBKDF2. Esses dados são somente para demonstração.
 
 O login atual é `POST /authentication`:
 
@@ -139,9 +163,9 @@ O login atual é `POST /authentication`:
 }
 ```
 
-Use o token retornado como `Authorization: Bearer <token>`. Importe as [collections](postman/collections) e o [ambiente Postman](postman/environments/Dev.environment.yaml); configure `base_url` e `token`.
+Use o token retornado como `Authorization: Bearer <token>`. Importe as [collections](postman/collections) e o [ambiente Postman](postman/environments/Dev.environment.yaml); configure `base_url` e `gateway_url` (incluindo o stage). Os logins Admin/Mechanic preenchem `admin_token`/`mechanic_token`; a chamada `ValidateCustomerDocument` ao Gateway preenche `customer_token`. As três variáveis começam vazias. Operações da oficina usam Mechanic, administração usa Admin e status/orçamento usam Customer; `GetOwnUser` consulta a conta do Mechanic sem filtros.
 
-A API cobre usuários, clientes, veículos, catálogo, materiais/estoque e criação, diagnóstico, orçamento, execução e entrega de OS. A futura rota `POST /customers/validate` será atendida pela Lambda. Novas permissões e operações de usuários ainda serão implementadas conforme o [contrato de acesso](docs/arquitetura/ACESSO_E_AUTENTICACAO.md).
+A API cobre usuários, clientes, veículos, catálogo, materiais/estoque e criação, diagnóstico, orçamento, execução e entrega de OS. A rota `POST /customers/validate` é atendida exclusivamente pela Lambda via Gateway. As regras de usuários seguem o [contrato de acesso](docs/arquitetura/ACESSO_E_AUTENTICACAO.md).
 
 ## Configuração e saúde
 

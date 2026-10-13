@@ -3,6 +3,7 @@ using Domain.Interface.Custumer;
 using NSubstitute;
 using Infrastructure.Persistence.PostgreSql.Repositories;
 using Service.Interface.Persistence;
+using System.Data;
 
 namespace InfrastructureTests
 {
@@ -61,7 +62,8 @@ namespace InfrastructureTests
                 name TEXT NOT NULL,
                 document TEXT NOT NULL,
                 phone TEXT NOT NULL,
-                email TEXT NOT NULL);
+                email TEXT NOT NULL,
+                status VARCHAR(8) NOT NULL DEFAULT 'Active');
                 """);
 
             Repository = new CustomerRepository(Connection);
@@ -75,6 +77,22 @@ namespace InfrastructureTests
             var registro = await Repository.RegisterCustomer(CustomerToCreate);
 
             Assert.That(registro, Is.Not.EqualTo(0));
+        }
+
+        [Test]
+        public async Task ReadsBothStatesAndPreservesInactiveOnUpdate()
+        {
+            await Repository.RegisterCustomer(CustomerToCreate);
+            await Connection.ExecuteAsync("UPDATE customers SET status = 'Inactive' WHERE id = @Id", new { Id = ExistingCustomerId });
+
+            var customers = (await Repository.GetCustomers()).ToList();
+            Assert.That(customers.Select(customer => customer.Status), Is.EquivalentTo(new[] { CustomerStatus.Active, CustomerStatus.Inactive }));
+            var inactive = await Repository.GetCustomer(id: ExistingCustomerId);
+            Assert.That(inactive!.Status, Is.EqualTo(CustomerStatus.Inactive));
+
+            // Even a caller passing Active cannot change the stored status through UPDATE.
+            await Repository.UpdateCustomer(CustomerToUpdate);
+            Assert.That((await Repository.GetCustomer(id: ExistingCustomerId))!.Status, Is.EqualTo(CustomerStatus.Inactive));
         }
 
         [Test]

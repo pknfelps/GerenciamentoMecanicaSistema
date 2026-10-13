@@ -6,7 +6,7 @@ namespace DomainTests.User
     public class UserCredentialsTests
     {
         private const string PasswordHash = "pbkdf2-sha256$100000$stored-salt$stored-hash";
-        private static IUser User { get; } = new Domain.User.User("Fulano", Roles.Manager.ToString());
+        private static IUser User { get; } = new Domain.User.User("Fulano", Roles.Mechanic.ToString());
 
         [Test]
         public void MustCreateUserCredentials()
@@ -16,7 +16,7 @@ namespace DomainTests.User
             Assert.Multiple(() =>
             {
                 Assert.That(credentials.User.Name, Is.EqualTo(User.Name));
-                Assert.That(credentials.User.Role, Is.EqualTo(Roles.Manager));
+                Assert.That(credentials.User.Role, Is.EqualTo(Roles.Mechanic));
                 Assert.That(credentials.PasswordHash, Is.EqualTo(PasswordHash));
             });
         }

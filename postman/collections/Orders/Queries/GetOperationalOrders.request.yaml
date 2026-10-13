@@ -1,4 +1,8 @@
 $kind: http-request
 url: "{{base_url}}/orders/operational"
 method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{mechanic_token}}"
 order: 3000

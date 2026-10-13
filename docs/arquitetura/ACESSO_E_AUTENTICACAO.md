@@ -1,7 +1,7 @@
 # E0 — Especificação de acesso e autenticação
 
 - **Data:** 2026-09-13.
-- **Estado:** especificação consolidada para implementação em E3/E4; não representa funcionalidade já implantada.
+- **Estado:** especificação consolidada; autorização das rotas existentes e vínculo da OS implementados/testados localmente na E4 em 13/10/2026. PATCH próprio e DELETE implementados/testados localmente; deploy/conferência AWS desta entrega pendentes.
 - **Referências:** [arquitetura](README.md), [identidade e permissões](adrs/001-IDENTIDADE.md) e [integração em execução](rfcs/001-EXECUCAO.md).
 - **Origem:** regras de negócio definidas pelo usuário nesta sessão; detalhes de contrato abaixo concretizam essas regras com base no código atual.
 
@@ -27,8 +27,8 @@ As rotas são apresentadas em minúsculas para uniformizar o contrato; as atuais
 | POST | `/customers/validate` | Não se aplica | Não se aplica | Sim | Sim | Função serverless via Gateway — nova |
 | POST | `/users` | Sim | Não | Não | Não | API |
 | GET | `/users` | Sim | Próprio | Não | Não | API |
-| PATCH | `/users` | Próprio | Próprio | Não | Não | API — nova |
-| DELETE | `/users` | Sim | Não | Não | Não | API — nova |
+| PATCH | `/users` | Próprio | Próprio | Não | Não | API — implementada localmente |
+| DELETE | `/users` | Sim | Não | Não | Não | API — implementada localmente |
 | POST | `/customers` | Não | Sim | Não | Não | API |
 | GET | `/customers` | Não | Sim | Não | Não | API |
 | PATCH | `/customers/{id}` | Não | Sim | Não | Não | API |
@@ -73,13 +73,26 @@ O OpenAPI `/openapi/v1.json` e a interface `/swagger` permanecem sem autenticaç
 ### Verificação de propriedade
 
 - **Update próprio:** obter o ID do usuário do token validado; nenhuma entrada pode selecionar outra conta.
-- **GET users:** Admin mantém a consulta atual por `name/role`. Para Mechanic, a consulta é vinculada ao ID autenticado; filtros que tentem selecionar outra conta são rejeitados e não retornam dados de terceiros.
-- **OS do cliente:** carregar a OS e verificar seu vínculo com o cliente identificado no token. Como hoje a OS referencia o documento do cliente, resolver a identidade pelo ID e conferir o documento correspondente; a existência dessa consulta não implica bloquear a sessão pelo status atual.
-- **Aprovação:** manter o campo `approved`. O `customerDocument` existente, enquanto mantido por compatibilidade, deve corresponder à identidade autenticada e nunca substitui a verificação do titular. Admin e Mechanic são rejeitados mesmo que informem o documento correto.
+- **GET users:** Admin mantém a consulta atual por `name/role`. Para Mechanic, a consulta parametrizada é vinculada exclusivamente ao UUID autenticado, sem usar o nome do token. Filtros omitidos retornam a própria conta; filtros informados devem corresponder ao cadastro atual, ou retornam 403 sem consultar outra conta. Conta própria ausente retorna 404; senha/hash não são retornados.
+- **OS do cliente:** carregar a OS e verificar seu vínculo com o cliente identificado no token. A API resolve o cliente pelo UUID do token e consulta a OS por ID/documento cadastrado, verificando o vínculo antes da decisão de estado ou de alterações. OS inexistente, de outro cliente ou cliente ausente retornam o mesmo 404 com detail `Ordem não encontrada`, sem divulgar documentos. Não revalidar Active/Inactive para bloquear uma sessão já emitida.
+- **Aprovação:** manter o campo `approved`. O `customerDocument` existente, enquanto mantido por compatibilidade, deve corresponder à identidade autenticada e nunca substitui a verificação do titular. Admin e Mechanic recebem 403 mesmo que informem o documento correto. Documento inválido retorna 400; divergência na OS própria ou transição inválida retorna 422. O titular obrigatório é obtido do JWT, não de campos adicionais do request.
+
+### Respostas das rotas existentes — E4
+
+| Situação | Resposta |
+|---|---|
+| JWT ausente/inválido/expirado; identidade obrigatória ausente, duplicada, inválida ou vazia | 401 |
+| Perfil sem permissão; filtros próprios incompatíveis | 403 |
+| OS ausente/de outro cliente; cadastro necessário ausente | 404 |
+| Request inválido | 400 |
+| Documento divergente na OS própria ou transição inválida | 422 |
+| Falha inesperada | 500 |
+
+O helper HTTP exige um único NameIdentifier UUID válido em GET Users de Mechanic, PATCH Users de Admin/Mechanic e status/orçamento de Customer. As outras rotas preservam a validação JWT existente, sem exigência global de ID ou leitura de cadastro para cada token. ClaimsPrincipal fica nos controllers; serviços recebem UUID. Negativas de challenge/forbid preservam seus formatos atuais; filtros de conta usam AccessDeniedException/Problem Details. Testes percorrem as 37 ações protegidas e exercitam HTTP/PostgreSQL, incluindo estoque/histórico intactos nas negativas e token anterior à inativação. A conferência pelo Gateway continua pendente de deploy.
 
 ## 3. PATCH /users — atualizar a própria conta
 
-**Autorização:** Admin ou Mechanic, somente a própria conta.
+**Implementação local E4.11 em 13/10/2026:** Admin ou Mechanic alteram exclusivamente sua própria conta, selecionada pelo UUID do JWT. Publicação e conferência AWS desta entrega permanecem pendentes.
 
 ```http
 PATCH /users
@@ -89,29 +102,35 @@ Content-Type: application/json
 
 ```json
 {
-  "name": "mecanico.atualizado",
+  "name": "mecanico atualizado",
   "password": "NovaSenha@123"
 }
 ```
 
-- `name` e `password` são campos opcionais de atualização; pelo menos um deve ser informado. Omitido significa preservar o valor atual; nulo/vazio explícito é inválido.
-- Não aceitar `id` ou `role` como campos editáveis. Identidade vem do token; role permanece a do cadastro.
-- Reutilizar validações de nome, senha e hash existentes. Não retornar senha/hash.
-- Preservar a verificação de unicidade de login/perfil aplicada pelo cadastro atual, excluindo a própria conta dessa busca.
-- Usar ID estável para a atualização; trocar nome/login não transfere a sessão a outra pessoa.
+- `name` e `password` são opcionais; informar pelo menos um. Omitir preserva o valor atual. Nulo/vazio/whitespace explícito é inválido. Não usar JSON Patch.
+- Aceitar somente essas duas propriedades, mantendo nomes JSON sem distinção de maiúsculas. Rejeitar id, role e demais campos desconhecidos; indicadores de presença são privados e não integram o contrato JSON.
+- Nome segue a validação já existente (ao menos três caracteres, letras/espaços) e limite de 100 caracteres; senha segue as regras atuais e é gravada como hash, nunca retornada.
+- Exigir exatamente um NameIdentifier UUID válido e não vazio antes do serviço. Nome/perfil do token não selecionam o cadastro; perfil persistido e ID permanecem inalterados.
+- Reutilizar a checagem atual de nome/perfil, excluindo a própria conta da detecção de conflito. O mesmo nome em outro perfil não conflita.
+- Atualizar name/password por SQL fixo parametrizado pelo UUID, com COALESCE para campos omitidos. Nenhuma linha atualizada significa conta ausente. Não modificar esquema nem criar operação de revogação.
 
 | Código | Significado |
 |---|---|
 | 204 | Atualização concluída, sem corpo |
-| 401 | Token ausente/inválido/expirado, perfil não permitido ou tentativa de operar sobre outra identidade |
-| 400 | Payload inválido, campos proibidos, nenhum campo alterável informado, login em conflito ou conta alvo já inexistente |
+| 401 | Token ausente/inválido/expirado ou identidade obrigatória inválida |
+| 403 | Perfil sem permissão |
+| 404 | Conta identificada pelo JWT inexistente |
+| 400 | Corpo/valores inválidos, campos proibidos ou nenhum campo informado |
+| 409 | Nome já utilizado por outro usuário do mesmo perfil |
 | 500 | Falha inesperada de execução/persistência |
 
-Após mudar nome/senha, o token assinado permanece válido até expirar na estratégia aqui definida; não consultar senha ou nome atual para revalidar cada requisição. O ID mantém a identificação da conta. O próximo login usa os dados novos. Se o token já for inválido por outra razão, exigir novo login, sem renovação automática.
+Contrato de erros alinhado à API por escolha do mantenedor em 13/10/2026, substituindo os códigos antigos desta operação. Preservar challenge/forbid e Problem Details. Mensagens não incluem senha, hash ou valores enviados.
+
+Após mudar nome/senha, o token assinado permanece válido até expirar; não exigir senha atual, gerar token novo ou revalidar cada requisição contra nome/senha. O UUID preserva a identificação da conta, inclusive se outro usuário reutilizar o login antigo. O próximo login usa os dados novos.
 
 ## 4. DELETE /users — remover usuário
 
-**Autorização:** somente Admin. Para manter a rota `/users`, identificar o alvo por query obrigatória `id` (UUID), sem corpo.
+**Implementação local E4.12 em 13/10/2026:** somente Admin. O alvo é selecionado pela query obrigatória `id` (UUID não vazio), sem corpo. Publicação e conferência AWS desta entrega permanecem pendentes.
 
 ```http
 DELETE /users?id=<uuid-do-usuario>
@@ -121,15 +140,19 @@ Authorization: Bearer <token-admin>
 | Código | Significado |
 |---|---|
 | 204 | Remoção concluída, sem corpo |
-| 401 | Token ausente/inválido/expirado ou perfil diferente de Admin |
-| 400 | ID ausente/inválido ou usuário não encontrado |
+| 401 | Token ausente/inválido/expirado |
+| 403 | Perfil diferente de Admin |
+| 400 | ID ausente/inválido/vazio |
+| 404 | Usuário inexistente, inclusive numa segunda exclusão |
 | 500 | Falha inesperada de execução/persistência |
 
-Mechanic não pode remover outros usuários nem a própria conta. A remoção impede nova autenticação da conta removida, mas não revoga tokens anteriores. Uma operação que dependa de um registro removido pode falhar por ausência do recurso, sem invalidar a sessão inteira. Não acrescentar regras de proteção do último Admin ou de autoexclusão sem requisito adicional.
+Contrato de erros alinhado à API por escolha do mantenedor em 13/10/2026, substituindo os códigos antigos desta operação. Preservar challenge/forbid e Problem Details, sem credenciais ou dados cadastrais nas mensagens.
 
-### Adequação das respostas dos novos métodos de users
+O controller exige Admin pelo atributo Authorize, sem exigir NameIdentifier do autor nem consultar seu cadastro a cada requisição. A query identifica o alvo. O serviço valida UUID e executa DELETE fixo parametrizado; quantidade zero de linhas afetadas resulta em 404, sem SELECT prévio. Nenhuma tabela além de users é alterada.
 
-Os códigos 204/401/400/500 foram definidos explicitamente pelo usuário. O middleware atual também possui mapeamentos 404/409, e a autorização por perfil pode produzir resposta de acesso negado distinta de 401. Na implementação, adequar **estas novas operações** ao contrato: ausência/conflito de alvo como 400 e negativas de acesso como 401. Preservar os contratos existentes das outras rotas. Não transformar falhas de infraestrutura em erro de credencial.
+Mechanic não pode remover outros usuários nem a própria conta. Admin pode excluir Admin/Mechanic, inclusive sua própria conta e o último Admin; não há proteção adicional definida. A remoção impede novo login, mas não revoga JWTs anteriores. Rotas permitidas pelo perfil continuam aceitando o token até expirar; GET próprio de Mechanic e PATCH próprio retornam 404 ao resolver a conta removida. Reutilizar o nome em uma nova conta não transfere a identidade do token anterior.
+
+No Postman, `DeleteUser` usa admin_token e user_id inicialmente vazios. Preencher user_id com o UUID do cadastro a excluir, obtido na consulta de usuários.
 
 ## 5. POST /customers/validate — validação serverless do documento (CPF/CNPJ)
 
@@ -178,6 +201,8 @@ O contrato estático do produtor fica em [contracts/openapi.json](https://github
 
 ## 6. JWT e autenticação interna
 
+**Implementação E4 — primeira entrega:** cadastro/login internos aceitam somente Admin/Mechanic, com validação nominal antes do banco; perfis incompatíveis no corpo retornam 400, credenciais incorretas/cadastro ausente retornam 401. O emissor interno acrescenta NameIdentifier usando o UUID persistido, como já faz a Lambda para Customer. Por revisão solicitada em 13/10/2026, os mapeadores constroem o domínio diretamente, sem try/catch: identidade/perfil persistidos inválidos propagam DomainValidationException (400 pelo middleware), sem emitir JWT. Algoritmo, expiração e tolerância são preservados; a validação global ainda aceita tokens anteriores sem ID. A matriz das rotas existentes e o vínculo da OS estão implementados nesta entrega: Mechanic opera a oficina, Admin administra o cadastro de usuários e Customer acessa status/decisão de sua própria OS. Admin não herda permissões operacionais; PATCH próprio e DELETE estão implementados localmente. Validação desta entrega é local; PR/deploy e conferência AWS ficam com o mantenedor.
+
 O JWT segue `Infrastructure/Authentication/JwtTokenGenerator.cs` e a validação de `GerenciamentoMecanicaSistema/Program.cs`:
 
 - Assinatura simétrica **HS256** com a configuração `Jwt:Key`; manter a exigência atual de chave com pelo menos 32 caracteres na API.
@@ -191,6 +216,8 @@ O JWT segue `Infrastructure/Authentication/JwtTokenGenerator.cs` e a validação
 O login **interno** continua em `POST /authentication`, com `name/password/role`, verificação do hash de senha e resposta 200 com token ou 401/400 conforme o fluxo atual. Passa a atender Admin e Mechanic; não é o caminho de validação de clientes. A ampliação de claims não altera algoritmo, formato JWT ou estratégia de sessão.
 
 ## 7. Cadastro e status de clientes
+
+**Implementação E4 — primeira entrega:** domínio e persistência da API representam Active/Inactive. `GET /Customers` retorna o campo `status` como string, incluindo clientes em ambos os estados. O cadastro define Active; a atualização preserva o estado carregado e não escreve a coluna status. Status ausente/desconhecido nos dados persistidos é falha técnica, sem fallback para Active. POST/PATCH não incluem status em seus contratos; um campo extra enviado é ignorado e não altera o estado. Fixtures PostgreSQL locais preparam Inactive para validar a preservação, sem operação pública de inativação. Conferência de Inactive real na AWS continua pendente.
 
 - Estados do modelo: Ativo e Inativo.
 - Novos clientes são criados como **Ativo** no servidor, independentemente de campo enviado pelo consumidor.

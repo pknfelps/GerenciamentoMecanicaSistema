@@ -2,6 +2,10 @@ $kind: http-request
 name: GetVehicles
 url: "{{base_url}}/vehicles"
 method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{mechanic_token}}"
 queryParams:
   - key: id
     value: ""

@@ -2,7 +2,7 @@
 
 [Arquitetura](../README.md) · [Contrato completo](../ACESSO_E_AUTENTICACAO.md)
 
-Fluxo alvo: validação cadastral sem senha; a função emite um token Customer. Isso não cria uma OS nem um usuário interno.
+Fluxo implementado: validação cadastral sem senha; a função emite um token Customer. Isso não cria uma OS nem um usuário interno.
 
 ```mermaid
 sequenceDiagram
@@ -40,13 +40,30 @@ sequenceDiagram
         C->>G: GET de status da OS + Bearer JWT
         G->>A: HTTP proxy preservando Bearer, caminho e corpo
         A->>A: Validar assinatura, issuer, audience, validade e role
-        alt JWT/permissão inválidos
-            A-->>G: Erro de autenticação/autorização
+        alt JWT ou identidade obrigatória inválidos
+            A-->>G: 401
+        else Perfil sem permissão
+            A-->>G: 403
         else Identidade autorizada
             A->>D: Resolver cliente pelo ID e consultar vínculo da OS
             D-->>A: Vínculo/status ou ausência
             A->>A: Permitir somente OS do próprio cliente
-            A-->>G: 200 com status ou erro conforme contrato
+            A-->>G: 200 com status; ausência ou OS de terceiro retorna 404 genérico
+        end
+        G-->>C: Resposta da aplicação
+    end
+    opt Cliente decide orçamento
+        C->>G: PATCH budget com documento e approved + JWT Customer
+        G->>A: HTTP proxy preservando Bearer
+        A->>A: Exigir Customer e único UUID do token
+        A->>D: Resolver cliente e consultar sua OS
+        alt Sem vínculo ou cadastro
+            A-->>G: 404 genérico, sem alteração
+        else Documento divergente ou estado inválido
+            A-->>G: 422, sem alteração
+        else Decisão válida
+            A->>D: Atualizar OS/histórico; restaurar estoque na recusa em transação
+            A-->>G: 204
         end
         G-->>C: Resposta da aplicação
     end
@@ -54,4 +71,6 @@ sequenceDiagram
 
 Falha ao obter secrets também é técnica e interrompe o fluxo com 5xx. Não registrar CPF/CNPJ, token ou valores de secrets. A elegibilidade Ativo é verificada na emissão: inativação/remoção posterior não revoga automaticamente uma sessão existente. A consulta ainda depende da existência dos recursos e do vínculo com a OS.
 
-O JWT segue o contrato atual, com expiração emitida em UTC + 10 minutos e ID estável; cada ambiente tem sua configuração. API e função compartilharão as regras de documentos CPF/CNPJ/CNPJ e JWT pelo pacote de contratos, sem dependência do domínio de OS. A autorização de aprovação/recusa segue a mesma verificação de propriedade e é exclusiva de Customer.
+O JWT segue o contrato atual, com expiração emitida em UTC + 10 minutos e ID estável; cada ambiente tem sua configuração. API e função compartilham as regras de documentos CPF/CNPJ e JWT pelo pacote de contratos, sem dependência do domínio de OS. A autorização de aprovação/recusa segue a mesma verificação de propriedade e é exclusiva de Customer.
+
+Autorização por perfil e vínculo preparada e validada em HTTP/PostgreSQL local na E4 em 13/10/2026. A implantação destas mudanças e sua conferência real via Gateway ainda serão realizadas pelo mantenedor; SMTP, SQL direto do histórico e sanitização de logs seguem pendentes.

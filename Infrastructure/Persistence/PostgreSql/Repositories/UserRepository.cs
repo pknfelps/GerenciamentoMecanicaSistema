@@ -28,6 +28,38 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
                 WHERE name = @Name AND role = @Role;
                 """;
 
+        public static string GetUserByIdSql { get; private set; } = """
+                SELECT id, name, role
+                FROM users
+                WHERE id = @Id;
+                """;
+
+        public async Task<IUser?> GetUserById(Guid id)
+        {
+            var user = await Connection.QuerySingleOrDefaultAsync<UserDb>(GetUserByIdSql, new { Id = id }, Transaction);
+            return user?.ToDomain();
+        }
+
+        public static string UpdateUserSql { get; private set; } = """
+                UPDATE users
+                SET name = COALESCE(@Name, name), password = COALESCE(@PasswordHash, password)
+                WHERE id = @Id;
+                """;
+
+        public async Task<int> UpdateUser(Guid id, string? name, string? passwordHash)
+        {
+            return await Connection.ExecuteAsync(UpdateUserSql, new { Id = id, Name = name, PasswordHash = passwordHash }, Transaction);
+        }
+
+        public static string DeleteUserSql { get; private set; } = """
+                DELETE FROM users WHERE id = @Id;
+                """;
+
+        public async Task<int> DeleteUser(Guid id)
+        {
+            return await Connection.ExecuteAsync(DeleteUserSql, new { Id = id }, Transaction);
+        }
+
         public async Task<int> RegisterUser(IUserCredentials credentials)
         {
             return await Connection.ExecuteAsync(RegisterUserSql, UserDb.Create(credentials), Transaction);

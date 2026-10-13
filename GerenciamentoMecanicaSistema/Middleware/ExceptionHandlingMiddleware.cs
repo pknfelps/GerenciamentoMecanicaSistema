@@ -52,6 +52,7 @@ namespace GerenciamentoMecanicaSistema.Middleware
             exception switch
             {
                 InvalidRequestException => StatusCodes.Status400BadRequest,
+                AccessDeniedException => StatusCodes.Status403Forbidden,
                 NotFoundException => StatusCodes.Status404NotFound,
                 ConflictException => StatusCodes.Status409Conflict,
                 BusinessRuleException => StatusCodes.Status422UnprocessableEntity,
@@ -91,6 +92,7 @@ namespace GerenciamentoMecanicaSistema.Middleware
             statusCode switch
             {
                 StatusCodes.Status400BadRequest => "Requisição inválida",
+                StatusCodes.Status403Forbidden => "Acesso negado",
                 StatusCodes.Status404NotFound => "Recurso não encontrado",
                 StatusCodes.Status409Conflict => "Conflito",
                 StatusCodes.Status422UnprocessableEntity => "Regra de negócio violada",

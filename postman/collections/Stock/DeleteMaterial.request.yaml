@@ -1,4 +1,8 @@
 $kind: http-request
 url: "{{base_url}}/stock/{{material_id}}"
 method: DELETE
+auth:
+  type: bearer
+  credentials:
+    token: "{{mechanic_token}}"
 order: 6000

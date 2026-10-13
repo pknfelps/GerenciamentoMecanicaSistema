@@ -1,6 +1,10 @@
 $kind: http-request
 url: "{{base_url}}/stock"
 method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{mechanic_token}}"
 queryParams:
   - key: id
     value: null
