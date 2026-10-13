@@ -12,6 +12,8 @@ values:
     value: ''
   - key: customer_document
     value: 662.119.730-63
+  - key: user_id
+    value: ''
   - key: customer_id
     value: ''
   - key: vehicle_id

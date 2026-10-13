@@ -51,6 +51,15 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
             return await Connection.ExecuteAsync(UpdateUserSql, new { Id = id, Name = name, PasswordHash = passwordHash }, Transaction);
         }
 
+        public static string DeleteUserSql { get; private set; } = """
+                DELETE FROM users WHERE id = @Id;
+                """;
+
+        public async Task<int> DeleteUser(Guid id)
+        {
+            return await Connection.ExecuteAsync(DeleteUserSql, new { Id = id }, Transaction);
+        }
+
         public async Task<int> RegisterUser(IUserCredentials credentials)
         {
             return await Connection.ExecuteAsync(RegisterUserSql, UserDb.Create(credentials), Transaction);

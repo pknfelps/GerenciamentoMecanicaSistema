@@ -14,6 +14,38 @@ namespace ServiceTests
 {
     public class UserServiceTests
     {
+        [Test]
+        public async Task DeletesOnlyRequestedIdentityWithoutLoadingAccount()
+        {
+            UserRepository.DeleteUser(ExistingUserId).Returns(1);
+            await UserService.DeleteUser(ExistingUserId);
+            await UserRepository.Received(1).DeleteUser(ExistingUserId);
+            await UserRepository.DidNotReceiveWithAnyArgs().GetUserById(Guid.Empty);
+            await UserRepository.DidNotReceiveWithAnyArgs().GetUser(default!, default!);
+            await UserRepository.DidNotReceiveWithAnyArgs().GetUserCredentials(default!, default!);
+        }
+
+        [Test]
+        public async Task MissingDeletedUserIsNotFound()
+        {
+            Assert.ThrowsAsync<NotFoundException>(() => UserService.DeleteUser(ExistingUserId));
+            await UserRepository.Received(1).DeleteUser(ExistingUserId);
+        }
+
+        [Test]
+        public async Task EmptyDeletedIdentityDoesNotCallRepository()
+        {
+            Assert.ThrowsAsync<InvalidRequestException>(() => UserService.DeleteUser(Guid.Empty));
+            await UserRepository.DidNotReceiveWithAnyArgs().DeleteUser(Guid.Empty);
+        }
+
+        [Test]
+        public void DeleteFailurePropagatesAsTechnicalFailure()
+        {
+            UserRepository.DeleteUser(ExistingUserId).Returns(Task.FromException<int>(new InvalidOperationException("test failure")));
+            Assert.ThrowsAsync<InvalidOperationException>(() => UserService.DeleteUser(ExistingUserId));
+        }
+
         private Domain.User.User PrepareOwnAccount()
         {
             var user = new Domain.User.User(ExistingUserId, "Original mechanic", "Mechanic");

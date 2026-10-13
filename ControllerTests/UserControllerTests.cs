@@ -48,6 +48,66 @@ namespace ControllerTests
         }
 
         [Test]
+        public async Task DeletesQueryTargetWithoutRequiringAdminIdentity()
+        {
+            TestClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthorizationTestTokens.Create("Admin", null));
+            using var response = await TestClient.DeleteAsync($"/Users?id={ExistingUserId}");
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+            Assert.That(await response.Content.ReadAsStringAsync(), Is.Empty);
+            await UserService.Received(1).DeleteUser(ExistingUserId);
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("invalid")]
+        [TestCase("00000000-0000-0000-0000-000000000000")]
+        public async Task InvalidDeleteIdDoesNotCallService(string? id)
+        {
+            using var response = await TestClient.DeleteAsync(id is null ? "/Users" : $"/Users?id={id}");
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+            await UserService.DidNotReceiveWithAnyArgs().DeleteUser(Guid.Empty);
+        }
+
+        [Test]
+        public async Task DeleteDoesNotReadTargetFromBody()
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Delete, "/Users") { Content = JsonContent.Create(new { id = ExistingUserId }) };
+            using var response = await TestClient.SendAsync(request);
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+            await UserService.DidNotReceiveWithAnyArgs().DeleteUser(Guid.Empty);
+        }
+
+        [TestCase("Mechanic", HttpStatusCode.Forbidden)]
+        [TestCase("Customer", HttpStatusCode.Forbidden)]
+        [TestCase("User", HttpStatusCode.Forbidden)]
+        [TestCase("Other", HttpStatusCode.Forbidden)]
+        [TestCase("missing", HttpStatusCode.Unauthorized)]
+        [TestCase("invalid", HttpStatusCode.Unauthorized)]
+        [TestCase("expired", HttpStatusCode.Unauthorized)]
+        public async Task UnauthorizedDeleteDoesNotCallService(string scenario, HttpStatusCode expected)
+        {
+            var role = scenario is "missing" or "invalid" or "expired" ? "Admin" : scenario;
+            var token = AuthorizationTestTokens.Create(role, TestIdentityId.ToString(),
+                expires: scenario == "expired" ? DateTime.UtcNow.AddMinutes(-6) : null);
+            if (scenario == "invalid") token += "x";
+            TestClient.DefaultRequestHeaders.Authorization = scenario == "missing" ? null : new AuthenticationHeaderValue("Bearer", token);
+            using var response = await TestClient.DeleteAsync($"/Users?id={ExistingUserId}");
+            Assert.That(response.StatusCode, Is.EqualTo(expected));
+            await UserService.DidNotReceiveWithAnyArgs().DeleteUser(Guid.Empty);
+        }
+
+        [TestCase(false, HttpStatusCode.NotFound)]
+        [TestCase(true, HttpStatusCode.InternalServerError)]
+        public async Task MapsDeleteFailureWithoutCredentialDetails(bool unexpected, HttpStatusCode expected)
+        {
+            Exception failure = unexpected ? new InvalidOperationException("secret-password-hash test failure") : new NotFoundException("Usuário não encontrado");
+            UserService.DeleteUser(ExistingUserId).Returns(_ => throw failure);
+            using var response = await TestClient.DeleteAsync($"/Users?id={ExistingUserId}");
+            Assert.That(response.StatusCode, Is.EqualTo(expected));
+            Assert.That(await response.Content.ReadAsStringAsync(), Does.Not.Contain("secret-password-hash").And.Not.Contain("test failure"));
+        }
+
+        [Test]
         public async Task MustRegisterUser()
         {
             var response = await TestClient.PostAsJsonAsync("users", UserToRegister);

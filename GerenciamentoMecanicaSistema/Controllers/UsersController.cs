@@ -3,6 +3,7 @@ using GerenciamentoMecanicaSistema.Contracts.Responses.User;
 using GerenciamentoMecanicaSistema.Contracts.Validation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Service.Interface;
 using GerenciamentoMecanicaSistema.Authorization;
 
@@ -73,6 +74,21 @@ namespace GerenciamentoMecanicaSistema.Controllers
                 return Challenge();
 
             await UsersService.UpdateOwnUser(userId, request.ToCommand());
+            return NoContent();
+        }
+
+        [HttpDelete()]
+        [Authorize(Roles = "Admin")]
+        [EndpointDescription("Endpoint para excluir um usuário")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Identificação do usuário inválida")]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden, Description = "Perfil sem permissão para esta operação")]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Description = "Usuário não encontrado")]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
+        public async Task<IActionResult> DeleteUser([FromQuery, BindRequired, GuidValidation] Guid id)
+        {
+            await UsersService.DeleteUser(id);
             return NoContent();
         }
     }

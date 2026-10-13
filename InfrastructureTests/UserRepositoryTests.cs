@@ -9,6 +9,17 @@ namespace InfrastructureTests
 {
     public class UserRepositoryTests : BaseRepositoryTests
     {
+        [Test]
+        public async Task DeleteRemovesOnlyTargetAndRepeatedDeleteAffectsNoRows()
+        {
+            await Repository.RegisterUser(UserToRegister);
+            Assert.That(await Repository.DeleteUser(ExistingUser.User.Id), Is.EqualTo(1));
+            Assert.That(await Repository.GetUserById(ExistingUser.User.Id), Is.Null);
+            Assert.That((await Repository.GetUserById(UserToRegister.User.Id))!.Name, Is.EqualTo(UserToRegister.User.Name));
+            Assert.That(await Repository.DeleteUser(ExistingUser.User.Id), Is.Zero);
+            Assert.That(await Repository.DeleteUser(Guid.NewGuid()), Is.Zero);
+        }
+
         [TestCase("Changed name", null)]
         [TestCase(null, "Changed-password-hash")]
         [TestCase("Changed name", "Changed-password-hash")]

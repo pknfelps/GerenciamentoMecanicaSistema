@@ -1,7 +1,7 @@
 # E0 — Especificação de acesso e autenticação
 
 - **Data:** 2026-09-13.
-- **Estado:** especificação consolidada; autorização das rotas existentes e vínculo da OS implementados/testados localmente na E4 em 13/10/2026. PATCH próprio implementado/testado localmente; DELETE users permanece futuro; deploy/conferência AWS desta entrega pendentes.
+- **Estado:** especificação consolidada; autorização das rotas existentes e vínculo da OS implementados/testados localmente na E4 em 13/10/2026. PATCH próprio e DELETE implementados/testados localmente; deploy/conferência AWS desta entrega pendentes.
 - **Referências:** [arquitetura](README.md), [identidade e permissões](adrs/001-IDENTIDADE.md) e [integração em execução](rfcs/001-EXECUCAO.md).
 - **Origem:** regras de negócio definidas pelo usuário nesta sessão; detalhes de contrato abaixo concretizam essas regras com base no código atual.
 
@@ -28,7 +28,7 @@ As rotas são apresentadas em minúsculas para uniformizar o contrato; as atuais
 | POST | `/users` | Sim | Não | Não | Não | API |
 | GET | `/users` | Sim | Próprio | Não | Não | API |
 | PATCH | `/users` | Próprio | Próprio | Não | Não | API — implementada localmente |
-| DELETE | `/users` | Sim | Não | Não | Não | API — nova |
+| DELETE | `/users` | Sim | Não | Não | Não | API — implementada localmente |
 | POST | `/customers` | Não | Sim | Não | Não | API |
 | GET | `/customers` | Não | Sim | Não | Não | API |
 | PATCH | `/customers/{id}` | Não | Sim | Não | Não | API |
@@ -88,7 +88,7 @@ O OpenAPI `/openapi/v1.json` e a interface `/swagger` permanecem sem autenticaç
 | Documento divergente na OS própria ou transição inválida | 422 |
 | Falha inesperada | 500 |
 
-O helper HTTP exige um único NameIdentifier UUID válido em GET Users de Mechanic, PATCH Users de Admin/Mechanic e status/orçamento de Customer. As outras rotas preservam a validação JWT existente, sem exigência global de ID ou leitura de cadastro para cada token. ClaimsPrincipal fica nos controllers; serviços recebem UUID. Negativas de challenge/forbid preservam seus formatos atuais; filtros de conta usam AccessDeniedException/Problem Details. Testes percorrem as 36 ações protegidas e exercitam HTTP/PostgreSQL, incluindo estoque/histórico intactos nas negativas e token anterior à inativação. A conferência pelo Gateway continua pendente de deploy.
+O helper HTTP exige um único NameIdentifier UUID válido em GET Users de Mechanic, PATCH Users de Admin/Mechanic e status/orçamento de Customer. As outras rotas preservam a validação JWT existente, sem exigência global de ID ou leitura de cadastro para cada token. ClaimsPrincipal fica nos controllers; serviços recebem UUID. Negativas de challenge/forbid preservam seus formatos atuais; filtros de conta usam AccessDeniedException/Problem Details. Testes percorrem as 37 ações protegidas e exercitam HTTP/PostgreSQL, incluindo estoque/histórico intactos nas negativas e token anterior à inativação. A conferência pelo Gateway continua pendente de deploy.
 
 ## 3. PATCH /users — atualizar a própria conta
 
@@ -130,7 +130,7 @@ Após mudar nome/senha, o token assinado permanece válido até expirar; não ex
 
 ## 4. DELETE /users — remover usuário
 
-**Autorização:** somente Admin. Para manter a rota `/users`, identificar o alvo por query obrigatória `id` (UUID), sem corpo.
+**Implementação local E4.12 em 13/10/2026:** somente Admin. O alvo é selecionado pela query obrigatória `id` (UUID não vazio), sem corpo. Publicação e conferência AWS desta entrega permanecem pendentes.
 
 ```http
 DELETE /users?id=<uuid-do-usuario>
@@ -140,15 +140,19 @@ Authorization: Bearer <token-admin>
 | Código | Significado |
 |---|---|
 | 204 | Remoção concluída, sem corpo |
-| 401 | Token ausente/inválido/expirado ou perfil diferente de Admin |
-| 400 | ID ausente/inválido ou usuário não encontrado |
+| 401 | Token ausente/inválido/expirado |
+| 403 | Perfil diferente de Admin |
+| 400 | ID ausente/inválido/vazio |
+| 404 | Usuário inexistente, inclusive numa segunda exclusão |
 | 500 | Falha inesperada de execução/persistência |
 
-Mechanic não pode remover outros usuários nem a própria conta. A remoção impede nova autenticação da conta removida, mas não revoga tokens anteriores. Uma operação que dependa de um registro removido pode falhar por ausência do recurso, sem invalidar a sessão inteira. Não acrescentar regras de proteção do último Admin ou de autoexclusão sem requisito adicional.
+Contrato de erros alinhado à API por escolha do mantenedor em 13/10/2026, substituindo os códigos antigos desta operação. Preservar challenge/forbid e Problem Details, sem credenciais ou dados cadastrais nas mensagens.
 
-### Adequação das respostas dos novos métodos de users
+O controller exige Admin pelo atributo Authorize, sem exigir NameIdentifier do autor nem consultar seu cadastro a cada requisição. A query identifica o alvo. O serviço valida UUID e executa DELETE fixo parametrizado; quantidade zero de linhas afetadas resulta em 404, sem SELECT prévio. Nenhuma tabela além de users é alterada.
 
-O PATCH foi alinhado à API em 13/10/2026: 401 para autenticação/identidade inválidas, 403 para perfil sem permissão, 404 para conta ausente e 409 para conflito. Os códigos antigos 204/401/400/500 permanecem na especificação futura do DELETE e deverão ser confirmados no planejamento próprio dessa operação. Não transformar falhas de infraestrutura em erro de credencial.
+Mechanic não pode remover outros usuários nem a própria conta. Admin pode excluir Admin/Mechanic, inclusive sua própria conta e o último Admin; não há proteção adicional definida. A remoção impede novo login, mas não revoga JWTs anteriores. Rotas permitidas pelo perfil continuam aceitando o token até expirar; GET próprio de Mechanic e PATCH próprio retornam 404 ao resolver a conta removida. Reutilizar o nome em uma nova conta não transfere a identidade do token anterior.
+
+No Postman, `DeleteUser` usa admin_token e user_id inicialmente vazios. Preencher user_id com o UUID do cadastro a excluir, obtido na consulta de usuários.
 
 ## 5. POST /customers/validate — validação serverless do documento (CPF/CNPJ)
 
@@ -197,7 +201,7 @@ O contrato estático do produtor fica em [contracts/openapi.json](https://github
 
 ## 6. JWT e autenticação interna
 
-**Implementação E4 — primeira entrega:** cadastro/login internos aceitam somente Admin/Mechanic, com validação nominal antes do banco; perfis incompatíveis no corpo retornam 400, credenciais incorretas/cadastro ausente retornam 401. O emissor interno acrescenta NameIdentifier usando o UUID persistido, como já faz a Lambda para Customer. Por revisão solicitada em 13/10/2026, os mapeadores constroem o domínio diretamente, sem try/catch: identidade/perfil persistidos inválidos propagam DomainValidationException (400 pelo middleware), sem emitir JWT. Algoritmo, expiração e tolerância são preservados; a validação global ainda aceita tokens anteriores sem ID. A matriz das rotas existentes e o vínculo da OS estão implementados nesta entrega: Mechanic opera a oficina, Admin administra o cadastro de usuários e Customer acessa status/decisão de sua própria OS. Admin não herda permissões operacionais; PATCH próprio está implementado; DELETE users ainda não existe. Validação desta entrega é local; PR/deploy e conferência AWS ficam com o mantenedor.
+**Implementação E4 — primeira entrega:** cadastro/login internos aceitam somente Admin/Mechanic, com validação nominal antes do banco; perfis incompatíveis no corpo retornam 400, credenciais incorretas/cadastro ausente retornam 401. O emissor interno acrescenta NameIdentifier usando o UUID persistido, como já faz a Lambda para Customer. Por revisão solicitada em 13/10/2026, os mapeadores constroem o domínio diretamente, sem try/catch: identidade/perfil persistidos inválidos propagam DomainValidationException (400 pelo middleware), sem emitir JWT. Algoritmo, expiração e tolerância são preservados; a validação global ainda aceita tokens anteriores sem ID. A matriz das rotas existentes e o vínculo da OS estão implementados nesta entrega: Mechanic opera a oficina, Admin administra o cadastro de usuários e Customer acessa status/decisão de sua própria OS. Admin não herda permissões operacionais; PATCH próprio e DELETE estão implementados localmente. Validação desta entrega é local; PR/deploy e conferência AWS ficam com o mantenedor.
 
 O JWT segue `Infrastructure/Authentication/JwtTokenGenerator.cs` e a validação de `GerenciamentoMecanicaSistema/Program.cs`:
 

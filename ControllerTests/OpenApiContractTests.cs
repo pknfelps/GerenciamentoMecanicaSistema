@@ -137,6 +137,22 @@ public sealed class OpenApiContractTests
         document.RootElement.GetProperty("paths").GetProperty(path).GetProperty(method);
 
     [Test]
+    public void UserDeleteDescribesRequiredUuidQueryBearerAndEmptyResponse()
+    {
+        var operation = Operation("/Users", "delete");
+        Assert.That(operation.GetProperty("security")[0].TryGetProperty("Bearer", out _), Is.True);
+        foreach (var code in new[] { "204", "400", "401", "403", "404", "500" })
+            Assert.That(operation.GetProperty("responses").TryGetProperty(code, out _), Is.True, code);
+        var parameter = operation.GetProperty("parameters").EnumerateArray().Single();
+        Assert.That(parameter.GetProperty("name").GetString(), Is.EqualTo("id"));
+        Assert.That(parameter.GetProperty("in").GetString(), Is.EqualTo("query"));
+        Assert.That(parameter.GetProperty("required").GetBoolean(), Is.True);
+        Assert.That(parameter.GetProperty("schema").GetProperty("format").GetString(), Is.EqualTo("uuid"));
+        Assert.That(operation.TryGetProperty("requestBody", out _), Is.False);
+        Assert.That(operation.GetProperty("responses").GetProperty("204").TryGetProperty("content", out _), Is.False);
+    }
+
+    [Test]
     public void OwnUserPatchDescribesOptionalFieldsBearerAndResponses()
     {
         var operation = Operation("/Users", "patch");

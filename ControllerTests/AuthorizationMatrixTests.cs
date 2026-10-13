@@ -16,6 +16,7 @@ public sealed class AuthorizationMatrixTests
     [
         ("POST", "/Users", "Admin"), ("GET", "/Users", "Admin,Mechanic"),
         ("PATCH", "/Users", "Admin,Mechanic"),
+        ("DELETE", "/Users?id=" + OrderId, "Admin"),
         ("POST", "/Customers", "Mechanic"), ("GET", "/Customers", "Mechanic"),
         ("PATCH", $"/Customers/{OrderId}", "Mechanic"), ("DELETE", $"/Customers/{OrderId}", "Mechanic"),
         ("POST", "/Vehicles", "Mechanic"), ("GET", "/Vehicles", "Mechanic"),

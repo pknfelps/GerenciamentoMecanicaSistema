@@ -8,6 +8,7 @@ namespace Service.Interface.Persistence
         Task<IUser?> GetUser(string name, string role);
         Task<IUser?> GetUserById(Guid id);
         Task<int> UpdateUser(Guid id, string? name, string? passwordHash);
+        Task<int> DeleteUser(Guid id);
         Task<IUserCredentials?> GetUserCredentials(string name, string role);
     }
 }

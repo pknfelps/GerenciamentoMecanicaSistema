@@ -9,5 +9,6 @@ namespace Service.Interface
         Task<UserResult?> GetUser(string name = "", string role = "");
         Task<UserResult?> GetOwnUser(Guid userId, string name = "", string role = "");
         Task UpdateOwnUser(Guid userId, UpdateOwnUserCommand command);
+        Task DeleteUser(Guid id);
     }
 }

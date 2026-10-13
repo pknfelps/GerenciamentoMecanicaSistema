@@ -329,4 +329,79 @@ public sealed class IdentityPersistenceTests
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         Assert.That(await connection.QuerySingleAsync<int>("SELECT COUNT(*) FROM users"), Is.Zero);
     }
+
+    [TestCase("Admin")]
+    [TestCase("Mechanic")]
+    public async Task AdminDeletesOnlyTargetAndRepeatedDeleteIs404(string targetRole)
+    {
+        var targetId = await RegisterAccount(targetRole);
+        var otherId = Guid.NewGuid();
+        await connection.ExecuteAsync("INSERT INTO users VALUES (@Id, 'Other user', @Hash, 'Mechanic')", new { Id = otherId, Hash = "other-local-hash" });
+        var customerId = Guid.NewGuid();
+        await connection.ExecuteAsync("INSERT INTO customers VALUES (@Id, 'Test customer', '662.119.730-63', '(11) 91234-5678', 'customer@example.com', 'Active')", new { Id = customerId });
+        using var deleted = await client.DeleteAsync($"/Users?id={targetId}");
+        Assert.That(deleted.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+        Assert.That(await deleted.Content.ReadAsStringAsync(), Is.Empty);
+        Assert.That(await connection.QuerySingleAsync<int>("SELECT COUNT(*) FROM users WHERE id = @Id", new { Id = targetId }), Is.Zero);
+        Assert.That(await connection.QuerySingleAsync<string>("SELECT password FROM users WHERE id = @Id", new { Id = otherId }), Is.EqualTo("other-local-hash"));
+        Assert.That(await connection.QuerySingleAsync<int>("SELECT COUNT(*) FROM customers WHERE id = @Id", new { Id = customerId }), Is.EqualTo(1));
+        using var repeated = await client.DeleteAsync($"/Users?id={targetId}");
+        Assert.That(repeated.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        using var login = await client.PostAsJsonAsync("/Authentication", new { name = "Original user", password = "Original@Test123", role = targetRole });
+        Assert.That(login.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+    }
+
+    [Test]
+    public async Task RemovingLastAdminDoesNotRevokeItsExistingToken()
+    {
+        var id = await RegisterAccount("Admin");
+        var token = await LoginToken("Original user", "Original@Test123", "Admin");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        using var deleted = await client.DeleteAsync($"/Users?id={id}");
+        Assert.That(deleted.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+        Assert.That(await connection.QuerySingleAsync<int>("SELECT COUNT(*) FROM users"), Is.Zero);
+        using var patch = await client.PatchAsJsonAsync("/Users", new { name = "Changed user" });
+        Assert.That(patch.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        using var login = await client.PostAsJsonAsync("/Authentication", new { name = "Original user", password = "Original@Test123", role = "Admin" });
+        Assert.That(login.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+        // Authorization still accepts this JWT on a route that does not load its account.
+        using var registration = await client.PostAsJsonAsync("/Users", new { name = "Replacement admin", password = "Replacement@Test123", role = "Admin" });
+        Assert.That(registration.StatusCode, Is.EqualTo(HttpStatusCode.Created));
+    }
+
+    [Test]
+    public async Task RemovedMechanicTokenKeepsPermissionsWithoutTransferringIdentity()
+    {
+        var id = await RegisterAccount("Mechanic");
+        var token = await LoginToken("Original user", "Original@Test123", "Mechanic");
+        using var deleted = await client.DeleteAsync($"/Users?id={id}");
+        Assert.That(deleted.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+        using var login = await client.PostAsJsonAsync("/Authentication", new { name = "Original user", password = "Original@Test123", role = "Mechanic" });
+        Assert.That(login.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+        using var replacement = await client.PostAsJsonAsync("/Users", new { name = "Original user", password = "Replacement@Test123", role = "Mechanic" });
+        Assert.That(replacement.StatusCode, Is.EqualTo(HttpStatusCode.Created));
+        var replacementId = await connection.QuerySingleAsync<Guid>("SELECT id FROM users");
+        Assert.That(replacementId, Is.Not.EqualTo(id));
+        var before = await connection.QuerySingleAsync<string>("SELECT jsonb_agg(to_jsonb(u) ORDER BY id)::text FROM users u");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        using var allowed = await client.GetAsync("/Customers");
+        Assert.That(allowed.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        using var self = await client.GetAsync("/Users");
+        using var patch = await client.PatchAsJsonAsync("/Users", new { name = "Attempted change" });
+        Assert.That(self.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        Assert.That(patch.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        Assert.That(await connection.QuerySingleAsync<string>("SELECT jsonb_agg(to_jsonb(u) ORDER BY id)::text FROM users u"), Is.EqualTo(before));
+    }
+
+    [TestCase("Mechanic")]
+    [TestCase("Customer")]
+    public async Task UnauthorizedDeleteDoesNotChangeAccounts(string role)
+    {
+        var id = await RegisterAccount("Mechanic");
+        var before = await connection.QuerySingleAsync<string>("SELECT jsonb_agg(to_jsonb(u) ORDER BY id)::text FROM users u");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthorizationTestTokens.Create(role, id.ToString()));
+        using var other = await client.DeleteAsync($"/Users?id={id}");
+        Assert.That(other.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
+        Assert.That(await connection.QuerySingleAsync<string>("SELECT jsonb_agg(to_jsonb(u) ORDER BY id)::text FROM users u"), Is.EqualTo(before));
+    }
 }

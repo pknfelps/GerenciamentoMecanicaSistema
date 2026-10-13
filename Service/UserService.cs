@@ -92,5 +92,14 @@ namespace Service
             if (await Repository.UpdateUser(user.Id, command.Name, passwordHash) == 0)
                 throw new NotFoundException("Usuário não encontrado");
         }
+
+        public async Task DeleteUser(Guid id)
+        {
+            if (id == Guid.Empty)
+                throw new InvalidRequestException("A identificação do usuário deve ser informada");
+
+            if (await Repository.DeleteUser(id) == 0)
+                throw new NotFoundException("Usuário não encontrado");
+        }
     }
 }
