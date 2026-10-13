@@ -61,7 +61,12 @@ public sealed class IdentityPersistenceTests
     }
 
     [SetUp]
-    public async Task ResetData() => await connection.ExecuteAsync("TRUNCATE customers, users");
+    public async Task ResetData()
+    {
+        await connection.ExecuteAsync("TRUNCATE customers, users");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",
+            AuthorizationTestTokens.Create("Admin", Guid.NewGuid().ToString()));
+    }
 
     [OneTimeTearDown]
     public async Task TearDown()
@@ -76,6 +81,7 @@ public sealed class IdentityPersistenceTests
     [Test]
     public async Task ExtraStatusCannotCreateInactiveCustomer()
     {
+        UseMechanic();
         using var response = await client.PostAsJsonAsync("/Customers", new
         {
             name = "Test customer", document = "66211973063", phone = "11912345678",
@@ -90,6 +96,7 @@ public sealed class IdentityPersistenceTests
     [Test]
     public async Task ExtraStatusCannotReactivateCustomerOnPatch()
     {
+        UseMechanic();
         var id = Guid.NewGuid();
         await connection.ExecuteAsync("""
             INSERT INTO customers VALUES (@Id, 'Test customer', '662.119.730-63', '(11) 91234-5678', 'customer@example.com', 'Inactive')
@@ -165,10 +172,49 @@ public sealed class IdentityPersistenceTests
     [Test]
     public async Task InvalidStoredCustomerStatusIsTechnicalFailure()
     {
+        UseMechanic();
         await connection.ExecuteAsync("""
             INSERT INTO customers VALUES (@Id, 'Test customer', '662.119.730-63', '(11) 91234-5678', 'customer@example.com', 'Unknown')
             """, new { Id = Guid.NewGuid() });
         using var response = await client.GetAsync("/Customers");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+    }
+
+    private void UseMechanic() => client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",
+        new JwtIssuer(TestWebApplicationFactory.JwtKey, TestWebApplicationFactory.JwtIssuer, TestWebApplicationFactory.JwtAudience)
+            .Generate("test mechanic", "Mechanic", Guid.NewGuid()));
+
+    [Test]
+    public async Task MechanicReadsOnlyCurrentAccountByIdAndAdminCanQueryOtherAccounts()
+    {
+        var ownId = Guid.NewGuid(); var otherId = Guid.NewGuid();
+        await connection.ExecuteAsync("""
+            INSERT INTO users VALUES (@OwnId, 'Current mechanic', 'local-hash-placeholder', 'Mechanic');
+            INSERT INTO users VALUES (@OtherId, 'Other mechanic', 'local-hash-placeholder', 'Mechanic');
+            """, new { OwnId = ownId, OtherId = otherId });
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthorizationTestTokens.Create("Mechanic", ownId.ToString(), name: "Previous name"));
+        using var own = await client.GetAsync("/Users");
+        Assert.That(own.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        var body = await own.Content.ReadAsStringAsync();
+        using var json = JsonDocument.Parse(body);
+        Assert.That(json.RootElement.GetProperty("id").GetGuid(), Is.EqualTo(ownId));
+        Assert.That(json.RootElement.GetProperty("name").GetString(), Is.EqualTo("Current mechanic"));
+        Assert.That(body, Does.Not.Contain("password").And.Not.Contain("hash"));
+        using var filtered = await client.GetAsync("/Users?name=Current%20mechanic&role=Mechanic");
+        Assert.That(filtered.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        using var forbidden = await client.GetAsync("/Users?name=Other%20mechanic&role=Mechanic");
+        Assert.That(forbidden.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
+        Assert.That(await forbidden.Content.ReadAsStringAsync(), Does.Not.Contain(otherId.ToString()));
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthorizationTestTokens.Create("Admin", null));
+        using var admin = await client.GetAsync("/Users?name=Other%20mechanic&role=Mechanic");
+        Assert.That(admin.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+    }
+
+    [Test]
+    public async Task MissingOwnAccountIsNotFoundWithoutRevokingToken()
+    {
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthorizationTestTokens.Create("Mechanic", Guid.NewGuid().ToString()));
+        using var response = await client.GetAsync("/Users");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
 }

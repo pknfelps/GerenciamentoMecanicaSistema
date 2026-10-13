@@ -20,7 +20,9 @@ scripts:
       });
 
       if (pm.response.code === 200) {
-        pm.environment.set("token", pm.response.text());
+        const body = pm.response.text();
+        const token = body.startsWith('"') ? pm.response.json() : body;
+        pm.environment.set("admin_token", token);
       }
     language: text/javascript
 order: 1000

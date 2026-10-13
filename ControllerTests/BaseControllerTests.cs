@@ -11,13 +11,18 @@ namespace ControllerTests
     {
         protected TestWebApplicationFactory TestWebAppFactory { get; set; }
         protected HttpClient TestClient { get; set; }
+        protected virtual string TestRole => "Mechanic";
+        protected Guid TestIdentityId { get; } = Guid.NewGuid();
+
+        protected void UseToken(string role) => TestClient.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", GenerateTestToken(role));
 
         [SetUp]
         public virtual Task SetUp()
         {
             TestWebAppFactory = new TestWebApplicationFactory();
             TestClient = TestWebAppFactory.CreateClient();
-            TestClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GenerateTestToken());
+            UseToken(TestRole);
 
             MockService();
             
@@ -34,12 +39,13 @@ namespace ControllerTests
             return Task.CompletedTask;
         }
 
-        private static string GenerateTestToken()
+        private string GenerateTestToken(string role)
         {
             var claims = new List<Claim>
             {
-                new(ClaimTypes.Name, "Admin"),
-                new(ClaimTypes.Role, "Admin")
+                new(ClaimTypes.Name, role),
+                new(ClaimTypes.Role, role),
+                new(ClaimTypes.NameIdentifier, TestIdentityId.ToString())
             };
 
             var chave = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TestWebApplicationFactory.JwtKey));
@@ -50,7 +56,7 @@ namespace ControllerTests
                 issuer: TestWebApplicationFactory.JwtIssuer,
                 audience: TestWebApplicationFactory.JwtAudience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddSeconds(30),
+                expires: DateTime.UtcNow.AddMinutes(10),
                 signingCredentials: credenciais
             );
 

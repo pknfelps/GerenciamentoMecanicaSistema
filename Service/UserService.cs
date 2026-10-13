@@ -45,5 +45,21 @@ namespace Service
             var passwordHash = PasswordHasher.Hash(password.Value);
             return new UserCredentials(user, passwordHash);
         }
+
+        public async Task<UserResult?> GetOwnUser(Guid userId, string name = "", string role = "")
+        {
+            if (userId == Guid.Empty)
+                throw new InvalidRequestException("A identificação do usuário deve ser informada");
+
+            var user = await Repository.GetUserById(userId);
+            if (user is null)
+                return null;
+
+            if ((!string.IsNullOrEmpty(name) && name != user.Name)
+                || (!string.IsNullOrEmpty(role) && role != user.Role.ToString()))
+                throw new AccessDeniedException("A consulta deve se limitar à própria conta");
+
+            return UserResult.Create(user);
+        }
     }
 }

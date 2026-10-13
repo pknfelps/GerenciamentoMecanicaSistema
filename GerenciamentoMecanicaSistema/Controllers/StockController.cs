@@ -9,7 +9,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Mechanic")]
     public class StockController(IStockService stockService) : ControllerBase
     {
         public IStockService StockService { get; private set; } = stockService;
@@ -18,6 +18,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para registrar o item no estoque")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden, Description = "Perfil sem permissão para esta operação")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> RegisterMaterial([FromBody] CreateMaterialRequest item)
@@ -31,6 +32,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para listar os itens do estoque")]
         [ProducesResponseType(typeof(IEnumerable<MaterialResponse>), StatusCodes.Status200OK, Description = "Retorna a lista de itens no estoque")]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden, Description = "Perfil sem permissão para esta operação")]
         public async Task<OkObjectResult> GetMaterials([FromQuery] Guid? id = null, [FromQuery] string name = "", [FromQuery] string brand = "")
         {
             var itens = await StockService.GetMaterials(id, name, brand);
@@ -42,6 +44,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para adicionar quantidade a um item")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden, Description = "Perfil sem permissão para esta operação")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> AddMaterialAmount([FromRoute, GuidValidation] Guid id, [FromBody] ValueUpdateRequest<int> value)
@@ -55,6 +58,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para remover quantidade de um item")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden, Description = "Perfil sem permissão para esta operação")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> RemoveMaterialAmount([FromRoute, GuidValidation] Guid id, ValueUpdateRequest<int> value)
@@ -68,6 +72,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para atualizar o preço de um item")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden, Description = "Perfil sem permissão para esta operação")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> UpdateMaterialPrice([FromRoute, GuidValidation] Guid id, ValueUpdateRequest<decimal> value)
@@ -81,6 +86,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [EndpointDescription("Endpoint para excluir um item")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden, Description = "Perfil sem permissão para esta operação")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> DeleteMaterial([FromRoute, GuidValidation] Guid id)

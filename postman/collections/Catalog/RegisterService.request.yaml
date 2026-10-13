@@ -1,6 +1,10 @@
 $kind: http-request
 url: "{{base_url}}/catalog"
 method: POST
+auth:
+  type: bearer
+  credentials:
+    token: "{{mechanic_token}}"
 body:
   type: json
   content: "{\r

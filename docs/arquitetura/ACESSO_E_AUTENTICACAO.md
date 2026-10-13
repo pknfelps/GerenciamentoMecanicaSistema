@@ -1,7 +1,7 @@
 # E0 — Especificação de acesso e autenticação
 
 - **Data:** 2026-09-13.
-- **Estado:** especificação consolidada para implementação em E3/E4; não representa funcionalidade já implantada.
+- **Estado:** especificação consolidada; autorização das rotas existentes e vínculo da OS implementados/testados localmente na E4 em 13/10/2026. PATCH/DELETE users permanecem futuros; deploy/conferência AWS desta entrega pendentes.
 - **Referências:** [arquitetura](README.md), [identidade e permissões](adrs/001-IDENTIDADE.md) e [integração em execução](rfcs/001-EXECUCAO.md).
 - **Origem:** regras de negócio definidas pelo usuário nesta sessão; detalhes de contrato abaixo concretizam essas regras com base no código atual.
 
@@ -73,9 +73,22 @@ O OpenAPI `/openapi/v1.json` e a interface `/swagger` permanecem sem autenticaç
 ### Verificação de propriedade
 
 - **Update próprio:** obter o ID do usuário do token validado; nenhuma entrada pode selecionar outra conta.
-- **GET users:** Admin mantém a consulta atual por `name/role`. Para Mechanic, a consulta é vinculada ao ID autenticado; filtros que tentem selecionar outra conta são rejeitados e não retornam dados de terceiros.
-- **OS do cliente:** carregar a OS e verificar seu vínculo com o cliente identificado no token. Como hoje a OS referencia o documento do cliente, resolver a identidade pelo ID e conferir o documento correspondente; a existência dessa consulta não implica bloquear a sessão pelo status atual.
-- **Aprovação:** manter o campo `approved`. O `customerDocument` existente, enquanto mantido por compatibilidade, deve corresponder à identidade autenticada e nunca substitui a verificação do titular. Admin e Mechanic são rejeitados mesmo que informem o documento correto.
+- **GET users:** Admin mantém a consulta atual por `name/role`. Para Mechanic, a consulta parametrizada é vinculada exclusivamente ao UUID autenticado, sem usar o nome do token. Filtros omitidos retornam a própria conta; filtros informados devem corresponder ao cadastro atual, ou retornam 403 sem consultar outra conta. Conta própria ausente retorna 404; senha/hash não são retornados.
+- **OS do cliente:** carregar a OS e verificar seu vínculo com o cliente identificado no token. A API resolve o cliente pelo UUID do token e consulta a OS por ID/documento cadastrado, verificando o vínculo antes da decisão de estado ou de alterações. OS inexistente, de outro cliente ou cliente ausente retornam o mesmo 404 com detail `Ordem não encontrada`, sem divulgar documentos. Não revalidar Active/Inactive para bloquear uma sessão já emitida.
+- **Aprovação:** manter o campo `approved`. O `customerDocument` existente, enquanto mantido por compatibilidade, deve corresponder à identidade autenticada e nunca substitui a verificação do titular. Admin e Mechanic recebem 403 mesmo que informem o documento correto. Documento inválido retorna 400; divergência na OS própria ou transição inválida retorna 422. O titular obrigatório é obtido do JWT, não de campos adicionais do request.
+
+### Respostas das rotas existentes — E4
+
+| Situação | Resposta |
+|---|---|
+| JWT ausente/inválido/expirado; identidade obrigatória ausente, duplicada, inválida ou vazia | 401 |
+| Perfil sem permissão; filtros próprios incompatíveis | 403 |
+| OS ausente/de outro cliente; cadastro necessário ausente | 404 |
+| Request inválido | 400 |
+| Documento divergente na OS própria ou transição inválida | 422 |
+| Falha inesperada | 500 |
+
+O helper HTTP exige um único NameIdentifier UUID válido somente em GET Users de Mechanic e status/orçamento de Customer. As outras rotas preservam a validação JWT existente, sem exigência global de ID ou leitura de cadastro para cada token. ClaimsPrincipal fica nos controllers; serviços recebem UUID. Negativas de challenge/forbid preservam seus formatos atuais; filtros de conta usam AccessDeniedException/Problem Details. Testes percorrem as 35 ações protegidas e exercitam HTTP/PostgreSQL, incluindo estoque/histórico intactos nas negativas e token anterior à inativação. A conferência pelo Gateway continua pendente de deploy.
 
 ## 3. PATCH /users — atualizar a própria conta
 
@@ -178,7 +191,7 @@ O contrato estático do produtor fica em [contracts/openapi.json](https://github
 
 ## 6. JWT e autenticação interna
 
-**Implementação E4 — primeira entrega:** cadastro/login internos aceitam somente Admin/Mechanic, com validação nominal antes do banco; perfis incompatíveis no corpo retornam 400, credenciais incorretas/cadastro ausente retornam 401. O emissor interno acrescenta NameIdentifier usando o UUID persistido, como já faz a Lambda para Customer. Por revisão solicitada em 13/10/2026, os mapeadores constroem o domínio diretamente, sem try/catch: identidade/perfil persistidos inválidos propagam DomainValidationException (400 pelo middleware), sem emitir JWT. Algoritmo, expiração e tolerância são preservados; a validação global ainda aceita tokens anteriores sem ID. A aplicação da matriz de rotas e o vínculo da OS permanecem pendentes da próxima entrega; isto não concede acesso operacional a Mechanic automaticamente. Validação desta entrega é local; PR/deploy e conferência AWS ficam com o mantenedor.
+**Implementação E4 — primeira entrega:** cadastro/login internos aceitam somente Admin/Mechanic, com validação nominal antes do banco; perfis incompatíveis no corpo retornam 400, credenciais incorretas/cadastro ausente retornam 401. O emissor interno acrescenta NameIdentifier usando o UUID persistido, como já faz a Lambda para Customer. Por revisão solicitada em 13/10/2026, os mapeadores constroem o domínio diretamente, sem try/catch: identidade/perfil persistidos inválidos propagam DomainValidationException (400 pelo middleware), sem emitir JWT. Algoritmo, expiração e tolerância são preservados; a validação global ainda aceita tokens anteriores sem ID. A matriz das rotas existentes e o vínculo da OS estão implementados nesta entrega: Mechanic opera a oficina, Admin administra o cadastro de usuários e Customer acessa status/decisão de sua própria OS. Admin não herda permissões operacionais; PATCH/DELETE users ainda não existem. Validação desta entrega é local; PR/deploy e conferência AWS ficam com o mantenedor.
 
 O JWT segue `Infrastructure/Authentication/JwtTokenGenerator.cs` e a validação de `GerenciamentoMecanicaSistema/Program.cs`:
 

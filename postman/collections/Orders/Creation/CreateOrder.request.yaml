@@ -2,6 +2,10 @@ $kind: http-request
 name: CreateOrder
 url: "{{base_url}}/orders"
 method: POST
+auth:
+  type: bearer
+  credentials:
+    token: "{{mechanic_token}}"
 body:
   type: json
   content: "{\r

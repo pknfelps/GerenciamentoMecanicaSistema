@@ -9,15 +9,15 @@ namespace GerenciamentoMecanicaSistema.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Mechanic")]
     public class CatalogController(ICatalogService catalogService) : ControllerBase
     {
         private ICatalogService CatalogService { get; set; } = catalogService;
 
         [HttpPost()]
-        [EndpointDescription("Endpoint para registrar um serviço")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden, Description = "Perfil sem permissão para esta operação")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> RegisterService([FromBody] CreateServiceRequest service)
@@ -28,9 +28,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         }
 
         [HttpGet()]
-        [EndpointDescription("Endpoint para listar os serviços")]
         [ProducesResponseType(typeof(IEnumerable<ServiceResponse>), StatusCodes.Status200OK, Description = "Retorna a lista de serviços")]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden, Description = "Perfil sem permissão para esta operação")]
         public async Task<OkObjectResult> GetServices([FromQuery] Guid? id = null, [FromQuery] string description = "")
         {
             var services = await CatalogService.GetServices(id, description);
@@ -39,9 +39,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         }
 
         [HttpPatch("{id}")]
-        [EndpointDescription("Endpoint para atualizar um serviço")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden, Description = "Perfil sem permissão para esta operação")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> UpdateService([FromRoute, GuidValidation] Guid id, [FromBody] CreateServiceRequest service)
@@ -52,9 +52,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         }
 
         [HttpDelete("{serviceId}")]
-        [EndpointDescription("Endpoint para excluir um serviço")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token de autenticação inválido")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden, Description = "Perfil sem permissão para esta operação")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> DeleteService([FromRoute, GuidValidation] Guid serviceId)

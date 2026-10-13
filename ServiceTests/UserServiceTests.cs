@@ -13,6 +13,35 @@ namespace ServiceTests
 {
     public class UserServiceTests
     {
+        [Test]
+        public async Task OwnAccountUsesIdAndReturnsCurrentName()
+        {
+            var user = new Domain.User.User(Guid.NewGuid(), "Current name", "Mechanic");
+            UserRepository.GetUserById(user.Id).Returns(user);
+            var result = await UserService.GetOwnUser(user.Id);
+            Assert.That(result, Is.EqualTo(new UserResult(user.Id, user.Name, "Mechanic")));
+            await UserRepository.DidNotReceiveWithAnyArgs().GetUser(default!, default!);
+        }
+
+        [TestCase("Another name", "Mechanic")]
+        [TestCase("Current name", "Admin")]
+        public async Task OwnAccountRejectsConflictingFiltersWithoutLookingUpOthers(string name, string role)
+        {
+            var user = new Domain.User.User(Guid.NewGuid(), "Current name", "Mechanic");
+            UserRepository.GetUserById(user.Id).Returns(user);
+            Assert.ThrowsAsync<AccessDeniedException>(() => UserService.GetOwnUser(user.Id, name, role));
+            await UserRepository.Received(1).GetUserById(user.Id);
+            await UserRepository.DidNotReceiveWithAnyArgs().GetUser(default!, default!);
+        }
+
+        [Test]
+        public async Task OwnAccountReturnsNullWhenDeleted()
+        {
+            var userId = Guid.NewGuid();
+            UserRepository.GetUserById(userId).Returns((IUser?)null);
+            Assert.That(await UserService.GetOwnUser(userId), Is.Null);
+        }
+
         private IUserService UserService { get; set; }
         private IUserRepository UserRepository { get; set; }
         private IPasswordHasher PasswordHasher { get; set; }

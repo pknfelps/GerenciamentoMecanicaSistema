@@ -6,6 +6,7 @@ namespace Service.Interface.Persistence
     {
         Task<int> RegisterUser(IUserCredentials credentials);
         Task<IUser?> GetUser(string name, string role);
+        Task<IUser?> GetUserById(Guid id);
         Task<IUserCredentials?> GetUserCredentials(string name, string role);
     }
 }

@@ -2,7 +2,13 @@ name: Dev
 values:
   - key: base_url
     value: 'http://localhost:8080'
-  - key: token
+  - key: gateway_url
+    value: ''
+  - key: admin_token
+    value: ''
+  - key: mechanic_token
+    value: ''
+  - key: customer_token
     value: ''
   - key: customer_document
     value: 662.119.730-63

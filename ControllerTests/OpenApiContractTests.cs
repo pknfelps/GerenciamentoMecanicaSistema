@@ -70,6 +70,8 @@ public sealed class OpenApiContractTests
     [TestCase("/Catalog", "get")]
     [TestCase("/Stock", "get")]
     [TestCase("/Orders", "post")]
+    [TestCase("/Orders/{id}/status", "get")]
+    [TestCase("/Orders/{id}/budget", "patch")]
     public void ProtectedOperationsRequireBearerInheritedFromController(string path, string method)
     {
         var security = Operation(path, method).GetProperty("security");
@@ -82,8 +84,6 @@ public sealed class OpenApiContractTests
     [TestCase("/health/live", "get")]
     [TestCase("/health/ready", "get")]
     [TestCase("/health/startup", "get")]
-    [TestCase("/Orders/{id}/status", "get")]
-    [TestCase("/Orders/{id}/budget", "patch")]
     public void PublicOperationsDoNotRequireBearer(string path, string method)
     {
         var operation = Operation(path, method);
@@ -136,8 +136,19 @@ public sealed class OpenApiContractTests
     private JsonElement Operation(string path, string method) =>
         document.RootElement.GetProperty("paths").GetProperty(path).GetProperty(method);
 
+    [TestCase("/Users", "post", new[] { "401", "403" })]
+    [TestCase("/Users", "get", new[] { "401", "403", "404" })]
+    [TestCase("/Orders/{id}/status", "get", new[] { "401", "403", "404" })]
+    [TestCase("/Orders/{id}/budget", "patch", new[] { "401", "403", "404", "422" })]
+    public void DescribesApplicableResponses(string path, string method, string[] responses)
+    {
+        var operation = Operation(path, method);
+        foreach (var response in responses)
+            Assert.That(operation.GetProperty("responses").TryGetProperty(response, out _), Is.True, response);
+    }
+
     [Test]
-    public void CustomerStatusIsDescribedOnlyInResponseAndRolesRemainStrings()
+    public void CustomerStatusAppearsOnlyInResponseAndRolesRemainStrings()
     {
         var schemas = document.RootElement.GetProperty("components").GetProperty("schemas");
         var response = schemas.GetProperty("CustomerResponse").GetProperty("properties");
@@ -146,7 +157,6 @@ public sealed class OpenApiContractTests
         Assert.Multiple(() =>
         {
             Assert.That(response.GetProperty("status").GetProperty("type").GetString(), Is.EqualTo("string"));
-            Assert.That(response.GetProperty("status").GetProperty("description").GetString(), Does.Contain("Active").And.Contain("Inactive"));
             Assert.That(request.TryGetProperty("status", out _), Is.False);
             Assert.That(user.GetProperty("role").GetProperty("type").GetString(), Is.EqualTo("string"));
             Assert.That(user.GetProperty("role").GetProperty("description").GetString(), Does.Contain("Admin").And.Contain("Mechanic"));

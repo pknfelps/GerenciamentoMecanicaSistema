@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{gateway_url}}/customers/validate"
+method: POST
+body:
+  type: json
+  content: '{"document": "{{customer_document}}"}'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Cliente autenticado com sucesso", () => {
+        pm.response.to.have.status(200);
+      });
+      if (pm.response.code === 200) {
+        pm.environment.set("customer_token", pm.response.json());
+      }
+    language: text/javascript
+order: 3000

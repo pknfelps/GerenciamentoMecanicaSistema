@@ -28,6 +28,18 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
                 WHERE name = @Name AND role = @Role;
                 """;
 
+        public static string GetUserByIdSql { get; private set; } = """
+                SELECT id, name, role
+                FROM users
+                WHERE id = @Id;
+                """;
+
+        public async Task<IUser?> GetUserById(Guid id)
+        {
+            var user = await Connection.QuerySingleOrDefaultAsync<UserDb>(GetUserByIdSql, new { Id = id }, Transaction);
+            return user?.ToDomain();
+        }
+
         public async Task<int> RegisterUser(IUserCredentials credentials)
         {
             return await Connection.ExecuteAsync(RegisterUserSql, UserDb.Create(credentials), Transaction);

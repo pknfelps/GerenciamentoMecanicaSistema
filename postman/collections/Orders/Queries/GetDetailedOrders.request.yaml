@@ -2,6 +2,10 @@ $kind: http-request
 name: GetDetailedOrders
 url: "{{base_url}}/orders/details?id={{order_id}}"
 method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{mechanic_token}}"
 queryParams:
   - key: id
     value: "{{order_id}}"

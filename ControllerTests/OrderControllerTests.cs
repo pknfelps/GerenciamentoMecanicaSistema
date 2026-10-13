@@ -141,7 +141,7 @@ namespace ControllerTests
                 throw new NotFoundException("Recurso não encontrado");
             });
 
-            OrderService.ApproveBudget(Arg.Any<Guid>(), Arg.Any<ApproveOrderCommand>()).Returns(callInfo =>
+            OrderService.ApproveBudget(Arg.Any<Guid>(), Arg.Any<ApproveOrderCommand>(), Arg.Any<Guid>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
@@ -522,10 +522,11 @@ namespace ControllerTests
         [Test]
         public async Task MustApproveBudget()
         {
+            UseToken("Customer");
             var approve = new ApproveOrderRequest(ExistingOrder.CustomerDocument, true);
             var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/budget", approve);
 
-            await OrderService.Received(1).ApproveBudget(ExistingOrder.Id, approve.ToCommand());
+            await OrderService.Received(1).ApproveBudget(ExistingOrder.Id, approve.ToCommand(), TestIdentityId);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         }
@@ -533,10 +534,11 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnNotFoundIfTryApproveBudgetThatNotExists()
         {
+            UseToken("Customer");
             var approve = new ApproveOrderRequest(ExistingOrder.CustomerDocument, true);
             var response = await TestClient.PatchAsJsonAsync($"orders/{Guid.NewGuid()}/budget", approve);
 
-            await OrderService.Received(1).ApproveBudget(Arg.Any<Guid>(), approve.ToCommand());
+            await OrderService.Received(1).ApproveBudget(Arg.Any<Guid>(), approve.ToCommand(), TestIdentityId);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         }
@@ -544,9 +546,10 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnBadRequestIfTryApproveBudgetWithInvalidModel()
         {
+            UseToken("Customer");
             var response = await TestClient.PatchAsJsonAsync($"orders/0000/budget", new { Teste = "teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).ApproveBudget(Arg.Any<Guid>(), Arg.Any<ApproveOrderCommand>());
+            await OrderService.ReceivedWithAnyArgs(0).ApproveBudget(Arg.Any<Guid>(), Arg.Any<ApproveOrderCommand>(), Arg.Any<Guid>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }

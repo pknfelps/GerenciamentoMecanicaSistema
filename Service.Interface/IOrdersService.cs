@@ -8,6 +8,7 @@ namespace Service.Interface
     {
         Task<Guid> CreateServiceOrder(CreateOrderCommand orderToCreate);
         Task<WorkOrderStatus> GetOrderStatus(Guid orderId);
+        Task<WorkOrderStatus> GetCustomerOrderStatus(Guid orderId, Guid customerId);
         Task<IEnumerable<WorkOrderResult>> GetOperationalOrders();
         Task<IEnumerable<DetailedWorkOrderResult>> GetOrders(Guid? id = null, string customerDocument = "", string vehicleLicensePlate = "");
         Task<DetailedWorkOrderResult?> GetOrder(Guid? id = null, string customerDocument = "", string vehicleLicensePlate = "");
@@ -17,7 +18,7 @@ namespace Service.Interface
         Task AddMaterialToOrder(Guid orderId, UpdateOrderItemCommand<int> orderItem);
         Task RemoveMaterialFromOrder(Guid orderId, UpdateOrderItemCommand<int> orderItem);
         Task CompleteDiagnosis(Guid orderId);
-        Task ApproveBudget(Guid orderId, ApproveOrderCommand approve);
+        Task ApproveBudget(Guid orderId, ApproveOrderCommand approve, Guid customerId);
         Task StartExecution(Guid orderId);
         Task CompleteExecution(Guid orderId);
         Task DeliverVehicle(Guid orderId);

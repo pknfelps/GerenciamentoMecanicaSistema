@@ -100,6 +100,26 @@ namespace Service
             return orders.Select(WorkOrderResult.Create);
         }
 
+        public async Task<WorkOrderStatus> GetCustomerOrderStatus(Guid orderId, Guid customerId)
+        {
+            var order = await GetCustomerOrder(orderId, customerId);
+            return order.Status;
+        }
+
+        private async Task<IOrder> GetCustomerOrder(Guid orderId, Guid customerId)
+        {
+            if (orderId == Guid.Empty || customerId == Guid.Empty)
+                throw new InvalidRequestException("A identificação da ordem e do cliente deve ser informada");
+
+            var customer = await DependenciesGateway.GetCustomerById(customerId)
+                ?? throw new NotFoundException("Ordem não encontrada");
+            var order = await Repository.GetOrder(orderId, customer_document: customer.Document.Id);
+            if (order is null || order.CustomerDocument.Id != customer.Document.Id)
+                throw new NotFoundException("Ordem não encontrada");
+
+            return order;
+        }
+
         public async Task<IEnumerable<DetailedWorkOrderResult>> GetOrders(Guid? id = null, string customerDocument = "", string vehicleLicensePlate = "")
         {
             if (!string.IsNullOrEmpty(customerDocument))
@@ -265,9 +285,9 @@ namespace Service
             await EventDispatcher.Publish(new BudgetAvailableEvent(CreateNotificationSnapshot(order)));
         }
 
-        public async Task ApproveBudget(Guid orderId, ApproveOrderCommand approve)
+        public async Task ApproveBudget(Guid orderId, ApproveOrderCommand approve, Guid customerId)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com ID \"{orderId}\" não encontrada");
+            var order = await GetCustomerOrder(orderId, customerId);
             var customerDocument = DocumentWrapper.CreateDocument(approve.CustomerDocument).Id;
 
             if (order.CustomerDocument.Id != customerDocument)

@@ -9,6 +9,15 @@ namespace InfrastructureTests
 {
     public class UserRepositoryTests : BaseRepositoryTests
     {
+        [Test]
+        public async Task FindsIdentityByIdWithoutCredentials()
+        {
+            var user = await Repository.GetUserById(ExistingUser.User.Id);
+            Assert.That(user!.Id, Is.EqualTo(ExistingUser.User.Id));
+            Assert.That(user.Name, Is.EqualTo(ExistingUser.User.Name));
+            Assert.That(await Repository.GetUserById(Guid.NewGuid()), Is.Null);
+        }
+
         [TestCase("User")]
         [TestCase("Manager")]
         [TestCase("Customer")]

@@ -1,6 +1,10 @@
 $kind: http-request
 url: "{{base_url}}/orders/{{order_id}}/services"
 method: PATCH
+auth:
+  type: bearer
+  credentials:
+    token: "{{mechanic_token}}"
 body:
   type: json
   content: "{\r

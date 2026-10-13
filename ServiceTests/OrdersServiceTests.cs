@@ -5,6 +5,7 @@ using Domain.Interface.Stock;
 using Domain.Interface.Vehicle;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
+using NSubstitute.Extensions;
 using Service.Interface.Persistence;
 using Service;
 using Service.Interface;
@@ -20,6 +21,36 @@ namespace ServiceTests
 {
     public class OrdersServiceTests
     {
+        [Test]
+        public async Task CustomerReadsOwnOrderWithoutRecheckingActiveStatus()
+        {
+            var customer = new Domain.Customer.Customer(ExistingCustomer.Id, ExistingCustomer.Name, ExistingCustomer.Document,
+                ExistingCustomer.Phone, ExistingCustomer.Email, CustomerStatus.Inactive);
+            DependenciesGateway.Configure().GetCustomerById(customer.Id).Returns(customer);
+            Assert.That(await Service.GetCustomerOrderStatus(ExistingReceivedOrder.Id, customer.Id), Is.EqualTo(WorkOrderStatus.Received));
+        }
+
+        [TestCase("other")]
+        [TestCase("missing-customer")]
+        [TestCase("missing-order")]
+        public async Task CustomerCannotReadOrModifyAnUnownedOrder(string scenario)
+        {
+            var customerId = scenario switch
+            {
+                "other" => ExistingFailCustomer.Id,
+                "missing-customer" => Guid.NewGuid(),
+                _ => ExistingCustomer.Id
+            };
+            var orderId = scenario == "missing-order" ? Guid.NewGuid() : ExistingReceivedOrder.Id;
+            var read = Assert.ThrowsAsync<NotFoundException>(() => Service.GetCustomerOrderStatus(orderId, customerId));
+            var write = Assert.ThrowsAsync<NotFoundException>(() => Service.ApproveBudget(orderId, new(ExistingCustomer.Document, false), customerId));
+            Assert.That(read!.Message, Is.EqualTo("Ordem não encontrada"));
+            Assert.That(write!.Message, Is.EqualTo(read.Message));
+            await Repository.DidNotReceiveWithAnyArgs().UpdateOrder(default!);
+            await StockService.DidNotReceiveWithAnyArgs().RestoreMaterialAmount(Guid.Empty, 0);
+            await EventDispatcher.DidNotReceiveWithAnyArgs().Publish(default!);
+        }
+
         private IOrdersService Service { get; set; }
         private IOrdersRepository Repository { get; set; }
         private IOrderDependenciesGateway DependenciesGateway { get; set; }
@@ -240,6 +271,13 @@ namespace ServiceTests
                 var document = callInfo.ArgAt<string>(0);
 
                 return customers.FirstOrDefault(x => x.Document.Id == document);
+            });
+
+            Repository.Configure().GetOrder(Arg.Is<Guid?>(id => id.HasValue), Arg.Is<string>(document => !string.IsNullOrEmpty(document))).Returns(callInfo =>
+            {
+                var id = callInfo.ArgAt<Guid?>(0);
+                var document = callInfo.ArgAt<string>(1);
+                return orders.FirstOrDefault(order => order.Id == id && order.CustomerDocument.Id == document);
             });
 
             DependenciesGateway.GetVehicleByLicensePlate(Arg.Any<string>()).Returns(callInfo =>
@@ -1081,9 +1119,9 @@ namespace ServiceTests
         [Test]
         public async Task MustApproveBudget()
         {
-            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(ExistingReceivedOrder.CustomerDocument.Id, true));
+            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(ExistingReceivedOrder.CustomerDocument.Id, true), ExistingCustomer.Id);
 
-            await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
+            await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id, ExistingCustomer.Document);
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
@@ -1093,18 +1131,18 @@ namespace ServiceTests
         {
             var unformattedDocument = string.Concat(ExistingReceivedOrder.CustomerDocument.Id.Where(char.IsDigit));
 
-            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(unformattedDocument, true));
+            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(unformattedDocument, true), ExistingCustomer.Id);
 
-            await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
+            await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id, ExistingCustomer.Document);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
         public async Task MustRefuseBudget()
         {
-            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(ExistingReceivedOrder.CustomerDocument.Id, false));
+            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(ExistingReceivedOrder.CustomerDocument.Id, false), ExistingCustomer.Id);
 
-            await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
+            await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id, ExistingCustomer.Document);
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
@@ -1112,9 +1150,9 @@ namespace ServiceTests
         [Test]
         public async Task MustRefuseBudgetWithPartsToRestore()
         {
-            await Service.ApproveBudget(ExistingOrderInDiagnosisId, new(ExistingOrderInDiagnosis.CustomerDocument.Id, false));
+            await Service.ApproveBudget(ExistingOrderInDiagnosisId, new(ExistingOrderInDiagnosis.CustomerDocument.Id, false), ExistingCustomer.Id);
 
-            await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
+            await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId, ExistingCustomer.Document);
             await StockService.ReceivedWithAnyArgs(2).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
@@ -1122,7 +1160,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotApproveOrRefuseBudgetIfOrderNotExists()
         {
-            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(Guid.NewGuid(), new("681.487.685-11", false)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(Guid.NewGuid(), new("681.487.685-11", false), ExistingCustomer.Id));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -1132,7 +1170,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotApproveOrRefuseBudgetWithWrongDocument()
         {
-            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(ExistingOrderInDiagnosisId, new("000.000.000-00", false)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(ExistingOrderInDiagnosisId, new("000.000.000-00", false), ExistingCustomer.Id));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -1142,9 +1180,9 @@ namespace ServiceTests
         [Test]
         public async Task MustFailToApproveOrRefuseBudget()
         {
-            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(ExistingTestOrder.Id, new(ExistingTestOrder.CustomerDocument.Id, false)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(ExistingTestOrder.Id, new(ExistingTestOrder.CustomerDocument.Id, false), ExistingCustomer.Id));
 
-            await Repository.Received(1).GetOrder(ExistingTestOrder.Id);
+            await Repository.Received(1).GetOrder(ExistingTestOrder.Id, ExistingCustomer.Document);
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(1).UpdateOrder(Arg.Any<IOrder>());
         }

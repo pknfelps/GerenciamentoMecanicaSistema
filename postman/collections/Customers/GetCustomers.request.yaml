@@ -2,6 +2,10 @@ $kind: http-request
 name: GetCustomers
 url: "{{base_url}}/customers"
 method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{mechanic_token}}"
 queryParams:
   - key: id
     value: c15db2bf-af4e-4b64-90c4-3d2047cd969b

@@ -12,6 +12,7 @@ namespace ControllerTests
 {
     public partial class UserControllerTests : BaseControllerTests
     {
+        protected override string TestRole => "Admin";
         private IUserService UserService { get; set; }
 
         private readonly CreateUserRequest UserToRegister = new("Fulano", "Fulano@123", "Mechanic");
