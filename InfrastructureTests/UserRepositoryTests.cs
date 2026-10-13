@@ -3,15 +3,35 @@ using Domain.Interface.User;
 using Domain.User;
 using Infrastructure.Persistence.PostgreSql.Repositories;
 using Service.Interface.Persistence;
+using Domain.Interface.Exceptions;
 
 namespace InfrastructureTests
 {
     public class UserRepositoryTests : BaseRepositoryTests
     {
+        [TestCase("User")]
+        [TestCase("Manager")]
+        [TestCase("Customer")]
+        [TestCase("0")]
+        [TestCase("Admin, Mechanic")]
+        public async Task InvalidStoredRolePropagatesDomainValidation(string role)
+        {
+            await Connection.ExecuteAsync("UPDATE users SET role = @Role WHERE id = @Id", new { Role = role, Id = ExistingUser.User.Id });
+            Assert.ThrowsAsync<DomainValidationException>(() => Repository.GetUser(ExistingUser.User.Name, role));
+            Assert.ThrowsAsync<DomainValidationException>(() => Repository.GetUserCredentials(ExistingUser.User.Name, role));
+        }
+
+        [Test]
+        public async Task EmptyStoredIdentityPropagatesDomainValidation()
+        {
+            await Connection.ExecuteAsync("UPDATE users SET id = @Id", new { Id = Guid.Empty });
+            Assert.ThrowsAsync<DomainValidationException>(() => Repository.GetUserCredentials(ExistingUser.User.Name, "Admin"));
+        }
+
         private IUserRepository Repository { get; set; }
 
         private static IUserCredentials UserToRegister { get; } = new UserCredentials(
-            new User(Guid.NewGuid(), "Fulano", Roles.Manager.ToString()),
+            new User(Guid.NewGuid(), "Fulano", Roles.Mechanic.ToString()),
             "Stored-password-hash1!");
 
         private static IUserCredentials ExistingUser { get; } = new UserCredentials(

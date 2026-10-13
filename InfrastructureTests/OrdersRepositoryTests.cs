@@ -92,7 +92,8 @@ namespace InfrastructureTests
                 name TEXT NOT NULL,
                 document TEXT NOT NULL UNIQUE,
                 phone TEXT NOT NULL,
-                email TEXT NOT NULL);
+                email TEXT NOT NULL,
+                status VARCHAR(8) NOT NULL DEFAULT 'Active');
                 """);
 
             await Connection.ExecuteAsync("""

@@ -27,10 +27,10 @@ namespace ServiceTests
         private ITransactionManager TransactionManager { get; set; }
         private IApplicationEventDispatcher EventDispatcher { get; set; }
 
-        private static CustomerResult ExistingCustomer { get; } = new(Guid.NewGuid(), "Teste", "417.384.220-11", "(11) 91234-5678", "teste@gmail.com");
+        private static CustomerResult ExistingCustomer { get; } = new(Guid.NewGuid(), "Teste", "417.384.220-11", "(11) 91234-5678", "teste@gmail.com", CustomerStatus.Active);
         private static ICustomer ExistingCustomerDomain { get; } = CreateSubstituteCustomer(ExistingCustomer.Id, ExistingCustomer.Name, ExistingCustomer.Document, ExistingCustomer.Phone, ExistingCustomer.Email);
 
-        private static CustomerResult ExistingFailCustomer { get; } = new(Guid.NewGuid(), "Teste", "662.119.730-63", "(11) 91234-5678", "teste@gmail.com");
+        private static CustomerResult ExistingFailCustomer { get; } = new(Guid.NewGuid(), "Teste", "662.119.730-63", "(11) 91234-5678", "teste@gmail.com", CustomerStatus.Active);
         private static ICustomer ExistingFailCustomerDomain { get; } = CreateSubstituteCustomer(ExistingFailCustomer.Id, ExistingFailCustomer.Name, ExistingFailCustomer.Document, ExistingFailCustomer.Phone, ExistingFailCustomer.Email);
 
         private static VehicleResult ExistingVehicle { get; } = new(Guid.NewGuid(), ExistingCustomer.Document, "Honda", "Civic", 2026, "CVC2026");

@@ -2,6 +2,7 @@ using Service.Interface.Authentication;
 using Service.Interface.Persistence;
 using Service.Interface;
 using Service.Interface.Commands.User;
+using Domain.User;
 
 namespace Service
 {
@@ -13,6 +14,8 @@ namespace Service
 
         public async Task<string> Authenticate(CreateUserCommand user)
         {
+            UserRoleRules.Parse(user.Role);
+
             var credentials = await UserRepository.GetUserCredentials(user.Name, user.Role);
 
             if (credentials == null)
@@ -21,7 +24,7 @@ namespace Service
             if (!PasswordHasher.Verify(user.Password, credentials.PasswordHash))
                 return string.Empty;
 
-            return TokenGenerator.Generate(credentials.User.Name, credentials.User.Role.ToString());
+            return TokenGenerator.Generate(credentials.User.Name, credentials.User.Role.ToString(), credentials.User.Id);
         }
     }
 }

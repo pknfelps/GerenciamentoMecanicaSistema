@@ -135,4 +135,22 @@ public sealed class OpenApiContractTests
 
     private JsonElement Operation(string path, string method) =>
         document.RootElement.GetProperty("paths").GetProperty(path).GetProperty(method);
+
+    [Test]
+    public void CustomerStatusIsDescribedOnlyInResponseAndRolesRemainStrings()
+    {
+        var schemas = document.RootElement.GetProperty("components").GetProperty("schemas");
+        var response = schemas.GetProperty("CustomerResponse").GetProperty("properties");
+        var request = schemas.GetProperty("CreateCustomerRequest").GetProperty("properties");
+        var user = schemas.GetProperty("CreateUserRequest").GetProperty("properties");
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.GetProperty("status").GetProperty("type").GetString(), Is.EqualTo("string"));
+            Assert.That(response.GetProperty("status").GetProperty("description").GetString(), Does.Contain("Active").And.Contain("Inactive"));
+            Assert.That(request.TryGetProperty("status", out _), Is.False);
+            Assert.That(user.GetProperty("role").GetProperty("type").GetString(), Is.EqualTo("string"));
+            Assert.That(user.GetProperty("role").GetProperty("description").GetString(), Does.Contain("Admin").And.Contain("Mechanic"));
+            Assert.That(user.TryGetProperty("id", out _), Is.False);
+        });
+    }
 }

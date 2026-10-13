@@ -18,8 +18,8 @@ namespace ServiceTests
         private IPasswordHasher PasswordHasher { get; set; }
         private const string PasswordHash = "Stored-password-hash1!";
 
-        private static CreateUserCommand UserToRegister { get; } = new("Fulano", "Senha@123", "Manager");
-        private static CreateUserCommand UserToFail { get; } = new("Teste", "Teste@123", "User");
+        private static CreateUserCommand UserToRegister { get; } = new("Fulano", "Senha@123", "Mechanic");
+        private static CreateUserCommand UserToFail { get; } = new("Teste", "Teste@123", "Mechanic");
 
         private static readonly Guid ExistingUserId = Guid.NewGuid();
         private static IUser ExistingUser
@@ -83,7 +83,7 @@ namespace ServiceTests
         [Test]
         public void MustNotHashOrRegisterUserWithInvalidPassword()
         {
-            var invalidUser = new CreateUserCommand("Fulano", "invalid", "Manager");
+            var invalidUser = new CreateUserCommand("Fulano", "invalid", "Mechanic");
 
             Assert.CatchAsync<DomainValidationException>(() => UserService.RegisterUser(invalidUser));
 
@@ -131,6 +131,18 @@ namespace ServiceTests
             await UserRepository.ReceivedWithAnyArgs(1).GetUser(Arg.Any<string>(), Arg.Any<string>());
 
             Assert.That(User, Is.Null);
+        }
+        
+        [TestCase("User")]
+        [TestCase("Manager")]
+        [TestCase("Customer")]
+        [TestCase("1")]
+        public async Task InvalidRoleDoesNotQueryOrWriteUser(string role)
+        {
+            Assert.ThrowsAsync<DomainValidationException>(() => UserService.RegisterUser(new CreateUserCommand("Fulano", "Fulano@123", role)));
+            await UserRepository.DidNotReceiveWithAnyArgs().GetUser(default!, default!);
+            await UserRepository.DidNotReceiveWithAnyArgs().RegisterUser(default!);
+            PasswordHasher.DidNotReceiveWithAnyArgs().Hash(default!);
         }
     }
 }

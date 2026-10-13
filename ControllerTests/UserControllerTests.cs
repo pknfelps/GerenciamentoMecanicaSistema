@@ -14,7 +14,7 @@ namespace ControllerTests
     {
         private IUserService UserService { get; set; }
 
-        private readonly CreateUserRequest UserToRegister = new("Fulano", "Fulano@123", "User");
+        private readonly CreateUserRequest UserToRegister = new("Fulano", "Fulano@123", "Mechanic");
         private static Guid ExistingUserId = Guid.NewGuid();
         private readonly UserResult ExistingUser = new(ExistingUserId, "Ciclano", "Admin");
 

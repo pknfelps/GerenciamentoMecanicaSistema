@@ -178,6 +178,8 @@ O contrato estático do produtor fica em [contracts/openapi.json](https://github
 
 ## 6. JWT e autenticação interna
 
+**Implementação E4 — primeira entrega:** cadastro/login internos aceitam somente Admin/Mechanic, com validação nominal antes do banco; perfis incompatíveis no corpo retornam 400, credenciais incorretas/cadastro ausente retornam 401. O emissor interno acrescenta NameIdentifier usando o UUID persistido, como já faz a Lambda para Customer. Por revisão solicitada em 13/10/2026, os mapeadores constroem o domínio diretamente, sem try/catch: identidade/perfil persistidos inválidos propagam DomainValidationException (400 pelo middleware), sem emitir JWT. Algoritmo, expiração e tolerância são preservados; a validação global ainda aceita tokens anteriores sem ID. A aplicação da matriz de rotas e o vínculo da OS permanecem pendentes da próxima entrega; isto não concede acesso operacional a Mechanic automaticamente. Validação desta entrega é local; PR/deploy e conferência AWS ficam com o mantenedor.
+
 O JWT segue `Infrastructure/Authentication/JwtTokenGenerator.cs` e a validação de `GerenciamentoMecanicaSistema/Program.cs`:
 
 - Assinatura simétrica **HS256** com a configuração `Jwt:Key`; manter a exigência atual de chave com pelo menos 32 caracteres na API.
@@ -191,6 +193,8 @@ O JWT segue `Infrastructure/Authentication/JwtTokenGenerator.cs` e a validação
 O login **interno** continua em `POST /authentication`, com `name/password/role`, verificação do hash de senha e resposta 200 com token ou 401/400 conforme o fluxo atual. Passa a atender Admin e Mechanic; não é o caminho de validação de clientes. A ampliação de claims não altera algoritmo, formato JWT ou estratégia de sessão.
 
 ## 7. Cadastro e status de clientes
+
+**Implementação E4 — primeira entrega:** domínio e persistência da API representam Active/Inactive. `GET /Customers` retorna o campo `status` como string, incluindo clientes em ambos os estados. O cadastro define Active; a atualização preserva o estado carregado e não escreve a coluna status. Status ausente/desconhecido nos dados persistidos é falha técnica, sem fallback para Active. POST/PATCH não incluem status em seus contratos; um campo extra enviado é ignorado e não altera o estado. Fixtures PostgreSQL locais preparam Inactive para validar a preservação, sem operação pública de inativação. Conferência de Inactive real na AWS continua pendente.
 
 - Estados do modelo: Ativo e Inativo.
 - Novos clientes são criados como **Ativo** no servidor, independentemente de campo enviado pelo consumidor.

@@ -16,6 +16,8 @@ namespace Service
 
         public async Task RegisterUser(CreateUserCommand user)
         {
+            UserRoleRules.Parse(user.Role);
+
             if (await Repository.GetUser(user.Name, user.Role.ToString()) != null)
                 throw new ConflictException("Usuário já cadastrado no sistema");
 

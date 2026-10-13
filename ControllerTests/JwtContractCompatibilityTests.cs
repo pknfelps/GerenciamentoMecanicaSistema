@@ -38,8 +38,9 @@ public class JwtContractCompatibilityTests
         Assert.That(result.ClaimsIdentity.FindFirst(ClaimTypes.NameIdentifier)!.Value, Is.EqualTo(id.ToString()));
     }
 
-    [Test]
-    public async Task ExistingInfrastructureAdapterIsStillAccepted()
+    [TestCase("Admin")]
+    [TestCase("Mechanic")]
+    public async Task InfrastructureAdapterIncludesStoredIdentity(string role)
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
@@ -47,11 +48,35 @@ public class JwtContractCompatibilityTests
             ["Jwt:Issuer"] = TestWebApplicationFactory.JwtIssuer,
             ["Jwt:Audience"] = TestWebApplicationFactory.JwtAudience
         }).Build();
-        var token = new JwtTokenGenerator(configuration).Generate("oficina", "Admin");
+        var id = Guid.NewGuid();
+        var token = new JwtTokenGenerator(configuration).Generate("oficina", role, id);
         var result = await options.TokenHandlers[0].ValidateTokenAsync(token, options.TokenValidationParameters);
         Assert.That(result.IsValid, Is.True, result.Exception?.Message);
         Assert.That(result.ClaimsIdentity.Name, Is.EqualTo("oficina"));
+        Assert.That(result.ClaimsIdentity.FindFirst(ClaimTypes.NameIdentifier)!.Value, Is.EqualTo(id.ToString()));
+        Assert.That(result.ClaimsIdentity.FindFirst(ClaimTypes.Role)!.Value, Is.EqualTo(role));
+    }
+
+    [Test]
+    public async Task ExistingTokenWithoutIdRemainsAccepted()
+    {
+        var token = CreateIssuer().Generate("oficina", "Admin");
+        var result = await options.TokenHandlers[0].ValidateTokenAsync(token, options.TokenValidationParameters);
+        Assert.That(result.IsValid, Is.True);
         Assert.That(result.ClaimsIdentity.FindFirst(ClaimTypes.NameIdentifier), Is.Null);
+    }
+
+    [Test]
+    public void InfrastructureAdapterRejectsEmptyIdentity()
+    {
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Jwt:Key"] = TestWebApplicationFactory.JwtKey,
+            ["Jwt:Issuer"] = TestWebApplicationFactory.JwtIssuer,
+            ["Jwt:Audience"] = TestWebApplicationFactory.JwtAudience
+        }).Build();
+        Assert.Throws<Domain.Interface.Exceptions.DomainValidationException>(() =>
+            new JwtTokenGenerator(configuration).Generate("oficina", "Admin", Guid.Empty));
     }
 
     [TestCase("key")]

@@ -4,15 +4,23 @@ API do sistema de oficina: usuários, clientes, veículos, catálogo, estoque e 
 
 ## Estado da implementação
 
-A separação em quatro repositórios está integrada. A API e os testes existentes são executáveis; o CI valida testes/cobertura, SonarCloud e build da imagem. O ciclo base/banco/API hom e a publicação OpenAPI foram validados na AWS; os ambientes estão atualmente descartados. Gateway implementado localmente, com bootstrap e validação integrada pendentes.
+A separação em quatro repositórios está integrada. O CI valida testes/cobertura, SonarCloud e build da imagem. Base/banco/API, autenticação Lambda, Gateway e compatibilidade JWT foram validados em hom, incluindo o ciclo de OS e expiração real. A primeira entrega da E4 acrescenta status consultável de clientes, perfis internos Admin/Mechanic e ID estável no JWT; sua publicação e validação AWS ocorrerão pelo fluxo de PR/deploy do mantenedor.
 
 | Disponível | A implementar |
 |---|---|
-| API .NET, JWT interno, PostgreSQL, SMTP e health checks | Validação serverless de documentos CPF/CNPJ e permissões Admin/Mechanic/Customer |
+| API .NET, JWT interno, PostgreSQL, adaptador SMTP e health checks | Aplicar a matriz de permissões Admin/Mechanic/Customer e validar SMTP na AWS |
 | Dockerfile, Compose opcional, Deployment/HPA e workflow manual ECR/EKS | Executar e validar deploy nos ambientes hom/prd |
-| CI com testes, cobertura, SonarCloud e build Docker; RDS hom provisionado | API Gateway, validação prd e observabilidade OpenTelemetry/New Relic |
+| CI, autenticação serverless e API Gateway validados em hom | Validação prd e observabilidade OpenTelemetry/New Relic |
 
-O foco de uso será a API na AWS. A URL do Gateway ainda não foi publicada. A [arquitetura alvo](docs/arquitetura/README.md) descreve contratos futuros; as [collections](postman/collections) e o OpenAPI gerado pela API representam as operações atuais.
+O foco de uso é a API na AWS. O endpoint do ambiente é publicado em SSM `/mecanica/<ambiente>/gateway/v2/endpoint` e pode mudar após recriação. A [especificação de acesso](docs/arquitetura/ACESSO_E_AUTENTICACAO.md) distingue as regras alvo das permissões ainda pendentes; as [collections](postman/collections) e o OpenAPI gerado representam as operações atuais.
+
+### Identidade e status — primeira entrega da E4
+
+- `POST /Authentication` mantém `name/password/role` e retorna o token no formato existente. Cadastro e login internos aceitam somente os nomes exatos `Admin` e `Mechanic`; perfis antigos, numéricos ou `Customer` retornam 400. Credenciais incorretas ou usuário inexistente retornam 401.
+- O JWT interno contém Name, Role e NameIdentifier (UUID lido da tabela users). O consumidor não escolhe o ID. HS256, expiração de dez minutos, issuer/audience e tolerância de relógio permanecem; não há revogação ou nova exigência global de ID para tokens anteriores.
+- `GET /Customers` acrescenta `status` como string `Active` ou `Inactive`. Novos clientes são Active; o PATCH preserva o estado existente. Status não faz parte dos requests: campos extras não permitem criar Inactive ou reativá-lo. DELETE continua excluindo o cadastro.
+- O status persistido é convertido explicitamente, sem fallback para Active. Os mapeadores constroem o domínio diretamente, sem try/catch; validações de identidade/perfil do usuário propagam DomainValidationException (400 no middleware atual). Não há conversão de perfis antigos. O SQL do banco já contém os campos/seeds necessários.
+- As permissões das rotas ainda são as atuais: Mechanic pode autenticar, mas acesso operacional e vínculo do cliente com a OS serão implementados na entrega seguinte. Não existe endpoint de inativação nesta parte.
 
 ## Componentes e repositórios
 
@@ -34,9 +42,9 @@ flowchart LR
 | Repositório | Responsabilidade |
 |---|---|
 | Este repositório | API, camadas, testes, Dockerfile/Compose e Deployment/HPA |
-| [Infraestrutura](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/tree/develop) | Terraform, plataforma Kubernetes, Service e futura entrada Gateway/NLB |
-| [Banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/tree/develop) | SQL/seeds, infraestrutura RDS PostgreSQL e Job de inicialização planejados |
-| [Autenticação](https://github.com/pknfelps/GerenciamentoMecanicaAutenticacao/tree/develop) | Futura Lambda de validação de documentos CPF/CNPJ e emissão de JWT |
+| [Infraestrutura](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/tree/develop) | Terraform, plataforma Kubernetes, Service e entrada Gateway/NLB |
+| [Banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/tree/develop) | SQL/seeds, infraestrutura RDS PostgreSQL e Job de inicialização |
+| [Autenticação](https://github.com/pknfelps/GerenciamentoMecanicaAutenticacao/tree/develop) | Lambda/SAM de validação CPF/CNPJ e emissão de JWT Customer |
 
 Os projetos `Domain.Interface` e `Service.Interface` definem contratos; `Infrastructure` implementa persistência PostgreSQL, JWT, hash de senha e SMTP; `DependencyInjection` registra os componentes. Consultas comuns de usuários não retornam senha/hash; os fluxos de credenciais usam `UserCredentials`.
 
@@ -49,7 +57,7 @@ Os projetos `Domain.Interface` e `Service.Interface` definem contratos; `Infrast
 - kubectl com Kustomize para renderizar os manifestos.
 - GitHub Actions e SonarCloud no CI.
 
-AWS EKS, RDS PostgreSQL, ECR, API Gateway e Lambda compõem o destino da Fase 3. Terraform da base e entrada pertence ao repositório de infraestrutura; Terraform do banco pertence ao repositório de banco. A escolha RDS `db.t3.micro` Single-AZ substituiu Aurora após a restrição do AWS Free Plan ([ADR 007](docs/arquitetura/adrs/007-RDS-FREE-PLAN.md)); implementação e validação ainda pendentes.
+AWS EKS, RDS PostgreSQL, ECR, API Gateway e Lambda compõem o destino da Fase 3, validado em hom. Terraform da base e entrada pertence ao repositório de infraestrutura; Terraform do banco pertence ao repositório de banco. A escolha RDS `db.t3.micro` Single-AZ substituiu Aurora após a restrição do AWS Free Plan ([ADR 007](docs/arquitetura/adrs/007-RDS-FREE-PLAN.md)).
 
 ## Build e testes
 

@@ -15,8 +15,8 @@ namespace GerenciamentoMecanicaSistema.Contracts.Requests.User
         [Required]
         public string Password { get; set; } = password;
 
-        [Description("Cargo do usuário")]
-        [Required, RegularNonEmptyStringExpression]
+        [Description("Cargo do usuário: Admin ou Mechanic (nomes exatos)")]
+        [Required, RegularNonEmptyStringExpression, UserRoleValidation]
         public string Role { get; set; } = role;
 
         public CreateUserCommand ToCommand() => new(Name, Password, Role);

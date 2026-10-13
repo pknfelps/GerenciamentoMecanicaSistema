@@ -5,5 +5,5 @@ queryParams:
   - key: name
     value: Teste
   - key: role
-    value: Manager
+    value: Mechanic
 order: 2000
