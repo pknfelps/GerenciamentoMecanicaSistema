@@ -1,6 +1,6 @@
 # RFC 003 — Histórico de OS, indicadores e observabilidade
 
-**Estado:** arquitetura aceita; implementação pendente. **Registro:** 2026-09-16. [Índice](../README.md)
+**Estado:** arquitetura aceita; histórico/projeções e consistência implementados e validados localmente na E4 em 14/10/2026. Observabilidade, indicadores e comprovação AWS da nova revisão permanecem pendentes. **Registro original:** 2026-09-16. [Índice](../README.md)
 
 ## Persistência e cálculo
 

@@ -26,7 +26,7 @@ namespace Infrastructure.Persistence.PostgreSql.Models
         [JsonPropertyName("date_created")]
         public DateTime DateCreated { get; private set; }
         [JsonPropertyName("date_finished")]
-        public DateTime DateFinished { get; private set; }
+        public DateTime? DateFinished { get; private set; }
 
         // Used by GetOrders or GetCustomerOrders that returns the detailed order
         public OrderDb(Guid id, string customerDocument, string vehicleLicensePlate, string services, string materials, decimal budget, string status, DateTime? dateCreated, DateTime? dateFinished)
@@ -39,10 +39,10 @@ namespace Infrastructure.Persistence.PostgreSql.Models
             Budget = budget;
             Status = status;
             DateCreated = dateCreated ?? throw new InvalidOperationException("A ordem não possui evento de criação no histórico.");
-            DateFinished = dateFinished ?? DateTime.MinValue;
+            DateFinished = dateFinished;
         }
 
-        public OrderDb(Guid id, string customerDocument, string vehicleLicensePlate, List<MechanicalServiceDb> services, List<MaterialDb> materials, decimal budget, string status, DateTime dateCreated, DateTime dateFinished)
+        public OrderDb(Guid id, string customerDocument, string vehicleLicensePlate, List<MechanicalServiceDb> services, List<MaterialDb> materials, decimal budget, string status, DateTime dateCreated, DateTime? dateFinished)
         {
             Id = id;
             CustomerDocument = customerDocument;
@@ -62,7 +62,7 @@ namespace Infrastructure.Persistence.PostgreSql.Models
             var services = Services == null ? new List<IMechanicalService>() : [.. Services.Select(service => service.ToDomain())];
             var materials = Materials == null ? new List<IMaterial>() : [.. Materials.Select(material => material.ToDomain())];
 
-            return new Order(Id, CustomerDocument, VehicleLicensePlate, services, materials, Budget, Enum.Parse<WorkOrderStatus>(Status), DateCreated, DateFinished);
+            return new Order(Id, CustomerDocument, VehicleLicensePlate, services, materials, Budget, WorkOrderStatusRules.Parse(Status), DateCreated, DateFinished);
         }
     }
 }

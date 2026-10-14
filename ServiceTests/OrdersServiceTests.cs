@@ -330,6 +330,7 @@ namespace ServiceTests
             TransactionManager = Substitute.For<ITransactionManager>();
             TransactionManager.ExecuteInTransaction(Arg.Any<Func<Task>>()).Returns(callInfo => callInfo.Arg<Func<Task>>()());
             TransactionManager.ExecuteInTransaction(Arg.Any<Func<Task<Guid>>>()).Returns(callInfo => callInfo.Arg<Func<Task<Guid>>>()());
+            TransactionManager.ExecuteInTransaction(Arg.Any<Func<Task<IOrder>>>()).Returns(callInfo => callInfo.Arg<Func<Task<IOrder>>>()());
 
             EventDispatcher = Substitute.For<IApplicationEventDispatcher>();
             EventDispatcher.Publish(Arg.Any<IApplicationEvent>()).Returns(Task.CompletedTask);
@@ -520,10 +521,7 @@ namespace ServiceTests
                 Assert.That(ordersList[0].DateCreated.Hour, Is.EqualTo(ExistingReceivedOrder.DateCreated.Hour));
                 Assert.That(ordersList[0].DateCreated.Minute, Is.EqualTo(ExistingReceivedOrder.DateCreated.Minute));
                 Assert.That(ordersList[0].DateCreated.Second, Is.EqualTo(ExistingReceivedOrder.DateCreated.Second));
-                Assert.That(ordersList[0].DateFinished.Date, Is.EqualTo(ExistingReceivedOrder.DateFinished.Date));
-                Assert.That(ordersList[0].DateFinished.Hour, Is.EqualTo(ExistingReceivedOrder.DateFinished.Hour));
-                Assert.That(ordersList[0].DateFinished.Minute, Is.EqualTo(ExistingReceivedOrder.DateFinished.Minute));
-                Assert.That(ordersList[0].DateFinished.Second, Is.EqualTo(ExistingReceivedOrder.DateFinished.Second));
+                Assert.That(ordersList[0].DateFinished, Is.EqualTo(ExistingReceivedOrder.DateFinished));
             });
 
             Assert.That(ordersList[1], Is.Not.Null);
@@ -539,10 +537,7 @@ namespace ServiceTests
                 Assert.That(ordersList[1].DateCreated.Hour, Is.EqualTo(ExistingOrderInDiagnosis.DateCreated.Hour));
                 Assert.That(ordersList[1].DateCreated.Minute, Is.EqualTo(ExistingOrderInDiagnosis.DateCreated.Minute));
                 Assert.That(ordersList[1].DateCreated.Second, Is.EqualTo(ExistingOrderInDiagnosis.DateCreated.Second));
-                Assert.That(ordersList[1].DateFinished.Date, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Date));
-                Assert.That(ordersList[1].DateFinished.Hour, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Hour));
-                Assert.That(ordersList[1].DateFinished.Minute, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Minute));
-                Assert.That(ordersList[1].DateFinished.Second, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Second));
+                Assert.That(ordersList[1].DateFinished, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished));
             });
 
             Assert.That(ordersList[2], Is.Not.Null);
@@ -558,10 +553,7 @@ namespace ServiceTests
                 Assert.That(ordersList[2].DateCreated.Hour, Is.EqualTo(ExistingTestOrder.DateCreated.Hour));
                 Assert.That(ordersList[2].DateCreated.Minute, Is.EqualTo(ExistingTestOrder.DateCreated.Minute));
                 Assert.That(ordersList[2].DateCreated.Second, Is.EqualTo(ExistingTestOrder.DateCreated.Second));
-                Assert.That(ordersList[2].DateFinished.Date, Is.EqualTo(ExistingTestOrder.DateFinished.Date));
-                Assert.That(ordersList[2].DateFinished.Hour, Is.EqualTo(ExistingTestOrder.DateFinished.Hour));
-                Assert.That(ordersList[2].DateFinished.Minute, Is.EqualTo(ExistingTestOrder.DateFinished.Minute));
-                Assert.That(ordersList[2].DateFinished.Second, Is.EqualTo(ExistingTestOrder.DateFinished.Second));
+                Assert.That(ordersList[2].DateFinished, Is.EqualTo(ExistingTestOrder.DateFinished));
             });
         }
 
@@ -587,10 +579,7 @@ namespace ServiceTests
                 Assert.That(order.DateCreated.Hour, Is.EqualTo(ExistingReceivedOrder.DateCreated.Hour));
                 Assert.That(order.DateCreated.Minute, Is.EqualTo(ExistingReceivedOrder.DateCreated.Minute));
                 Assert.That(order.DateCreated.Second, Is.EqualTo(ExistingReceivedOrder.DateCreated.Second));
-                Assert.That(order.DateFinished.Date, Is.EqualTo(ExistingReceivedOrder.DateFinished.Date));
-                Assert.That(order.DateFinished.Hour, Is.EqualTo(ExistingReceivedOrder.DateFinished.Hour));
-                Assert.That(order.DateFinished.Minute, Is.EqualTo(ExistingReceivedOrder.DateFinished.Minute));
-                Assert.That(order.DateFinished.Second, Is.EqualTo(ExistingReceivedOrder.DateFinished.Second));
+                Assert.That(order.DateFinished, Is.EqualTo(ExistingReceivedOrder.DateFinished));
             });
         }
 
@@ -626,10 +615,7 @@ namespace ServiceTests
                 Assert.That(order.DateCreated.Hour, Is.EqualTo(ExistingReceivedOrder.DateCreated.Hour));
                 Assert.That(order.DateCreated.Minute, Is.EqualTo(ExistingReceivedOrder.DateCreated.Minute));
                 Assert.That(order.DateCreated.Second, Is.EqualTo(ExistingReceivedOrder.DateCreated.Second));
-                Assert.That(order.DateFinished.Date, Is.EqualTo(ExistingReceivedOrder.DateFinished.Date));
-                Assert.That(order.DateFinished.Hour, Is.EqualTo(ExistingReceivedOrder.DateFinished.Hour));
-                Assert.That(order.DateFinished.Minute, Is.EqualTo(ExistingReceivedOrder.DateFinished.Minute));
-                Assert.That(order.DateFinished.Second, Is.EqualTo(ExistingReceivedOrder.DateFinished.Second));
+                Assert.That(order.DateFinished, Is.EqualTo(ExistingReceivedOrder.DateFinished));
             });
         }
 
@@ -663,10 +649,7 @@ namespace ServiceTests
                 Assert.That(ordersList[0].DateCreated.Hour, Is.EqualTo(ExistingReceivedOrder.DateCreated.Hour));
                 Assert.That(ordersList[0].DateCreated.Minute, Is.EqualTo(ExistingReceivedOrder.DateCreated.Minute));
                 Assert.That(ordersList[0].DateCreated.Second, Is.EqualTo(ExistingReceivedOrder.DateCreated.Second));
-                Assert.That(ordersList[0].DateFinished.Date, Is.EqualTo(ExistingReceivedOrder.DateFinished.Date));
-                Assert.That(ordersList[0].DateFinished.Hour, Is.EqualTo(ExistingReceivedOrder.DateFinished.Hour));
-                Assert.That(ordersList[0].DateFinished.Minute, Is.EqualTo(ExistingReceivedOrder.DateFinished.Minute));
-                Assert.That(ordersList[0].DateFinished.Second, Is.EqualTo(ExistingReceivedOrder.DateFinished.Second));
+                Assert.That(ordersList[0].DateFinished, Is.EqualTo(ExistingReceivedOrder.DateFinished));
             });
 
             Assert.That(ordersList[1], Is.Not.Null);
@@ -682,10 +665,7 @@ namespace ServiceTests
                 Assert.That(ordersList[1].DateCreated.Hour, Is.EqualTo(ExistingOrderInDiagnosis.DateCreated.Hour));
                 Assert.That(ordersList[1].DateCreated.Minute, Is.EqualTo(ExistingOrderInDiagnosis.DateCreated.Minute));
                 Assert.That(ordersList[1].DateCreated.Second, Is.EqualTo(ExistingOrderInDiagnosis.DateCreated.Second));
-                Assert.That(ordersList[1].DateFinished.Date, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Date));
-                Assert.That(ordersList[1].DateFinished.Hour, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Hour));
-                Assert.That(ordersList[1].DateFinished.Minute, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Minute));
-                Assert.That(ordersList[1].DateFinished.Second, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Second));
+                Assert.That(ordersList[1].DateFinished, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished));
             });
 
             Assert.That(ordersList[2], Is.Not.Null);
@@ -701,10 +681,7 @@ namespace ServiceTests
                 Assert.That(ordersList[2].DateCreated.Hour, Is.EqualTo(ExistingTestOrder.DateCreated.Hour));
                 Assert.That(ordersList[2].DateCreated.Minute, Is.EqualTo(ExistingTestOrder.DateCreated.Minute));
                 Assert.That(ordersList[2].DateCreated.Second, Is.EqualTo(ExistingTestOrder.DateCreated.Second));
-                Assert.That(ordersList[2].DateFinished.Date, Is.EqualTo(ExistingTestOrder.DateFinished.Date));
-                Assert.That(ordersList[2].DateFinished.Hour, Is.EqualTo(ExistingTestOrder.DateFinished.Hour));
-                Assert.That(ordersList[2].DateFinished.Minute, Is.EqualTo(ExistingTestOrder.DateFinished.Minute));
-                Assert.That(ordersList[2].DateFinished.Second, Is.EqualTo(ExistingTestOrder.DateFinished.Second));
+                Assert.That(ordersList[2].DateFinished, Is.EqualTo(ExistingTestOrder.DateFinished));
             });
         }
 
@@ -741,10 +718,7 @@ namespace ServiceTests
                 Assert.That(ordersList[0].DateCreated.Hour, Is.EqualTo(ExistingReceivedOrder.DateCreated.Hour));
                 Assert.That(ordersList[0].DateCreated.Minute, Is.EqualTo(ExistingReceivedOrder.DateCreated.Minute));
                 Assert.That(ordersList[0].DateCreated.Second, Is.EqualTo(ExistingReceivedOrder.DateCreated.Second));
-                Assert.That(ordersList[0].DateFinished.Date, Is.EqualTo(ExistingReceivedOrder.DateFinished.Date));
-                Assert.That(ordersList[0].DateFinished.Hour, Is.EqualTo(ExistingReceivedOrder.DateFinished.Hour));
-                Assert.That(ordersList[0].DateFinished.Minute, Is.EqualTo(ExistingReceivedOrder.DateFinished.Minute));
-                Assert.That(ordersList[0].DateFinished.Second, Is.EqualTo(ExistingReceivedOrder.DateFinished.Second));
+                Assert.That(ordersList[0].DateFinished, Is.EqualTo(ExistingReceivedOrder.DateFinished));
             });
 
             Assert.That(ordersList[1], Is.Not.Null);
@@ -760,10 +734,7 @@ namespace ServiceTests
                 Assert.That(ordersList[1].DateCreated.Hour, Is.EqualTo(ExistingOrderInDiagnosis.DateCreated.Hour));
                 Assert.That(ordersList[1].DateCreated.Minute, Is.EqualTo(ExistingOrderInDiagnosis.DateCreated.Minute));
                 Assert.That(ordersList[1].DateCreated.Second, Is.EqualTo(ExistingOrderInDiagnosis.DateCreated.Second));
-                Assert.That(ordersList[1].DateFinished.Date, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Date));
-                Assert.That(ordersList[1].DateFinished.Hour, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Hour));
-                Assert.That(ordersList[1].DateFinished.Minute, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Minute));
-                Assert.That(ordersList[1].DateFinished.Second, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Second));
+                Assert.That(ordersList[1].DateFinished, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished));
             });
 
             Assert.That(ordersList[2], Is.Not.Null);
@@ -779,10 +750,7 @@ namespace ServiceTests
                 Assert.That(ordersList[2].DateCreated.Hour, Is.EqualTo(ExistingTestOrder.DateCreated.Hour));
                 Assert.That(ordersList[2].DateCreated.Minute, Is.EqualTo(ExistingTestOrder.DateCreated.Minute));
                 Assert.That(ordersList[2].DateCreated.Second, Is.EqualTo(ExistingTestOrder.DateCreated.Second));
-                Assert.That(ordersList[2].DateFinished.Date, Is.EqualTo(ExistingTestOrder.DateFinished.Date));
-                Assert.That(ordersList[2].DateFinished.Hour, Is.EqualTo(ExistingTestOrder.DateFinished.Hour));
-                Assert.That(ordersList[2].DateFinished.Minute, Is.EqualTo(ExistingTestOrder.DateFinished.Minute));
-                Assert.That(ordersList[2].DateFinished.Second, Is.EqualTo(ExistingTestOrder.DateFinished.Second));
+                Assert.That(ordersList[2].DateFinished, Is.EqualTo(ExistingTestOrder.DateFinished));
             });
         }
 
@@ -1057,7 +1025,7 @@ namespace ServiceTests
             await StockService.ReceivedWithAnyArgs(0).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(0).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
-            await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
@@ -1390,8 +1358,8 @@ namespace ServiceTests
             order.Materials.Returns(parts);
             order.Budget.Returns(budget);
             order.Status.Returns(status);
-            order.DateCreated.Returns(DateTime.Now);
-            order.DateFinished.Returns(DateTime.MinValue);
+            order.DateCreated.Returns(DateTime.UtcNow);
+            order.DateFinished.Returns((DateTime?)null);
 
             order.AddService(Arg.Any<IMechanicalService>()).Returns(callInfo =>
             {

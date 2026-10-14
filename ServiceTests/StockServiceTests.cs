@@ -122,7 +122,9 @@ namespace ServiceTests
                 return 0;
             });
 
-            Service = new StockService(Repository);
+            var transactions = Substitute.For<ITransactionManager>();
+            transactions.ExecuteInTransaction(Arg.Any<Func<Task>>()).Returns(call => call.Arg<Func<Task>>()());
+            Service = new StockService(Repository, transactions);
         }
 
         [Test]

@@ -73,6 +73,9 @@ public sealed class OrderOwnershipPersistenceTests
     public async Task ResetData()
     {
         await connection.ExecuteAsync("""
+            DROP TRIGGER IF EXISTS fail_delete_test ON order_services;
+            DROP TRIGGER IF EXISTS fail_delete_test ON order_materials;
+            DROP TRIGGER IF EXISTS fail_delete_test ON orders;
             TRUNCATE customers, vehicles, orders, order_status_history, order_services, order_materials, stock, catalog;
             INSERT INTO customers VALUES (@CustomerId, 'Owner', @Document, '(11) 91234-5678', 'owner@example.com', 'Active');
             INSERT INTO customers VALUES (@OtherId, 'Other', @OtherDocument, '(11) 91234-5678', 'other@example.com', 'Active');
@@ -132,6 +135,12 @@ public sealed class OrderOwnershipPersistenceTests
     public async Task MechanicAndOwnerExerciseApprovedAndRejectedCycles(bool approved)
     {
         var id = await CreateOrder();
+        using (var details = await SendAuthorized(HttpMethod.Get, $"/Orders/details?id={id}"))
+        using (var json = JsonDocument.Parse(await details.Content.ReadAsStringAsync()))
+        {
+            Assert.That(json.RootElement[0].GetProperty("dateFinished").ValueKind, Is.EqualTo(JsonValueKind.Null));
+            Assert.That(json.RootElement[0].GetProperty("duration").ValueKind, Is.EqualTo(JsonValueKind.Null));
+        }
         await CompleteDiagnosis(id);
         UseToken("Customer", customerId);
         // Inactivation after issuance does not revoke this signed token.
@@ -154,6 +163,12 @@ public sealed class OrderOwnershipPersistenceTests
         Assert.That(await connection.QuerySingleAsync<string>("SELECT reason FROM order_status_history WHERE order_id = @Id AND new_status = 'Finished'", new { Id = id }), Is.EqualTo(approved ? "ServiceCompleted" : "BudgetRejected"));
         Assert.That(await connection.QuerySingleAsync<int>("SELECT reserved_amount FROM stock"), Is.Zero);
         Assert.That(await connection.QuerySingleAsync<int>("SELECT amount FROM stock"), Is.EqualTo(approved ? 4 : 5));
+        using var finalDetails = await SendAuthorized(HttpMethod.Get, $"/Orders/details?id={id}");
+        using var finalJson = JsonDocument.Parse(await finalDetails.Content.ReadAsStringAsync());
+        Assert.That(finalJson.RootElement[0].GetProperty("dateFinished").ValueKind,
+            Is.EqualTo(approved ? JsonValueKind.String : JsonValueKind.Null));
+        Assert.That(finalJson.RootElement[0].GetProperty("duration").ValueKind,
+            Is.EqualTo(approved ? JsonValueKind.String : JsonValueKind.Null));
     }
 
     [TestCase("other")]
@@ -215,4 +230,306 @@ public sealed class OrderOwnershipPersistenceTests
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
         Assert.That(await Snapshot(), Is.EqualTo(before));
     }
+    private async Task<HttpResponseMessage> SendAuthorized(HttpMethod method, string path, object? body = null, string role = "Mechanic")
+    {
+        using var request = new HttpRequestMessage(method, path);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AuthorizationTestTokens.Create(role, customerId.ToString()));
+        if (body is not null) request.Content = JsonContent.Create(body);
+        return await client.SendAsync(request);
+    }
+
+    private object NewOrderBody(int amount = 1) => new
+    {
+        customerId, vehicleId, services = new[] { new { id = serviceId, value = 1 } },
+        materials = new[] { new { id = materialId, value = amount } }
+    };
+
+    private async Task<HttpResponseMessage[]> RunContenders(string table, Guid id,
+        Func<Task<HttpResponseMessage>> first, Func<Task<HttpResponseMessage>> second)
+    {
+        if (table is not "orders" and not "stock") throw new ArgumentException("Unexpected fixture table.", nameof(table));
+        await using var blocker = new NpgsqlConnection(container.GetConnectionString());
+        await blocker.OpenAsync();
+        await using var transaction = await blocker.BeginTransactionAsync();
+        await blocker.ExecuteAsync($"SELECT id FROM {table} WHERE id = @Id FOR UPDATE", new { Id = id }, transaction);
+        var tasks = new[] { first(), second() };
+        var blocked = false;
+        var timeout = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            while (timeout.Elapsed < TimeSpan.FromSeconds(10))
+            {
+                var waiting = await connection.QuerySingleAsync<int>("""
+                    SELECT count(*)::int FROM pg_stat_activity
+                    WHERE datname = current_database() AND wait_event_type = 'Lock'
+                    AND query ILIKE @Pattern
+                    """, new { Pattern = "%" + table + "%" });
+                if (waiting >= 2) { blocked = true; break; }
+                await Task.Delay(25);
+            }
+        }
+        finally
+        {
+            await transaction.RollbackAsync();
+        }
+        var responses = await Task.WhenAll(tasks).WaitAsync(TimeSpan.FromSeconds(15));
+        if (!blocked)
+        {
+            foreach (var response in responses) response.Dispose();
+            Assert.Fail("Both operations must contend on the held database row before it is released.");
+        }
+        return responses;
+    }
+
+    private async Task AssertSingleDecision(HttpResponseMessage[] responses)
+    {
+        try
+        {
+            Assert.That(responses.Select(response => response.StatusCode),
+                Is.EquivalentTo(new[] { HttpStatusCode.NoContent, HttpStatusCode.UnprocessableEntity }));
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT reserved_amount FROM stock"), Is.EqualTo(1));
+        }
+        finally { foreach (var response in responses) response.Dispose(); }
+    }
+
+    [Test]
+    public async Task ApprovalAndRejectionCannotOverwriteEachOther()
+    {
+        var id = await CreateOrder();
+        await CompleteDiagnosis(id);
+        var responses = await RunContenders("orders", id,
+            () => SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/budget", new { customerDocument = Document, approved = true }, "Customer"),
+            () => SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/budget", new { customerDocument = Document, approved = false }, "Customer"));
+        try
+        {
+            Assert.That(responses.Select(response => response.StatusCode),
+                Is.EquivalentTo(new[] { HttpStatusCode.NoContent, HttpStatusCode.UnprocessableEntity }));
+            var status = await connection.QuerySingleAsync<string>("SELECT status FROM orders WHERE id = @Id", new { Id = id });
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM order_status_history WHERE order_id = @Id", new { Id = id }), Is.EqualTo(4));
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT reserved_amount FROM stock"), Is.EqualTo(status == "Finished" ? 0 : 1));
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT amount FROM stock"), Is.EqualTo(status == "Finished" ? 5 : 4));
+        }
+        finally { foreach (var response in responses) response.Dispose(); }
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task RepeatedRejectionOrCompletionDoesNotUseAnotherOrdersReservation(bool complete)
+    {
+        var id = await CreateOrder();
+        await CreateOrder(); // Independent reservation for the same SKU must survive.
+        await CompleteDiagnosis(id);
+        if (complete)
+        {
+            using var approve = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/budget", new { customerDocument = Document, approved = true }, "Customer");
+            using var start = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/execution/start");
+            Assert.That(start.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+        }
+        var events = factory.Services.GetRequiredService<IApplicationEventDispatcher>();
+        events.ClearReceivedCalls();
+        var path = complete ? $"/Orders/{id}/execution/complete" : $"/Orders/{id}/budget";
+        var body = complete ? null : (object)new { customerDocument = Document, approved = false };
+        var role = complete ? "Mechanic" : "Customer";
+        await AssertSingleDecision(await RunContenders("orders", id,
+            () => SendAuthorized(HttpMethod.Patch, path, body, role), () => SendAuthorized(HttpMethod.Patch, path, body, role)));
+        Assert.That(await connection.QuerySingleAsync<int>("SELECT amount FROM stock"), Is.EqualTo(complete ? 3 : 4));
+        Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM order_status_history WHERE order_id = @Id", new { Id = id }), Is.EqualTo(complete ? 6 : 4));
+        if (complete) await events.Received(1).Publish(Arg.Any<Service.Interface.Events.Order.OrderStatusChangedEvent>());
+        else await events.DidNotReceive().Publish(Arg.Any<Service.Interface.Events.IApplicationEvent>());
+    }
+
+    [Test]
+    public async Task ItemEditAndDiagnosisKeepBudgetAndReservationsConsistent()
+    {
+        var id = await CreateOrder();
+        using var start = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/diagnosis/start");
+        var responses = await RunContenders("orders", id,
+            () => SendAuthorized(HttpMethod.Post, $"/Orders/{id}/materials", new { id = materialId, value = 1 }),
+            () => SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/diagnosis/complete"));
+        try
+        {
+            Assert.That(responses[0].StatusCode, Is.AnyOf(HttpStatusCode.OK, HttpStatusCode.UnprocessableEntity));
+            Assert.That(responses[1].StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+            var amount = await connection.QuerySingleAsync<int>("SELECT amount FROM order_materials WHERE order_id = @Id", new { Id = id });
+            Assert.That(await connection.QuerySingleAsync<decimal>("SELECT budget FROM orders WHERE id = @Id", new { Id = id }), Is.EqualTo(20 + 10 * amount));
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT reserved_amount FROM stock"), Is.EqualTo(amount));
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT amount FROM stock"), Is.EqualTo(5 - amount));
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM order_status_history WHERE order_id = @Id", new { Id = id }), Is.EqualTo(3));
+        }
+        finally { foreach (var response in responses) response.Dispose(); }
+    }
+
+    [TestCase("services", true)]
+    [TestCase("services", false)]
+    [TestCase("materials", true)]
+    [TestCase("materials", false)]
+    public async Task ConcurrentItemAddsDoNotLoseAmountsOrCreateDuplicates(string kind, bool existing)
+    {
+        var id = await CreateOrder();
+        using var start = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/diagnosis/start");
+        var itemId = kind == "services" ? serviceId : materialId;
+        if (!existing)
+        {
+            using var remove = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/{kind}", new { id = itemId, value = 1 });
+            Assert.That(remove.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+        }
+        var responses = await RunContenders("orders", id,
+            () => SendAuthorized(HttpMethod.Post, $"/Orders/{id}/{kind}", new { id = itemId, value = 1 }),
+            () => SendAuthorized(HttpMethod.Post, $"/Orders/{id}/{kind}", new { id = itemId, value = 1 }));
+        try
+        {
+            Assert.That(responses.All(response => response.StatusCode == HttpStatusCode.OK), Is.True);
+            var table = kind == "services" ? "order_services" : "order_materials";
+            Assert.That(await connection.QuerySingleAsync<int>($"SELECT count(*) FROM {table} WHERE order_id = @Id", new { Id = id }), Is.EqualTo(1));
+            Assert.That(await connection.QuerySingleAsync<int>($"SELECT amount FROM {table} WHERE order_id = @Id", new { Id = id }), Is.EqualTo(existing ? 3 : 2));
+        }
+        finally { foreach (var response in responses) response.Dispose(); }
+    }
+
+    [Test]
+    public async Task TwoOrdersCannotReserveMoreThanAvailable()
+    {
+        var responses = await RunContenders("stock", materialId,
+            () => SendAuthorized(HttpMethod.Post, "/Orders", NewOrderBody(4)),
+            () => SendAuthorized(HttpMethod.Post, "/Orders", NewOrderBody(4)));
+        try
+        {
+            Assert.That(responses.Select(response => response.StatusCode), Is.EquivalentTo(new[] { HttpStatusCode.Created, HttpStatusCode.UnprocessableEntity }));
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM orders"), Is.EqualTo(1));
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM order_status_history"), Is.EqualTo(1));
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT amount FROM stock"), Is.EqualTo(1));
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT reserved_amount FROM stock"), Is.EqualTo(4));
+        }
+        finally { foreach (var response in responses) response.Dispose(); }
+    }
+
+    [TestCase("replenish", 6, 1)]
+    [TestCase("remove", 3, 1)]
+    [TestCase("consume", 4, 0)]
+    [TestCase("reserve", 3, 2)]
+    public async Task RejectionAndOtherStockOperationsDoNotLoseBalances(string operation, int available, int reserved)
+    {
+        var firstOrder = await CreateOrder();
+        var secondOrder = await CreateOrder();
+        await CompleteDiagnosis(firstOrder);
+        if (operation == "consume")
+        {
+            await CompleteDiagnosis(secondOrder);
+            using var approve = await SendAuthorized(HttpMethod.Patch, $"/Orders/{secondOrder}/budget", new { customerDocument = Document, approved = true }, "Customer");
+            using var start = await SendAuthorized(HttpMethod.Patch, $"/Orders/{secondOrder}/execution/start");
+        }
+        var responses = await RunContenders("stock", materialId,
+            () => SendAuthorized(HttpMethod.Patch, $"/Orders/{firstOrder}/budget", new { customerDocument = Document, approved = false }, "Customer"),
+            () => operation switch
+            {
+                "replenish" => SendAuthorized(HttpMethod.Post, $"/Stock/amount/{materialId}", new { value = 2 }),
+                "remove" => SendAuthorized(HttpMethod.Patch, $"/Stock/amount/{materialId}", new { value = 1 }),
+                "consume" => SendAuthorized(HttpMethod.Patch, $"/Orders/{secondOrder}/execution/complete"),
+                _ => SendAuthorized(HttpMethod.Post, "/Orders", NewOrderBody())
+            });
+        try
+        {
+            Assert.That(responses[0].StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+            var expected = operation switch
+            {
+                "replenish" => HttpStatusCode.OK,
+                "reserve" => HttpStatusCode.Created,
+                _ => HttpStatusCode.NoContent
+            };
+            Assert.That(responses[1].StatusCode, Is.EqualTo(expected));
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT amount FROM stock"), Is.EqualTo(available));
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT reserved_amount FROM stock"), Is.EqualTo(reserved));
+        }
+        finally { foreach (var response in responses) response.Dispose(); }
+    }
+
+    [Test]
+    public async Task DeletionAndCompletionUseTheCurrentStateBeforeChangingStock()
+    {
+        var id = await CreateOrder();
+        await CreateOrder();
+        await CompleteDiagnosis(id);
+        using var approve = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/budget", new { customerDocument = Document, approved = true }, "Customer");
+        using var start = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/execution/start");
+        var responses = await RunContenders("orders", id,
+            () => SendAuthorized(HttpMethod.Delete, $"/Orders/{id}"),
+            () => SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/execution/complete"));
+        try
+        {
+            Assert.That(responses[0].StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+            Assert.That(responses[1].StatusCode, Is.AnyOf(HttpStatusCode.NoContent, HttpStatusCode.NotFound));
+            var completed = responses[1].StatusCode == HttpStatusCode.NoContent;
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM orders WHERE id = @Id", new { Id = id }), Is.Zero);
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM order_status_history WHERE order_id = @Id", new { Id = id }), Is.EqualTo(completed ? 6 : 5));
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT amount FROM stock"), Is.EqualTo(completed ? 3 : 4));
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT reserved_amount FROM stock"), Is.EqualTo(1));
+        }
+        finally { foreach (var response in responses) response.Dispose(); }
+    }
+
+    [Test]
+    public async Task MultipleMaterialsAreLockedInTheSameOrderForDifferentRequests()
+    {
+        var otherMaterial = Guid.NewGuid();
+        await connection.ExecuteAsync("INSERT INTO stock VALUES (@Id, 'Second material', 'Test', 10, 5, 0)", new { Id = otherMaterial });
+        object Body(Guid first, Guid second) => new
+        {
+            customerId, vehicleId, services = new[] { new { id = serviceId, value = 1 } },
+            materials = new[] { new { id = first, value = 1 }, new { id = second, value = 1 } }
+        };
+        var firstLock = new[] { materialId, otherMaterial }.Min();
+        var responses = await RunContenders("stock", firstLock,
+            () => SendAuthorized(HttpMethod.Post, "/Orders", Body(materialId, otherMaterial)),
+            () => SendAuthorized(HttpMethod.Post, "/Orders", Body(otherMaterial, materialId)));
+        try
+        {
+            Assert.That(responses.All(response => response.StatusCode == HttpStatusCode.Created), Is.True);
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM stock WHERE amount = 3 AND reserved_amount = 2"), Is.EqualTo(2));
+            Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM order_status_history"), Is.EqualTo(2));
+        }
+        finally { foreach (var response in responses) response.Dispose(); }
+    }
+
+    [TestCase("orders", "Received")]
+    [TestCase("order_materials", "Received")]
+    [TestCase("order_services", "Received")]
+    [TestCase("orders", "Finished")]
+    [TestCase("order_materials", "Finished")]
+    [TestCase("order_services", "Finished")]
+    [TestCase("orders", "Delivered")]
+    [TestCase("order_materials", "Delivered")]
+    [TestCase("order_services", "Delivered")]
+    public async Task FailedDeletionRollsBackEveryStepAndPreservesHistory(string table, string status)
+    {
+        var id = await CreateOrder();
+        if (status != "Received")
+        {
+            await CompleteDiagnosis(id);
+            using var decision = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/budget",
+                new { customerDocument = Document, approved = status == "Delivered" }, "Customer");
+            if (status == "Delivered")
+                foreach (var action in new[] { "execution/start", "execution/complete", "delivery" })
+                {
+                    using var transition = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/{action}");
+                    Assert.That(transition.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+                }
+        }
+        if (table is not "orders" and not "order_materials" and not "order_services") throw new ArgumentException("Unexpected fixture table.", nameof(table));
+        await connection.ExecuteAsync($"""
+            CREATE OR REPLACE FUNCTION reject_test_deletion() RETURNS trigger AS $$
+            BEGIN RAISE EXCEPTION 'Controlled local deletion failure'; END;
+            $$ LANGUAGE plpgsql;
+            CREATE TRIGGER fail_delete_test BEFORE DELETE ON {table}
+            FOR EACH ROW EXECUTE FUNCTION reject_test_deletion();
+            """);
+        var before = await Snapshot();
+        var servicesBefore = await connection.QuerySingleAsync<int>("SELECT count(*) FROM order_services");
+        var materialsBefore = await connection.QuerySingleAsync<int>("SELECT count(*) FROM order_materials");
+        using var response = await SendAuthorized(HttpMethod.Delete, $"/Orders/{id}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+        Assert.That(await Snapshot(), Is.EqualTo(before));
+        Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM order_services"), Is.EqualTo(servicesBefore));
+        Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM order_materials"), Is.EqualTo(materialsBefore));
+    }
+
 }

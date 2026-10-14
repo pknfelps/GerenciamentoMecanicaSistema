@@ -68,7 +68,8 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
                 os.budget,
                 os.status,
                 history.date_created,
-                history.date_finished;
+                history.date_finished
+            ORDER BY history.date_created ASC, os.id ASC;
             """;
 
         public static string GetOperationalOrdersSql { get; private set; } = """
@@ -100,7 +101,7 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
                     WHEN @Received THEN 4
                     ELSE 5
                 END,
-                history.date_created ASC;
+                history.date_created ASC, os.id ASC;
             """;
 
         public static string UpdateOrderSql { get; private set; } = """
@@ -162,12 +163,21 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
             WHERE id = @orderId;
             """;
 
+        public async Task LockOrder(Guid orderId)
+        {
+            if (Transaction is null)
+                throw new InvalidOperationException("O bloqueio da ordem exige uma transação ativa.");
+
+            await Connection.QuerySingleOrDefaultAsync<Guid?>(
+                "SELECT id FROM orders WHERE id = @Id FOR UPDATE;", new { Id = orderId }, Transaction);
+        }
+
         public async Task<int> CreateOrder(IOrder serviceOrder)
         {
             if (serviceOrder.Status != WorkOrderStatus.Received || serviceOrder.DateCreated == DateTime.MinValue)
                 throw new ArgumentException("A criação da ordem exige estado Received e instante de abertura.", nameof(serviceOrder));
 
-            return await ExecuteWithHistoryTransaction(async transaction =>
+            return await ExecuteInTransaction(async transaction =>
             {
                 var affected = await Connection.ExecuteAsync(CreateServiceSql, OrderDb.Create(serviceOrder), transaction);
                 await Connection.ExecuteAsync(InsertHistorySql, new
@@ -224,7 +234,7 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
 
         public async Task<int> UpdateOrder(IOrder order)
         {
-            return await ExecuteWithHistoryTransaction(async transaction =>
+            return await ExecuteInTransaction(async transaction =>
             {
                 var previousStatus = await Connection.QuerySingleOrDefaultAsync<string>(
                     "SELECT status FROM orders WHERE id = @Id FOR UPDATE;", new { order.Id }, transaction);
@@ -244,7 +254,9 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
                         throw new InvalidOperationException("O histórico da ordem não corresponde ao estado atual.");
 
                     var completed = order.Status == WorkOrderStatus.Finished && previousStatus == WorkOrderStatus.InExecution.ToString();
-                    var occurredAt = completed ? order.DateFinished.ToUniversalTime() : DateTime.UtcNow;
+                    var occurredAt = completed
+                        ? (order.DateFinished ?? throw new InvalidOperationException("A conclusão exige um instante válido.")).ToUniversalTime()
+                        : DateTime.UtcNow;
                     if (occurredAt == DateTime.MinValue || occurredAt < latest.OccurredAt)
                         throw new InvalidOperationException("O instante da transição da ordem é inválido.");
 
@@ -268,7 +280,7 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
             });
         }
 
-        private async Task<int> ExecuteWithHistoryTransaction(Func<IDbTransaction, Task<int>> operation)
+        private async Task<int> ExecuteInTransaction(Func<IDbTransaction, Task<int>> operation)
         {
             if (Transaction is not null)
                 return await operation(Transaction);
@@ -323,11 +335,12 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
 
         public async Task<int> DeleteOrder(Guid orderId)
         {
-            await Connection.ExecuteAsync(DeleteServicesFromOrderSql, new { orderId }, Transaction);
-
-            await Connection.ExecuteAsync(RemoveMaterialsFromOrderSql, new { orderId }, Transaction);
-
-            return await Connection.ExecuteAsync(DeleteOrderSql, new { orderId }, Transaction);
+            return await ExecuteInTransaction(async transaction =>
+            {
+                await Connection.ExecuteAsync(DeleteServicesFromOrderSql, new { orderId }, transaction);
+                await Connection.ExecuteAsync(RemoveMaterialsFromOrderSql, new { orderId }, transaction);
+                return await Connection.ExecuteAsync(DeleteOrderSql, new { orderId }, transaction);
+            });
         }
 
         private static Dictionary<string, object?> BuildQueryParameters(Guid? id = null, string customer_document = "", string vehicle_license_plate = "")

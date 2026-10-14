@@ -6,6 +6,7 @@ namespace Service.Interface.Persistence
 {
     public interface IOrdersRepository
     {
+        Task LockOrder(Guid orderId);
         Task<int> CreateOrder(IOrder serviceOrder);
         Task<IEnumerable<IOrder>> GetOrders(Guid? id = null, string customer_document = "", string vehicle_license_plate = "");
         Task<IEnumerable<IOrder>> GetOperationalOrders();
