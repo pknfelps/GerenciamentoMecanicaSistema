@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Service.Interface;
 
@@ -12,6 +13,7 @@ namespace ControllerTests
         public const string JwtKey = "controller-tests-only-key-with-at-least-32-characters";
         public const string JwtIssuer = "controller-tests";
         public const string JwtAudience = "controller-tests";
+        public ILoggerProvider? LogProvider { get; set; }
 
         public ICustomerService CustomerServiceMock { get; private set; } = Substitute.For<ICustomerService>();
         public IUserService UserServiceMock { get; private set; } = Substitute.For<IUserService>();
@@ -23,6 +25,9 @@ namespace ControllerTests
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
+            if (LogProvider is not null)
+                builder.ConfigureLogging(logging => logging.AddProvider(LogProvider));
+
             builder.UseSetting(
                 "ConnectionStrings:DefaultConnection",
                 databaseConnectionString ?? "Host=localhost;Port=5432;Database=tests;Username=tests;Password=tests");

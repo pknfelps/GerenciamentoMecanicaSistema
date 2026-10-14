@@ -58,7 +58,8 @@ namespace GerenciamentoMecanicaSistema
                 builder.Configuration,
                 Path.Combine(AppContext.BaseDirectory, "Certificates", "rds-ca.pem"));
             
-            if (runtimeConfiguration is not null)
+            var usesAwsConfiguration = runtimeConfiguration is not null;
+            if (usesAwsConfiguration)
                 builder.Configuration.AddInMemoryCollection(runtimeConfiguration);
 
             var jwtIssuer = builder.Configuration["Jwt:Issuer"]
@@ -91,10 +92,10 @@ namespace GerenciamentoMecanicaSistema
 
             builder.Services
                 .AddApplication()
-                .AddInfrastructure(builder.Configuration)
+                .AddInfrastructure(builder.Configuration, usesAwsConfiguration)
                 .AddPersistence(builder.Configuration);
 
-            return runtimeConfiguration is not null;
+            return usesAwsConfiguration;
         }
     }
 }

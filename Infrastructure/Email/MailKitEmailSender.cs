@@ -34,7 +34,9 @@ namespace Infrastructure.Email
             }
             catch (Exception e)
             {
-                Logger.LogError(e, "Falha ao enviar email. ToEmail: {ToEmail}. Subject: {Subject}", toEmail, subject);
+                Logger.LogError(
+                    "Falha ao enviar email. ExceptionType: {ExceptionType}",
+                    e.GetType().FullName);
                 throw;
             }
         }

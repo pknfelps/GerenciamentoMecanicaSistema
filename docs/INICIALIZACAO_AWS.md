@@ -8,6 +8,12 @@ Sem `Runtime__Environment`, a API usa sua configuração local e não cria clien
 
 O SDK utiliza a cadeia padrão de credenciais. No EKS, a integração é Pod Identity para o ServiceAccount `default/gerenciamento-api`; não fornecer chaves de acesso no Deployment. A associação existe na base. Os overlays criam o ServiceAccount e configuram o Deployment; a policy de leitura do banco deve estar aplicada pelo Terraform da base antes do deploy (sucesso da infra hom informado pelo mantenedor). Não usar os overlays com a imagem provisória `:pending`.
 
+### Seleção do envio de e-mail
+
+O resultado validado do carregamento de runtime também é passado à composição da Infrastructure. Sem Runtime, ela mantém MailKit/SMTP e EmailSettings locais. Em hom/prd, registra somente LoggingEmailSender para IEmailSender: cada chamada conclui e escreve uma mensagem Information fixa, `Envio de e-mail simulado.`. Nenhum argumento de envio é registrado; não são configurados EmailSettings nem registrados cliente/conexão SMTP no modo AWS, mesmo que esses valores ainda existam no appsettings.
+
+Não há opção adicional nem seleção por Development/Staging/Production: Runtime hom/prd também simula quando executado em uma máquina local. Valor de Runtime presente inválido continua impedindo a inicialização antes da composição, sem fallback para SMTP. Não há novo parâmetro SSM, Secret, leitura AWS ou permissão de e-mail. A mesma imagem preserva MailKit para o modo local. Envio funcional de e-mail na AWS foi retirado da entrega por decisão do mantenedor; a mensagem de log comprova somente simulação.
+
 ## Leitura e configuração
 
 Antes de registrar autenticação e persistência, a API faz um `GetParameters` com `WithDecryption=false` para nove parâmetros públicos String:

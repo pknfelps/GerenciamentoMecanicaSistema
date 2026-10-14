@@ -22,7 +22,7 @@ namespace Infrastructure.Email
 
             try
             {
-                Logger.LogDebug("Conectando ao SMTP. Host: {Host}. Port: {Port}. UseTls: {UseTls}", Settings.Host, Settings.Port, Settings.UseTls);
+                Logger.LogDebug("Conectando ao SMTP.");
 
                 await Client.ConnectAsync(Settings.Host, Settings.Port, socketOptions);
 
@@ -31,7 +31,9 @@ namespace Infrastructure.Email
             }
             catch (Exception e)
             {
-                Logger.LogError(e, "Falha ao conectar ou autenticar no SMTP. Host: {Host}. Port: {Port}. UseTls: {UseTls}", Settings.Host, Settings.Port, Settings.UseTls);
+                Logger.LogError(
+                    "Falha ao conectar ou autenticar no SMTP. ExceptionType: {ExceptionType}",
+                    e.GetType().FullName);
                 throw;
             }
 

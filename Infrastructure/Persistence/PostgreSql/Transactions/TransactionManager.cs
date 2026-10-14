@@ -37,7 +37,9 @@ namespace Infrastructure.Persistence.PostgreSql.Transactions
             catch (Exception e)
             {
                 transaction.Rollback();
-                Logger.LogError(e, "Transação revertida após falha durante execução de operação persistente");
+                Logger.LogError(
+                    "Transação revertida após falha durante execução de operação persistente. ExceptionType: {ExceptionType}",
+                    e.GetType().FullName);
                 throw;
             }
             finally
