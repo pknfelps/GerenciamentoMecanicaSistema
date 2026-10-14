@@ -40,12 +40,10 @@ namespace Service.Events
             catch (Exception exception)
             {
                 Logger.LogError(
-                    exception,
-                    "Falha ao enviar notificação da ordem. EventType: {EventType}. OrderId: {OrderId}. CustomerDocument: {CustomerDocument}. VehicleLicensePlate: {VehicleLicensePlate}",
+                    "Falha ao enviar notificação da ordem. EventType: {EventType}. OrderId: {OrderId}. ExceptionType: {ExceptionType}",
                     applicationEvent.GetType().Name,
                     order.OrderId,
-                    order.CustomerDocument,
-                    order.VehicleLicensePlate);
+                    exception.GetType().FullName);
             }
         }
 

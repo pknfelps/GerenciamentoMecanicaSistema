@@ -26,6 +26,18 @@ Sem conclusão do serviço, `dateFinished` e `duration` agora são `null`, inclu
 
 Esta alteração de nulabilidade afeta os consumidores do contrato. Após o PR, executar `api-deploy` e atualizar o Gateway pelo workflow próprio com o novo commit OpenAPI da API e a revisão de autenticação vigente. Conferir as projeções nulas, o ciclo e as negativas pelo Gateway. Não é necessário alterar ou reinicializar o banco, modificar IAM ou mudar workflows para esta entrega.
 
+### Sanitização dos logs — E4
+
+Os logs de erro da aplicação usam somente a mensagem fixa da operação, o tipo da exceção e propriedades técnicas permitidas. Não enviar o objeto Exception ao logger, nem Message/InnerException/Data/ToString ou stack trace. Notificações não registram CPF/CNPJ, placa, destinatário, assunto ou conteúdo; o diagnóstico não registra o valor do orçamento; SMTP não registra configuração ou credenciais. A execução e o descarte das transações, a propagação das falhas e o tratamento das notificações permanecem iguais.
+
+O middleware registra RequestId gerado pelo servidor, TraceId da atividade atual (ou unavailable), código HTTP, verbo reconhecido (outros: OTHER) e o modelo do endpoint (sem endpoint: unmatched). Não copiar caminho, query, headers ou corpo. Não são criados cabeçalhos nem eventos extras por requisição.
+
+O formato permanece textual/simple. CaptureScopes e IncludeScopes ficam false para não transportar escopos automáticos com RequestPath; a correlação está nas propriedades do próprio evento. Os filtros Information/Warning existentes são preservados. Não há filtro None nem supressão do analisador. Os avisos S6667 ficam visíveis, pois a regra recomenda passar a exceção completa, contrariando a política de sanitização aceita; avaliar o resultado do quality gate sem ocultar o diagnóstico.
+
+Após o PR, executar somente o api-deploy normal. Esta entrega não altera contratos HTTP/OpenAPI, recursos AWS ou configuração funcional do SMTP. Não é necessário reaplicar base, banco, Job ou Gateway para disponibilizar os novos logs. A validação local não comprova a revisão na AWS.
+
+Na conferência posterior, identificar o commit/digest e o pod da nova revisão, delimitar a leitura ao seu início e exercitar uma negativa de negócio e uma notificação com dados fictícios/example.invalid. Conferir mensagem fixa, tipo e IDs técnicos, ausência de stack trace, caminho bruto, documentos, e-mail, tokens e credenciais. Fazer a busca em memória e registrar somente contagens/IDs técnicos, sem reproduzir os valores. Verificar também a preservação das respostas HTTP e do estado da OS diante da falha de notificação. Não alterar SMTP, corromper banco nem induzir indisponibilidade AWS para testar logs. Registros históricos e pendências de SMTP, Inativo/histórico SQL e E5 permanecem preservados.
+
 ## Executar
 
 1. Publicar as alterações via PR nas branches necessárias, incluindo `main` para disponibilizar o disparo manual, conforme a [documentação do GitHub](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).

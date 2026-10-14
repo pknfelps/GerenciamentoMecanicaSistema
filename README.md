@@ -46,6 +46,16 @@ As alterações de estado, itens e exclusão bloqueiam a OS dentro da transaçã
 
 A lista detalhada ordena por abertura crescente e UUID; a operacional mantém prioridade de status, depois abertura e UUID. O [diagrama de dados](docs/arquitetura/diagramas/DADOS.md) registra as relações e a preservação do histórico. Os ajustes não alteram o esquema/seeds nem reintroduzem constraints ou índices. A conferência desta entrega é local; publicação e validação AWS dependem dos PRs/deploys do mantenedor.
 
+### Logs da API
+
+Os erros da aplicação registram uma mensagem fixa da operação e o tipo da exceção, sem stack trace, mensagem original, exceção interna ou `Data`. A política é a mesma em desenvolvimento e produção, inclusive para logs Debug da aplicação. Não registrar documentos, placa, nomes, e-mail, assunto/corpo das notificações, orçamento, tokens, senhas, hashes, strings de conexão ou configuração AWS/SMTP.
+
+Os registros preservam dados técnicos: ID/estado da OS e tipo do evento, quando aplicável; no middleware, código HTTP, RequestId do servidor, TraceId da atividade atual, verbo reconhecido e modelo da rota. Caminho e query recebidos não são copiados. Sem endpoint reconhecido, usar `unmatched`; verbos não previstos usam `OTHER`; sem atividade, o TraceId é `unavailable`. Esses campos ficam no próprio evento, sem criar cabeçalhos ou novos logs por requisição.
+
+O console mantém texto simples. `CaptureScopes=false` e `IncludeScopes=false` impedem a coleta/exibição de escopos automáticos que poderiam conter o caminho bruto. Os filtros de mensagens permanecem os originais: Information para a aplicação e Warning para Microsoft.AspNetCore. Não foi desabilitada categoria nem suprimida regra do analisador. O aviso S6667, que pede o objeto da exceção no logger, permanece visível para revisão; esse objeto não é registrado porque pode expor dados sensíveis e stack trace.
+
+As respostas HTTP e o funcionamento das notificações/transações não mudam. A sanitização foi preparada para validação local; sua comprovação na AWS depende do deploy e da inspeção dos logs da nova revisão, conforme [procedimento de deploy](docs/DEPLOY_API.md). Os registros antigos não são apagados. A correção funcional do SMTP e a observabilidade E5 permanecem separadas.
+
 ## Componentes e repositórios
 
 Diagrama da aplicação existente:

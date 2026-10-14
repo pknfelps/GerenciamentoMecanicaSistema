@@ -238,8 +238,8 @@ namespace Service
         {
             var order = await ChangeStatus(orderId, order => order.FinalizeDiagnosis(), "Falha ao atualizar ordem");
             Logger.LogInformation(
-                "Diagnóstico concluído e evento de orçamento disponível será publicado. OrderId: {OrderId}. Status: {Status}. Budget: {Budget}",
-                order.Id, order.Status, order.Budget);
+                "Diagnóstico concluído e evento de orçamento disponível será publicado. OrderId: {OrderId}. Status: {Status}",
+                order.Id, order.Status);
             await EventDispatcher.Publish(new BudgetAvailableEvent(CreateNotificationSnapshot(order)));
         }
 

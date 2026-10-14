@@ -57,6 +57,7 @@ namespace ServiceTests
         private IStockService StockService { get; set; }
         private ITransactionManager TransactionManager { get; set; }
         private IApplicationEventDispatcher EventDispatcher { get; set; }
+        private ILogger<OrdersService> Logger { get; set; }
 
         private static CustomerResult ExistingCustomer { get; } = new(Guid.NewGuid(), "Teste", "417.384.220-11", "(11) 91234-5678", "teste@gmail.com", CustomerStatus.Active);
         private static ICustomer ExistingCustomerDomain { get; } = CreateSubstituteCustomer(ExistingCustomer.Id, ExistingCustomer.Name, ExistingCustomer.Document, ExistingCustomer.Phone, ExistingCustomer.Email);
@@ -335,7 +336,8 @@ namespace ServiceTests
             EventDispatcher = Substitute.For<IApplicationEventDispatcher>();
             EventDispatcher.Publish(Arg.Any<IApplicationEvent>()).Returns(Task.CompletedTask);
 
-            Service = new OrdersService(Repository, DependenciesGateway, StockService, TransactionManager, EventDispatcher, Substitute.For<ILogger<OrdersService>>());
+            Logger = Substitute.For<ILogger<OrdersService>>();
+            Service = new OrdersService(Repository, DependenciesGateway, StockService, TransactionManager, EventDispatcher, Logger);
         }
 
         [Test]
@@ -1062,6 +1064,14 @@ namespace ServiceTests
             await EventDispatcher.Received(1).Publish(Arg.Is<BudgetAvailableEvent>(notification =>
                 notification.Order.OrderId == ExistingOrderInDiagnosis.Id
                 && notification.Order.Status == WorkOrderStatus.WaitingForApproval));
+
+            var arguments = Logger.ReceivedCalls().Single(call => call.GetMethodInfo().Name == nameof(ILogger.Log)).GetArguments();
+            var properties = ((IEnumerable<KeyValuePair<string, object?>>)arguments[2]!).ToDictionary(pair => pair.Key, pair => pair.Value);
+            Assert.That(arguments[0], Is.EqualTo(LogLevel.Information));
+            Assert.That(arguments[3], Is.Null);
+            Assert.That(properties.Keys, Is.EquivalentTo(new[] { "OrderId", "Status", "{OriginalFormat}" }));
+            Assert.That(properties["OrderId"], Is.EqualTo(ExistingOrderInDiagnosisId));
+            Assert.That(properties["Status"], Is.EqualTo(WorkOrderStatus.WaitingForApproval));
         }
 
         [Test]

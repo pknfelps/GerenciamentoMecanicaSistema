@@ -1,6 +1,7 @@
 using Domain.Interface.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interface.Exceptions;
+using System.Diagnostics;
 
 namespace GerenciamentoMecanicaSistema.Middleware
 {
@@ -11,6 +12,13 @@ namespace GerenciamentoMecanicaSistema.Middleware
 
         public async Task InvokeAsync(HttpContext context)
         {
+            var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText ?? "unmatched";
+            var method = context.Request.Method is "GET" or "POST" or "PUT" or "PATCH" or "DELETE" or "HEAD" or "OPTIONS"
+                ? context.Request.Method
+                : "OTHER";
+            var requestId = context.TraceIdentifier;
+            var traceId = Activity.Current?.TraceId.ToString() ?? "unavailable";
+
             try
             {
                 await Next(context);
@@ -18,26 +26,27 @@ namespace GerenciamentoMecanicaSistema.Middleware
             catch (ApplicationBaseException exception)
             {
                 Logger.LogWarning(
-                    exception,
-                    "Erro de aplicação tratado. Path: {Path}. StatusCode: {StatusCode}",
-                    context.Request.Path,
-                    GetStatusCode(exception));
+                    "Erro de aplicação tratado. StatusCode: {StatusCode}. ExceptionType: {ExceptionType}. RequestId: {RequestId}. TraceId: {TraceId}. HttpMethod: {HttpMethod}. Route: {Route}",
+                    GetStatusCode(exception),
+                    exception.GetType().FullName, requestId, traceId, method, route);
 
                 await WriteProblemDetails(context, exception, GetStatusCode(exception));
             }
             catch (DomainBaseException exception)
             {
                 Logger.LogWarning(
-                    exception,
-                    "Erro de domínio tratado. Path: {Path}. StatusCode: {StatusCode}",
-                    context.Request.Path,
-                    GetStatusCode(exception));
+                    "Erro de domínio tratado. StatusCode: {StatusCode}. ExceptionType: {ExceptionType}. RequestId: {RequestId}. TraceId: {TraceId}. HttpMethod: {HttpMethod}. Route: {Route}",
+                    GetStatusCode(exception),
+                    exception.GetType().FullName, requestId, traceId, method, route);
 
                 await WriteProblemDetails(context, exception, GetStatusCode(exception));
             }
             catch (Exception exception)
             {
-                Logger.LogError(exception, "Erro inesperado durante a requisição. Path: {Path}", context.Request.Path);
+                Logger.LogError(
+                    "Erro inesperado durante a requisição. StatusCode: {StatusCode}. ExceptionType: {ExceptionType}. RequestId: {RequestId}. TraceId: {TraceId}. HttpMethod: {HttpMethod}. Route: {Route}",
+                    StatusCodes.Status500InternalServerError,
+                    exception.GetType().FullName, requestId, traceId, method, route);
 
                 await WriteProblemDetails(
                     context,

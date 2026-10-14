@@ -12,6 +12,7 @@ namespace ControllerTests
         protected TestWebApplicationFactory TestWebAppFactory { get; set; }
         protected HttpClient TestClient { get; set; }
         protected virtual string TestRole => "Mechanic";
+        protected virtual TestWebApplicationFactory CreateFactory() => new();
         protected Guid TestIdentityId { get; } = Guid.NewGuid();
 
         protected void UseToken(string role) => TestClient.DefaultRequestHeaders.Authorization =
@@ -20,7 +21,7 @@ namespace ControllerTests
         [SetUp]
         public virtual Task SetUp()
         {
-            TestWebAppFactory = new TestWebApplicationFactory();
+            TestWebAppFactory = CreateFactory();
             TestClient = TestWebAppFactory.CreateClient();
             UseToken(TestRole);
 
