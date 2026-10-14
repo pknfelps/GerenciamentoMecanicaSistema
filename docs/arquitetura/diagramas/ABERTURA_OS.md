@@ -12,7 +12,8 @@ sequenceDiagram
     participant D as RDS PostgreSQL
     participant O as OpenTelemetry
     participant N as Handler de notificação na API
-    participant S as SMTP
+    participant S as SMTP (somente local)
+    participant L as Log textual da API
     M->>G: POST /authentication (credenciais internas)
     G->>A: Encaminhar login
     A->>D: Consultar usuário interno
@@ -42,10 +43,13 @@ sequenceDiagram
                     A->>D: COMMIT
                     A->>O: Registrar criação confirmada (sem bloquear negócio)
                     A->>N: Publicar evento de status, após commit
-                    N->>S: Tentar enviar notificação ao cliente
-                    S-->>N: Resultado ou falha
-                    N->>O: Registrar tentativa/erro sem dados pessoais
-                    N-->>A: Concluir tratamento (falha SMTP não desfaz OS)
+                    alt Runtime hom/prd
+                        N->>L: Envio de e-mail simulado.
+                    else Runtime ausente (mesmo fluxo local sem Gateway)
+                        N->>S: Tentar enviar notificação ao cliente
+                        S-->>N: Resultado ou falha
+                    end
+                    N-->>A: Concluir tratamento (falha de notificação não desfaz OS)
                     A-->>G: 201 com ID da OS
                 end
             end
@@ -56,6 +60,6 @@ sequenceDiagram
 
 A criação/itens/estoque e o histórico inicial são gravados na mesma transação. Nas alterações e exclusões, a API bloqueia a OS antes de carregar e validar o estado atual; materiais são bloqueados em ordem consistente de UUIDs. Assim, uma decisão concorrente não usa um estado anterior nem repete efeitos de estoque. Status/evento e exclusão dos itens/OS são atômicos, preservando o histórico após DELETE.
 
-O [diagrama de dados](DADOS.md) registra as relações e projeções: conclusão/duração ausentes são null, não data mínima/zero artificial. As mudanças de consistência e contrato foram validadas localmente em 14/10/2026; publicação/validação da nova revisão em hom continuam pendentes. Os participantes OpenTelemetry e os registros sem dados pessoais no fluxo acima continuam sendo o alvo da E5: instrumentação, sanitização, entrega e reconciliação dos indicadores ainda precisam ser implementadas. Não considerar que todo o diagrama já está operacional.
+O [diagrama de dados](DADOS.md) registra as relações e projeções: conclusão/duração ausentes são null, não data mínima/zero artificial. As mudanças de consistência e contrato foram conferidas em hom em 14/10/2026; a sanitização dos logs e a simulação de e-mail foram validadas localmente e aguardam conferência da nova revisão na AWS. Os participantes OpenTelemetry continuam sendo o alvo da E5: instrumentação, exportação e reconciliação dos indicadores ainda precisam ser implementadas. Não considerar que todo o diagrama já está operacional.
 
-O envio SMTP permanece no processamento da API, após o commit, como em `OrdersService` e `OrderNotificationEventHandler`. Não há fila nem função de notificação nesta entrega. Falha de SMTP não pode recriar a OS ou transformar a persistência confirmada em falha de criação. Um timeout percebido pelo consumidor depois do commit não oferece garantia de idempotência de uma nova requisição.
+O tratamento permanece no processamento da API, após o commit, como em `OrdersService` e `OrderNotificationEventHandler`. O handler continua consultando os dados necessários e EmailService monta a mensagem; IEmailSender define o destino do envio. Em hom/prd, LoggingEmailSender conclui e registra apenas `Envio de e-mail simulado.`, sem dados do envio ou entrega real. No modo local, MailKitEmailSender mantém SMTP, configurações e smtp4dev do Compose. A escolha usa o modo AWS já validado, não a máquina nem ASPNETCORE_ENVIRONMENT. Não há fila nem função de notificação nesta entrega. Falha de notificação não pode recriar a OS ou transformar a persistência confirmada em falha de criação. Um timeout percebido pelo consumidor depois do commit não oferece garantia de idempotência de uma nova requisição. A simulação está preparada para conferência após o deploy; SMTP funcional na AWS deixou de fazer parte da entrega por decisão do mantenedor.

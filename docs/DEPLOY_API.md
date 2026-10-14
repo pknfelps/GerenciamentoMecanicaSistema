@@ -36,7 +36,15 @@ O formato permanece textual/simple. CaptureScopes e IncludeScopes ficam false pa
 
 Após o PR, executar somente o api-deploy normal. Esta entrega não altera contratos HTTP/OpenAPI, recursos AWS ou configuração funcional do SMTP. Não é necessário reaplicar base, banco, Job ou Gateway para disponibilizar os novos logs. A validação local não comprova a revisão na AWS.
 
-Na conferência posterior, identificar o commit/digest e o pod da nova revisão, delimitar a leitura ao seu início e exercitar uma negativa de negócio e uma notificação com dados fictícios/example.invalid. Conferir mensagem fixa, tipo e IDs técnicos, ausência de stack trace, caminho bruto, documentos, e-mail, tokens e credenciais. Fazer a busca em memória e registrar somente contagens/IDs técnicos, sem reproduzir os valores. Verificar também a preservação das respostas HTTP e do estado da OS diante da falha de notificação. Não alterar SMTP, corromper banco nem induzir indisponibilidade AWS para testar logs. Registros históricos e pendências de SMTP, Inativo/histórico SQL e E5 permanecem preservados.
+Na conferência posterior, identificar o commit/digest e o pod da nova revisão, delimitar a leitura ao seu início e exercitar uma negativa de negócio e uma notificação com dados fictícios/example.invalid. Conferir mensagem fixa, tipo e IDs técnicos, ausência de stack trace, caminho bruto, documentos, e-mail, tokens e credenciais. Fazer a busca em memória e registrar somente contagens/IDs técnicos, sem reproduzir os valores. Não corromper banco nem induzir indisponibilidade AWS para testar logs. Registros históricos e pendências de Inativo/histórico SQL e E5 permanecem preservados; o envio de e-mail em hom/prd passa à simulação descrita a seguir.
+
+### SMTP local e envio simulado na AWS
+
+Sem Runtime__Environment, o envio SMTP e o smtp4dev do Compose permanecem iguais. Em Runtime hom/prd, a API registra somente LoggingEmailSender para IEmailSender e não lê EmailSettings nem registra ISmtpClient, SmtpConnection ou MailKitEmailSender. O Program fornece à composição o resultado do modo AWS já validado; não há variável nova, leitura de e-mail no SSM/Secrets, seleção por ASPNETCORE_ENVIRONMENT ou fallback SMTP. Campos de Runtime vazios/nulos/inválidos continuam sendo rejeitados na inicialização.
+
+O fluxo de OS e as consultas/montagem das notificações permanecem. O adaptador simulado conclui cada chamada com um único log Information, `Envio de e-mail simulado.`, sem destinatário/assunto/conteúdo. Nenhum e-mail é entregue. MailKit continua no pacote para uso local, sem builds distintos. SMTP funcional na AWS não é mais uma pendência de implementação, por decisão do mantenedor; não confundir simulação com entrega comprovada.
+
+Após PR, executar somente api-deploy; base, banco/Job e Gateway não precisam ser reaplicados para esta alteração. Conferir commit/digest/pod e somente logs a partir da nova revisão, exercitando criação/mudança de estado e orçamento com dados fictícios. Esperar a mensagem de simulação e nenhuma tentativa/falha SMTP ou exposição de dados, com respostas e estado da OS preservados. Não apagar logs históricos nem considerar a revisão anterior como prova. As verificações locais de composição/notificações não comprovam o deploy; Inativo/histórico SQL e E5 continuam pendentes.
 
 ## Executar
 

@@ -20,7 +20,7 @@ Segredos JWT e credenciais ficam no Secrets Manager por ambiente. API e função
 
 ## Fluxos e falhas
 
-Ver [componentes](../diagramas/COMPONENTES.md), [validação de CPF](../diagramas/VALIDACAO_CPF.md) e [abertura de OS](../diagramas/ABERTURA_OS.md). Falha técnica de banco/secrets não equivale a documento inelegível. Falha de telemetria não deve impedir uma operação de negócio. SMTP permanece na API, com falhas posteriores ao commit tratadas separadamente.
+Ver [componentes](../diagramas/COMPONENTES.md), [validação de CPF](../diagramas/VALIDACAO_CPF.md) e [abertura de OS](../diagramas/ABERTURA_OS.md). Falha técnica de banco/secrets não equivale a documento inelegível. Falha de telemetria não deve impedir uma operação de negócio. Notificações permanecem na API após o commit: SMTP somente no modo local; hom/prd usam o adaptador de log fixo `Envio de e-mail simulado.`, sem entrega real ou nova infraestrutura. Essa seleção reutiliza o modo AWS validado; falhas de notificação continuam tratadas separadamente. A decisão do mantenedor retira envio funcional de e-mail na AWS da entrega.
 
 ## Infraestrutura declarativa
 

@@ -24,6 +24,7 @@ flowchart LR
             NAT["Um NAT Gateway + EIP"] --> IGW["Internet Gateway"]
         end
         API --> DB
+        API -->|"Notificações hom/prd"| EMAILLOG["Envio de e-mail simulado — log da API"]
         LNET -->|"SELECT de cliente"| DB
         API -->|"Saída externa"| NAT
         LNET -->|"Saída externa"| NAT
@@ -32,7 +33,7 @@ flowchart LR
     end
     VL -->|"TCP 80"| NLB
     FN -.-> LNET
-    IGW --> EXT["New Relic / APIs AWS / SMTP"]
+    IGW --> EXT["New Relic / APIs AWS"]
     SM["Secrets Manager por ambiente"] -.-> API
     SM -.-> FN
     GH["GitHub Actions via OIDC"] --> CTRL["Endpoint administrativo EKS público + privado"]
@@ -43,6 +44,8 @@ flowchart LR
 Terraform cria NLB/listener/target group e associação ao ASG. A AWS registra/remove suas instâncias; o Service NodePort encaminha para a API, sem controller. Health HTTP em /health/ready pela porta 30080; externalTrafficPolicy: Cluster. A Lambda é serviço gerenciado: o bloco representa conectividade à VPC, não execução no EKS. Template SAM com ZIP implementado ([ADR 009](../adrs/009-SAM-AUTENTICACAO.md)), implantação pendente; VPC/SG continuam na base Terraform e IAM runtime no bootstrap persistente. Auth administra somente duas saídas do SG reservado.
 
 O Gateway é a entrada pública de negócio. O endpoint administrativo do EKS é outra superfície, autenticada por IAM e autorizada no cluster. NAT atende saída; RDS não recebe rota de internet. O HPA escala pods dentro da capacidade disponível: o nó único não oferece alta disponibilidade nem escalonamento automático de nós.
+
+Notificações de e-mail usam LoggingEmailSender em hom/prd e produzem somente o log fixo `Envio de e-mail simulado.`, sem SMTP ou entrega externa. SMTP/MailKit continuam na API exclusivamente no modo local (Runtime ausente), incluindo smtp4dev no Compose. A seleção usa o modo AWS validado, sem novas variáveis/recursos. A simulação foi implementada localmente; sua conferência na nova revisão AWS depende do deploy do mantenedor.
 
 S3 de estado, identidade OIDC, ECR e bucket separado de artefatos pertencem ao bootstrap compartilhado. VPC, EKS, RDS, função, Gateway, NLB e segredos de cada ambiente são independentes. A destruição de hom não remove prd nem o bootstrap.
 

@@ -31,7 +31,7 @@ Amostragem das spans de negócio produzidas pela API/função será de 100% nas 
 
 ## Operação e comprovação
 
-Três dashboards cobrem operação, OS e integrações, com filtro por ambiente. Alertas iniciais: CPU de nó acima de 80% e memória acima de 85% por cinco minutos, Deployment da API sem réplica disponível por dois minutos durante janela ativa e ao menos uma falha técnica de OS em cinco minutos; falhas de SMTP ficam separadas. Confirmar destinatário e testar alerta por falha controlada, sem teste de carga.
+Três dashboards cobrem operação, OS e integrações, com filtro por ambiente. Alertas iniciais: CPU de nó acima de 80% e memória acima de 85% por cinco minutos, Deployment da API sem réplica disponível por dois minutos durante janela ativa e ao menos uma falha técnica de OS em cinco minutos. Não prever alerta de falha SMTP em hom/prd: esses modos somente registram `Envio de e-mail simulado.`, sem entrega real, por decisão do mantenedor. SMTP permanece local. Confirmar destinatário dos alertas de observabilidade e testar alerta por falha controlada, sem teste de carga.
 
 A exportação possui filas limitadas em memória: pode perder dados e não participa da transação de negócio. Publicar métricas após commit e implementar/verificar deduplicação e reconciliação com o histórico antes de considerá-las evidência confiável. Não foi escolhido outbox ou um novo serviço para isso.
 

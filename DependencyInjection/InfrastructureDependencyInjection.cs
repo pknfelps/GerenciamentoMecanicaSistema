@@ -10,8 +10,17 @@ namespace DependencyInjection
 {
     public static class InfrastructureDependencyInjection
     {
-        public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration, bool usesAwsConfiguration)
         {
+            services.AddTransient<ITokenGenerator, JwtTokenGenerator>();
+            services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
+
+            if (usesAwsConfiguration)
+            {
+                services.AddTransient<IEmailSender, LoggingEmailSender>();
+                return services;
+            }
+
             var emailSettings = configuration.GetSection("EmailSettings");
             services.Configure<EmailSettings>(settings =>
             {
@@ -24,8 +33,6 @@ namespace DependencyInjection
                 settings.UseTls = bool.TryParse(emailSettings["UseTls"], out var useTls) && useTls;
             });
 
-            services.AddTransient<ITokenGenerator, JwtTokenGenerator>();
-            services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
             services.AddTransient<ISmtpClient, SmtpClient>();
             services.AddTransient<SmtpConnection>();
             services.AddTransient<IEmailSender, MailKitEmailSender>();

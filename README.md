@@ -1,6 +1,6 @@
 # Sistema de Gerenciamento de Mecânica
 
-API do sistema de oficina: usuários, clientes, veículos, catálogo, estoque e ciclo de ordens de serviço (OS). Mantém as regras de negócio, persistência, autenticação interna, notificações SMTP, testes, imagem Docker e Deployment/HPA.
+API do sistema de oficina: usuários, clientes, veículos, catálogo, estoque e ciclo de ordens de serviço (OS). Mantém as regras de negócio, persistência, autenticação interna, notificações SMTP locais e simuladas na AWS, testes, imagem Docker e Deployment/HPA.
 
 ## Estado da implementação
 
@@ -8,7 +8,7 @@ A separação em quatro repositórios está integrada. O CI valida testes/cobert
 
 | Disponível | A implementar |
 |---|---|
-| API .NET, JWT interno, PostgreSQL, adaptador SMTP e health checks | Validação da autorização pelo Gateway e SMTP na AWS |
+| API .NET, JWT interno, PostgreSQL, SMTP local, envio simulado AWS e health checks | Conferência do envio simulado na AWS após deploy |
 | Dockerfile, Compose opcional, Deployment/HPA e workflow manual ECR/EKS | Executar e validar deploy nos ambientes hom/prd |
 | CI, autenticação serverless e API Gateway validados em hom | Validação prd e observabilidade OpenTelemetry/New Relic |
 
@@ -54,7 +54,19 @@ Os registros preservam dados técnicos: ID/estado da OS e tipo do evento, quando
 
 O console mantém texto simples. `CaptureScopes=false` e `IncludeScopes=false` impedem a coleta/exibição de escopos automáticos que poderiam conter o caminho bruto. Os filtros de mensagens permanecem os originais: Information para a aplicação e Warning para Microsoft.AspNetCore. Não foi desabilitada categoria nem suprimida regra do analisador. O aviso S6667, que pede o objeto da exceção no logger, permanece visível para revisão; esse objeto não é registrado porque pode expor dados sensíveis e stack trace.
 
-As respostas HTTP e o funcionamento das notificações/transações não mudam. A sanitização foi preparada para validação local; sua comprovação na AWS depende do deploy e da inspeção dos logs da nova revisão, conforme [procedimento de deploy](docs/DEPLOY_API.md). Os registros antigos não são apagados. A correção funcional do SMTP e a observabilidade E5 permanecem separadas.
+As respostas HTTP e o funcionamento das transações não mudam. A sanitização foi preparada para validação local; sua comprovação na AWS depende do deploy e da inspeção dos logs da nova revisão, conforme [procedimento de deploy](docs/DEPLOY_API.md). Os registros antigos não são apagados. O SMTP funcional fica restrito ao modo local; hom/prd usam a simulação abaixo. A observabilidade E5 permanece separada.
+
+### Notificações por ambiente
+
+| Configuração de runtime | Envio de e-mail |
+|---|---|
+| `Runtime__Environment` ausente | `MailKitEmailSender`, com SMTP e `EmailSettings` existentes |
+| `Runtime__Environment=hom` ou `prd` | `LoggingEmailSender`: uma mensagem Information, `Envio de e-mail simulado.`, por chamada |
+| Campo presente vazio, nulo ou inválido | Inicialização rejeitada pelo carregador existente |
+
+A escolha reutiliza o resultado do carregamento AWS validado no início da API; não há nova variável nem dependência do `ASPNETCORE_ENVIRONMENT` ou da máquina. Executar localmente com Runtime hom/prd também usa o modo AWS e a simulação. Nesse modo não são lidos os ajustes de e-mail nem registrados cliente/conexão SMTP. Não há fallback para SMTP nem entrega real ao destinatário. O log não inclui nomes, destinatário, assunto ou conteúdo.
+
+`IEmailSender`, `EmailService`, eventos e handler permanecem: cliente/veículo continuam sendo consultados e a mensagem é montada antes de chegar ao adaptador. O SMTP e o smtp4dev do Compose continuam disponíveis no modo local; MailKit permanece na mesma imagem. Por decisão do mantenedor, não será configurado envio funcional na AWS. A implementação é local; conferir a simulação na AWS após PR e api-deploy, sem reaplicar base, banco ou Gateway.
 
 ## Componentes e repositórios
 
@@ -68,7 +80,9 @@ flowchart LR
     SERVICE --> PORTS["Service.Interface: contratos"]
     PORTS --> INFRA["Infrastructure: adaptadores"]
     INFRA --> PG[("PostgreSQL")]
-    INFRA --> SMTP["Servidor SMTP"]
+    INFRA --> EMAIL["Envio de e-mail"]
+    EMAIL --> SMTP["SMTP local"]
+    EMAIL --> SIM["Log simulado hom/prd"]
     DI["DependencyInjection"] -.-> API
     DI -.-> INFRA
 ```
@@ -191,13 +205,13 @@ A API cobre usuários, clientes, veículos, catálogo, materiais/estoque e cria�
 |---|---|
 | `ConnectionStrings__DefaultConnection` | Conexão PostgreSQL |
 | `Jwt__Issuer`, `Jwt__Audience`, `Jwt__Key` | Emissão e validação JWT compatíveis no ambiente |
-| `Runtime__Environment` | Ausente: configuração local. `hom` ou `prd`: carregar JWT e conexão RDS pela AWS na inicialização |
+| `Runtime__Environment` | Ausente: configuração local e SMTP. `hom` ou `prd`: carregar JWT/conexão RDS pela AWS e simular envio de e-mail |
 | `AWS_REGION` | Região dos clientes AWS quando o carregamento remoto estiver habilitado (`us-east-1` nos ambientes previstos) |
-| `EmailSettings__Host`, `EmailSettings__Port` | Servidor SMTP |
-| `EmailSettings__Username`, `EmailSettings__Password`, `EmailSettings__UseTls` | Autenticação/TLS do SMTP |
-| `EmailSettings__SenderName`, `EmailSettings__SenderEmail` | Identificação do remetente |
+| `EmailSettings__Host`, `EmailSettings__Port` | Servidor SMTP, somente no modo local |
+| `EmailSettings__Username`, `EmailSettings__Password`, `EmailSettings__UseTls` | Autenticação/TLS do SMTP local |
+| `EmailSettings__SenderName`, `EmailSettings__SenderEmail` | Identificação do remetente local |
 
-O Compose mapeia essas configurações a partir do `.env` e dos serviços locais. E-mails enviados ao smtp4dev ficam no painel local. Para outro destino, configure o servidor SMTP apropriado.
+O Compose mapeia essas configurações a partir do `.env` e dos serviços locais. E-mails enviados ao smtp4dev ficam no painel local. Para outro destino local, configure o servidor SMTP apropriado. Hom/prd não usam essas configurações e não entregam e-mails.
 
 O carregamento inicial AWS está implementado: lê os parâmetros SSM v2 e a versão `AWSCURRENT` dos Secrets JWT e da credencial `mecanica_api`, mantendo os valores em memória. A conexão usa TLS `VerifyFull` com o certificado público RDS incluído no publish. Falha de leitura, configuração inválida ou prazo de 45 segundos excedido impede a inicialização, sem fallback local. Sem `Runtime__Environment`, o fluxo local permanece; campo vazio ou diferente de `hom`/`prd` é inválido. Consulte [inicialização e conexão AWS](docs/INICIALIZACAO_AWS.md). Policy Terraform e ServiceAccount/overlays estão preparados; o mantenedor confirmou o deploy da infra hom. Publicação da API e validação real no EKS permanecem pendentes.
 
@@ -238,10 +252,10 @@ A [especificação central](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md) de
 | Produz para implantação | Imagem ECR identificada por digest; o Deployment não usa latest |
 | Produz para Gateway | contracts/api/<commit>/openapi.json e seu .sha256, gerados da mesma revisão implantada |
 | Produz para a função | Pacote NuGet de versão fixa em packages/GerenciamentoMecanica.Auth.Contracts/<versao>/, com .sha256 |
-| Publica em SSM | /mecanica/<ambiente>/api/v2/: configuração administrada pelo Terraform, sem releases/tentativas; smtp-secret-arn quando aplicável |
+| Publica em SSM | /mecanica/<ambiente>/api/v2/: configuração administrada pelo Terraform, sem releases/tentativas; sem parâmetro SMTP nesta entrega |
 | Consome da base | Cluster/namespace/Service, ECR, referência JWT, issuer/audience e endpoint OTel quando habilitado |
 | Consome do banco | Writer/porta/database/TLS, versão/hash SQL e api-secret-arn |
-| Resolve no runtime | Sua credencial de banco, JWT e SMTP autenticado; nunca a credencial administrativa do banco |
+| Resolve no runtime | Sua credencial de banco e JWT; nunca a credencial administrativa do banco. SMTP somente por configuração local |
 | Solicita após deploy | Plano e aprovação do Gateway com versões fixas dos contratos API/função; operações sequenciais pelo mantenedor |
 
 Build/testes e publicação do pacote são independentes de banco/EKS. Publicação e deploy são resultados distintos: dependência ausente deixa a implantação bloqueada, sem sinalizar sucesso nem criar infraestrutura implicitamente. Release pronta exige rollout/readiness aprovados e dependências compatíveis. A API não inicializa SQL nem administra o Service/NLB.
