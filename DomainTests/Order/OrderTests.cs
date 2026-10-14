@@ -16,8 +16,89 @@ namespace DomainTests.Order
         [SetUp]
         public void SetUp()
         {
-            ReceivedOrder = new Domain.WorkOrder.Order(Document, LicensePlate, DateTime.Now);
-            OrderInExecution = new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate, [], [], 10.0m, WorkOrderStatus.InExecution, DateTime.Now, DateTime.MinValue);
+            ReceivedOrder = new Domain.WorkOrder.Order(Document, LicensePlate, DateTime.UtcNow);
+            OrderInExecution = new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate, [], [], 10.0m, WorkOrderStatus.InExecution, DateTime.UtcNow, null);
+        }
+
+        [Test]
+        public void CompletionBeforeOpeningDoesNotChangeTheOrder()
+        {
+            Assert.Throws<DomainValidationException>(() => OrderInExecution.CompleteService(OrderInExecution.DateCreated.AddTicks(-1)));
+            Assert.Multiple(() =>
+            {
+                Assert.That(OrderInExecution.Status, Is.EqualTo(WorkOrderStatus.InExecution));
+                Assert.That(OrderInExecution.DateFinished, Is.Null);
+                Assert.That(OrderInExecution.Duration, Is.Null);
+            });
+        }
+
+        [Test]
+        public void EqualInstantsProduceARealZeroDuration()
+        {
+            OrderInExecution.CompleteService(OrderInExecution.DateCreated);
+            Assert.That(OrderInExecution.Duration, Is.EqualTo(TimeSpan.Zero));
+        }
+
+        [Test]
+        public void LocalInstantsAreNormalizedToUtc()
+        {
+            var opening = DateTime.UtcNow.AddHours(-1);
+            var order = new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate, [], [], 0,
+                WorkOrderStatus.InExecution, opening.ToLocalTime(), null);
+            order.CompleteService(opening.AddMinutes(1).ToLocalTime());
+            Assert.Multiple(() =>
+            {
+                Assert.That(order.DateCreated, Is.EqualTo(opening));
+                Assert.That(order.DateCreated.Kind, Is.EqualTo(DateTimeKind.Utc));
+                Assert.That(order.DateFinished!.Value.Kind, Is.EqualTo(DateTimeKind.Utc));
+                Assert.That(order.Duration, Is.EqualTo(TimeSpan.FromMinutes(1)));
+            });
+        }
+
+        [TestCase("minimum")]
+        [TestCase("maximum")]
+        [TestCase("unspecified")]
+        public void InvalidInstantsAreRejectedForOpeningAndCompletion(string kind)
+        {
+            var instant = kind switch
+            {
+                "minimum" => DateTime.MinValue,
+                "maximum" => DateTime.MaxValue,
+                _ => DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
+            };
+            Assert.Throws<DomainValidationException>(() => new Domain.WorkOrder.Order(Document, LicensePlate, instant));
+            Assert.Throws<DomainValidationException>(() => OrderInExecution.CompleteService(instant));
+            Assert.That(OrderInExecution.DateFinished, Is.Null);
+        }
+
+        [Test]
+        public void ReconstructionRejectsInconsistentDatesAndUndefinedStatus()
+        {
+            var opening = DateTime.UtcNow;
+            Assert.Throws<DomainValidationException>(() => new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate,
+                [], [], 0, (WorkOrderStatus)999, opening, null));
+            Assert.Throws<DomainValidationException>(() => new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate,
+                [], [], 0, WorkOrderStatus.Finished, opening, opening.AddTicks(-1)));
+            Assert.Throws<DomainValidationException>(() => new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate,
+                [], [], 0, WorkOrderStatus.Received, opening, opening));
+        }
+
+        [TestCase("0")]
+        [TestCase("999")]
+        [TestCase("received")]
+        [TestCase("Unknown")]
+        [TestCase("Received,InDiagnosis")]
+        [TestCase("")]
+        public void PersistedStatusMustBeAnExactName(string status)
+        {
+            Assert.Throws<DomainValidationException>(() => Domain.WorkOrder.WorkOrderStatusRules.Parse(status));
+        }
+
+        [Test]
+        public void EveryDefinedStatusNameCanBeParsed()
+        {
+            foreach (var status in Enum.GetValues<WorkOrderStatus>())
+                Assert.That(Domain.WorkOrder.WorkOrderStatusRules.Parse(status.ToString()), Is.EqualTo(status));
         }
 
         [Test]
@@ -35,8 +116,8 @@ namespace DomainTests.Order
                 Assert.That(ReceivedOrder.Budget, Is.EqualTo(0.0m));
                 Assert.That(ReceivedOrder.Status, Is.EqualTo(WorkOrderStatus.Received));
                 Assert.That(ReceivedOrder.DateCreated, Is.Not.EqualTo(DateTime.MinValue));
-                Assert.That(ReceivedOrder.DateFinished, Is.EqualTo(DateTime.MinValue));
-                Assert.That(ReceivedOrder.Duration, Is.EqualTo(TimeSpan.Zero));
+                Assert.That(ReceivedOrder.DateFinished, Is.Null);
+                Assert.That(ReceivedOrder.Duration, Is.Null);
             });
         }
 
@@ -51,7 +132,7 @@ namespace DomainTests.Order
             material.Id.Returns(Guid.NewGuid());
             material.Amount.Returns(3);
 
-            var order = new Domain.WorkOrder.Order(Document, LicensePlate, [service], [material], DateTime.Now);
+            var order = new Domain.WorkOrder.Order(Document, LicensePlate, [service], [material], DateTime.UtcNow);
 
             Assert.Multiple(() =>
             {
@@ -76,31 +157,31 @@ namespace DomainTests.Order
             secondService.Amount.Returns(2);
 
             Assert.Catch<DomainValidationException>(() =>
-                new Domain.WorkOrder.Order(Document, LicensePlate, [firstService, secondService], [], DateTime.Now));
+                new Domain.WorkOrder.Order(Document, LicensePlate, [firstService, secondService], [], DateTime.UtcNow));
         }
 
         [Test]
         public void MustNotCreateWorkOrderIfIdIsEmpty()
         {
-            Assert.Catch<DomainValidationException>(() => new Domain.WorkOrder.Order(Guid.Empty, Document, LicensePlate, [], [], 0.0m, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue));
+            Assert.Catch<DomainValidationException>(() => new Domain.WorkOrder.Order(Guid.Empty, Document, LicensePlate, [], [], 0.0m, WorkOrderStatus.Received, DateTime.UtcNow, null));
         }
 
         [Test]
         public void MustNotCreateWorkOrderIfClientIsNull()
         {
-            Assert.Catch<DomainValidationException>(() => new Domain.WorkOrder.Order("", LicensePlate, DateTime.Now));
+            Assert.Catch<DomainValidationException>(() => new Domain.WorkOrder.Order("", LicensePlate, DateTime.UtcNow));
         }
 
         [Test]
         public void MustNotCreateWorkOrderIfVehicleIsNull()
         {
-            Assert.Catch<DomainValidationException>(() => new Domain.WorkOrder.Order(Document, "", DateTime.Now));
+            Assert.Catch<DomainValidationException>(() => new Domain.WorkOrder.Order(Document, "", DateTime.UtcNow));
         }
 
         [Test]
         public void MustNotCreateWorkOrderIfBudgetIsLowerThan0()
         {
-            Assert.Catch<DomainValidationException>(() => new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate, [], [], -1.0m, WorkOrderStatus.Received, DateTime.Now, DateTime.MinValue));
+            Assert.Catch<DomainValidationException>(() => new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate, [], [], -1.0m, WorkOrderStatus.Received, DateTime.UtcNow, null));
         }
 
         [Test]
@@ -165,7 +246,7 @@ namespace DomainTests.Order
         [TestCase(WorkOrderStatus.WaitingForExecution)]
         public void MustNotChangeItemsAfterDiagnosis(WorkOrderStatus status)
         {
-            var order = new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate, [], [], 10.0m, status, DateTime.Now, DateTime.MinValue);
+            var order = new Domain.WorkOrder.Order(Guid.NewGuid(), Document, LicensePlate, [], [], 10.0m, status, DateTime.UtcNow, null);
 
             Assert.Multiple(() =>
             {
@@ -429,7 +510,7 @@ namespace DomainTests.Order
 
             ReceivedOrder.StartService();
 
-            ReceivedOrder.CompleteService(DateTime.Now);
+            ReceivedOrder.CompleteService(DateTime.UtcNow);
 
             Assert.That(ReceivedOrder.Status, Is.EqualTo(WorkOrderStatus.Finished));
             Assert.That(ReceivedOrder.Duration, Is.Not.EqualTo(TimeSpan.Zero));
@@ -438,7 +519,7 @@ namespace DomainTests.Order
         [Test]
         public void MustNotCompleteServiceIfNotInAValidState()
         {
-            Assert.Catch<DomainBusinessRuleException>(() => ReceivedOrder.CompleteService(DateTime.Now));
+            Assert.Catch<DomainBusinessRuleException>(() => ReceivedOrder.CompleteService(DateTime.UtcNow));
         }
 
         [Test]
@@ -454,7 +535,7 @@ namespace DomainTests.Order
 
             ReceivedOrder.StartService();
 
-            ReceivedOrder.CompleteService(DateTime.Now);
+            ReceivedOrder.CompleteService(DateTime.UtcNow);
 
             ReceivedOrder.DeliverVehicle();
 

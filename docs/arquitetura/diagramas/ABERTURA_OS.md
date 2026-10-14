@@ -33,7 +33,7 @@ sequenceDiagram
             alt Dados inválidos ou dependência ausente
                 A-->>G: Erro conforme contrato da rota
             else Dados válidos
-                A->>D: BEGIN; resolver itens e reservar estoque
+                A->>D: BEGIN; resolver itens; bloquear materiais por UUID e reservar estoque
                 A->>D: Inserir OS Received, itens e histórico inicial UTC
                 alt Falha ao persistir
                     A->>D: ROLLBACK
@@ -54,6 +54,8 @@ sequenceDiagram
     end
 ```
 
-A transação existente de criação/itens/estoque será ampliada para incluir o histórico inicial. Novas transições também atualizarão estado e histórico atomicamente. Publicar telemetria depois do commit evita contar um rollback como criação; entrega e reconciliação dos indicadores ainda precisam ser implementadas em E4/E5.
+A criação/itens/estoque e o histórico inicial são gravados na mesma transação. Nas alterações e exclusões, a API bloqueia a OS antes de carregar e validar o estado atual; materiais são bloqueados em ordem consistente de UUIDs. Assim, uma decisão concorrente não usa um estado anterior nem repete efeitos de estoque. Status/evento e exclusão dos itens/OS são atômicos, preservando o histórico após DELETE.
+
+O [diagrama de dados](DADOS.md) registra as relações e projeções: conclusão/duração ausentes são null, não data mínima/zero artificial. As mudanças de consistência e contrato foram validadas localmente em 14/10/2026; publicação/validação da nova revisão em hom continuam pendentes. Os participantes OpenTelemetry e os registros sem dados pessoais no fluxo acima continuam sendo o alvo da E5: instrumentação, sanitização, entrega e reconciliação dos indicadores ainda precisam ser implementadas. Não considerar que todo o diagrama já está operacional.
 
 O envio SMTP permanece no processamento da API, após o commit, como em `OrdersService` e `OrderNotificationEventHandler`. Não há fila nem função de notificação nesta entrega. Falha de SMTP não pode recriar a OS ou transformar a persistência confirmada em falha de criação. Um timeout percebido pelo consumidor depois do commit não oferece garantia de idempotência de uma nova requisição.

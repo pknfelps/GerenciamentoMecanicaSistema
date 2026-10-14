@@ -37,6 +37,20 @@ public sealed class OpenApiContractTests
     }
 
     [Test]
+    public void OrderCompletionAndDurationAreNullable()
+    {
+        foreach (var name in new[] { "WorkOrderResponse", "DetailedWorkOrderResponse" })
+        {
+            var properties = document.RootElement.GetProperty("components").GetProperty("schemas")
+                .GetProperty(name).GetProperty("properties");
+            Assert.That(properties.GetProperty("dateFinished").GetProperty("nullable").GetBoolean(), Is.True);
+            Assert.That(properties.GetProperty("duration").GetProperty("nullable").GetBoolean(), Is.True);
+            Assert.That(properties.GetProperty("dateCreated").TryGetProperty("nullable", out var openingNullable)
+                && openingNullable.GetBoolean(), Is.False);
+        }
+    }
+
+    [Test]
     public void DescribesVersionedOpenApi30ContractWithoutGlobalAuthentication()
     {
         var root = document.RootElement;

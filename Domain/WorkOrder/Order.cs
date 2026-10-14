@@ -19,13 +19,13 @@ namespace Domain.WorkOrder
         public decimal Budget { get; private set; } = 0.0m;
         public WorkOrderStatus Status { get; private set; }
         public DateTime DateCreated { get; private set; }
-        public DateTime DateFinished { get; private set; }
-        public TimeSpan Duration => DateFinished != DateTime.MinValue ? DateFinished.Subtract(DateCreated) : TimeSpan.Zero;
+        public DateTime? DateFinished { get; private set; }
+        public TimeSpan? Duration => DateFinished - DateCreated;
 
         private readonly List<IMechanicalService> services;
         private readonly List<IMaterial> materials;
 
-        public Order(string customerDocument, string vehicleLicensePlate, DateTime dateCreated) : this(Guid.NewGuid(), customerDocument, vehicleLicensePlate, [], [], 0.0m, WorkOrderStatus.Received, dateCreated, DateTime.MinValue) { }
+        public Order(string customerDocument, string vehicleLicensePlate, DateTime dateCreated) : this(Guid.NewGuid(), customerDocument, vehicleLicensePlate, [], [], 0.0m, WorkOrderStatus.Received, dateCreated, null) { }
 
         public Order(
             string customerDocument,
@@ -41,10 +41,10 @@ namespace Domain.WorkOrder
                 0.0m,
                 WorkOrderStatus.Received,
                 dateCreated,
-                DateTime.MinValue)
+                null)
         { }
 
-        public Order(Guid id, string customerDocument, string vehicleLicensePlate, List<IMechanicalService> services, List<IMaterial> materials, decimal budget, WorkOrderStatus status, DateTime dateCreated, DateTime dateFinished)
+        public Order(Guid id, string customerDocument, string vehicleLicensePlate, List<IMechanicalService> services, List<IMaterial> materials, decimal budget, WorkOrderStatus status, DateTime dateCreated, DateTime? dateFinished)
         {
             if (id == Guid.Empty)
                 throw new DomainValidationException("O ID da ordem não pode ser vazio");
@@ -58,6 +58,16 @@ namespace Domain.WorkOrder
             if (budget < 0.0m)
                 throw new DomainValidationException("Orçamento não pode ser negativo");
 
+            if (!Enum.IsDefined(status))
+                throw new DomainValidationException("O status da ordem é inválido");
+
+            var opening = NormalizeInstant(dateCreated);
+            var completion = dateFinished.HasValue ? NormalizeInstant(dateFinished.Value) : (DateTime?)null;
+            if (completion < opening)
+                throw new DomainValidationException("A conclusão não pode ser anterior à abertura");
+            if (completion.HasValue && status is not WorkOrderStatus.Finished and not WorkOrderStatus.Delivered)
+                throw new DomainValidationException("A conclusão exige uma ordem finalizada ou entregue");
+
             Id = id;
             CustomerDocument = DocumentWrapper.CreateDocument(customerDocument);
             VehicleLicensePlate = LicensePlateWrapper.CreateLicensePlate(vehicleLicensePlate);
@@ -65,8 +75,8 @@ namespace Domain.WorkOrder
             this.materials = materials;
             Budget = budget;
             Status = status;
-            DateCreated = dateCreated;
-            DateFinished = dateFinished;
+            DateCreated = opening;
+            DateFinished = completion;
         }
 
         public void StartDiagnosis()
@@ -178,7 +188,11 @@ namespace Domain.WorkOrder
             if (Status is not WorkOrderStatus.InExecution)
                 throw new InvalidDomainStateException("Não é possível finalizar o serviço enquanto não estiver em execução");
 
-            DateFinished = dateFinished;
+            var completion = NormalizeInstant(dateFinished);
+            if (completion < DateCreated)
+                throw new DomainValidationException("A conclusão não pode ser anterior à abertura");
+
+            DateFinished = completion;
             Status = WorkOrderStatus.Finished;
         }
 
@@ -188,6 +202,17 @@ namespace Domain.WorkOrder
                 throw new InvalidDomainStateException("Não é possível entregar o veículo enquanto não estiver finalizado");
 
             Status = WorkOrderStatus.Delivered;
+        }
+
+        private static DateTime NormalizeInstant(DateTime instant)
+        {
+            if (instant == DateTime.MinValue || instant == DateTime.MaxValue || instant.Kind == DateTimeKind.Unspecified)
+                throw new DomainValidationException("O instante deve ser válido e possuir fuso definido");
+
+            var utc = instant.ToUniversalTime();
+            if (utc == DateTime.MinValue || utc == DateTime.MaxValue)
+                throw new DomainValidationException("O instante está fora do intervalo válido");
+            return utc;
         }
 
         private static List<IMechanicalService> ValidateServices(IEnumerable<IMechanicalService> services)

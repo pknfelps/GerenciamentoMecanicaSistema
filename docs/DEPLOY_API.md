@@ -22,7 +22,9 @@ A aplicação lê seus parâmetros e Secrets usando o SDK .NET e Pod Identity, c
 
 A API grava em `orders` somente identidade, cliente, veículo, orçamento e status. A abertura vem do primeiro evento de `order_status_history`; a conclusão vem do evento `Finished` com motivo `ServiceCompleted`. A duração continua calculada, sem coluna própria. Os instantes são enviados em UTC, e criação/transição e histórico são gravados na mesma transação, reutilizando a transação do serviço quando existente. Recusa usa `BudgetRejected` e não é tratada como serviço concluído; excluir a ordem preserva o histórico.
 
-Os campos de resposta atuais são preservados: sem conclusão do serviço, `DateFinished` mantém `DateTime.MinValue` e `Duration` permanece zero. A revisão desses contratos e dos indicadores pertence à E4. Após publicar esta correção pelo `api-deploy`, reconferir no Gateway que a consulta de uma ordem inexistente retorna 404. Não é necessário alterar ou reinicializar o banco para esta correção.
+Sem conclusão do serviço, `dateFinished` e `duration` agora são `null`, inclusive em recusas; não são substituídos por data mínima ou duração artificial. Instantes iguais de abertura/conclusão podem produzir uma duração real zero. As listagens usam abertura e UUID como desempate, preservando a prioridade operacional. Alterações/exclusão bloqueiam a OS antes da leitura de decisão; estoque bloqueia o material na mesma transação. Falhas revertem todos os efeitos, e notificações são disparadas após a transação da operação.
+
+Esta alteração de nulabilidade afeta os consumidores do contrato. Após o PR, executar `api-deploy` e atualizar o Gateway pelo workflow próprio com o novo commit OpenAPI da API e a revisão de autenticação vigente. Conferir as projeções nulas, o ciclo e as negativas pelo Gateway. Não é necessário alterar ou reinicializar o banco, modificar IAM ou mudar workflows para esta entrega.
 
 ## Executar
 
@@ -38,7 +40,7 @@ Cada job faz checkout do SHA da execução, mesmo que a branch avance enquanto o
 
 `Microsoft.Extensions.ApiDescription.Server 10.0.9` gera somente `v1`, em OpenAPI 3.0, como `artifacts/openapi/openapi.json`. A geração é optativa; builds comuns/Docker permanecem desabilitados por padrão. O `Program` reconhece o entry assembly oficial `GetDocument.Insider` e registra somente controllers/OpenAPI, sem carregar AWS, configurar credenciais JWT ou registrar persistência. A inicialização normal mantém todas as validações. Development serve o mesmo formato 3.0.
 
-O contrato tem título **API da oficina** e versão **1.0.0**, sem destinos AWS, extensões de integração ou exemplos de tokens. Bearer JWT é descrito por operação com `Authorize`, inclusive herdado do controller; `AllowAnonymous` prevalece. Não há exigência global. Autenticação interna e health checks são públicos, assim como status/orçamento atualmente anônimos. Esta entrega não muda essas permissões. `/customers/validate` continua no contrato da Lambda.
+O contrato tem título **API da oficina** e versão **1.0.0**, sem destinos AWS, extensões de integração ou exemplos de tokens. Bearer JWT é descrito por operação com `Authorize`, inclusive herdado do controller; `AllowAnonymous` prevalece. Não há exigência global. Autenticação interna e health checks são públicos. Status exige Mechanic/Customer e orçamento exige Customer, com vínculo da própria OS. `/customers/validate` continua no contrato da Lambda.
 
 No bucket `mecanica-artifacts-121754142617-us-east-1`, a revisão da execução determina as chaves:
 

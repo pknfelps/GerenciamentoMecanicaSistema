@@ -20,6 +20,7 @@
 | [Componentes](diagramas/COMPONENTES.md) | Rede, serviços, ambientes e caminhos de observabilidade |
 | [Validação de documento](diagramas/VALIDACAO_CPF.md) | Emissão do token do cliente e autorização da consulta de OS |
 | [Abertura de OS](diagramas/ABERTURA_OS.md) | Login interno, criação transacional e notificação |
+| [Dados e histórico](diagramas/DADOS.md) | Esquema de OS, relações, projeções e proteção transacional |
 | [RFC 001 — Execução](rfcs/001-EXECUCAO.md) | Integração entre Gateway, função, aplicação e banco |
 | [RFC 002 — Entrega](rfcs/002-ENTREGA.md) | Responsabilidades, contratos entre pipelines e ciclo dos ambientes |
 | [RFC 003 — Dados e observabilidade](rfcs/003-DADOS-E-OBSERVABILIDADE.md) | Histórico, métricas, coleta e critérios de validação |

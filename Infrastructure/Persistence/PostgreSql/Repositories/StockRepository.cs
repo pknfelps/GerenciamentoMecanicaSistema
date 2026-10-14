@@ -40,6 +40,15 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
                 WHERE id = @Id;
                 """;
 
+        public async Task LockMaterial(Guid materialId)
+        {
+            if (Transaction is null)
+                throw new InvalidOperationException("O bloqueio do material exige uma transação ativa.");
+
+            await Connection.QuerySingleOrDefaultAsync<Guid?>(
+                "SELECT id FROM stock WHERE id = @Id FOR UPDATE;", new { Id = materialId }, Transaction);
+        }
+
         public async Task<int> RegisterNewMaterial(IMaterial material)
         {
             return await Connection.ExecuteAsync(RegisterMaterialSql, MaterialDb.Create(material), Transaction);

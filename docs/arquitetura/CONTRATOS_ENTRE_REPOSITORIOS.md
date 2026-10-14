@@ -85,6 +85,8 @@ Job `k8s/database-init.yaml`: banco vazio cria esquema/seeds e marcador na mesma
 
 ### API, autenticação e Gateway
 
+**Contrato de OS da API — consolidação E4 de 14/10/2026:** `dateFinished` e `duration` são nullable e retornam null enquanto não existir conclusão de serviço, inclusive na recusa. Abertura/conclusão vêm do histórico UTC; entrega não altera a duração do atendimento. Atualizar consumidores do contrato e compor o Gateway com o novo OpenAPI publicado após o deploy da API. Rotas, JWT, parâmetros SSM, esquema/seeds e permissões permanecem iguais. A implementação/testes locais não substituem a validação AWS dessa revisão.
+
 API mantém Deployment/probes/testes de negócio; runtime resolve credencial restrita e JWT em default. Função consome subnets/SG da base, endpoint e auth-secret-arn do banco e JWT; Gateway consome nlb-arn/URI e ARN qualificado da versão Lambda. Campos futuros da API: image-uri/deployment-name/openapi-key/auth-contracts-version; campos implementados do Gateway estão descritos abaixo. Sem releases ou tentativas.
 
 #### Auth — SAM/CloudFormation com ZIP e IAM persistente

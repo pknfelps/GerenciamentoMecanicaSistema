@@ -15,7 +15,7 @@ namespace ControllerTests
     {
         private IOrdersService OrderService { get; set; }
 
-        private static readonly DetailedWorkOrderResult ExistingOrder = new(Guid.NewGuid(), "123.456.789-12", "TST1234", 0.0m, "Received", DateTime.Now, DateTime.MinValue, [], [], TimeSpan.Zero);
+        private static readonly DetailedWorkOrderResult ExistingOrder = new(Guid.NewGuid(), "123.456.789-12", "TST1234", 0.0m, "Received", DateTime.UtcNow, null, [], [], null);
         private static readonly Guid ExistingServiceId = Guid.NewGuid();
         private static readonly Guid ExistingMaterialId = Guid.NewGuid();
         private static readonly Guid ExistingCustomerId = Guid.NewGuid();

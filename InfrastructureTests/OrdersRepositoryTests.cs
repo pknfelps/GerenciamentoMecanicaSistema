@@ -59,7 +59,7 @@ namespace InfrastructureTests
                 order.Status.Returns(WorkOrderStatus.Received);
                 order.Id.Returns(Guid.NewGuid());
                 order.DateCreated.Returns(DateTime.UtcNow);
-                order.DateFinished.Returns(DateTime.MinValue);
+                order.DateFinished.Returns((DateTime?)null);
                 return order;
             }
         }
@@ -79,7 +79,7 @@ namespace InfrastructureTests
                 order.Budget.Returns(100);
                 order.Status.Returns(WorkOrderStatus.WaitingForApproval);
                 order.DateCreated.Returns(ExistingOrderDateCreated);
-                order.DateFinished.Returns(DateTime.MinValue);
+                order.DateFinished.Returns((DateTime?)null);
                 return order;
             }
         }
@@ -202,6 +202,41 @@ namespace InfrastructureTests
         }
 
         [Test]
+        public void LockingRequiresAnAmbientTransaction()
+        {
+            Assert.ThrowsAsync<InvalidOperationException>(() => Repository.LockOrder(ExistingOrderId));
+        }
+
+        [TestCase("0")]
+        [TestCase("999")]
+        [TestCase("received")]
+        [TestCase("Unknown")]
+        public async Task InvalidPersistedStatusIsNotSilentlyMapped(string status)
+        {
+            await Connection.ExecuteAsync("UPDATE orders SET status = @Status WHERE id = @Id", new { Status = status, Id = ExistingOrderId });
+            Assert.ThrowsAsync<Domain.Interface.Exceptions.DomainValidationException>(() => Repository.GetOrder(ExistingOrderId));
+        }
+
+        [Test]
+        public async Task ListsHaveAStableOpeningTimeTieBreak()
+        {
+            var first = Guid.Parse("00000000-0000-0000-0000-000000000001");
+            var second = Guid.Parse("00000000-0000-0000-0000-000000000002");
+            var opening = DateTime.UtcNow.AddDays(-1);
+            foreach (var id in new[] { second, first })
+            {
+                var order = OrderToCreate;
+                order.Id.Returns(id);
+                order.DateCreated.Returns(opening);
+                await Repository.CreateOrder(order);
+            }
+            var detailed = (await Repository.GetOrders()).Select(order => order.Id).ToArray();
+            var operational = (await Repository.GetOperationalOrders()).Select(order => order.Id).ToArray();
+            Assert.That(detailed, Is.EqualTo(new[] { first, second, ExistingOrderId }));
+            Assert.That(operational, Is.EqualTo(new[] { ExistingOrderId, first, second }));
+        }
+
+        [Test]
         public async Task MustCreateOrder()
         {
             var registry = await Repository.CreateOrder(OrderToCreate);
@@ -213,7 +248,7 @@ namespace InfrastructureTests
         public async Task MustPersistCreationInHistoryWithUtcTimestamp()
         {
             var order = OrderToCreate;
-            order.DateCreated.Returns(DateTime.Now);
+            order.DateCreated.Returns(DateTime.UtcNow);
 
             await Repository.CreateOrder(order);
             var loaded = await Repository.GetOrder(order.Id);
@@ -231,8 +266,8 @@ namespace InfrastructureTests
                 Assert.That(initial, Is.True);
                 Assert.That(loaded!.DateCreated.Kind, Is.EqualTo(DateTimeKind.Utc));
                 Assert.That(loaded.DateCreated, Is.EqualTo(order.DateCreated.ToUniversalTime()).Within(TimeSpan.FromMilliseconds(1)));
-                Assert.That(loaded.DateFinished, Is.EqualTo(DateTime.MinValue));
-                Assert.That(loaded.Duration, Is.EqualTo(TimeSpan.Zero));
+                Assert.That(loaded.DateFinished, Is.Null);
+                Assert.That(loaded.Duration, Is.Null);
             });
         }
 
@@ -313,8 +348,8 @@ namespace InfrastructureTests
             Assert.Multiple(() =>
             {
                 Assert.That(reason, Is.EqualTo("BudgetRejected"));
-                Assert.That(loaded!.DateFinished, Is.EqualTo(DateTime.MinValue));
-                Assert.That(loaded.Duration, Is.EqualTo(TimeSpan.Zero));
+                Assert.That(loaded!.DateFinished, Is.Null);
+                Assert.That(loaded.Duration, Is.Null);
             });
         }
 
@@ -391,10 +426,7 @@ namespace InfrastructureTests
                 Assert.That(ordersList[0].DateCreated.Hour, Is.EqualTo(ExistingOrder.DateCreated.Hour));
                 Assert.That(ordersList[0].DateCreated.Minute, Is.EqualTo(ExistingOrder.DateCreated.Minute));
                 Assert.That(ordersList[0].DateCreated.Second, Is.EqualTo(ExistingOrder.DateCreated.Second));
-                Assert.That(ordersList[0].DateFinished.Date, Is.EqualTo(ExistingOrder.DateFinished.Date));
-                Assert.That(ordersList[0].DateFinished.Hour, Is.EqualTo(ExistingOrder.DateFinished.Hour));
-                Assert.That(ordersList[0].DateFinished.Minute, Is.EqualTo(ExistingOrder.DateFinished.Minute));
-                Assert.That(ordersList[0].DateFinished.Second, Is.EqualTo(ExistingOrder.DateFinished.Second));
+                Assert.That(ordersList[0].DateFinished, Is.EqualTo(ExistingOrder.DateFinished));
             });
         }
 
@@ -468,10 +500,7 @@ namespace InfrastructureTests
                 Assert.That(order.DateCreated.Hour, Is.EqualTo(ExistingOrder.DateCreated.Hour));
                 Assert.That(order.DateCreated.Minute, Is.EqualTo(ExistingOrder.DateCreated.Minute));
                 Assert.That(order.DateCreated.Second, Is.EqualTo(ExistingOrder.DateCreated.Second));
-                Assert.That(order.DateFinished.Date, Is.EqualTo(ExistingOrder.DateFinished.Date));
-                Assert.That(order.DateFinished.Hour, Is.EqualTo(ExistingOrder.DateFinished.Hour));
-                Assert.That(order.DateFinished.Minute, Is.EqualTo(ExistingOrder.DateFinished.Minute));
-                Assert.That(order.DateFinished.Second, Is.EqualTo(ExistingOrder.DateFinished.Second));
+                Assert.That(order.DateFinished, Is.EqualTo(ExistingOrder.DateFinished));
             });
 
             Assert.Multiple(() =>
@@ -564,10 +593,7 @@ namespace InfrastructureTests
                 Assert.That(ordersList[0].DateCreated.Hour, Is.EqualTo(ExistingOrder.DateCreated.Hour));
                 Assert.That(ordersList[0].DateCreated.Minute, Is.EqualTo(ExistingOrder.DateCreated.Minute));
                 Assert.That(ordersList[0].DateCreated.Second, Is.EqualTo(ExistingOrder.DateCreated.Second));
-                Assert.That(ordersList[0].DateFinished.Date, Is.EqualTo(ExistingOrder.DateFinished.Date));
-                Assert.That(ordersList[0].DateFinished.Hour, Is.EqualTo(ExistingOrder.DateFinished.Hour));
-                Assert.That(ordersList[0].DateFinished.Minute, Is.EqualTo(ExistingOrder.DateFinished.Minute));
-                Assert.That(ordersList[0].DateFinished.Second, Is.EqualTo(ExistingOrder.DateFinished.Second));
+                Assert.That(ordersList[0].DateFinished, Is.EqualTo(ExistingOrder.DateFinished));
             });
 
             Assert.Multiple(() =>
@@ -621,10 +647,7 @@ namespace InfrastructureTests
                 Assert.That(ordersList[0].DateCreated.Hour, Is.EqualTo(ExistingOrder.DateCreated.Hour));
                 Assert.That(ordersList[0].DateCreated.Minute, Is.EqualTo(ExistingOrder.DateCreated.Minute));
                 Assert.That(ordersList[0].DateCreated.Second, Is.EqualTo(ExistingOrder.DateCreated.Second));
-                Assert.That(ordersList[0].DateFinished.Date, Is.EqualTo(ExistingOrder.DateFinished.Date));
-                Assert.That(ordersList[0].DateFinished.Hour, Is.EqualTo(ExistingOrder.DateFinished.Hour));
-                Assert.That(ordersList[0].DateFinished.Minute, Is.EqualTo(ExistingOrder.DateFinished.Minute));
-                Assert.That(ordersList[0].DateFinished.Second, Is.EqualTo(ExistingOrder.DateFinished.Second));
+                Assert.That(ordersList[0].DateFinished, Is.EqualTo(ExistingOrder.DateFinished));
             });
 
             Assert.Multiple(() =>

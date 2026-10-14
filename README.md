@@ -38,6 +38,14 @@ Os exemplos Postman `UpdateOwnUserAdmin`/`UpdateOwnUserMechanic` usam os tokens 
 
 Após excluir, o usuário não pode fazer novo login, mas JWTs anteriores continuam válidos até expirar nas rotas permitidas pelo perfil. GET próprio de Mechanic e PATCH próprio retornam 404 porque o cadastro não existe. Recriar uma conta com o mesmo nome não transfere a identidade do token antigo. O exemplo Postman `DeleteUser` usa admin_token e user_id inicialmente vazios; preencher user_id com o UUID alvo retornado pela consulta. Validação desta entrega é local; deploy/conferência AWS permanecem sob condução do mantenedor.
 
+### Histórico e consistência das OSs
+
+As alterações de estado, itens e exclusão bloqueiam a OS dentro da transação antes de carregar e validar seu estado atual. Estoque usa bloqueio por material, compartilhando a transação da OS; operações com vários materiais seguem a mesma ordem de UUIDs. Uma disputa de transição não repete reserva, devolução, consumo ou notificação. A exclusão é atômica em todos os estados e preserva o histórico.
+
+`dateCreated` vem do evento inicial; `dateFinished` vem de `Finished/ServiceCompleted`. Sem conclusão do serviço, `dateFinished` e `duration` são **null**, inclusive na recusa. Uma duração efetivamente igual a zero continua sendo zero. A entrega preserva a conclusão e a duração do atendimento. O domínio normaliza instantes locais para UTC e rejeita instantes sem fuso, extremos ou conclusão anterior à abertura.
+
+A lista detalhada ordena por abertura crescente e UUID; a operacional mantém prioridade de status, depois abertura e UUID. O [diagrama de dados](docs/arquitetura/diagramas/DADOS.md) registra as relações e a preservação do histórico. Os ajustes não alteram o esquema/seeds nem reintroduzem constraints ou índices. A conferência desta entrega é local; publicação e validação AWS dependem dos PRs/deploys do mantenedor.
+
 ## Componentes e repositórios
 
 Diagrama da aplicação existente:

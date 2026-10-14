@@ -4,6 +4,7 @@ namespace Service.Interface.Persistence
 {
     public interface IStockRepository
     {
+        Task LockMaterial(Guid materialId);
         Task<int> RegisterNewMaterial(IMaterial material);
         Task<IEnumerable<IMaterial>> GetMaterials(Guid? id = null, string name = "", string brand = "");
         Task<IMaterial?> GetMaterial(Guid? id = null, string name = "", string brand = "");
