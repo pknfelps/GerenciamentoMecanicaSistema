@@ -66,7 +66,7 @@ kubectl rollout restart deployment/deploy-gerenciamento-api --namespace default
 kubectl rollout status deployment/deploy-gerenciamento-api --namespace default --timeout=600s
 ```
 
-Esses comandos são um procedimento de operador, não foram executados nesta entrega. Não use a imagem provisória `pending` num apply manual: preserve o digest implantado conforme o procedimento de deploy. O ConfigMap contém somente configuração pública de telemetria, nunca JWT, banco, credenciais ou chave New Relic. Os overlays continuam sem ativação e sem endpoint até a entrega do Collector EKS.
+Esses comandos são um procedimento de operador, não foram executados nesta entrega. Não use a imagem provisória `pending` num apply manual: preserve o digest implantado conforme o procedimento de deploy. O ConfigMap contém somente configuração pública de telemetria, nunca JWT, banco, credenciais ou chave New Relic. Os overlays hom/prd preparam o endpoint `http://otel-collector.observability.svc.cluster.local:4318` e mantêm `Telemetry__Enabled=false`. Os manifestos do Collector são independentes no repositório de infraestrutura; sua implantação e integração dos workflows continuam pendentes.
 
 Versões fixas: OpenTelemetry Hosting/OTLP `1.19.1`, instrumentação ASP.NET Core `1.19.0`, Npgsql.OpenTelemetry `10.0.2`. Métricas de runtime usam o meter nativo `System.Runtime` do .NET 10.
 
@@ -127,6 +127,16 @@ Não há persistência, retentativas próprias ou garantia de entrega exatamente
 
 ## Validação e próxima entrega
 
+A fixture `CollectorExportTests` aceita o parâmetro NUnit opcional `CollectorConfigPath`, com o caminho do YAML da infraestrutura. Sem parâmetro, mantém o YAML local e o comportamento atual do CI, sem depender de outro checkout. Com parâmetro, monta o arquivo somente para leitura, executa com UID/GID 10001 e limites 0.5 CPU/256 MiB, verifica health 13133 e acrescenta override nativo `debug.verbosity=detailed` somente durante o teste. O manifesto da infraestrutura continua `basic`. O teste confere sinais técnicos/de negócio, correlação, sanitização, ausência de duplicação e funcionamento da API/readiness com o Collector parado.
+
+Na raiz da API, substitua `C:/caminho` pelo caminho real:
+
+```powershell
+dotnet test ControllerTests/ControllerTests.csproj -c Release --filter FullyQualifiedName~CollectorExportTests -- 'TestRunParameters.Parameter(name="CollectorConfigPath",value="C:/caminho/GerenciamentoMecanicaInfraestrutura/kubernetes/observability/collector.yaml")'
+```
+
+Os recursos e comandos de instalação/restart/descarte estão no [procedimento da infraestrutura](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/COLLECTOR_API.md). A Kustomization do Collector não integra a raiz que os workflows existentes aplicam. Não habilitar coleta antes da instalação e validação posterior; nenhuma operação AWS faz parte desta entrega.
+
 Os testes existentes de HTTP/PostgreSQL foram ampliados com exporter InMemory somente no projeto de testes. Exercitam configuração, contexto recebido, vínculo HTTP→PostgreSQL, correlação concorrente, probes, descarte, sanitização e exportação real dos três sinais para Collector em container. Incluem exceção PostgreSQL real e continuidade com Collector parado, sem AWS/RDS externos. Docker indisponível é falha, sem testes ignorados.
 
 ```powershell
@@ -140,3 +150,5 @@ E5.1–E5.3 continuam parciais: falta Collector EKS/ingestão New Relic, conta/r
 Validação em 14/10/2026: **1.128 testes aprovados, zero falhas/ignorados**, incluindo 31 específicos desta entrega. Restore/build Release, publish com certificado RDS e geração oficial do OpenAPI aprovados. Duas gerações do mesmo build com Runtime hom/telemetria inválida preservaram o contrato 3.0.4 byte a byte, SHA-256 `d784c3b554a65c4f8cfe732c0975b8bfedaf78d67f9c6ed69e2b07220c5f5d84`. Três sinais e sanitização da exceção PostgreSQL comprovados no Collector real; operações/readiness continuaram com ele parado. Isso não comprova ingestão New Relic ou implantação AWS.
 
 Após a simplificação declarativa, em 14/10/2026: **1.136 testes aprovados, zero falhas/ignorados**, incluindo 39 de observabilidade. Configuração nativa de identidade/ajustes operacionais comprovada nos três sinais; exportação real, sanitização, probes e indisponibilidade preservadas. Build Release, OpenAPI repetido/idêntico, publish/certificado e renderizações Kustomize base/hom/prd aprovados. Overlays alterados somente para identidade, sem ativação ou deploy. Referência de configuração: [SDK OTLP .NET 1.19.1](https://github.com/open-telemetry/opentelemetry-dotnet/blob/core-1.19.1/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md#environment-variables).
+
+Preparação do Collector EKS em 15/10/2026: **90 testes de observabilidade aprovados, zero falhas/ignorados**, com fixture também exercitada usando o YAML da infraestrutura. Validação nativa, health 200, três sinais e debug basic sem payloads comprovados sob as restrições do Deployment. Raiz da infraestrutura inalterada; overlays da API com endpoint e coleta false. OpenAPI preservado byte a byte. Evidências em artifacts/e5-collector dos dois repositórios. Integração de workflows, implantação, capacidade do nó e New Relic continuam pendentes.

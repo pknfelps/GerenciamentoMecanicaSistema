@@ -38,3 +38,7 @@ patches:
             value: mecanica-api
           - name: OTEL_RESOURCE_ATTRIBUTES
             value: deployment.environment.name=prd
+          - name: OTEL_EXPORTER_OTLP_ENDPOINT
+            value: http://otel-collector.observability.svc.cluster.local:4318
+          - name: Telemetry__Enabled
+            value: "false"

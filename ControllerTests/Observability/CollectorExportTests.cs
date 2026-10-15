@@ -24,28 +24,72 @@ public sealed class CollectorExportTests : BaseControllerTests
     [OneTimeSetUp]
     public async Task StartCollector()
     {
+        FileInfo configuration;
+        var infrastructureConfiguration = TestContext.Parameters.Exists("CollectorConfigPath");
+        if (infrastructureConfiguration)
+        {
+            var path = TestContext.Parameters.Get("CollectorConfigPath");
+            if (string.IsNullOrWhiteSpace(path))
+                throw new InvalidOperationException("Collector configuration was not found.");
+            configuration = new FileInfo(path);
+            if (!configuration.Exists)
+                throw new InvalidOperationException("Collector configuration was not found.");
+        }
+        else
+        {
+            var directory = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
+            while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "observability", "collector-local.yaml")))
+                directory = directory.Parent;
+            if (directory is null) throw new InvalidOperationException("Collector configuration was not found.");
+            configuration = new FileInfo(Path.Combine(directory.FullName, "observability", "collector-local.yaml"));
+        }
         database = new PostgreSqlBuilder("postgres:16.15")
             .WithDatabase("collector_tests").WithUsername("postgres").WithPassword("private-local-password").Build();
         await database.StartAsync();
-        var directory = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "observability", "collector-local.yaml")))
-            directory = directory.Parent;
-        if (directory is null) throw new InvalidOperationException("Collector configuration was not found.");
-        collector = new ContainerBuilder("otel/opentelemetry-collector-contrib:0.161.0")
-            .WithResourceMapping(new FileInfo(Path.Combine(directory.FullName, "observability", "collector-local.yaml")), "/etc/otelcol-contrib")
-            .WithCommand("--config=/etc/otelcol-contrib/collector-local.yaml")
-            .WithPortBinding(4318, true)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request =>
-                request.ForPort(4318).ForPath("/").ForStatusCode(HttpStatusCode.NotFound)))
-            .Build();
+        var builder = new ContainerBuilder("otel/opentelemetry-collector-contrib:0.161.0")
+            .WithPortBinding(4318, true);
+        if (infrastructureConfiguration)
+        {
+            builder = builder
+                .WithBindMount(configuration.FullName, $"/etc/otelcol-contrib/{configuration.Name}",
+                    DotNet.Testcontainers.Configurations.AccessMode.ReadOnly)
+                .WithCommand($"--config=/etc/otelcol-contrib/{configuration.Name}",
+                    "--config=yaml:exporters::debug::verbosity: detailed")
+                .WithEnvironment("GOMEMLIMIT", "192MiB")
+                .WithCreateParameterModifier(parameters =>
+                {
+                    parameters.User = "10001:10001";
+                    var host = parameters.HostConfig
+                        ?? throw new InvalidOperationException("Docker host configuration was not created.");
+                    host.ReadonlyRootfs = true;
+                    host.CapDrop = ["ALL"];
+                    host.SecurityOpt = ["no-new-privileges:true"];
+                    host.Memory = 256 * 1024 * 1024;
+                    host.NanoCPUs = 500_000_000;
+                })
+                .WithPortBinding(13133, true)
+                .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request =>
+                    request.ForPort(13133).ForPath("/").ForStatusCode(HttpStatusCode.OK)));
+        }
+        else
+        {
+            builder = builder
+                .WithResourceMapping(configuration, "/etc/otelcol-contrib")
+                .WithCommand($"--config=/etc/otelcol-contrib/{configuration.Name}")
+                .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request =>
+                    request.ForPort(4318).ForPath("/").ForStatusCode(HttpStatusCode.NotFound)));
+        }
+        collector = builder.Build();
         await collector.StartAsync();
     }
 
     [OneTimeTearDown]
     public async Task RemoveCollector()
     {
-        await collector.DisposeAsync();
-        await database.DisposeAsync();
+        if (collector is not null)
+            await collector.DisposeAsync();
+        if (database is not null)
+            await database.DisposeAsync();
     }
 
     protected override TestWebApplicationFactory CreateFactory() => new TelemetryWebApplicationFactory(database.GetConnectionString())
@@ -58,6 +102,16 @@ public sealed class CollectorExportTests : BaseControllerTests
     [Test]
     public async Task ExportsAllSignalsOverOtlpAndContinuesWhenCollectorStops()
     {
+        var infrastructureConfiguration = TestContext.Parameters.Exists("CollectorConfigPath");
+        await TestContext.Out.WriteLineAsync(infrastructureConfiguration
+            ? "Collector configuration: infrastructure; read-only, UID/GID 10001, 256 MiB, 0.5 CPU."
+            : "Collector configuration: local.");
+        if (infrastructureConfiguration)
+        {
+            using var healthClient = new HttpClient();
+            using var health = await healthClient.GetAsync($"http://{collector.Hostname}:{collector.GetMappedPublicPort(13133)}/");
+            Assert.That(health.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        }
         var logger = TestWebAppFactory.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Service.CollectorValidation");
         using (logger.BeginScope(new Dictionary<string, object?>
         { ["RequestPath"] = "/private-person", ["Authorization"] = "Bearer private-token" }))
@@ -119,6 +173,7 @@ public sealed class CollectorExportTests : BaseControllerTests
             + $"metrics={output.Contains("ResourceMetrics", StringComparison.Ordinal)}, logs={output.Contains("ResourceLog", StringComparison.Ordinal)}, "
             + $"context={output.Contains(traceId, StringComparison.Ordinal)}, message={output.Contains("Validação local da exportação.", StringComparison.Ordinal)}.");
         Assert.That(output.Contains("mecanica-api", StringComparison.Ordinal), Is.True);
+        Assert.That(output.Contains("service.version", StringComparison.Ordinal), Is.True);
         Assert.That(output.Contains("deployment.environment.name", StringComparison.Ordinal), Is.True);
         Assert.That(output.Contains("http.server.request.duration", StringComparison.Ordinal), Is.True);
         Assert.That(output.Contains("exception.stacktrace", StringComparison.Ordinal), Is.False);
