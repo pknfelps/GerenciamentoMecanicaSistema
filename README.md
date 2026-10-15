@@ -284,7 +284,7 @@ Crie branches de trabalho a partir da `develop` atualizada e direcione os PRs pa
 
 ## Referências
 
-Os manifestos do Collector da API estão preparados no repositório de infraestrutura, em Kustomization independente, conforme [procedimento do Collector](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/COLLECTOR_API.md). Hom/prd declaram o endpoint interno, com coleta explicitamente desabilitada. Instalação, integração dos workflows e New Relic continuam pendentes. A validação local usa a fixture existente com configuração externa opcional, sem alterar o código de produção da API.
+Os manifestos do Collector da API estão preparados no repositório de infraestrutura, em Kustomization independente, conforme [procedimento do Collector](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/COLLECTOR_API.md). Hom/prd declaram o endpoint interno, com coleta explicitamente desabilitada. Os workflows da infraestrutura agora preparam instalação/restart/rollout e descarte do Collector; a execução no EKS e New Relic continuam pendentes. A ativação da API permanece no manifesto, sem novo input de workflow. A validação local usa a fixture existente com configuração externa opcional, sem alterar o código de produção da API.
 
 - [Arquitetura, diagramas, RFCs e ADRs](docs/arquitetura/README.md).
 - [Contrato de autenticação e permissões](docs/arquitetura/ACESSO_E_AUTENTICACAO.md).
