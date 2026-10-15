@@ -2,10 +2,14 @@ using Domain.Interface.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interface.Exceptions;
 using System.Diagnostics;
+using GerenciamentoMecanicaSistema.Controllers;
+using GerenciamentoMecanicaSistema.Observability;
+using Microsoft.AspNetCore.Mvc.Controllers;
 
 namespace GerenciamentoMecanicaSistema.Middleware
 {
-    public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+    public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger,
+        OrderBusinessMetrics? metrics = null)
     {
         private RequestDelegate Next { get; } = next;
         private ILogger<ExceptionHandlingMiddleware> Logger { get; } = logger;
@@ -54,6 +58,13 @@ namespace GerenciamentoMecanicaSistema.Middleware
                     StatusCodes.Status500InternalServerError,
                     "Erro interno do servidor",
                     "Ocorreu um erro inesperado ao processar a requisição.");
+            }
+            finally
+            {
+                if (context.Response.StatusCode == StatusCodes.Status500InternalServerError && !context.RequestAborted.IsCancellationRequested
+                    && context.GetEndpoint()?.Metadata.GetMetadata<ControllerActionDescriptor>() is { } action
+                    && action.ControllerTypeInfo.AsType() == typeof(OrdersController))
+                    metrics?.RecordProcessingFailure(action.MethodInfo.Name);
             }
         }
 

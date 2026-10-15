@@ -17,6 +17,7 @@ public sealed class TelemetryWebApplicationFactory(string? connectionString = nu
     public TelemetryBuffer<Activity> Spans { get; } = new();
     public TelemetryBuffer<LogRecord> Logs { get; } = new();
     public TelemetryBuffer<Metric> Metrics { get; } = new();
+    public Action<IServiceCollection>? ConfigureTestServices { get; init; }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -31,6 +32,7 @@ public sealed class TelemetryWebApplicationFactory(string? connectionString = nu
                 services.RemoveAll<ICustomerService>();
                 services.AddScoped<ICustomerService, Service.CustomerService>();
             }
+            ConfigureTestServices?.Invoke(services);
         });
     }
 

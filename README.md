@@ -70,6 +70,8 @@ O código registra a instrumentação e aplica as regras antes de exportar/agreg
 
 O [procedimento local](docs/OBSERVABILIDADE_LOCAL.md) usa um Compose separado com Collector Contrib `0.161.0`, porta OTLP somente em localhost e saída debug, sem New Relic ou credenciais. Falha do Collector não altera respostas/readiness. A instrumentação/exportação foi comprovada localmente; E5.1–E5.3 permanecem parciais até implantação/ingestão externa. Manifestos incluem identidade e ConfigMap público de observabilidade; workflows e recursos AWS não foram alterados.
 
+As [métricas de negócio da E5](docs/OBSERVABILIDADE_NEGOCIO.md) acrescentam volume de OS, durações pelo histórico persistido e falhas de processamento/notificação. Usam a mesma ativação e exportação locais, com seleção, dimensões, histogramas e prazo de leitura no manifesto. A conferência SQL não implica recuperação automática ou entrega única. Dashboards, alertas e ingestão AWS/New Relic continuam pendentes.
+
 ### Notificações por ambiente
 
 | Configuração de runtime | Envio de e-mail |

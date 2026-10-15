@@ -3,6 +3,8 @@ using Service;
 using Service.Events;
 using Service.Interface;
 using Service.Interface.Events;
+using Service.Interface.Observability;
+using Service.Observability;
 
 namespace DependencyInjection
 {
@@ -21,6 +23,7 @@ namespace DependencyInjection
             services.AddTransient<IApplicationEventDispatcher, ApplicationEventDispatcher>();
             services.AddTransient<IApplicationEventHandler, OrderNotificationEventHandler>();
             services.AddTransient<IEmailService, EmailService>();
+            services.AddSingleton<IOrderNotificationMetrics, NullOrderNotificationMetrics>();
 
             return services;
         }

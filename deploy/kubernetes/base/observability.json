@@ -1,6 +1,11 @@
 {
   "Telemetry": {
     "Enabled": false,
+    "BusinessMetrics": {
+      "HistoryQueryTimeoutSeconds": 1,
+      "DurationBoundariesSeconds": [ 1, 5, 15, 30, 60, 300, 900, 1800, 3600, 14400, 28800, 86400, 604800 ],
+      "Attributes": [ "operation", "stage", "completion.reason", "notification.type", "outcome", "mode" ]
+    },
     "Collection": {
       "ExcludedPaths": [ "/health/live", "/health/ready", "/health/startup" ],
       "HttpMethods": [ "GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS" ],
@@ -35,7 +40,8 @@
   "Metrics": {
     "EnabledMetrics": {
       "Microsoft.AspNetCore.Hosting": true,
-      "System.Runtime": true
+      "System.Runtime": true,
+      "Mecanica.Api.Business": true
     }
   },
   "OTEL_SERVICE_NAME": "mecanica-api",

@@ -112,10 +112,12 @@ O projeto Compose `mecanica-observability` não remove banco/SMTP do Compose pri
 
 ## Dados e limites
 
+A [observabilidade de negócio](OBSERVABILIDADE_NEGOCIO.md) acrescenta o meter `Mecanica.Api.Business` à mesma configuração/exportação: criações, intervalos concluídos, falhas de ações de OS e notificações. As regras e consultas de conferência estão no procedimento específico, sem outro exporter ou dependência de New Relic para testar localmente. Referências anteriores neste documento a métricas de negócio pendentes descrevem a primeira entrega técnica.
+
 - **Traces:** W3C, todas as requisições de aplicação mesmo com pai não amostrado; probes e seu SQL excluídos. Nomes HTTP usam verbo reconhecido/modelo de rota ou `OTHER`/`unmatched`; PostgreSQL usa nome fixo. Remover headers, URL/query, SQL, parâmetros, identificadores da conexão, baggage e tracestate antes da exportação. Manter somente método, rota, status, protocolo/esquema, sistema/nome/operação do banco e tipo/código técnico do erro.
 - **Exceções:** `ActivityListener.ExceptionRecorder` substitui o conteúdo por tipo/mensagem fixa na origem. O processor remove o atributo de stack trace do evento e fixa a descrição de erro antes da exportação. Sem reflexão, mensagem original, exceção interna, Data ou mascaramento de strings.
 - **Logs:** um provider OTLP, somente categorias da aplicação `GerenciamentoMecanicaSistema.`, `Infrastructure.` e `Service.`, nível Information ou superior. TraceId/SpanId automáticos, escopos desabilitados. Preservar filtros/console existentes; não reenviar stdout nem logs internos de frameworks, driver ou exportador. Mensagens/propriedades seguem a sanitização da E4.
-- **Métricas:** duração/requisições HTTP ativas e runtime (memória, CPU do processo, GC, thread pool). Dimensões HTTP limitadas a método, rota, status, protocolo/esquema; sem usuário, documento, OS ou UUID. Não representam CPU/memória de nós/pods nem indicadores de negócio.
+- **Métricas técnicas:** duração/requisições HTTP ativas e runtime (memória, CPU do processo, GC, thread pool). Dimensões HTTP limitadas a método, rota, status, protocolo/esquema; sem usuário, documento, OS ou UUID. Não representam CPU/memória de nós/pods. Os indicadores de OS usam o meter separado de negócio, no mesmo provider/exporter.
 
 OTLP HTTP/protobuf em `/v1/traces`, `/v1/logs` e `/v1/metrics`, sem autenticação. Os valores da tabela preservam os padrões anteriores: métricas 30 s/delta e batches 512/fila 2.048/intervalo 1 s/timeout 3 s. `UseOtlpExporter` registra a exportação dos três sinais; não registrar também exporters OTLP individuais. Providers/listener pertencem ao host e são descartados com ele. Collector usa `memory_limiter`, batch e exporter debug; memória limitada a 256 MiB e CPU a 0,5 no Compose.
 
@@ -133,7 +135,7 @@ dotnet build GerenciamentoMecanicaSistema.slnx -c Release --no-restore
 dotnet test GerenciamentoMecanicaSistema.slnx -c Release --no-build --no-restore
 ```
 
-E5.1–E5.3 continuam parciais: falta Collector EKS/ingestão New Relic, conta/região e entrega segura da chave apenas ao exportador correspondente. Lambda, CloudWatch/X-Ray, métricas Kubernetes, dashboards, alertas e métricas de negócio ficam nas próximas entregas. Nenhum recurso AWS foi alterado. Avisos transitivos NU1902/NU1903 e avisos S6667 permanecem visíveis, fora deste escopo. Decisão em [ADR 005](arquitetura/adrs/005-OBSERVABILIDADE.md).
+E5.1–E5.3 continuam parciais: falta Collector EKS/ingestão New Relic, conta/região e entrega segura da chave apenas ao exportador correspondente. Lambda, CloudWatch/X-Ray, métricas Kubernetes, dashboards e alertas ficam nas próximas entregas. A instrumentação local de negócio está no procedimento específico. Nenhum recurso AWS foi alterado. Avisos transitivos NU1902/NU1903 e avisos S6667 permanecem visíveis, fora deste escopo. Decisão em [ADR 005](arquitetura/adrs/005-OBSERVABILIDADE.md).
 
 Validação em 14/10/2026: **1.128 testes aprovados, zero falhas/ignorados**, incluindo 31 específicos desta entrega. Restore/build Release, publish com certificado RDS e geração oficial do OpenAPI aprovados. Duas gerações do mesmo build com Runtime hom/telemetria inválida preservaram o contrato 3.0.4 byte a byte, SHA-256 `d784c3b554a65c4f8cfe732c0975b8bfedaf78d67f9c6ed69e2b07220c5f5d84`. Três sinais e sanitização da exceção PostgreSQL comprovados no Collector real; operações/readiness continuaram com ele parado. Isso não comprova ingestão New Relic ou implantação AWS.
 
