@@ -66,7 +66,7 @@ kubectl rollout restart deployment/deploy-gerenciamento-api --namespace default
 kubectl rollout status deployment/deploy-gerenciamento-api --namespace default --timeout=600s
 ```
 
-Esses comandos são um procedimento de operador, não foram executados nesta entrega. Não use a imagem provisória `pending` num apply manual: preserve o digest implantado conforme o procedimento de deploy. O ConfigMap contém somente configuração pública de telemetria, nunca JWT, banco, credenciais ou chave New Relic. Os overlays hom/prd preparam o endpoint `http://otel-collector.observability.svc.cluster.local:4318` e mantêm `Telemetry__Enabled=false`. Os manifestos do Collector são independentes no repositório de infraestrutura; sua implantação e integração dos workflows continuam pendentes.
+Esses comandos são um procedimento de operador, não foram executados nesta entrega. Não use a imagem provisória `pending` num apply manual: preserve o digest implantado conforme o procedimento de deploy. O ConfigMap contém somente configuração pública de telemetria, nunca JWT, banco, credenciais ou chave New Relic. Os overlays hom/prd declaram o endpoint `http://otel-collector.observability.svc.cluster.local:4318`; hom define `Telemetry__Enabled=true` para a validação AWS e prd continua false. A ativação é versionada no manifesto, sem input em api-deploy. Os manifestos do Collector são independentes no repositório de infraestrutura; os workflows já integram sua implantação/descarte, mas a execução AWS continua pendente.
 
 Versões fixas: OpenTelemetry Hosting/OTLP `1.19.1`, instrumentação ASP.NET Core `1.19.0`, Npgsql.OpenTelemetry `10.0.2`. Métricas de runtime usam o meter nativo `System.Runtime` do .NET 10.
 
@@ -155,13 +155,13 @@ Preparação do Collector EKS em 15/10/2026: **90 testes de observabilidade apro
 
 ## Integração operacional preparada — 15/10/2026
 
-Os workflows da infraestrutura aplicam e reiniciam o Collector após o apply aprovado da base, aguardam rollout por até 300 segundos e o removem antes do descarte Terraform. O CI renderiza sua Kustomization independente e valida o YAML pelo binário fixado. Os workflows da API não mudam: sua ativação permanece no manifesto, com Telemetry__Enabled=false nesta entrega. Lambda possui opção própria no SAM e não depende desse Collector EKS. Integração implementada e validada localmente, sem execução AWS ou ingestão New Relic; capacidade e comportamento reais permanecem pendentes.
+Os workflows da infraestrutura aplicam e reiniciam o Collector após o apply aprovado da base, aguardam rollout por até 300 segundos e o removem antes do descarte Terraform. O CI renderiza sua Kustomization independente e valida o YAML pelo binário fixado. Os workflows da API não mudam: sua ativação permanece no manifesto: hom agora usa Telemetry__Enabled=true para a validação AWS e prd continua false. Lambda possui opção própria no SAM e não depende desse Collector EKS. Integração implementada e validada localmente, sem execução AWS ou ingestão New Relic; capacidade e comportamento reais permanecem pendentes.
 
 ## Ordem dos workflows para validação AWS/hom — 15/10/2026
 
 Referência operacional para a retomada da E5. O bootstrap X-Ray/layer já foi aprovado e aplicado: quatro alterações IAM, nenhuma criação/exclusão; conferência posterior sem diferenças. Não reaplicar o plano consumido. A sequência abaixo permanece pendente; registrá-la não dispara workflows nem autoriza alterações adicionais.
 
-Antes dos disparos, publicar os PRs com os workflows/templates novos. Para a ativação em hom, versionar `Telemetry__Enabled="true"` no overlay da API e `xray_tracing_enabled=true` no tfvars hom do Gateway. A Lambda recebe as opções pelo workflow. Os padrões continuam desabilitados até essas alterações explícitas.
+Antes dos disparos, publicar os PRs com os ajustes de ativação hom: `Telemetry__Enabled="true"` no overlay da API e `xray_tracing_enabled=true` no tfvars hom do Gateway. Esses arquivos já foram ajustados localmente; sua aplicação AWS depende dos workflows. Prd e os padrões das aplicações/variáveis permanecem desabilitados. Na autenticação, selecionar `telemetry_enabled=true` e `xray_enabled=true` na interface de auth-provision; os dois inputs continuam false por padrão e não exigem alteração de arquivo.
 
 Executar sequencialmente, aguardando cada workflow terminar. Em todos, selecionar branch `develop` e `environment=hom`:
 
