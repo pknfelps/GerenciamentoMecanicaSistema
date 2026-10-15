@@ -40,6 +40,8 @@ Na conferência posterior, identificar o commit/digest e o pod da nova revisão,
 
 ### SMTP local e envio simulado na AWS
 
+Conferência hom em 14/10/2026: API deploy [38585034082](https://github.com/pknfelps/GerenciamentoMecanicaSistema/actions/runs/38585034082), commit `423ac1c1beb75607df03efa3b70fe9724ccb76a8`. Pod Ready sem reinícios; probes 200 e NLB saudável. Os ciclos de aprovação/entrega e recusa geraram nove mensagens Information de simulação, sem tentativa/falha SMTP. Três erros controlados mantiveram mensagem fixa, tipo e correlação, sem stack trace ou dados sensíveis usados nos testes. Gateway correlacionou 27/27 chamadas, sem 5xx na janela. Contrato do novo commit idêntico ao consumido pelo Gateway. Evidências locais sanitizadas em `artifacts/e4-email-aws-validation/RESULTADO.md`; isso não comprova entrega real de e-mail, prd ou todas as falhas técnicas possíveis.
+
 Sem Runtime__Environment, o envio SMTP e o smtp4dev do Compose permanecem iguais. Em Runtime hom/prd, a API registra somente LoggingEmailSender para IEmailSender e não lê EmailSettings nem registra ISmtpClient, SmtpConnection ou MailKitEmailSender. O Program fornece à composição o resultado do modo AWS já validado; não há variável nova, leitura de e-mail no SSM/Secrets, seleção por ASPNETCORE_ENVIRONMENT ou fallback SMTP. Campos de Runtime vazios/nulos/inválidos continuam sendo rejeitados na inicialização.
 
 O fluxo de OS e as consultas/montagem das notificações permanecem. O adaptador simulado conclui cada chamada com um único log Information, `Envio de e-mail simulado.`, sem destinatário/assunto/conteúdo. Nenhum e-mail é entregue. MailKit continua no pacote para uso local, sem builds distintos. SMTP funcional na AWS não é mais uma pendência de implementação, por decisão do mantenedor; não confundir simulação com entrega comprovada.
@@ -132,6 +134,14 @@ O workflow remove apenas os objetos do overlay, sem Terraform, leitura de Secret
 4. Após concluir o banco, executar **base-destroy** no repositório de infraestrutura, revisando/aprovando o plano salvo. Ele remove seus manifestos Kubernetes antes de excluir EKS/rede/NLB e demais recursos da base.
 
 A ordem é **api-destroy → database-destroy → base-destroy**, coordenada pelo mantenedor; não há disparo automático entre repositórios. Executar API destroy antes de remover a base: ele depende dos parâmetros SSM e do cluster existentes. Para remover somente a aplicação, executar apenas API destroy; API deploy pode implantá-la novamente usando as dependências preservadas. Bootstrap, backend, repositório ECR/imagens e o outro ambiente são preservados. Se Gateway/Lambda ou outros consumidores forem implantados depois, eles devem ser descartados antes do banco/base conforme seus procedimentos. Nenhum workflow foi disparado para validar esta implementação.
+
+## Observabilidade — primeira entrega local
+
+A instrumentação OpenTelemetry permanece desabilitada por padrão. O overlay inclui o ConfigMap público `mecanica-api-observability`, gerado nativamente pelo Kustomize a partir de `base/observability.json` e montado somente para leitura em `/app/Observability/observability.json`. Esse arquivo concentra regras de coleta, filtros de logs, seleção de métricas, identidade e ajustes operacionais; também é copiado para build/publish local. Os overlays hom/prd sobrescrevem somente nome/ambiente, sem ativar exportação. Endpoint padrão `OTEL_EXPORTER_OTLP_ENDPOINT`, com alternativa legada `Telemetry__OtlpEndpoint`; ativação explícita por `Telemetry__Enabled`. Não habilitar OTLP antes de preparar o Collector do ambiente. Workflows e recursos AWS não foram alterados.
+
+O ConfigMap tem nome estável, sem acumular revisões, e é removido pelo delete do overlay no `api-destroy` existente. Configuração é lida uma vez por processo: se atualizar só o ConfigMap, aplicar a configuração preservando o digest da API e executar `kubectl rollout restart deployment/deploy-gerenciamento-api --namespace default`, seguido de rollout status. Trocar a imagem pelo workflow já reinicia os pods. Não há atualização automática do arquivo montado com subPath nem recarga dos providers.
+
+Sem a flag, não há providers/listeners/exportação. Console textual, sanitização e probes permanecem. O OpenAPI é gerado sem carregar/validar telemetria. Consulte [observabilidade local](OBSERVABILIDADE_LOCAL.md) para Collector, dados permitidos, comandos e limites. Collector EKS e ingestão New Relic exigem entrega posterior; build/deploy bem-sucedido não comprova ingestão.
 
 ## Integração com o Gateway
 

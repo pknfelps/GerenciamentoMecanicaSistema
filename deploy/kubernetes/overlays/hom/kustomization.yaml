@@ -34,3 +34,7 @@ patches:
             value: "true"
           - name: ASPNETCORE_ENVIRONMENT
             value: Staging
+          - name: OTEL_SERVICE_NAME
+            value: mecanica-api
+          - name: OTEL_RESOURCE_ATTRIBUTES
+            value: deployment.environment.name=hom

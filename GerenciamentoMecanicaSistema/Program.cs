@@ -1,10 +1,12 @@
 using DependencyInjection;
 using GerenciamentoMecanicaSistema.Middleware;
 using GerenciamentoMecanicaSistema.OpenApi;
+using GerenciamentoMecanicaSistema.Observability;
 using Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Microsoft.Extensions.Configuration.Json;
 using System.Reflection;
 using System.Text;
 
@@ -16,6 +18,17 @@ namespace GerenciamentoMecanicaSistema
         {
             var builder = WebApplication.CreateBuilder(args);
             var generatingDocument = Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
+            if (!generatingDocument)
+            {
+                var observability = new JsonConfigurationSource
+                {
+                    Path = Path.Combine(AppContext.BaseDirectory, "Observability", "observability.json"),
+                    Optional = true,
+                    ReloadOnChange = false
+                };
+                observability.ResolveFileProvider();
+                builder.Configuration.Sources.Insert(0, observability);
+            }
 
             builder.Services.AddControllers();
             builder.Services.AddOpenApi(options =>
@@ -26,6 +39,8 @@ namespace GerenciamentoMecanicaSistema
             });
 
             var usesAwsConfiguration = !generatingDocument && await ConfigureRuntimeAsync(builder);
+            if (!generatingDocument)
+                builder.AddApiObservability();
             var app = builder.Build();
 
             if (!generatingDocument)

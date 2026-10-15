@@ -4,3 +4,11 @@ kind: Kustomization
 resources:
   - deploy-gerenciamento-api.yaml
   - hpa-gerenciamento-api.yaml
+
+configMapGenerator:
+  - name: mecanica-api-observability
+    files:
+      - observability.json
+
+generatorOptions:
+  disableNameSuffixHash: true

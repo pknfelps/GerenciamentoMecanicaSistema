@@ -1,0 +1,113 @@
+using DotNet.Testcontainers.Builders;
+using DotNet.Testcontainers.Containers;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Domain.Interface.Order;
+using Dapper;
+using Npgsql;
+using NSubstitute;
+using System.Net;
+using System.Text.RegularExpressions;
+using Testcontainers.PostgreSql;
+
+namespace ControllerTests.Observability;
+
+[NonParallelizable]
+public sealed class CollectorExportTests : BaseControllerTests
+{
+    private IContainer collector = null!;
+    private PostgreSqlContainer database = null!;
+    private TelemetryWebApplicationFactory Telemetry => (TelemetryWebApplicationFactory)TestWebAppFactory;
+
+    [OneTimeSetUp]
+    public async Task StartCollector()
+    {
+        database = new PostgreSqlBuilder("postgres:16.15")
+            .WithDatabase("collector_tests").WithUsername("postgres").WithPassword("private-local-password").Build();
+        await database.StartAsync();
+        var directory = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "observability", "collector-local.yaml")))
+            directory = directory.Parent;
+        if (directory is null) throw new InvalidOperationException("Collector configuration was not found.");
+        collector = new ContainerBuilder("otel/opentelemetry-collector-contrib:0.161.0")
+            .WithResourceMapping(new FileInfo(Path.Combine(directory.FullName, "observability", "collector-local.yaml")), "/etc/otelcol-contrib")
+            .WithCommand("--config=/etc/otelcol-contrib/collector-local.yaml")
+            .WithPortBinding(4318, true)
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request =>
+                request.ForPort(4318).ForPath("/").ForStatusCode(HttpStatusCode.NotFound)))
+            .Build();
+        await collector.StartAsync();
+    }
+
+    [OneTimeTearDown]
+    public async Task RemoveCollector()
+    {
+        await collector.DisposeAsync();
+        await database.DisposeAsync();
+    }
+
+    protected override TestWebApplicationFactory CreateFactory() => new TelemetryWebApplicationFactory(database.GetConnectionString())
+    {
+        TelemetryEnabled = "true",
+        TelemetryEndpoint = $"http://{collector.Hostname}:{collector.GetMappedPublicPort(4318)}"
+    };
+    protected override void MockService() { }
+
+    [Test]
+    public async Task ExportsAllSignalsOverOtlpAndContinuesWhenCollectorStops()
+    {
+        var logger = TestWebAppFactory.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Service.CollectorValidation");
+        using (logger.BeginScope(new Dictionary<string, object?>
+        { ["RequestPath"] = "/private-person", ["Authorization"] = "Bearer private-token" }))
+            logger.LogInformation("Validação local da exportação.");
+        using var first = await TestClient.GetAsync("/Customers?document=private-query");
+        Telemetry.Flush();
+        var traceId = Telemetry.Spans.Single(x => x.Kind == System.Diagnostics.ActivityKind.Server).TraceId.ToString();
+        var id = Guid.NewGuid();
+        TestWebAppFactory.OrderServiceMock.GetOrderStatus(id)
+            .Returns(async _ =>
+            {
+                await using var connection = new NpgsqlConnection(database.GetConnectionString());
+                await connection.ExecuteAsync("DO $$ BEGIN RAISE EXCEPTION 'private-database-message'; END $$;");
+                return WorkOrderStatus.Received;
+            });
+        using var negative = await TestClient.GetAsync($"/Orders/{id}/status?password=private-password");
+        Telemetry.Flush();
+        var received = false;
+        string output = "";
+        for (var attempt = 0; attempt < 50; attempt++)
+        {
+            var logs = await collector.GetLogsAsync();
+            output = logs.Stdout + logs.Stderr;
+            received = output.Contains("ResourceSpans", StringComparison.Ordinal)
+                && output.Contains("ResourceMetrics", StringComparison.Ordinal)
+                && output.Contains("ResourceLog", StringComparison.Ordinal)
+                && output.Contains(traceId, StringComparison.Ordinal)
+                && output.Contains("Falha na operação PostgreSQL.", StringComparison.Ordinal)
+                && output.Contains("Validação local da exportação.", StringComparison.Ordinal);
+            if (received) break;
+            await Task.Delay(200);
+        }
+        Assert.That(received, Is.True,
+            $"Collector signals: traces={output.Contains("ResourceSpans", StringComparison.Ordinal)}, "
+            + $"metrics={output.Contains("ResourceMetrics", StringComparison.Ordinal)}, logs={output.Contains("ResourceLog", StringComparison.Ordinal)}, "
+            + $"context={output.Contains(traceId, StringComparison.Ordinal)}, message={output.Contains("Validação local da exportação.", StringComparison.Ordinal)}.");
+        Assert.That(output.Contains("mecanica-api", StringComparison.Ordinal), Is.True);
+        Assert.That(output.Contains("deployment.environment.name", StringComparison.Ordinal), Is.True);
+        Assert.That(output.Contains("http.server.request.duration", StringComparison.Ordinal), Is.True);
+        Assert.That(output.Contains("exception.stacktrace", StringComparison.Ordinal), Is.False);
+        Assert.That(output.Contains("RAISE EXCEPTION", StringComparison.Ordinal), Is.False);
+        Assert.That(output.Contains("private-", StringComparison.Ordinal), Is.False, "Sensitive inputs must not reach the Collector.");
+        Assert.That(output.Contains(id.ToString(), StringComparison.Ordinal), Is.False, "Raw route IDs must not reach the Collector.");
+        Assert.That(Regex.Count(output, @"Trace ID\s*:\s*" + traceId), Is.EqualTo(1), "The successful request span must be exported only once.");
+        Assert.That(first.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        Assert.That(negative.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+        await collector.StopAsync();
+        logger.LogInformation("Exportador local indisponível.");
+        Telemetry.Flush();
+        using var second = await TestClient.GetAsync("/Customers");
+        using var ready = await TestClient.GetAsync("/health/ready");
+        Assert.That(second.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        Assert.That(ready.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+    }
+}
