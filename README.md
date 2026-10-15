@@ -8,9 +8,9 @@ A separação em quatro repositórios está integrada. O CI valida testes/cobert
 
 | Disponível | A implementar |
 |---|---|
-| API .NET, JWT interno, PostgreSQL, SMTP local, envio simulado AWS e health checks | Conferência do envio simulado na AWS após deploy |
+| API .NET, JWT interno, PostgreSQL, SMTP local, envio simulado AWS e health checks; Inativo/histórico SQL conferidos em hom | Tratamento dos avisos transitivos NU1902/NU1903 |
 | Dockerfile, Compose opcional, Deployment/HPA e workflow manual ECR/EKS | Executar e validar deploy nos ambientes hom/prd |
-| CI, autenticação serverless e API Gateway validados em hom | Validação prd e observabilidade OpenTelemetry/New Relic |
+| CI, autenticação serverless e API Gateway validados em hom; OpenTelemetry/Collector comprovados localmente | Validação prd, Collector EKS e ingestão New Relic |
 
 O foco de uso é a API na AWS. O endpoint do ambiente é publicado em SSM `/mecanica/<ambiente>/gateway/v2/endpoint` e pode mudar após recriação. A [especificação de acesso](docs/arquitetura/ACESSO_E_AUTENTICACAO.md) distingue as regras alvo das permissões ainda pendentes; as [collections](postman/collections) e o OpenAPI gerado representam as operações atuais.
 
@@ -40,6 +40,8 @@ Após excluir, o usuário não pode fazer novo login, mas JWTs anteriores contin
 
 ### Histórico e consistência das OSs
 
+Conferência SQL independente em hom em 14/10/2026: 44 eventos de doze OSs, com sequência, encadeamento, UTC, motivos de conclusão/recusa e preservação após exclusão aprovados. Cliente fictício Inactive não obteve novo JWT; o token anterior continuou consultando/decidindo somente suas OSs enquanto válido. PATCH cadastral preservou Inactive. O acesso ocorreu por Pod psql temporário com TLS, removido ao final, sem novo deploy ou alteração de esquema/IAM. Procedimento no [repositório do banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados); prd permanece fora dessa conferência.
+
 As alterações de estado, itens e exclusão bloqueiam a OS dentro da transação antes de carregar e validar seu estado atual. Estoque usa bloqueio por material, compartilhando a transação da OS; operações com vários materiais seguem a mesma ordem de UUIDs. Uma disputa de transição não repete reserva, devolução, consumo ou notificação. A exclusão é atômica em todos os estados e preserva o histórico.
 
 `dateCreated` vem do evento inicial; `dateFinished` vem de `Finished/ServiceCompleted`. Sem conclusão do serviço, `dateFinished` e `duration` são **null**, inclusive na recusa. Uma duração efetivamente igual a zero continua sendo zero. A entrega preserva a conclusão e a duração do atendimento. O domínio normaliza instantes locais para UTC e rejeita instantes sem fuso, extremos ou conclusão anterior à abertura.
@@ -54,7 +56,21 @@ Os registros preservam dados técnicos: ID/estado da OS e tipo do evento, quando
 
 O console mantém texto simples. `CaptureScopes=false` e `IncludeScopes=false` impedem a coleta/exibição de escopos automáticos que poderiam conter o caminho bruto. Os filtros de mensagens permanecem os originais: Information para a aplicação e Warning para Microsoft.AspNetCore. Não foi desabilitada categoria nem suprimida regra do analisador. O aviso S6667, que pede o objeto da exceção no logger, permanece visível para revisão; esse objeto não é registrado porque pode expor dados sensíveis e stack trace.
 
-As respostas HTTP e o funcionamento das transações não mudam. A sanitização foi preparada para validação local; sua comprovação na AWS depende do deploy e da inspeção dos logs da nova revisão, conforme [procedimento de deploy](docs/DEPLOY_API.md). Os registros antigos não são apagados. O SMTP funcional fica restrito ao modo local; hom/prd usam a simulação abaixo. A observabilidade E5 permanece separada.
+As respostas HTTP e o funcionamento das transações não mudam. Em 14/10/2026, a revisão `423ac1c` foi conferida em hom: três erros controlados mantiveram mensagem fixa, tipo e correlação, sem dados fictícios sensíveis, tokens ou stack trace nos logs do novo pod. A evidência cobre os cenários exercitados; falhas técnicas deliberadas e prd não foram testados. O [procedimento de deploy](docs/DEPLOY_API.md) descreve a conferência. Os registros antigos não são apagados. O SMTP funcional fica restrito ao modo local; hom/prd usam a simulação abaixo. A observabilidade E5 permanece separada.
+
+### Observabilidade local — E5
+
+A API pode exportar traces HTTP/PostgreSQL, métricas técnicas nativas do .NET 10 e logs da aplicação correlacionados por OpenTelemetry. A telemetria permanece **desabilitada por padrão**: `Telemetry__Enabled=true` exige `OTEL_EXPORTER_OTLP_ENDPOINT` HTTP/HTTPS absoluto, sem credenciais, query ou fragmento. `Telemetry__OtlpEndpoint` continua aceito como alternativa legada; a variável padrão tem precedência. Configuração inválida impede a inicialização com mensagem fixa; desabilitada, não cria providers nem exporta. A geração oficial do OpenAPI ignora essas configurações.
+
+As regras e os ajustes ficam em [deploy/kubernetes/base/observability.json](deploy/kubernetes/base/observability.json), fonte do ConfigMap `mecanica-api-observability` pelo Kustomize e do arquivo copiado para execução local/publish. Inclui probes, métodos, atributos permitidos, dimensões, mensagens fixas, seleção de métricas, filtros de logs e parâmetros `OTEL_*`. Não há cópia dessas listas no C#. O arquivo é montado somente para leitura; alterações são consumidas na inicialização e podem exigir rollout restart quando não há troca de imagem.
+
+`OTEL_SERVICE_NAME` e `OTEL_RESOURCE_ATTRIBUTES` definem a identidade por configuração/manifesto. Os padrões são `mecanica-api`, versão pelo commit do assembly (ou `local`) e ambiente do runtime (ou `local`); atributos explícitos podem substituir versão/ambiente. Os overlays hom/prd declaram serviço/ambiente, mantendo a telemetria desabilitada. Configurações da aplicação/ambiente podem substituir os valores do arquivo. O SDK registra a exportação dos três sinais com uma única chamada.
+
+O código registra a instrumentação e aplica as regras antes de exportar/agregar: traces com verbo/modelo de rota, sem caminho/query, SQL, parâmetros, identificadores da conexão ou conteúdo original de exceções. Probes continuam produzindo respostas/métricas, sem spans HTTP/PostgreSQL. Logs preservam console textual e mensagens fixas; OTLP inclui TraceId/SpanId. Escopos continuam bloqueados em código; filtros de categorias e seleção das métricas usam configuração nativa do .NET. Métricas não contêm identidades e representam o processo, sem substituir métricas de nós/pods.
+
+O [procedimento local](docs/OBSERVABILIDADE_LOCAL.md) usa um Compose separado com Collector Contrib `0.161.0`, porta OTLP somente em localhost e saída debug, sem New Relic ou credenciais. Falha do Collector não altera respostas/readiness. A instrumentação/exportação foi comprovada localmente; E5.1–E5.3 permanecem parciais até implantação/ingestão externa. Manifestos incluem identidade e ConfigMap público de observabilidade; workflows e recursos AWS não foram alterados.
+
+As [métricas de negócio da E5](docs/OBSERVABILIDADE_NEGOCIO.md) acrescentam volume de OS, durações pelo histórico persistido e falhas de processamento/notificação. Usam a mesma ativação e exportação locais, com seleção, dimensões, histogramas e prazo de leitura no manifesto. A conferência SQL não implica recuperação automática ou entrega única. Dashboards, alertas e ingestão AWS/New Relic continuam pendentes.
 
 ### Notificações por ambiente
 
@@ -66,7 +82,7 @@ As respostas HTTP e o funcionamento das transações não mudam. A sanitização
 
 A escolha reutiliza o resultado do carregamento AWS validado no início da API; não há nova variável nem dependência do `ASPNETCORE_ENVIRONMENT` ou da máquina. Executar localmente com Runtime hom/prd também usa o modo AWS e a simulação. Nesse modo não são lidos os ajustes de e-mail nem registrados cliente/conexão SMTP. Não há fallback para SMTP nem entrega real ao destinatário. O log não inclui nomes, destinatário, assunto ou conteúdo.
 
-`IEmailSender`, `EmailService`, eventos e handler permanecem: cliente/veículo continuam sendo consultados e a mensagem é montada antes de chegar ao adaptador. O SMTP e o smtp4dev do Compose continuam disponíveis no modo local; MailKit permanece na mesma imagem. Por decisão do mantenedor, não será configurado envio funcional na AWS. A implementação é local; conferir a simulação na AWS após PR e api-deploy, sem reaplicar base, banco ou Gateway.
+`IEmailSender`, `EmailService`, eventos e handler permanecem: cliente/veículo continuam sendo consultados e a mensagem é montada antes de chegar ao adaptador. O SMTP e o smtp4dev do Compose continuam disponíveis no modo local; MailKit permanece na mesma imagem. Por decisão do mantenedor, não será configurado envio funcional na AWS. Em hom, em 14/10/2026, os ciclos de aprovação/entrega e recusa produziram nove logs Information de simulação, sem conexão/falha SMTP ou dados do envio. Essa entrega não exigiu reaplicar base, banco ou Gateway.
 
 ## Componentes e repositórios
 
@@ -267,6 +283,8 @@ O [workflow manual OIDC](.github/workflows/aws-oidc-check.yml) verifica a role a
 Crie branches de trabalho a partir da `develop` atualizada e direcione os PRs para `develop`. A promoção `develop -> main` ocorre quando a entrega estiver concluída. `develop` corresponde a **hom** e `main` a **prd**; os ambientes poderão coexistir. Proteções, Environments e autenticação OIDC foram preparados. O deploy da API é disparado manualmente, executando publicação e implantação completas; não ocorre por push. O arquivo do workflow também deve existir em `main` para disponibilizar Run workflow.
 
 ## Referências
+
+Os manifestos do Collector da API estão preparados no repositório de infraestrutura, em Kustomization independente, conforme [procedimento do Collector](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/COLLECTOR_API.md). Hom/prd declaram o endpoint interno, com coleta explicitamente desabilitada. Os workflows da infraestrutura agora preparam instalação/restart/rollout e descarte do Collector; a execução no EKS e New Relic continuam pendentes. A ativação da API permanece no manifesto, sem novo input de workflow. A validação local usa a fixture existente com configuração externa opcional, sem alterar o código de produção da API.
 
 - [Arquitetura, diagramas, RFCs e ADRs](docs/arquitetura/README.md).
 - [Contrato de autenticação e permissões](docs/arquitetura/ACESSO_E_AUTENTICACAO.md).

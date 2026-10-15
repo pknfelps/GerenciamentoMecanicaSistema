@@ -1,0 +1,60 @@
+{
+  "Telemetry": {
+    "Enabled": false,
+    "BusinessMetrics": {
+      "HistoryQueryTimeoutSeconds": 1,
+      "DurationBoundariesSeconds": [ 1, 5, 15, 30, 60, 300, 900, 1800, 3600, 14400, 28800, 86400, 604800 ],
+      "Attributes": [ "operation", "stage", "completion.reason", "notification.type", "outcome", "mode" ]
+    },
+    "Collection": {
+      "ExcludedPaths": [ "/health/live", "/health/ready", "/health/startup" ],
+      "HttpMethods": [ "GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS" ],
+      "HttpTraceAttributes": [
+        "http.request.method", "http.route", "http.response.status_code",
+        "network.protocol.version", "url.scheme", "error.type"
+      ],
+      "DatabaseTraceAttributes": [
+        "db.system.name", "db.namespace", "db.operation.name", "db.response.status_code", "error.type"
+      ],
+      "ExceptionAttributes": [ "exception.type", "exception.message" ],
+      "HttpMetricAttributes": [
+        "http.request.method", "http.route", "http.response.status_code", "network.protocol.version", "url.scheme"
+      ],
+      "HttpErrorMessage": "Falha durante a requisição HTTP.",
+      "DatabaseErrorMessage": "Falha na operação PostgreSQL.",
+      "DatabaseSpanName": "postgresql"
+    }
+  },
+  "Logging": {
+    "OpenTelemetry": {
+      "IncludeFormattedMessage": true,
+      "ParseStateValues": true,
+      "LogLevel": {
+        "Default": "None",
+        "GerenciamentoMecanicaSistema": "Information",
+        "Infrastructure": "Information",
+        "Service": "Information"
+      }
+    }
+  },
+  "Metrics": {
+    "EnabledMetrics": {
+      "Microsoft.AspNetCore.Hosting": true,
+      "System.Runtime": true,
+      "Mecanica.Api.Business": true
+    }
+  },
+  "OTEL_SERVICE_NAME": "mecanica-api",
+  "OTEL_EXPORTER_OTLP_TIMEOUT": 3000,
+  "OTEL_BSP_MAX_QUEUE_SIZE": 2048,
+  "OTEL_BSP_MAX_EXPORT_BATCH_SIZE": 512,
+  "OTEL_BSP_SCHEDULE_DELAY": 1000,
+  "OTEL_BSP_EXPORT_TIMEOUT": 3000,
+  "OTEL_BLRP_MAX_QUEUE_SIZE": 2048,
+  "OTEL_BLRP_MAX_EXPORT_BATCH_SIZE": 512,
+  "OTEL_BLRP_SCHEDULE_DELAY": 1000,
+  "OTEL_BLRP_EXPORT_TIMEOUT": 3000,
+  "OTEL_METRIC_EXPORT_INTERVAL": 30000,
+  "OTEL_METRIC_EXPORT_TIMEOUT": 3000,
+  "OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE": "delta"
+}

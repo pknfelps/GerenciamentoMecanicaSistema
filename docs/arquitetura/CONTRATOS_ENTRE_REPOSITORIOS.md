@@ -6,7 +6,7 @@
 
 | Componente | Proprietário | Responsabilidade |
 |---|---|---|
-| api | GerenciamentoMecanicaSistema | Negócio/testes, imagem ECR, Deployment/HPA, OpenAPI, Auth.Contracts |
+| api | GerenciamentoMecanicaSistema | Negócio/testes, imagem ECR, Deployment/HPA, ConfigMap de observabilidade, OpenAPI, Auth.Contracts |
 | base | GerenciamentoMecanicaInfraestrutura | Rede/EKS/add-ons, SGs, NLB Terraform, Service NodePort e namespace reservado |
 | gateway | GerenciamentoMecanicaInfraestrutura | Estado separado para REST API/VPC Link, OpenAPI composto e permissão Lambda |
 | database | GerenciamentoMecanicaBancoDados | RDS, credenciais API/auth, esquema/seeds e Job próprio |
@@ -65,6 +65,8 @@ A base administra a role mecanica-<ambiente>-api-runtime e a associação Pod Id
 Consumo pelo SDK .NET: resolver os três parâmetros SSM e AWSCURRENT na inicialização; preencher Jwt:Key, Jwt:Issuer e Jwt:Audience e manter a chave em memória, sem consulta por requisição. A API já implementa esse carregamento junto à credencial RDS, ativado por Runtime__Environment=hom|prd; IAM/manifestos estão preparados e o deploy da infra hom foi informado pelo mantenedor; publicação/deploy da API e validação real permanecem pendentes. Sem esse campo, preserva o modo local; campo presente inválido impede a inicialização. Falha de leitura ou configuração inválida impede inicialização, sem fallback local e sem cópia para Secrets Kubernetes. HS256, expiração, claims e tolerância de relógio permanecem iguais. [Inicialização da API](../INICIALIZACAO_AWS.md) e [procedimento JWT](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/JWT_COMPARTILHADO.md).
 
 Campos futuros da base, adicionados somente quando implementados: `newrelic-secret-arn`, `newrelic-otlp-endpoint`, `otel-collector-endpoint`. Issuer/audience/chave JWT são distintos entre hom/prd e compatíveis entre API/função no ambiente. JWT e observabilidade não são pré-requisitos do Job do banco.
+
+**E5 — configuração da API:** a API é dona do ConfigMap público `default/mecanica-api-observability`, produzido pelo Kustomize a partir de `deploy/kubernetes/base/observability.json`, sem scripts. O mesmo arquivo é copiado no build/publish para uso local; no EKS, o ConfigMap é montado read-only sobre esse arquivo. Concentra regras de coleta e ajustes técnicos, sem credenciais/JWT/conexão do banco/chave New Relic. Os overlays declaram nome/ambiente; exportação permanece desabilitada até preparar o Collector. A API aplica a política antes do envio/agregação; o Collector não recebe dados brutos para depois sanitizar. Configuração lida no início do processo, sem reload; update isolado do ConfigMap requer rollout restart. Nome estável permite atualização/descarte pelo overlay e workflows existentes, sem novos parâmetros SSM ou permissões AWS. [Procedimento](../OBSERVABILIDADE_LOCAL.md).
 
 ### Banco
 

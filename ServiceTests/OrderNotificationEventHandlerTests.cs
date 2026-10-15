@@ -6,6 +6,7 @@ using NSubstitute;
 using Service.Events;
 using Service.Interface;
 using Service.Interface.Events.Order;
+using Service.Interface.Observability;
 
 namespace ServiceTests
 {
@@ -15,6 +16,7 @@ namespace ServiceTests
         private IEmailService EmailService { get; set; }
         private OrderNotificationEventHandler Handler { get; set; }
         private ILogger<OrderNotificationEventHandler> Logger { get; set; }
+        private IOrderNotificationMetrics Metrics { get; set; }
 
         [SetUp]
         public void SetUp()
@@ -22,10 +24,11 @@ namespace ServiceTests
             DependenciesGateway = Substitute.For<IOrderDependenciesGateway>();
             EmailService = Substitute.For<IEmailService>();
             Logger = Substitute.For<ILogger<OrderNotificationEventHandler>>();
+            Metrics = Substitute.For<IOrderNotificationMetrics>();
             Handler = new OrderNotificationEventHandler(
                 DependenciesGateway,
                 EmailService,
-                Logger);
+                Logger, Metrics);
         }
 
         [Test]
@@ -44,6 +47,7 @@ namespace ServiceTests
             await DependenciesGateway.Received(1).GetVehicleByLicensePlate(order.VehicleLicensePlate);
             await EmailService.Received(1).NotifyBudget(customer, vehicle, order);
             await EmailService.ReceivedWithAnyArgs(0).NotifyOrderStatus(default!, default!, default!);
+            Metrics.Received(1).RecordNotification(true, true);
         }
 
         [Test]
@@ -62,6 +66,7 @@ namespace ServiceTests
             await DependenciesGateway.Received(1).GetVehicleByLicensePlate(order.VehicleLicensePlate);
             await EmailService.Received(1).NotifyOrderStatus(customer, vehicle, order);
             await EmailService.ReceivedWithAnyArgs(0).NotifyBudget(default!, default!, default!);
+            Metrics.Received(1).RecordNotification(false, true);
         }
 
         [Test]
@@ -76,6 +81,7 @@ namespace ServiceTests
             await DependenciesGateway.Received(1).GetCustomerByDocument(order.CustomerDocument);
             await DependenciesGateway.ReceivedWithAnyArgs(0).GetVehicleByLicensePlate(default!);
             await EmailService.ReceivedWithAnyArgs(0).NotifyOrderStatus(default!, default!, default!);
+            Metrics.Received(1).RecordNotification(false, false);
         }
 
         [TestCase(true)]
@@ -91,6 +97,7 @@ namespace ServiceTests
             EmailService.NotifyOrderStatus(customer, vehicle, order).Returns(_ => ThrowNotificationFailure());
 
             await Handler.Handle(budget ? new BudgetAvailableEvent(order) : new OrderStatusChangedEvent(order));
+            Metrics.Received(1).RecordNotification(budget, false);
 
             var call = Logger.ReceivedCalls().Single(call => call.GetMethodInfo().Name == nameof(ILogger.Log));
             var arguments = call.GetArguments();

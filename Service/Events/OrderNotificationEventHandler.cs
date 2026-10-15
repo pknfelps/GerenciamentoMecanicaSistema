@@ -3,17 +3,21 @@ using Service.Interface;
 using Service.Interface.Exceptions;
 using Service.Interface.Events;
 using Service.Interface.Events.Order;
+using Service.Interface.Observability;
+using Service.Observability;
 
 namespace Service.Events
 {
     public class OrderNotificationEventHandler(
         IOrderDependenciesGateway dependenciesGateway,
         IEmailService emailService,
-        ILogger<OrderNotificationEventHandler> logger) : IApplicationEventHandler
+        ILogger<OrderNotificationEventHandler> logger,
+        IOrderNotificationMetrics? metrics = null) : IApplicationEventHandler
     {
         private IOrderDependenciesGateway DependenciesGateway { get; } = dependenciesGateway;
         private IEmailService EmailService { get; } = emailService;
         private ILogger<OrderNotificationEventHandler> Logger { get; } = logger;
+        private IOrderNotificationMetrics Metrics { get; } = metrics ?? new NullOrderNotificationMetrics();
 
         public bool CanHandle(IApplicationEvent applicationEvent) =>
             applicationEvent is BudgetAvailableEvent or OrderStatusChangedEvent;
@@ -25,6 +29,7 @@ namespace Service.Events
             if (order == null)
                 return;
 
+            var succeeded = false;
             try
             {
                 var customer = await DependenciesGateway.GetCustomerByDocument(order.CustomerDocument)
@@ -36,6 +41,7 @@ namespace Service.Events
                     await EmailService.NotifyBudget(customer, vehicle, order);
                 else
                     await EmailService.NotifyOrderStatus(customer, vehicle, order);
+                succeeded = true;
             }
             catch (Exception exception)
             {
@@ -44,6 +50,10 @@ namespace Service.Events
                     applicationEvent.GetType().Name,
                     order.OrderId,
                     exception.GetType().FullName);
+            }
+            finally
+            {
+                Metrics.RecordNotification(applicationEvent is BudgetAvailableEvent, succeeded);
             }
         }
 
