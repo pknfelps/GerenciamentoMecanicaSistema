@@ -14,9 +14,6 @@ namespace ControllerTests
         public const string JwtIssuer = "controller-tests";
         public const string JwtAudience = "controller-tests";
         public ILoggerProvider? LogProvider { get; set; }
-        public string? TelemetryEnabled { get; set; }
-        public string? TelemetryEndpoint { get; set; }
-        public Dictionary<string, string?> TelemetryConfiguration { get; } = [];
 
         public ICustomerService CustomerServiceMock { get; private set; } = Substitute.For<ICustomerService>();
         public IUserService UserServiceMock { get; private set; } = Substitute.For<IUserService>();
@@ -37,11 +34,7 @@ namespace ControllerTests
             builder.UseSetting("Jwt:Key", JwtKey);
             builder.UseSetting("Jwt:Issuer", JwtIssuer);
             builder.UseSetting("Jwt:Audience", JwtAudience);
-            builder.UseSetting("Telemetry:Enabled", TelemetryEnabled ?? "false");
-            if (TelemetryEndpoint is not null)
-                builder.UseSetting("Telemetry:OtlpEndpoint", TelemetryEndpoint);
-            foreach (var setting in TelemetryConfiguration)
-                builder.UseSetting(setting.Key, setting.Value);
+            builder.UseSetting("Telemetry:Enabled", "false");
 
             builder.ConfigureServices(services =>
             {

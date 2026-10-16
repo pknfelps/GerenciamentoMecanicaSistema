@@ -1,6 +1,8 @@
 # Observabilidade local da API
 
-**Estado atual — 14/10/2026:** coleta dirigida pelo ConfigMap, validada com **1.142 testes aprovados, zero falhas/ignorados**, incluindo 45 de observabilidade. Conteúdo do ConfigMap/publicação idêntico ao arquivo fonte; filtros/meters nativos e regras alteráveis sem recompilar comprovados. Build Release, PostgreSQL/Collector reais, OpenAPI repetido/idêntico, publish/certificado e Kustomize aprovados. Os resultados datados no fim do documento registram as entregas anteriores; este estado é o vigente. Sem implantação AWS/New Relic.
+**Decisão vigente — 15/10/2026:** removidos os testes de conexão New Relic e Collectors locais e seus receptores fictícios, incluindo o cenário de destino OTLP lento. CI não executa imagens de Collector para validar exporter/YAML. Todos os testes automatizados de telemetria foram removidos da API e da Lambda, incluindo instrumentação InMemory, métricas de negócio, traces, exporters e auxiliares. Testes funcionais e de sanitização do console permanecem; Compose manual e configuração de produção preservados. Resultados de transporte datados abaixo são históricos; conectividade/ingestão será conferida operacionalmente após deploy.
+
+**Registro histórico — 14/10/2026:** coleta dirigida pelo ConfigMap, validada com **1.142 testes aprovados, zero falhas/ignorados**, incluindo 45 de observabilidade. Conteúdo do ConfigMap/publicação idêntico ao arquivo fonte; filtros/meters nativos e regras alteráveis sem recompilar comprovados. Build Release, PostgreSQL/Collector reais, OpenAPI repetido/idêntico, publish/certificado e Kustomize aprovados. Os resultados datados no fim do documento registram as entregas anteriores; esse resultado antecede a remoção dos testes de telemetria. Sem implantação AWS/New Relic.
 
 A instrumentação fica em `GerenciamentoMecanicaSistema/Observability`, na composição da API. Não há dependências OpenTelemetry em Domain/Application, spans manuais de negócio ou mudanças de persistência/transação. O console continua textual, com mensagens fixas e tipo do erro, sem stack trace.
 
@@ -127,17 +129,11 @@ Não há persistência, retentativas próprias ou garantia de entrega exatamente
 
 ## Validação e próxima entrega
 
-A fixture `CollectorExportTests` aceita o parâmetro NUnit opcional `CollectorConfigPath`, com o caminho do YAML da infraestrutura. Sem parâmetro, mantém o YAML local e o comportamento atual do CI, sem depender de outro checkout. Com parâmetro, monta o arquivo somente para leitura, executa com UID/GID 10001 e limites 0.5 CPU/256 MiB, verifica health 13133 e acrescenta override nativo `debug.verbosity=detailed` somente durante o teste. O manifesto da infraestrutura continua `basic`. O teste confere sinais técnicos/de negócio, correlação, sanitização, ausência de duplicação e funcionamento da API/readiness com o Collector parado.
-
-Na raiz da API, substitua `C:/caminho` pelo caminho real:
-
-```powershell
-dotnet test ControllerTests/ControllerTests.csproj -c Release --filter FullyQualifiedName~CollectorExportTests -- 'TestRunParameters.Parameter(name="CollectorConfigPath",value="C:/caminho/GerenciamentoMecanicaInfraestrutura/kubernetes/observability/collector.yaml")'
-```
+Por decisão do mantenedor, foram removidos os testes de conexão com Collectors locais e New Relic, incluindo a fixture de transporte, o receptor fictício e o parâmetro NUnit de YAML externo. Também foram removidos os testes de instrumentação, métricas, correlação e sanitização OTLP com InMemory; os testes de sanitização do console continuam funcionais.
 
 Os recursos e comandos de instalação/restart/descarte estão no [procedimento da infraestrutura](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/COLLECTOR_API.md). A Kustomization do Collector não integra a raiz que os workflows existentes aplicam. Não habilitar coleta antes da instalação e validação posterior; nenhuma operação AWS faz parte desta entrega.
 
-Os testes existentes de HTTP/PostgreSQL foram ampliados com exporter InMemory somente no projeto de testes. Exercitam configuração, contexto recebido, vínculo HTTP→PostgreSQL, correlação concorrente, probes, descarte, sanitização e exportação real dos três sinais para Collector em container. Incluem exceção PostgreSQL real e continuidade com Collector parado, sem AWS/RDS externos. Docker indisponível é falha, sem testes ignorados.
+Os testes HTTP/PostgreSQL preservam autenticação, autorização, persistência, estoque, concorrência, rollback e histórico, com telemetria desabilitada na factory comum. Não há exporter InMemory nem testes de telemetria na suíte. Docker continua necessário para PostgreSQL, sem ignorar testes indisponíveis. Instrumentação, manifestos e Collectors de produção permanecem inalterados.
 
 ```powershell
 dotnet restore GerenciamentoMecanicaSistema.slnx
@@ -161,13 +157,12 @@ A API não recebe a License Key ou endpoint New Relic: continua enviando ao Coll
 
 Sequência: plano/aprovação/apply do bootstrap New Relic → cadastro da chave no console → PRs → base-provision → banco/Job e api-deploy somente se necessários → auth-publish de nova revisão → auth-provision com artifact_commit e X-Ray desejado → atualizar Gateway para a versão numérica nova → conferir ingestão. O cadastro da chave no ambiente é pré-requisito obrigatório de provisionamento. [Guia completo](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/NEW_RELIC.md).
 
-## New Relic US — teste local do Collector
+## New Relic US — conferência operacional
 
-A fixture CollectorExportTests aceita CollectorConfigPath apontando para kubernetes/observability/base/collector.yaml da infraestrutura. Overrides nativos substituem endpoint/header por destino OTLP local e chave fictícia, sem AWS; exercitam os três sinais, métricas de negócio, correlação e falhas 401/429/503/lentidão/offline. O modo local padrão do CI usa seu Compose/debug independente, sem constituir alternativa de deploy.
+Os testes de conexão com New Relic e Collector local foram removidos por decisão do mantenedor. Não há receptor OTLP fictício, testes de falhas 401/429/503/lentidão/offline ou seleção de YAML de Collector nos testes.
 
-```powershell
-$collectorPath = (Resolve-Path ../GerenciamentoMecanicaInfraestrutura/kubernetes/observability/base/collector.yaml).Path.Replace('\', '/')
-dotnet test ControllerTests/ControllerTests.csproj -c Release --filter FullyQualifiedName~CollectorExportTests -- "TestRunParameters.Parameter(name=`"CollectorConfigPath`",value=`"$collectorPath`")"
-```
+Os manifests e Collectors de produção, o Compose manual e os preflights de credencial continuam funcionando como antes. Ingestão, conectividade e comportamento do destino serão conferidos operacionalmente após deploy, conforme o [procedimento New Relic](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/NEW_RELIC.md). Os resultados datados anteriores registram testes históricos que não fazem mais parte da suíte vigente.
 
-O arquivo versionado não é reescrito. Ingestão real, dashboards/alertas, coleta Kubernetes/CloudWatch e integração X-Ray/New Relic continuam pendentes. Registros anteriores de debug básico representam validações históricas, não o destino de produção vigente.
+**Validação após remoção dos testes de Collectors/New Relic — 15/10/2026:** build Release e 1193 testes restantes aprovados, zero falhas/ignorados. Actionlint/ShellCheck aprovados nos dois CIs alterados. Evidências locais em artifacts/collector-tests-removal. Nenhum teste novo de conexão, Collector iniciado, workflow remoto ou operação AWS nesta validação; Docker utilizado somente pelos testes PostgreSQL preservados.
+
+**Validação após remoção de todos os testes de telemetria da API — 15/10/2026:** restore e build Release concluídos; 1.100 testes restantes aprovados (48 contratos, 525 controllers, 183 domínio, 149 infraestrutura e 195 serviços), zero falhas e zero ignorados. Corrigidas as referências à factory e aos auxiliares removidos; testes funcionais de OS usam a factory comum com telemetria desabilitada. Removidas as asserções de métricas das notificações e dos testes de persistência, o leitor exclusivo de medição e a dependência OpenTelemetry.Exporter.InMemory dos testes. Instrumentação de produção preservada. Evidências locais em `artifacts/api-telemetry-tests-removal`. Nenhuma operação AWS, workflow remoto ou deploy.

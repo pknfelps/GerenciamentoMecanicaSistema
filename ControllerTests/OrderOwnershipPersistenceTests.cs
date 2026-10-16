@@ -12,8 +12,6 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Testcontainers.PostgreSql;
-using ControllerTests.Observability;
-using OpenTelemetry.Metrics;
 
 namespace ControllerTests;
 
@@ -22,7 +20,7 @@ public sealed class OrderOwnershipPersistenceTests
 {
     private PostgreSqlContainer container = null!;
     private NpgsqlConnection connection = null!;
-    private TelemetryWebApplicationFactory sourceFactory = null!;
+    private TestWebApplicationFactory sourceFactory = null!;
     private WebApplicationFactory<Program> factory = null!;
     private HttpClient client = null!;
     private readonly Guid customerId = Guid.NewGuid();
@@ -63,8 +61,7 @@ public sealed class OrderOwnershipPersistenceTests
 
     private void CreateApi()
     {
-        sourceFactory = new TelemetryWebApplicationFactory(container.GetConnectionString())
-        { TelemetryEnabled = "true", TelemetryEndpoint = "http://127.0.0.1:1" };
+        sourceFactory = new TestWebApplicationFactory(container.GetConnectionString());
         factory = sourceFactory.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
         {
             services.RemoveAll<IOrdersService>();
@@ -76,8 +73,6 @@ public sealed class OrderOwnershipPersistenceTests
         }));
         client = factory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
     }
-
-    private void FlushMetrics() => factory.Services.GetRequiredService<MeterProvider>().ForceFlush(5_000);
 
     [SetUp]
     public async Task ResetData()
@@ -352,9 +347,6 @@ public sealed class OrderOwnershipPersistenceTests
         Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM order_status_history WHERE order_id = @Id", new { Id = id }), Is.EqualTo(complete ? 6 : 4));
         if (complete) await events.Received(1).Publish(Arg.Any<Service.Interface.Events.Order.OrderStatusChangedEvent>());
         else await events.DidNotReceive().Publish(Arg.Any<Service.Interface.Events.IApplicationEvent>());
-        FlushMetrics();
-        Assert.That(BusinessMetricAssertions.Count(sourceFactory.Metrics, "mecanica.orders.created"), Is.EqualTo(2));
-        Assert.That(BusinessMetricAssertions.Count(sourceFactory.Metrics, "mecanica.orders.service.duration"), Is.EqualTo(complete ? 1 : 0));
     }
 
     [Test]
@@ -549,13 +541,11 @@ public sealed class OrderOwnershipPersistenceTests
         Assert.That(await Snapshot(), Is.EqualTo(before));
         Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM order_services"), Is.EqualTo(servicesBefore));
         Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM order_materials"), Is.EqualTo(materialsBefore));
-        FlushMetrics();
-        Assert.That(BusinessMetricAssertions.Count(sourceFactory.Metrics, "mecanica.orders.processing.failures", ("operation", "DeleteOrder")), Is.EqualTo(1));
     }
 
     [TestCase(true)]
     [TestCase(false)]
-    public async Task BusinessMetricsMatchRetainedHistoryAfterAnApprovedOrRejectedOrderIsDeleted(bool approved)
+    public async Task DeletedOrdersPreserveTheirStatusHistory(bool approved)
     {
         var id = await CreateOrder();
         var opening = DateTime.UtcNow.AddDays(-7);
@@ -575,38 +565,13 @@ public sealed class OrderOwnershipPersistenceTests
         Assert.That(delivery.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         using var deletion = await SendAuthorized(HttpMethod.Delete, $"/Orders/{id}");
         Assert.That(deletion.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
-        var expected = await connection.QuerySingleAsync<double>("""
-            WITH intervals AS (
-                SELECT *, lag(occurred_at) OVER (ORDER BY sequence) AS entered_at
-                FROM order_status_history WHERE order_id = @Id
-            )
-            SELECT sum(extract(epoch FROM occurred_at - entered_at))::double precision
-            FROM intervals
-            WHERE new_status IN ('WaitingForApproval', 'Delivered')
-                OR (new_status = 'Finished' AND reason = 'ServiceCompleted');
-            """, new { Id = id });
-        FlushMetrics();
-        Assert.That(BusinessMetricAssertions.Count(sourceFactory.Metrics, "mecanica.orders.created"), Is.EqualTo(1));
-        Assert.That(BusinessMetricAssertions.Count(sourceFactory.Metrics, "mecanica.orders.stage.duration"), Is.EqualTo(approved ? 3 : 2));
-        Assert.That(BusinessMetricAssertions.Sum(sourceFactory.Metrics, "mecanica.orders.stage.duration"), Is.EqualTo(expected).Within(0.00001));
-        Assert.That(BusinessMetricAssertions.Count(sourceFactory.Metrics, "mecanica.orders.service.duration"), Is.EqualTo(approved ? 1 : 0));
-        Assert.That(BusinessMetricAssertions.Count(sourceFactory.Metrics, "mecanica.orders.stage.duration",
-            ("completion.reason", approved ? "service_completed" : "budget_rejected")), Is.EqualTo(1));
         Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM orders"), Is.Zero);
-        Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM order_status_history WHERE sequence = 1"), Is.EqualTo(1));
-        if (approved)
-        {
-            var total = await connection.QuerySingleAsync<double>("""
-                SELECT extract(epoch FROM max(occurred_at) FILTER (WHERE reason = 'ServiceCompleted')
-                    - min(occurred_at) FILTER (WHERE sequence = 1))::double precision
-                FROM order_status_history WHERE order_id = @Id;
-                """, new { Id = id });
-            Assert.That(BusinessMetricAssertions.Sum(sourceFactory.Metrics, "mecanica.orders.service.duration"), Is.EqualTo(total).Within(0.00001));
-        }
+        Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM order_status_history WHERE order_id = @Id", new { Id = id }), Is.EqualTo(approved ? 7 : 5));
+        Assert.That(await connection.QuerySingleAsync<string>("SELECT reason FROM order_status_history WHERE order_id = @Id AND new_status = 'Finished'", new { Id = id }), Is.EqualTo(approved ? "ServiceCompleted" : "BudgetRejected"));
     }
 
     [Test]
-    public async Task FailedCreationRollsBackWithoutRecordingVolume()
+    public async Task FailedCreationRollsBackHistoryAndStock()
     {
         await connection.ExecuteAsync("""
             CREATE OR REPLACE FUNCTION reject_test_creation() RETURNS trigger AS $$
@@ -618,40 +583,10 @@ public sealed class OrderOwnershipPersistenceTests
         try
         {
             using var response = await SendAuthorized(HttpMethod.Post, "/Orders", NewOrderBody());
-            FlushMetrics();
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
-            Assert.That(BusinessMetricAssertions.Count(sourceFactory.Metrics, "mecanica.orders.created"), Is.Zero);
-            Assert.That(BusinessMetricAssertions.Count(sourceFactory.Metrics, "mecanica.orders.processing.failures", ("operation", "CreateOrder")), Is.EqualTo(1));
             Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM order_status_history"), Is.Zero);
             Assert.That(await connection.QuerySingleAsync<int>("SELECT reserved_amount FROM stock"), Is.Zero);
         }
         finally { await connection.ExecuteAsync("DROP TRIGGER fail_create_test ON order_services;"); }
     }
-
-    [Test]
-    public async Task ApiRestartUsesPersistedStageStartWithoutReplayingCreation()
-    {
-        var id = await CreateOrder();
-        using var start = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/diagnosis/start");
-        var opening = new DateTime(2026, 9, 30, 2, 59, 0, DateTimeKind.Utc);
-        await connection.ExecuteAsync("UPDATE order_status_history SET occurred_at = @Opening + (sequence - 1) * interval '1 day' WHERE order_id = @Id",
-            new { Opening = opening, Id = id });
-        client.Dispose();
-        await factory.DisposeAsync();
-        await sourceFactory.DisposeAsync();
-        CreateApi();
-        FlushMetrics();
-        Assert.That(BusinessMetricAssertions.Count(sourceFactory.Metrics, "mecanica.orders.created"), Is.Zero);
-        using var completion = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/diagnosis/complete");
-        Assert.That(completion.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
-        var expected = await connection.QuerySingleAsync<double>("""
-            SELECT extract(epoch FROM max(occurred_at) FILTER (WHERE sequence = 3)
-                - max(occurred_at) FILTER (WHERE sequence = 2))::double precision
-            FROM order_status_history WHERE order_id = @Id;
-            """, new { Id = id });
-        FlushMetrics();
-        Assert.That(BusinessMetricAssertions.Sum(sourceFactory.Metrics, "mecanica.orders.stage.duration"), Is.EqualTo(expected).Within(0.00001));
-        Assert.That(BusinessMetricAssertions.Count(sourceFactory.Metrics, "mecanica.orders.created"), Is.Zero);
-    }
-
 }
