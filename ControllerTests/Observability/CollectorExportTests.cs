@@ -218,10 +218,13 @@ public sealed class CollectorExportTests : BaseControllerTests
             if (received) break;
             await Task.Delay(200);
         }
-        Assert.That(received, Is.True,
-            $"Collector signals: traces={output.Contains("ResourceSpans", StringComparison.Ordinal)}, "
-            + $"metrics={output.Contains("ResourceMetrics", StringComparison.Ordinal)}, logs={output.Contains("ResourceLog", StringComparison.Ordinal)}, "
-            + $"context={output.Contains(traceId, StringComparison.Ordinal)}, message={output.Contains("Validação local da exportação.", StringComparison.Ordinal)}.");
+        var diagnostic = destination?.DescribeReceivedSignals()
+            ?? $"traces={output.Contains("ResourceSpans", StringComparison.Ordinal)}, "
+            + $"metrics={output.Contains("ResourceMetrics", StringComparison.Ordinal)}, "
+            + $"logs={output.Contains("ResourceLog", StringComparison.Ordinal)}, "
+            + $"context={output.Contains(traceId, StringComparison.Ordinal)}, "
+            + $"message={output.Contains("Validação local da exportação.", StringComparison.Ordinal)}";
+        Assert.That(received, Is.True, $"Collector={collector.State}; {diagnostic}.");
         Assert.That(output.Contains("mecanica-api", StringComparison.Ordinal), Is.True);
         Assert.That(output.Contains("service.version", StringComparison.Ordinal), Is.True);
         Assert.That(output.Contains("deployment.environment.name", StringComparison.Ordinal), Is.True);
