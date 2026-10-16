@@ -17,6 +17,7 @@ namespace ControllerTests.Observability;
 [NonParallelizable]
 public sealed class CollectorExportTests : BaseControllerTests
 {
+    private OtlpTestEndpoint? destination;
     private IContainer collector = null!;
     private PostgreSqlContainer database = null!;
     private TelemetryWebApplicationFactory Telemetry => (TelemetryWebApplicationFactory)TestWebAppFactory;
@@ -43,6 +44,8 @@ public sealed class CollectorExportTests : BaseControllerTests
             if (directory is null) throw new InvalidOperationException("Collector configuration was not found.");
             configuration = new FileInfo(Path.Combine(directory.FullName, "observability", "collector-local.yaml"));
         }
+        var newRelic = (await File.ReadAllTextAsync(configuration.FullName)).Contains("otlphttp/newrelic", StringComparison.Ordinal);
+        if (newRelic) destination = await OtlpTestEndpoint.StartAsync();
         database = new PostgreSqlBuilder("postgres:16.15")
             .WithDatabase("collector_tests").WithUsername("postgres").WithPassword("private-local-password").Build();
         await database.StartAsync();
@@ -53,8 +56,11 @@ public sealed class CollectorExportTests : BaseControllerTests
             builder = builder
                 .WithBindMount(configuration.FullName, $"/etc/otelcol-contrib/{configuration.Name}",
                     DotNet.Testcontainers.Configurations.AccessMode.ReadOnly)
-                .WithCommand($"--config=/etc/otelcol-contrib/{configuration.Name}",
-                    "--config=yaml:exporters::debug::verbosity: detailed")
+                .WithCommand(newRelic
+                    ? new[] { $"--config=/etc/otelcol-contrib/{configuration.Name}",
+                       $"--config=yaml:exporters::otlphttp/newrelic::endpoint: {destination!.CollectorEndpoint}",
+                       $"--config=yaml:exporters::otlphttp/newrelic::headers::api-key: {OtlpTestEndpoint.License}" }
+                    : new[] { $"--config=/etc/otelcol-contrib/{configuration.Name}", "--config=yaml:exporters::debug::verbosity: detailed" })
                 .WithEnvironment("GOMEMLIMIT", "192MiB")
                 .WithCreateParameterModifier(parameters =>
                 {
@@ -90,6 +96,7 @@ public sealed class CollectorExportTests : BaseControllerTests
             await collector.DisposeAsync();
         if (database is not null)
             await database.DisposeAsync();
+        if (destination is not null) await destination.DisposeAsync();
     }
 
     protected override TestWebApplicationFactory CreateFactory() => new TelemetryWebApplicationFactory(database.GetConnectionString())
@@ -98,6 +105,37 @@ public sealed class CollectorExportTests : BaseControllerTests
         TelemetryEndpoint = $"http://{collector.Hostname}:{collector.GetMappedPublicPort(4318)}"
     };
     protected override void MockService() { }
+
+    private async Task VerifyDestinationFailuresAsync(ILogger logger)
+    {
+        foreach (var status in new[] { 401, 429, 503 })
+        {
+            destination!.StatusCode = status;
+            using var response = await TestClient.GetAsync("/Customers");
+            logger.LogInformation("Destino de telemetria com falha controlada.");
+            Telemetry.Flush();
+            for (var attempt = 0; attempt < 40 && !destination.Requests.Any(item => item.Status == status); attempt++)
+                await Task.Delay(100);
+            Assert.That(destination.Requests.Any(item => item.Status == status), Is.True);
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            destination.StatusCode = 200;
+            await Task.Delay(1200);
+        }
+        destination!.Delay = TimeSpan.FromSeconds(4);
+        using var slow = await TestClient.GetAsync("/Customers");
+        Telemetry.Flush();
+        Assert.That(slow.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        await Task.Delay(3200);
+        destination.Delay = TimeSpan.Zero;
+        await destination.StopAsync();
+        using var offline = await TestClient.GetAsync("/Customers");
+        using var ready = await TestClient.GetAsync("/health/ready");
+        Telemetry.Flush();
+        Assert.That(offline.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        Assert.That(ready.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        var captured = await collector.GetLogsAsync();
+        Assert.That(captured.Stdout + captured.Stderr, Does.Not.Contain(OtlpTestEndpoint.License));
+    }
 
     [Test]
     public async Task ExportsAllSignalsOverOtlpAndContinuesWhenCollectorStops()
@@ -154,6 +192,18 @@ public sealed class CollectorExportTests : BaseControllerTests
         {
             var logs = await collector.GetLogsAsync();
             output = logs.Stdout + logs.Stderr;
+            if (destination is not null)
+            {
+                output = destination.PayloadText;
+                received = destination.HasAllSignals && output.Contains("mecanica.orders.created", StringComparison.Ordinal)
+                    && output.Contains("mecanica.orders.notifications", StringComparison.Ordinal)
+                    && output.Contains("mecanica.orders.stage.duration", StringComparison.Ordinal)
+                    && output.Contains("mecanica.orders.service.duration", StringComparison.Ordinal)
+                    && output.Contains("mecanica.orders.processing.failures", StringComparison.Ordinal);
+                if (received) break;
+                await Task.Delay(200);
+                continue;
+            }
             received = output.Contains("ResourceSpans", StringComparison.Ordinal)
                 && output.Contains("ResourceMetrics", StringComparison.Ordinal)
                 && output.Contains("ResourceLog", StringComparison.Ordinal)
@@ -181,7 +231,20 @@ public sealed class CollectorExportTests : BaseControllerTests
         Assert.That(output.Contains("private-", StringComparison.Ordinal), Is.False, "Sensitive inputs must not reach the Collector.");
         Assert.That(output.Contains(id.ToString(), StringComparison.Ordinal), Is.False, "Raw route IDs must not reach the Collector.");
         Assert.That(output.Contains(completedOrderId.ToString(), StringComparison.Ordinal), Is.False);
-        Assert.That(Regex.Count(output, @"Trace ID\s*:\s*" + traceId), Is.EqualTo(1), "The successful request span must be exported only once.");
+        if (destination is null)
+            Assert.That(Regex.Count(output, @"Trace ID\s*:\s*" + traceId), Is.EqualTo(1), "The successful request span must be exported only once.");
+        else
+        {
+            Assert.That(destination.Requests.All(item => item.ApiKey == OtlpTestEndpoint.License), Is.True);
+            Assert.That(output, Does.Not.Contain(OtlpTestEndpoint.License));
+            var traceBytes = Convert.FromHexString(traceId);
+            Assert.That(destination.Requests.Any(item => item.Path == "/v1/traces" && item.Body.AsSpan().IndexOf(traceBytes) >= 0), Is.True);
+            var errorTraceBytes = Convert.FromHexString(Telemetry.Spans.Single(span =>
+                span.Kind == System.Diagnostics.ActivityKind.Server && span.Status == System.Diagnostics.ActivityStatusCode.Error).TraceId.ToString());
+            Assert.That(destination.Requests.Any(item => item.Path == "/v1/logs" && item.Body.AsSpan().IndexOf(errorTraceBytes) >= 0), Is.True);
+            Assert.That(destination.Requests.All(item => item.Body.Length < 1_000_000), Is.True);
+            await VerifyDestinationFailuresAsync(logger);
+        }
         Assert.That(first.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         Assert.That(creation.StatusCode, Is.EqualTo(HttpStatusCode.Created));
         Assert.That(negative.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));

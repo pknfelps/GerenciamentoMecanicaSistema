@@ -153,29 +153,21 @@ Após a simplificação declarativa, em 14/10/2026: **1.136 testes aprovados, ze
 
 Preparação do Collector EKS em 15/10/2026: **90 testes de observabilidade aprovados, zero falhas/ignorados**, com fixture também exercitada usando o YAML da infraestrutura. Validação nativa, health 200, três sinais e debug basic sem payloads comprovados sob as restrições do Deployment. Raiz da infraestrutura inalterada; overlays da API com endpoint e coleta false. OpenAPI preservado byte a byte. Evidências em artifacts/e5-collector dos dois repositórios. Integração de workflows, implantação, capacidade do nó e New Relic continuam pendentes.
 
-## Integração operacional preparada — 15/10/2026
+## Fluxo operacional vigente — New Relic permanente
 
-Os workflows da infraestrutura aplicam e reiniciam o Collector após o apply aprovado da base, aguardam rollout por até 300 segundos e o removem antes do descarte Terraform. O CI renderiza sua Kustomization independente e valida o YAML pelo binário fixado. Os workflows da API não mudam: sua ativação permanece no manifesto: hom agora usa Telemetry__Enabled=true para a validação AWS e prd continua false. Lambda possui opção própria no SAM e não depende desse Collector EKS. Integração implementada e validada localmente, sem execução AWS ou ingestão New Relic; capacidade e comportamento reais permanecem pendentes.
+Infraestrutura aplica sempre kubernetes/observability/<ambiente>; base-provision e base-destroy mantêm plano salvo/aprovação/apply. Auth SAM sempre instala a layer e habilita OpenTelemetry/New Relic. Não existem inputs de ativação nessas pipelines; xray_enabled permanece independente.
 
-## Ordem dos workflows para validação AWS/hom — 15/10/2026
+A API não recebe a License Key ou endpoint New Relic: continua enviando ao Collector interno. Sua configuração de instrumentação permanece no manifesto (hom habilitado, prd conforme arquivo versionado); código e workflows da API não mudam nesta simplificação.
 
-Referência operacional para a retomada da E5. O bootstrap X-Ray/layer já foi aprovado e aplicado: quatro alterações IAM, nenhuma criação/exclusão; conferência posterior sem diferenças. Não reaplicar o plano consumido. A sequência abaixo permanece pendente; registrá-la não dispara workflows nem autoriza alterações adicionais.
+Sequência: plano/aprovação/apply do bootstrap New Relic → cadastro da chave no console → PRs → base-provision → banco/Job e api-deploy somente se necessários → auth-publish de nova revisão → auth-provision com artifact_commit e X-Ray desejado → atualizar Gateway para a versão numérica nova → conferir ingestão. O cadastro da chave no ambiente é pré-requisito obrigatório de provisionamento. [Guia completo](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/NEW_RELIC.md).
 
-Antes dos disparos, publicar os PRs com os ajustes de ativação hom: `Telemetry__Enabled="true"` no overlay da API e `xray_tracing_enabled=true` no tfvars hom do Gateway. Esses arquivos já foram ajustados localmente; sua aplicação AWS depende dos workflows. Prd e os padrões das aplicações/variáveis permanecem desabilitados. Na autenticação, selecionar `telemetry_enabled=true` e `xray_enabled=true` na interface de auth-provision; os dois inputs continuam false por padrão e não exigem alteração de arquivo.
+## New Relic US — teste local do Collector
 
-Executar sequencialmente, aguardando cada workflow terminar. Em todos, selecionar branch `develop` e `environment=hom`:
+A fixture CollectorExportTests aceita CollectorConfigPath apontando para kubernetes/observability/base/collector.yaml da infraestrutura. Overrides nativos substituem endpoint/header por destino OTLP local e chave fictícia, sem AWS; exercitam os três sinais, métricas de negócio, correlação e falhas 401/429/503/lentidão/offline. O modo local padrão do CI usa seu Compose/debug independente, sem constituir alternativa de deploy.
 
-| Ordem | Repositório | Workflow | Entradas e resultado esperado |
-|---|---|---|---|
-| 1 | GerenciamentoMecanicaInfraestrutura | `base-provision` | Base disponível; Collector EKS aplicado/reiniciado, rollout concluído. |
-| 2 | GerenciamentoMecanicaBancoDados | `database-provision` | Executar somente se banco/Job não estiverem prontos. Se já estiverem, pular esta etapa. |
-| 3 | GerenciamentoMecanicaSistema | `api-deploy` | API com telemetria habilitada no manifesto; guardar o SHA completo da execução para `api_commit`. |
-| 4 | GerenciamentoMecanicaAutenticacao | `auth-publish` | Publicar revisão nova com parâmetros TelemetryEnabled/XRayEnabled; guardar o commit completo informado no summary. |
-| 5 | GerenciamentoMecanicaAutenticacao | `auth-provision` | `artifact_commit` do passo 4, `telemetry_enabled=true` e `xray_enabled=true`. |
-| 6 | GerenciamentoMecanicaInfraestrutura | `gateway-provision` | `api_commit` do passo 3 e `auth_commit` do passo 4; consumir a nova versão numérica da Lambda e habilitar X-Ray conforme tfvars. |
+```powershell
+$collectorPath = (Resolve-Path ../GerenciamentoMecanicaInfraestrutura/kubernetes/observability/base/collector.yaml).Path.Replace('\', '/')
+dotnet test ControllerTests/ControllerTests.csproj -c Release --filter FullyQualifiedName~CollectorExportTests -- "TestRunParameters.Parameter(name=`"CollectorConfigPath`",value=`"$collectorPath`")"
+```
 
-Base, banco e Gateway mantêm plan → aprovação → apply do plano salvo. API e autenticação seguem integralmente após o disparo manual, sem aprovação intermediária. Não usar hashes de arquivos, versões S3 ou números de versão Lambda como os inputs de commit.
-
-Depois, validar autenticação, ciclo de OS, recebimento dos três sinais, correlação, memória/tempo da Lambda, comportamento em falha do Collector e segmentos nativos X-Ray. Os Collectors usam `debug: basic`, que mostra resumos; inspeção completa de atributos/sanitização na AWS exige preparar configuração diagnóstica temporária `detailed`, com dados fictícios e retorno posterior a `basic`. Essa alteração ainda não foi feita. Segmentos nativos não passam pela sanitização da aplicação.
-
-New Relic não é necessário para essa validação de instrumentação/transporte na AWS. Ingestão final, dashboards, alertas, correlação W3C/X-Ray e coleta Kubernetes/CloudWatch ainda não implementada permanecem pendentes. Não marcar a E5 como concluída por receber sinais no exporter debug.
+O arquivo versionado não é reescrito. Ingestão real, dashboards/alertas, coleta Kubernetes/CloudWatch e integração X-Ray/New Relic continuam pendentes. Registros anteriores de debug básico representam validações históricas, não o destino de produção vigente.
