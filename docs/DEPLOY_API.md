@@ -18,6 +18,8 @@ O workflow exige conta `121754142617`, região `us-east-1`, repositório GitHub 
 
 A aplicação lê seus parâmetros e Secrets usando o SDK .NET e Pod Identity, conforme [inicialização AWS](INICIALIZACAO_AWS.md). A pipeline não lê seus valores.
 
+O build da imagem recebe o SHA completo da execução em `SOURCE_REVISION_ID` e o incorpora no assembly pela propriedade `SourceRevisionId` do SDK .NET. A telemetria usa esse mesmo commit em `service.version`; não depende da presença de `.git` dentro do Docker nem de uma variável no manifesto. Após publicar esta alteração, executar `api-deploy` para disponibilizá-la e conferir a versão dos sinais da nova revisão no New Relic. O ambiente precisa estar provisionado para essa conferência.
+
 ### Compatibilidade das ordens com o esquema 1.0.0
 
 A API grava em `orders` somente identidade, cliente, veículo, orçamento e status. A abertura vem do primeiro evento de `order_status_history`; a conclusão vem do evento `Finished` com motivo `ServiceCompleted`. A duração continua calculada, sem coluna própria. Os instantes são enviados em UTC, e criação/transição e histórico são gravados na mesma transação, reutilizando a transação do serviço quando existente. Recusa usa `BudgetRejected` e não é tratada como serviço concluído; excluir a ordem preserva o histórico.
@@ -129,11 +131,13 @@ Com kubectl 1.36.1, executa `kubectl delete -k` do overlay, ignora somente recur
 O workflow remove apenas os objetos do overlay, sem Terraform, leitura de Secrets ou exclusão de recursos AWS. Service/NLB, RDS, JWT/credenciais, IAM e ECR permanecem com seus proprietários. Para descartar todo o ambiente:
 
 1. Interromper novos disparos de deploy/provisionamento do ambiente e aguardar as execuções em curso.
-2. Executar **API destroy** neste repositório, selecionando develop/hom (ou main/prd), e aguardar sucesso. Deployment, HPA, ServiceAccount e pods dependentes são removidos; Service/NLB continuam pertencendo à base.
-3. Executar **database-destroy** no repositório de banco, no mesmo ambiente: revisar e aprovar seu plano salvo. Ele remove o Job e descarta RDS/configuração/credenciais administrados pelo Terraform.
-4. Após concluir o banco, executar **base-destroy** no repositório de infraestrutura, revisando/aprovando o plano salvo. Ele remove seus manifestos Kubernetes antes de excluir EKS/rede/NLB e demais recursos da base.
+2. Executar **gateway-destroy** na infraestrutura com o ambiente e os SHAs de contratos da última implantação; revisar/aprovar o plano salvo e aguardar sucesso.
+3. Executar **API destroy** neste repositório e **auth-destroy** na autenticação, no mesmo ambiente. Podem executar em paralelo. Deployment, HPA, ServiceAccount e pods da API são removidos; SAM remove a função e seus recursos. Service/NLB continuam pertencendo à base.
+4. Aguardar ambos e conferir a liberação das ENIs da autenticação. O último step de auth-destroy apenas as lista; não espera automaticamente sua limpeza.
+5. Executar **database-destroy** no repositório de banco, no mesmo ambiente: revisar e aprovar seu plano salvo. Ele remove o Job e descarta RDS/configuração/credenciais administrados pelo Terraform.
+6. Após concluir o banco, executar **base-destroy** no repositório de infraestrutura, revisando/aprovando o plano salvo. Ele remove o Collector EKS e seus manifestos Kubernetes antes de excluir EKS/rede/NLB e demais recursos da base.
 
-A ordem é **api-destroy → database-destroy → base-destroy**, coordenada pelo mantenedor; não há disparo automático entre repositórios. Executar API destroy antes de remover a base: ele depende dos parâmetros SSM e do cluster existentes. Para remover somente a aplicação, executar apenas API destroy; API deploy pode implantá-la novamente usando as dependências preservadas. Bootstrap, backend, repositório ECR/imagens e o outro ambiente são preservados. Se Gateway/Lambda ou outros consumidores forem implantados depois, eles devem ser descartados antes do banco/base conforme seus procedimentos. Nenhum workflow foi disparado para validar esta implementação.
+A ordem é **gateway-destroy → API/auth em paralelo → conferir ENIs → database-destroy → base-destroy**, coordenada pelo mantenedor; não há disparo automático entre repositórios. Executar API destroy antes de remover a base: ele depende dos parâmetros SSM e do cluster existentes. Para remover somente a aplicação, executar apenas API destroy; API deploy pode implantá-la novamente usando as dependências preservadas. Bootstrap, backend, repositório ECR/imagens, credencial New Relic do bootstrap e o outro ambiente são preservados. O [mapa completo de destroy](DESTRUICAO_AMBIENTE.md) detalha entradas, aprovações, artefatos preservados e recarga futura do ZIP removido pelo SAM. Nenhum workflow foi disparado para registrar este roteiro.
 
 ## Observabilidade — primeira entrega local
 

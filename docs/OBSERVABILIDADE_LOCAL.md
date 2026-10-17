@@ -40,7 +40,7 @@ Erros de configuração têm mensagem fixa, sem reproduzir os valores recebidos.
 
 Sem substituição explícita, `service.version` vem do commit nos metadados do assembly (fallback `local`) e `deployment.environment.name=local/hom/prd` vem do runtime existente. O detector nativo lê as variáveis padrão pela configuração da aplicação; não há parser próprio nem detecção automática de host/usuário. Use somente metadados técnicos: nunca coloque dados pessoais, credenciais ou tokens em atributos.
 
-Os overlays hom/prd já definem `OTEL_SERVICE_NAME=mecanica-api` e `OTEL_RESOURCE_ATTRIBUTES=deployment.environment.name=hom|prd`. Não definem Enabled ou endpoint, portanto não ativam exportação. Para uma revisão com versão explícita, a configuração pode usar `OTEL_RESOURCE_ATTRIBUTES=deployment.environment.name=hom,service.version=<commit>`. Sem isso, prevalece o commit do assembly ou o fallback. Não foi alterado Dockerfile/workflow para injetar commit nesta entrega.
+Os overlays hom/prd definem `OTEL_SERVICE_NAME=mecanica-api` e `OTEL_RESOURCE_ATTRIBUTES=deployment.environment.name=hom|prd`. O `api-deploy` passa o SHA completo da execução ao build Docker como `SOURCE_REVISION_ID`; o Dockerfile fornece esse valor à propriedade nativa `SourceRevisionId` do `dotnet publish`. O SDK incorpora o commit em `AssemblyInformationalVersion`, lido pela instrumentação existente para preencher `service.version`, mesmo com `.git` excluído do contexto Docker. Não é necessária uma variável de versão no Kubernetes. Builds sem commit disponível preservam o fallback `local`.
 
 Os ajustes operacionais abaixo ficam no arquivo declarativo e são lidos diretamente pelo SDK. Variáveis de ambiente com os mesmos nomes substituem esses padrões, sem recompilar:
 
