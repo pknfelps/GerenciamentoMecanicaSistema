@@ -152,3 +152,9 @@ Sem a flag, não há providers/listeners/exportação. Console textual, sanitiza
 ## Integração com o Gateway
 
 Após publicar/implantar a API, informar seu commit completo em api_commit do workflow gateway-provision no repositório de infraestrutura. auth_commit corresponde à autenticação implantada; ambos fixam contratos publicados. Gateway tem estado/workflow próprio e não é disparado pelo api-deploy. Mudanças de contrato exigem novo plano Gateway. A rede exige novo SG reservado na base, conforme [ADR 010](arquitetura/adrs/010-GATEWAY-REST-V2.md). Descartar Gateway antes da API/auth e antes de banco/base.
+
+## Bloqueio antes de API destroy — 17/10/2026
+
+Após OIDC e identificação do destino, API destroy procura a REST API e o VPC Link mecanica-<ambiente>-gateway por AWS CLI, com paginação e resultados JSON. Ambos devem estar ausentes; VPC Link em exclusão também bloqueia. Erros de consulta não significam ausência. A remoção continua manual e usa o overlay versionado, sem aprovação adicional. A conferência final inclui ReplicaSets, além dos recursos já verificados.
+
+Publicar primeiro as permissões de inspeção do bootstrap. API e auth podem ser removidas após Gateway; somente depois de ambas e da liberação das ENIs remover banco, seguido da base. Não há novos inputs, scripts ou marcadores SSM. [Mapa completo](DESTRUICAO_AMBIENTE.md).

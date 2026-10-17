@@ -78,6 +78,23 @@ jobs:
           echo "cluster=$cluster" >> "$GITHUB_OUTPUT"
           echo "namespace=$namespace" >> "$GITHUB_OUTPUT"
 
+      - name: Conferir remoção do Gateway
+        run: |
+          set -euo pipefail
+          case "$DEPLOY_ENVIRONMENT" in hom|prd) ;; *) exit 1 ;; esac
+          test "$AWS_REGION" = us-east-1
+          name="mecanica-$DEPLOY_ENVIRONMENT-gateway"
+          apis="$(aws apigateway get-rest-apis --query "items[?name=='$name'].id" --output json)"
+          if ! jq -e 'type == "array" and length == 0' <<< "$apis" > /dev/null; then
+            echo "::error::$DEPLOY_ENVIRONMENT: REST API $name encontrada ou resposta invalida. Conclua gateway-destroy."
+            exit 1
+          fi
+          links="$(aws apigatewayv2 get-vpc-links --query "Items[?Name=='$name'].VpcLinkId" --output json)"
+          if ! jq -e 'type == "array" and length == 0' <<< "$links" > /dev/null; then
+            echo "::error::$DEPLOY_ENVIRONMENT: VPC Link $name encontrado ou resposta invalida. Conclua gateway-destroy."
+            exit 1
+          fi
+
       - name: Instalar kubectl
         uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
         with:
@@ -96,16 +113,16 @@ jobs:
           kubectl delete -k "deploy/kubernetes/overlays/$DEPLOY_ENVIRONMENT" \
             --namespace "$NAMESPACE" --ignore-not-found=true --cascade=foreground --wait=true --timeout=600s
 
-      - name: Conferir remoção
+      - name: Conferir remoção da API
         env:
           NAMESPACE: ${{ steps.target.outputs.namespace }}
         run: |
           remaining="$(kubectl get deployment/deploy-gerenciamento-api horizontalpodautoscaler/hpa-gerenciamento-api serviceaccount/gerenciamento-api \
             --namespace "$NAMESPACE" --ignore-not-found=true -o name)"
           test -z "$remaining"
-          pods="$(kubectl get pods --namespace "$NAMESPACE" -l app=gerenciamento-api -o name)"
+          pods="$(kubectl get pods,replicasets --namespace "$NAMESPACE" -l app=gerenciamento-api -o name)"
           test -z "$pods"
-          printf 'API removida de `%s/default`.\n\nCommit do manifesto: `%s`\n\nPróximo: database-destroy, depois base-destroy no mesmo ambiente.\n' \
+          printf 'API removida de %s/default.\n\nCommit do manifesto: %s\n\nPróximo: database-destroy somente após auth-destroy; depois base-destroy no mesmo ambiente.\n' \
             "$DEPLOY_ENVIRONMENT" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Diagnóstico de falha

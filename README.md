@@ -304,3 +304,7 @@ Gateway REST/VPC Link V2 implementado localmente no repositório de infraestrutu
 ## New Relic US
 
 O envio externo fica nos Collectors da infraestrutura/autenticação; a API preserva código, endpoint interno e configuração de coleta. Credencial pelo Secrets Manager nativo, com permissões por ambiente e sem valor nos manifestos. Integração preparada localmente; ingestão real, dashboards/alertas e integração X-Ray ainda pendentes. [Procedimento](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/NEW_RELIC.md).
+
+## Bloqueio de dependências no descarte — 17/10/2026
+
+API destroy consulta REST API e VPC Link do Gateway do ambiente antes de remover o overlay. Se algum existir, ou a consulta falhar, o descarte é bloqueado. O banco só pode ser removido depois de API e autenticação, e a base por último. Bootstrap/permissões e a associação de leitura Kubernetes da pipeline do banco devem ser publicados primeiro. [Mapa e critérios](docs/DESTRUICAO_AMBIENTE.md). Preparação local; nenhuma execução AWS realizada nesta implementação.
