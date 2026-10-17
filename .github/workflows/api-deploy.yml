@@ -129,6 +129,8 @@ jobs:
           context: .
           file: GerenciamentoMecanicaSistema/Dockerfile
           platforms: linux/amd64
+          build-args: |
+            SOURCE_REVISION_ID=${{ github.sha }}
           push: true
           tags: ${{ steps.repository.outputs.url }}:sha-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
 

@@ -1,5 +1,7 @@
 # Observabilidade de negócio — E5
 
+**Decisão vigente — 15/10/2026:** todos os testes automatizados de telemetria foram removidos por decisão do mantenedor, inclusive métricas de negócio e leitor de histórico exclusivo para medição. Os testes funcionais de OS, histórico, estoque, concorrência e rollback foram preservados. Instrumentação e consultas de conferência de produção permanecem; resultados de testes abaixo são registros históricos.
+
 A API observa criações e transições concluídas pelo fluxo HTTP. O filtro MVC executa depois do retorno do serviço e de suas transações; o middleware existente conta respostas 500 de ações de OS. Chamadas diretas aos serviços não são outro canal instrumentado. Notificações são medidas no handler existente, inclusive falhas nas consultas necessárias à notificação.
 
 ## Coleta e configuração

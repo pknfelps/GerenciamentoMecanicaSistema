@@ -1,6 +1,8 @@
 # Observabilidade local da API
 
-**Estado atual — 14/10/2026:** coleta dirigida pelo ConfigMap, validada com **1.142 testes aprovados, zero falhas/ignorados**, incluindo 45 de observabilidade. Conteúdo do ConfigMap/publicação idêntico ao arquivo fonte; filtros/meters nativos e regras alteráveis sem recompilar comprovados. Build Release, PostgreSQL/Collector reais, OpenAPI repetido/idêntico, publish/certificado e Kustomize aprovados. Os resultados datados no fim do documento registram as entregas anteriores; este estado é o vigente. Sem implantação AWS/New Relic.
+**Decisão vigente — 15/10/2026:** removidos os testes de conexão New Relic e Collectors locais e seus receptores fictícios, incluindo o cenário de destino OTLP lento. CI não executa imagens de Collector para validar exporter/YAML. Todos os testes automatizados de telemetria foram removidos da API e da Lambda, incluindo instrumentação InMemory, métricas de negócio, traces, exporters e auxiliares. Testes funcionais e de sanitização do console permanecem; Compose manual e configuração de produção preservados. Resultados de transporte datados abaixo são históricos; conectividade/ingestão será conferida operacionalmente após deploy.
+
+**Registro histórico — 14/10/2026:** coleta dirigida pelo ConfigMap, validada com **1.142 testes aprovados, zero falhas/ignorados**, incluindo 45 de observabilidade. Conteúdo do ConfigMap/publicação idêntico ao arquivo fonte; filtros/meters nativos e regras alteráveis sem recompilar comprovados. Build Release, PostgreSQL/Collector reais, OpenAPI repetido/idêntico, publish/certificado e Kustomize aprovados. Os resultados datados no fim do documento registram as entregas anteriores; esse resultado antecede a remoção dos testes de telemetria. Sem implantação AWS/New Relic.
 
 A instrumentação fica em `GerenciamentoMecanicaSistema/Observability`, na composição da API. Não há dependências OpenTelemetry em Domain/Application, spans manuais de negócio ou mudanças de persistência/transação. O console continua textual, com mensagens fixas e tipo do erro, sem stack trace.
 
@@ -38,7 +40,7 @@ Erros de configuração têm mensagem fixa, sem reproduzir os valores recebidos.
 
 Sem substituição explícita, `service.version` vem do commit nos metadados do assembly (fallback `local`) e `deployment.environment.name=local/hom/prd` vem do runtime existente. O detector nativo lê as variáveis padrão pela configuração da aplicação; não há parser próprio nem detecção automática de host/usuário. Use somente metadados técnicos: nunca coloque dados pessoais, credenciais ou tokens em atributos.
 
-Os overlays hom/prd já definem `OTEL_SERVICE_NAME=mecanica-api` e `OTEL_RESOURCE_ATTRIBUTES=deployment.environment.name=hom|prd`. Não definem Enabled ou endpoint, portanto não ativam exportação. Para uma revisão com versão explícita, a configuração pode usar `OTEL_RESOURCE_ATTRIBUTES=deployment.environment.name=hom,service.version=<commit>`. Sem isso, prevalece o commit do assembly ou o fallback. Não foi alterado Dockerfile/workflow para injetar commit nesta entrega.
+Os overlays hom/prd definem `OTEL_SERVICE_NAME=mecanica-api` e `OTEL_RESOURCE_ATTRIBUTES=deployment.environment.name=hom|prd`. O `api-deploy` passa o SHA completo da execução ao build Docker como `SOURCE_REVISION_ID`; o Dockerfile fornece esse valor à propriedade nativa `SourceRevisionId` do `dotnet publish`. O SDK incorpora o commit em `AssemblyInformationalVersion`, lido pela instrumentação existente para preencher `service.version`, mesmo com `.git` excluído do contexto Docker. Não é necessária uma variável de versão no Kubernetes. Builds sem commit disponível preservam o fallback `local`.
 
 Os ajustes operacionais abaixo ficam no arquivo declarativo e são lidos diretamente pelo SDK. Variáveis de ambiente com os mesmos nomes substituem esses padrões, sem recompilar:
 
@@ -127,17 +129,11 @@ Não há persistência, retentativas próprias ou garantia de entrega exatamente
 
 ## Validação e próxima entrega
 
-A fixture `CollectorExportTests` aceita o parâmetro NUnit opcional `CollectorConfigPath`, com o caminho do YAML da infraestrutura. Sem parâmetro, mantém o YAML local e o comportamento atual do CI, sem depender de outro checkout. Com parâmetro, monta o arquivo somente para leitura, executa com UID/GID 10001 e limites 0.5 CPU/256 MiB, verifica health 13133 e acrescenta override nativo `debug.verbosity=detailed` somente durante o teste. O manifesto da infraestrutura continua `basic`. O teste confere sinais técnicos/de negócio, correlação, sanitização, ausência de duplicação e funcionamento da API/readiness com o Collector parado.
-
-Na raiz da API, substitua `C:/caminho` pelo caminho real:
-
-```powershell
-dotnet test ControllerTests/ControllerTests.csproj -c Release --filter FullyQualifiedName~CollectorExportTests -- 'TestRunParameters.Parameter(name="CollectorConfigPath",value="C:/caminho/GerenciamentoMecanicaInfraestrutura/kubernetes/observability/collector.yaml")'
-```
+Por decisão do mantenedor, foram removidos os testes de conexão com Collectors locais e New Relic, incluindo a fixture de transporte, o receptor fictício e o parâmetro NUnit de YAML externo. Também foram removidos os testes de instrumentação, métricas, correlação e sanitização OTLP com InMemory; os testes de sanitização do console continuam funcionais.
 
 Os recursos e comandos de instalação/restart/descarte estão no [procedimento da infraestrutura](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/COLLECTOR_API.md). A Kustomization do Collector não integra a raiz que os workflows existentes aplicam. Não habilitar coleta antes da instalação e validação posterior; nenhuma operação AWS faz parte desta entrega.
 
-Os testes existentes de HTTP/PostgreSQL foram ampliados com exporter InMemory somente no projeto de testes. Exercitam configuração, contexto recebido, vínculo HTTP→PostgreSQL, correlação concorrente, probes, descarte, sanitização e exportação real dos três sinais para Collector em container. Incluem exceção PostgreSQL real e continuidade com Collector parado, sem AWS/RDS externos. Docker indisponível é falha, sem testes ignorados.
+Os testes HTTP/PostgreSQL preservam autenticação, autorização, persistência, estoque, concorrência, rollback e histórico, com telemetria desabilitada na factory comum. Não há exporter InMemory nem testes de telemetria na suíte. Docker continua necessário para PostgreSQL, sem ignorar testes indisponíveis. Instrumentação, manifestos e Collectors de produção permanecem inalterados.
 
 ```powershell
 dotnet restore GerenciamentoMecanicaSistema.slnx
@@ -153,29 +149,20 @@ Após a simplificação declarativa, em 14/10/2026: **1.136 testes aprovados, ze
 
 Preparação do Collector EKS em 15/10/2026: **90 testes de observabilidade aprovados, zero falhas/ignorados**, com fixture também exercitada usando o YAML da infraestrutura. Validação nativa, health 200, três sinais e debug basic sem payloads comprovados sob as restrições do Deployment. Raiz da infraestrutura inalterada; overlays da API com endpoint e coleta false. OpenAPI preservado byte a byte. Evidências em artifacts/e5-collector dos dois repositórios. Integração de workflows, implantação, capacidade do nó e New Relic continuam pendentes.
 
-## Integração operacional preparada — 15/10/2026
+## Fluxo operacional vigente — New Relic permanente
 
-Os workflows da infraestrutura aplicam e reiniciam o Collector após o apply aprovado da base, aguardam rollout por até 300 segundos e o removem antes do descarte Terraform. O CI renderiza sua Kustomization independente e valida o YAML pelo binário fixado. Os workflows da API não mudam: sua ativação permanece no manifesto: hom agora usa Telemetry__Enabled=true para a validação AWS e prd continua false. Lambda possui opção própria no SAM e não depende desse Collector EKS. Integração implementada e validada localmente, sem execução AWS ou ingestão New Relic; capacidade e comportamento reais permanecem pendentes.
+Infraestrutura aplica sempre kubernetes/observability/<ambiente>; base-provision e base-destroy mantêm plano salvo/aprovação/apply. Auth SAM sempre instala a layer e habilita OpenTelemetry/New Relic. Não existem inputs de ativação nessas pipelines; xray_enabled permanece independente.
 
-## Ordem dos workflows para validação AWS/hom — 15/10/2026
+A API não recebe a License Key ou endpoint New Relic: continua enviando ao Collector interno. Sua configuração de instrumentação permanece no manifesto (hom habilitado, prd conforme arquivo versionado); código e workflows da API não mudam nesta simplificação.
 
-Referência operacional para a retomada da E5. O bootstrap X-Ray/layer já foi aprovado e aplicado: quatro alterações IAM, nenhuma criação/exclusão; conferência posterior sem diferenças. Não reaplicar o plano consumido. A sequência abaixo permanece pendente; registrá-la não dispara workflows nem autoriza alterações adicionais.
+Sequência: plano/aprovação/apply do bootstrap New Relic → cadastro da chave no console → PRs → base-provision → banco/Job e api-deploy somente se necessários → auth-publish de nova revisão → auth-provision com artifact_commit e X-Ray desejado → atualizar Gateway para a versão numérica nova → conferir ingestão. O cadastro da chave no ambiente é pré-requisito obrigatório de provisionamento. [Guia completo](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/NEW_RELIC.md).
 
-Antes dos disparos, publicar os PRs com os ajustes de ativação hom: `Telemetry__Enabled="true"` no overlay da API e `xray_tracing_enabled=true` no tfvars hom do Gateway. Esses arquivos já foram ajustados localmente; sua aplicação AWS depende dos workflows. Prd e os padrões das aplicações/variáveis permanecem desabilitados. Na autenticação, selecionar `telemetry_enabled=true` e `xray_enabled=true` na interface de auth-provision; os dois inputs continuam false por padrão e não exigem alteração de arquivo.
+## New Relic US — conferência operacional
 
-Executar sequencialmente, aguardando cada workflow terminar. Em todos, selecionar branch `develop` e `environment=hom`:
+Os testes de conexão com New Relic e Collector local foram removidos por decisão do mantenedor. Não há receptor OTLP fictício, testes de falhas 401/429/503/lentidão/offline ou seleção de YAML de Collector nos testes.
 
-| Ordem | Repositório | Workflow | Entradas e resultado esperado |
-|---|---|---|---|
-| 1 | GerenciamentoMecanicaInfraestrutura | `base-provision` | Base disponível; Collector EKS aplicado/reiniciado, rollout concluído. |
-| 2 | GerenciamentoMecanicaBancoDados | `database-provision` | Executar somente se banco/Job não estiverem prontos. Se já estiverem, pular esta etapa. |
-| 3 | GerenciamentoMecanicaSistema | `api-deploy` | API com telemetria habilitada no manifesto; guardar o SHA completo da execução para `api_commit`. |
-| 4 | GerenciamentoMecanicaAutenticacao | `auth-publish` | Publicar revisão nova com parâmetros TelemetryEnabled/XRayEnabled; guardar o commit completo informado no summary. |
-| 5 | GerenciamentoMecanicaAutenticacao | `auth-provision` | `artifact_commit` do passo 4, `telemetry_enabled=true` e `xray_enabled=true`. |
-| 6 | GerenciamentoMecanicaInfraestrutura | `gateway-provision` | `api_commit` do passo 3 e `auth_commit` do passo 4; consumir a nova versão numérica da Lambda e habilitar X-Ray conforme tfvars. |
+Os manifests e Collectors de produção, o Compose manual e os preflights de credencial continuam funcionando como antes. Ingestão, conectividade e comportamento do destino serão conferidos operacionalmente após deploy, conforme o [procedimento New Relic](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/NEW_RELIC.md). Os resultados datados anteriores registram testes históricos que não fazem mais parte da suíte vigente.
 
-Base, banco e Gateway mantêm plan → aprovação → apply do plano salvo. API e autenticação seguem integralmente após o disparo manual, sem aprovação intermediária. Não usar hashes de arquivos, versões S3 ou números de versão Lambda como os inputs de commit.
+**Validação após remoção dos testes de Collectors/New Relic — 15/10/2026:** build Release e 1193 testes restantes aprovados, zero falhas/ignorados. Actionlint/ShellCheck aprovados nos dois CIs alterados. Evidências locais em artifacts/collector-tests-removal. Nenhum teste novo de conexão, Collector iniciado, workflow remoto ou operação AWS nesta validação; Docker utilizado somente pelos testes PostgreSQL preservados.
 
-Depois, validar autenticação, ciclo de OS, recebimento dos três sinais, correlação, memória/tempo da Lambda, comportamento em falha do Collector e segmentos nativos X-Ray. Os Collectors usam `debug: basic`, que mostra resumos; inspeção completa de atributos/sanitização na AWS exige preparar configuração diagnóstica temporária `detailed`, com dados fictícios e retorno posterior a `basic`. Essa alteração ainda não foi feita. Segmentos nativos não passam pela sanitização da aplicação.
-
-New Relic não é necessário para essa validação de instrumentação/transporte na AWS. Ingestão final, dashboards, alertas, correlação W3C/X-Ray e coleta Kubernetes/CloudWatch ainda não implementada permanecem pendentes. Não marcar a E5 como concluída por receber sinais no exporter debug.
+**Validação após remoção de todos os testes de telemetria da API — 15/10/2026:** restore e build Release concluídos; 1.100 testes restantes aprovados (48 contratos, 525 controllers, 183 domínio, 149 infraestrutura e 195 serviços), zero falhas e zero ignorados. Corrigidas as referências à factory e aos auxiliares removidos; testes funcionais de OS usam a factory comum com telemetria desabilitada. Removidas as asserções de métricas das notificações e dos testes de persistência, o leitor exclusivo de medição e a dependência OpenTelemetry.Exporter.InMemory dos testes. Instrumentação de produção preservada. Evidências locais em `artifacts/api-telemetry-tests-removal`. Nenhuma operação AWS, workflow remoto ou deploy.

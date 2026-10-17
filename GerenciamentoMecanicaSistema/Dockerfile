@@ -16,11 +16,13 @@ COPY ["Service/Service.csproj", "Service/"]
 RUN dotnet restore "GerenciamentoMecanicaSistema/GerenciamentoMecanicaSistema.csproj"
 
 COPY . .
+ARG SOURCE_REVISION_ID
 RUN dotnet publish "GerenciamentoMecanicaSistema/GerenciamentoMecanicaSistema.csproj" \
     --configuration "$BUILD_CONFIGURATION" \
     --output /app/publish \
     --no-restore \
-    /p:UseAppHost=false
+    /p:UseAppHost=false \
+    /p:SourceRevisionId="$SOURCE_REVISION_ID"
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 

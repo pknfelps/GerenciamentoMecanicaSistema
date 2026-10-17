@@ -70,6 +70,8 @@ O código registra a instrumentação e aplica as regras antes de exportar/agreg
 
 O [procedimento local](docs/OBSERVABILIDADE_LOCAL.md) usa um Compose separado com Collector Contrib `0.161.0`, porta OTLP somente em localhost e saída debug, sem New Relic ou credenciais. Falha do Collector não altera respostas/readiness. A instrumentação/exportação foi comprovada localmente; E5.1–E5.3 permanecem parciais até implantação/ingestão externa. Manifestos incluem identidade e ConfigMap público de observabilidade; workflows e recursos AWS não foram alterados.
 
+Por decisão do mantenedor, todos os testes automatizados de telemetria da API foram removidos, incluindo métricas de negócio, instrumentação InMemory e transporte OTLP. A suíte preserva os testes funcionais e a sanitização dos logs de console; os testes HTTP executam com telemetria desabilitada. Instrumentação e configurações de produção permanecem inalteradas.
+
 As [métricas de negócio da E5](docs/OBSERVABILIDADE_NEGOCIO.md) acrescentam volume de OS, durações pelo histórico persistido e falhas de processamento/notificação. Usam a mesma ativação e exportação locais, com seleção, dimensões, histogramas e prazo de leitura no manifesto. A conferência SQL não implica recuperação automática ou entrega única. Dashboards, alertas e ingestão AWS/New Relic continuam pendentes.
 
 ### Notificações por ambiente
@@ -257,7 +259,7 @@ A [pipeline](.github/workflows/pipeline.yml) executa em PRs para `develop`/`main
 
 O [API deploy](.github/workflows/api-deploy.yml) é manual e separado do CI: **Publicar → Implantar**, sem aprovação intermediária. Exige `develop/hom` ou `main/prd`, testa em Release, publica `linux/amd64` no ECR com tag `sha-<commit>-<run_id>-<run_attempt>` e aplica o overlay usando o digest retornado. Ambos os jobs usam o mesmo SHA e OIDC; a pipeline não lê Secrets. Aguarda rollout por 600 segundos e, em falha, exibe diagnóstico limitado sem rollback automático. Consulte o [procedimento de deploy](docs/DEPLOY_API.md) para pré-requisitos, publicação do workflow também em `main`, primeiro disparo `develop/hom` e validação RDS/probes/NLB. A [RFC de entrega](docs/arquitetura/rfcs/002-ENTREGA.md) mantém a ordem entre os repositórios.
 
-O [API destroy](.github/workflows/api-destroy.yml) remove Deployment, HPA, ServiceAccount e pods dependentes em um único job manual, sem aprovação intermediária. Valida develop/hom ou main/prd e compartilha concurrency com API deploy. Para descartar o ambiente, executar API destroy, depois database-destroy e base-destroy; os dois últimos mantêm suas aprovações de planos Terraform. ECR/imagens e bootstrap são preservados. Consulte o [procedimento](docs/DEPLOY_API.md#descartar-o-ambiente).
+O [API destroy](.github/workflows/api-destroy.yml) remove Deployment, HPA, ServiceAccount e pods dependentes em um único job manual, sem aprovação intermediária. Valida develop/hom ou main/prd e compartilha concurrency com API deploy. Para descartar o ambiente completo: gateway-destroy → API destroy e auth-destroy em paralelo → conferir liberação das ENIs → database-destroy → base-destroy. Gateway, banco e base mantêm aprovação do plano salvo; bootstrap, ECR/imagens e Secret New Relic são preservados. Consulte o [mapa de destroy](docs/DESTRUICAO_AMBIENTE.md) e o [procedimento](docs/DEPLOY_API.md#descartar-o-ambiente).
 
 ## Contratos de integração
 
@@ -298,3 +300,11 @@ Os workflows de CI pipeline/auth-contracts validam PRs para develop/main e permi
 A base implementa Secret JWT por ambiente e publica jwt-secret-arn, jwt-issuer e jwt-audience em /mecanica/<ambiente>/base/v2/. Base JWT hom aplicada e conferida em 08/10: Secret/SSM/Pod Identity, No changes e isolamento IAM simulado. A API já implementa leitura inicial pelo SDK .NET, overlays com ServiceAccount e policy Terraform para leitura do banco. Deploy da infra hom com essa policy foi confirmado pelo mantenedor. Publicação/deploy da API, validação no EKS, Lambda e prd permanecem pendentes. A role e a associação Pod Identity para default/gerenciamento-api são administradas pela base. A chave AWSCURRENT fica em memória, sem fallback local ou cópia para Secret Kubernetes. HS256, dez minutos e tolerância de relógio são preservados. [Contrato](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md).
 
 Gateway REST/VPC Link V2 implementado localmente no repositório de infraestrutura, com unidade/workflows separados e plano bootstrap para revisão. A API continua privada atrás do NLB e suas permissões não foram alteradas. [Decisão e dependências](docs/arquitetura/adrs/010-GATEWAY-REST-V2.md); deploy e validação HTTP/JWT pendentes.
+
+## New Relic US
+
+O envio externo fica nos Collectors da infraestrutura/autenticação; a API preserva código, endpoint interno e configuração de coleta. Credencial pelo Secrets Manager nativo, com permissões por ambiente e sem valor nos manifestos. Integração preparada localmente; ingestão real, dashboards/alertas e integração X-Ray ainda pendentes. [Procedimento](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/NEW_RELIC.md).
+
+## Bloqueio de dependências no descarte — 17/10/2026
+
+API destroy consulta REST API e VPC Link do Gateway do ambiente antes de remover o overlay. Se algum existir, ou a consulta falhar, o descarte é bloqueado. O banco só pode ser removido depois de API e autenticação, e a base por último. Bootstrap/permissões e a associação de leitura Kubernetes da pipeline do banco devem ser publicados primeiro. [Mapa e critérios](docs/DESTRUICAO_AMBIENTE.md). Preparação local; nenhuma execução AWS realizada nesta implementação.

@@ -59,8 +59,10 @@ flowchart LR
     GW["API Gateway"] --> CW["CloudWatch: logs do Gateway e métricas AWS"]
     AWS["Lambda / RDS: métricas AWS"] --> CW
     CW -->|"Polling pelo receiver"| COL
-    GW --> XR["X-Ray: tracing nativo do Gateway"]
-    XR -->|"Integração oficial com polling"| NR["New Relic"]
+    GW --> XR["X-Ray: segmentos nativos AWS"]
+    FN -->|"Tracing nativo independente"| XR
+    XR -->|"Consulta regional pela role persistente"| LINK["Integração New Relic X-Ray — polling 5 min"]
+    LINK --> NR["New Relic"]
     COL -->|"OTLP HTTP/protobuf TLS"| NR
     LCOL -->|"OTLP HTTP/protobuf TLS"| NR
 ```
@@ -68,3 +70,5 @@ flowchart LR
 Logs da aplicação/função têm um único caminho remoto via OTel; não duplicar sua ingestão por stdout/CloudWatch. O caminho CloudWatch do Gateway depende do Collector ativo. X-Ray possui atraso de polling e não alimenta alertas imediatos. A continuidade entre contextos W3C/AWS deve ser demonstrada, não presumida. Compatibilidade do receiver CloudWatch e da extensão Lambda será comprovada em E5.
 
 **Gateway — 12/10/2026:** código local usa VPC Link V2 com SG reservado da base e NLB interno TCP 80; bootstrap fornece logging regional persistente. Gateway possui access logs JSON básicos/sete dias. O diagrama de observabilidade é alvo da E5 e não comprova Collector/New Relic/X-Ray implantados. [ADR 010](../adrs/010-GATEWAY-REST-V2.md).
+
+**X-Ray → New Relic — preparação local de 15/10/2026:** o bloco de integração consulta X-Ray diretamente com a role do bootstrap mecanica-newrelic-xray (/mecanica/observability/), confiando somente na conta New Relic US e no ExternalId igual ao Account ID New Relic. Não utiliza o Collector, a License Key ou provider New Relic. Conexão manual apenas X-Ray/us-east-1 após plano salvo/aprovação/apply; role persistente, leitura compartilhada de hom/prd na conta/região, sem isolamento IAM por ambiente. Polling cinco minutos, primeira ingestão até vinte minutos, dados nativos fora da sanitização da aplicação; não alimentar alertas imediatos. Este desenho não comprova ativação/ingestão nem união dos contextos W3C/X-Ray. [Operação e critérios](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/NEW_RELIC.md#x-ray-nativo--new-relic--preparação-declarativa).
