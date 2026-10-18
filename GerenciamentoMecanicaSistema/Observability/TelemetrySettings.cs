@@ -8,6 +8,7 @@ public sealed class TelemetrySettings
     public Uri? Endpoint { get; private init; }
     public string Environment { get; private init; } = "local";
     public string Version { get; private init; } = "local";
+    public string[] InboundFormats { get; private init; } = [];
     public TelemetryCollectionOptions Collection { get; private init; } = new();
 
     public static TelemetrySettings Read(IConfiguration configuration)
@@ -44,12 +45,27 @@ public sealed class TelemetrySettings
             ?? throw new InvalidOperationException("Configuração de coleta de telemetria ausente.");
         collection.Validate();
 
+        string[] inboundFormats;
+        try
+        {
+            inboundFormats = configuration.GetSection("Telemetry:Propagation:InboundFormats").Get<string[]>() ?? [];
+        }
+        catch (InvalidOperationException)
+        {
+            throw new InvalidOperationException("Configuração de propagação de telemetria inválida.");
+        }
+        if (inboundFormats.Length == 0
+            || inboundFormats.Any(format => format is not ("xray" or "tracecontext"))
+            || inboundFormats.Distinct(StringComparer.Ordinal).Count() != inboundFormats.Length)
+            throw new InvalidOperationException("Configuração de propagação de telemetria inválida.");
+
         return new()
         {
             Enabled = true,
             Endpoint = endpoint,
             Environment = environment,
             Version = ReadVersion(typeof(Program).Assembly),
+            InboundFormats = inboundFormats,
             Collection = collection
         };
     }

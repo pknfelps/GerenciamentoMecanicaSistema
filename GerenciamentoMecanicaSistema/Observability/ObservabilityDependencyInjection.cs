@@ -19,6 +19,8 @@ public static class ObservabilityDependencyInjection
         if (!settings.Enabled)
             return builder;
 
+        Sdk.SetDefaultTextMapPropagator(new GatewayTracePropagator(settings.InboundFormats));
+
         builder.Services.AddSingleton(settings);
         builder.Services.AddSingleton(settings.Collection);
         builder.Services.AddHttpContextAccessor();
