@@ -10,6 +10,7 @@ namespace ControllerTests.Observability;
 [NonParallelizable]
 public sealed class ObservabilityRegistrationTests
 {
+    private static readonly string[] ExpectedInboundFormats = ["xray", "tracecontext"];
     private TextMapPropagator originalPropagator = null!;
 
     [SetUp]
@@ -48,7 +49,7 @@ public sealed class ObservabilityRegistrationTests
         Assert.Multiple(() =>
         {
             Assert.That(Propagators.DefaultTextMapPropagator, Is.TypeOf<GatewayTracePropagator>());
-            Assert.That(settings.InboundFormats, Is.EqualTo(new[] { "xray", "tracecontext" }));
+            Assert.That(settings.InboundFormats, Is.EqualTo(ExpectedInboundFormats));
         });
     }
 }

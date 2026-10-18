@@ -13,6 +13,8 @@ public sealed class GatewayTracePropagatorTests
     private const string W3CHeader = "00-00000000000000000000000000000002-0000000000000202-01";
     private const string W3CTraceId = "00000000000000000000000000000002";
     private const string W3CParentId = "0000000000000202";
+    private static readonly string[] OutboundHeaderNames = ["traceparent"];
+    private static readonly string[] PropagationHeaderNames = ["X-Amzn-Trace-Id", "traceparent"];
 
     [Test]
     public void ReadsTraceAndParentFromXRayHeader()
@@ -139,7 +141,7 @@ public sealed class GatewayTracePropagatorTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(headers.Keys, Is.EquivalentTo(new[] { "traceparent" }));
+            Assert.That(headers.Keys, Is.EquivalentTo(OutboundHeaderNames));
             Assert.That(headers["traceparent"], Is.EqualTo(W3CHeader));
         });
     }
@@ -163,7 +165,7 @@ public sealed class GatewayTracePropagatorTests
     {
         var propagator = new GatewayTracePropagator(["xray", "tracecontext"]);
 
-        Assert.That(propagator.Fields, Is.EquivalentTo(new[] { "X-Amzn-Trace-Id", "traceparent" }).IgnoreCase);
+        Assert.That(propagator.Fields, Is.EquivalentTo(PropagationHeaderNames).IgnoreCase);
     }
 
     [Test]

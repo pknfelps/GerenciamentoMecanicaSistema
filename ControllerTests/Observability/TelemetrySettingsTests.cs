@@ -10,6 +10,7 @@ namespace ControllerTests.Observability;
 public sealed class TelemetrySettingsTests
 {
     private const string PropagationError = "Configuração de propagação de telemetria inválida.";
+    private static readonly string[] ExpectedInboundFormats = ["xray", "tracecontext"];
 
     [TestCase(null)]
     [TestCase("false")]
@@ -58,7 +59,7 @@ public sealed class TelemetrySettingsTests
             Assert.That(settings.Enabled, Is.True);
             Assert.That(settings.Endpoint, Is.EqualTo(new Uri("http://localhost:4318")));
             Assert.That(settings.Environment, Is.EqualTo(expectedEnvironment));
-            Assert.That(settings.InboundFormats, Is.EqualTo(new[] { "xray", "tracecontext" }));
+            Assert.That(settings.InboundFormats, Is.EqualTo(ExpectedInboundFormats));
             Assert.That(settings.Collection.ExcludedPaths, Does.Contain("/health/ready"));
         });
     }
