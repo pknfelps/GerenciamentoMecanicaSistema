@@ -1,6 +1,12 @@
 # Observabilidade local da API
 
-**Decisão vigente — 15/10/2026:** removidos os testes de conexão New Relic e Collectors locais e seus receptores fictícios, incluindo o cenário de destino OTLP lento. CI não executa imagens de Collector para validar exporter/YAML. Todos os testes automatizados de telemetria foram removidos da API e da Lambda, incluindo instrumentação InMemory, métricas de negócio, traces, exporters e auxiliares. Testes funcionais e de sanitização do console permanecem; Compose manual e configuração de produção preservados. Resultados de transporte datados abaixo são históricos; conectividade/ingestão será conferida operacionalmente após deploy.
+**Decisão de 18/10/2026:** após o Quality Gate do PR #22, o mantenedor autorizou testes simples de configuração, composição e propagação da API. Esse escopo substitui parcialmente a remoção anterior: permanecem removidas as suítes de Collector/New Relic, exporters fictícios e instrumentação InMemory. Não há mudança nos testes da Lambda nesta entrega. [Cenários e comandos](#testes-unitários-de-configuração-e-propagação).
+
+**Conferência AWS de 17/10/2026:** coleta Kubernetes e enriquecimento dos três sinais da API comprovados em hom; [resultados/limites](VALIDACAO_KUBERNETES_HOM_2026-10-17.md). Sem alteração da aplicação, workflows ou recursos na validação. As pendências de implantação Kubernetes nos registros anteriores ficam superadas para hom; prd/carga e entregas restantes permanecem separados.
+
+**Estado em 17/10/2026:** ingestão OTLP API/auth, versão da API pelo SHA, indicadores de negócio por SQL e X-Ray polling comprovados em hom; [resultados e limites](VALIDACAO_HOM_2026-10-17.md). A infraestrutura prepara métricas/enriquecimento Kubernetes com validação local, sem alterar a API ou reintroduzir testes de telemetria. Implantação posterior somente pelo base-provision; [métricas, RBAC e NRQL](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/COLLECTOR_API.md). Correlação W3C/X-Ray, CloudWatch, dashboards, alertas e prd continuam separados. As pendências de ingestão/versão nos registros anteriores são históricas.
+
+**Decisão histórica — 15/10/2026:** removidos os testes de conexão New Relic e Collectors locais e seus receptores fictícios, incluindo o cenário de destino OTLP lento. CI não executa imagens de Collector para validar exporter/YAML. Todos os testes automatizados de telemetria foram removidos da API e da Lambda, incluindo instrumentação InMemory, métricas de negócio, traces, exporters e auxiliares. Testes funcionais e de sanitização do console permanecem; Compose manual e configuração de produção preservados. Resultados de transporte datados abaixo são históricos; conectividade/ingestão será conferida operacionalmente após deploy. A autorização de 18/10 retoma somente os testes unitários de configuração e propagação da API.
 
 **Registro histórico — 14/10/2026:** coleta dirigida pelo ConfigMap, validada com **1.142 testes aprovados, zero falhas/ignorados**, incluindo 45 de observabilidade. Conteúdo do ConfigMap/publicação idêntico ao arquivo fonte; filtros/meters nativos e regras alteráveis sem recompilar comprovados. Build Release, PostgreSQL/Collector reais, OpenAPI repetido/idêntico, publish/certificado e Kustomize aprovados. Os resultados datados no fim do documento registram as entregas anteriores; esse resultado antecede a remoção dos testes de telemetria. Sem implantação AWS/New Relic.
 
@@ -14,6 +20,7 @@ O arquivo entra como configuração de menor prioridade: appsettings, user-secre
 
 | Seção do arquivo | Responsabilidade |
 |---|---|
+| `Telemetry:Propagation:InboundFormats` | Ordem de extração dos propagadores oficiais; padrão `["xray", "tracecontext"]`. Somente esses formatos, não repetidos. Lista inválida/ausente com telemetria habilitada bloqueia inicialização. |
 | `Telemetry:Collection:ExcludedPaths` | Caminhos literais excluídos dos traces HTTP e de seu SQL; comparação sem distinção de maiúsculas e tolerando barra final. |
 | `Telemetry:Collection:HttpMethods` | Métodos reconhecidos para nomes seguros; demais usam marcador OTHER. |
 | `Telemetry:Collection:HttpTraceAttributes` / `DatabaseTraceAttributes` | Listas de atributos permitidos antes da exportação. |
@@ -70,7 +77,7 @@ kubectl rollout status deployment/deploy-gerenciamento-api --namespace default -
 
 Esses comandos são um procedimento de operador, não foram executados nesta entrega. Não use a imagem provisória `pending` num apply manual: preserve o digest implantado conforme o procedimento de deploy. O ConfigMap contém somente configuração pública de telemetria, nunca JWT, banco, credenciais ou chave New Relic. Os overlays hom/prd declaram o endpoint `http://otel-collector.observability.svc.cluster.local:4318`; hom define `Telemetry__Enabled=true` para a validação AWS e prd continua false. A ativação é versionada no manifesto, sem input em api-deploy. Os manifestos do Collector são independentes no repositório de infraestrutura; os workflows já integram sua implantação/descarte, mas a execução AWS continua pendente.
 
-Versões fixas: OpenTelemetry Hosting/OTLP `1.19.1`, instrumentação ASP.NET Core `1.19.0`, Npgsql.OpenTelemetry `10.0.2`. Métricas de runtime usam o meter nativo `System.Runtime` do .NET 10.
+Versões fixas: OpenTelemetry Hosting/OTLP/Extensions.AWS `1.19.1`, instrumentação ASP.NET Core `1.19.0`, Npgsql.OpenTelemetry `10.0.2`. Métricas de runtime usam o meter nativo `System.Runtime` do .NET 10.
 
 ## Executar
 
@@ -166,3 +173,62 @@ Os manifests e Collectors de produção, o Compose manual e os preflights de cre
 **Validação após remoção dos testes de Collectors/New Relic — 15/10/2026:** build Release e 1193 testes restantes aprovados, zero falhas/ignorados. Actionlint/ShellCheck aprovados nos dois CIs alterados. Evidências locais em artifacts/collector-tests-removal. Nenhum teste novo de conexão, Collector iniciado, workflow remoto ou operação AWS nesta validação; Docker utilizado somente pelos testes PostgreSQL preservados.
 
 **Validação após remoção de todos os testes de telemetria da API — 15/10/2026:** restore e build Release concluídos; 1.100 testes restantes aprovados (48 contratos, 525 controllers, 183 domínio, 149 infraestrutura e 195 serviços), zero falhas e zero ignorados. Corrigidas as referências à factory e aos auxiliares removidos; testes funcionais de OS usam a factory comum com telemetria desabilitada. Removidas as asserções de métricas das notificações e dos testes de persistência, o leitor exclusivo de medição e a dependência OpenTelemetry.Exporter.InMemory dos testes. Instrumentação de produção preservada. Evidências locais em `artifacts/api-telemetry-tests-removal`. Nenhuma operação AWS, workflow remoto ou deploy.
+
+## Propagação Gateway → API
+
+**Preparada e conferida localmente em 18/10/2026.** A configuração de menor prioridade continua no mesmo manifesto público, copiado no build/publish e montado pelo ConfigMap. Sem nova variável de workflow, toggle ou atualização dinâmica. Ordem versionada:
+
+```json
+"Propagation": {
+  "InboundFormats": [ "xray", "tracecontext" ]
+}
+```
+
+O nó fica dentro de Telemetry. Somente xray e tracecontext são aceitos, sem repetições. Configuração ausente/vazia/inválida quando habilitada lança somente **Configuração de propagação de telemetria inválida.**, sem reproduzir valor ou exceção interna. Telemetria desabilitada ignora essa seção; geração oficial de OpenAPI ignora toda a instrumentação.
+
+GatewayTracePropagator usa CompositeTextMapPropagator, AWSXRayPropagator oficial de OpenTelemetry.Extensions.AWS 1.19.1 e TraceContextPropagator. O primeiro contexto válido prevalece: X-Ray válido em X-Amzn-Trace-Id, depois traceparent W3C; nenhum válido deixa o ASP.NET Core criar novo trace. Cabeçalhos malformados ou ambíguos seguem a validação das bibliotecas oficiais. Não há parser ou conversão manual do Root/Parent. A precedência está no manifesto, não em condições por ambiente.
+
+O adaptador descarta baggage/tracestate antes de devolver o contexto; não solicita tracestate ao getter. Não registra conteúdo de cabeçalhos nem exceções de parsing. Na saída, injeta somente traceparent W3C com contexto sanitizado, sem baggage/tracestate ou cabeçalho X-Ray. Fields expõe apenas nomes técnicos utilizados. Não acrescenta instrumentação de saída HTTP ou SDK AWS.
+
+Sdk.SetDefaultTextMapPropagator é chamado uma vez na composição habilitada antes de construir o host/instrumentação ASP.NET Core. A instrumentação oficial estabelece o pai do span HTTP; não se alteram IDs de Activity iniciada por middleware, nem se cria outro span manual. SQL Npgsql continua filho do span HTTP e logs da aplicação usam Activity.Current. Telemetria é metadado: esses cabeçalhos não substituem autenticação/autorização.
+
+O sampler atual mantém coleta da aplicação inclusive quando Sampled=0 ou traceparent não amostrado. Probes e seu SQL permanecem excluídos. Segmentos nativos AWS mantêm sua amostragem independente: uma requisição pode ter OTLP sem segmento nativo correspondente. Não habilitado sampler remoto, gerador de IDs X-Ray ou envio de spans da aplicação para X-Ray.
+
+### Conferência local realizada
+
+Usados API publicada, Collector local existente com debug detailed e PostgreSQL descartável, sem AWS/New Relic. Porta e dados fictícios somente para execução local. Enviados requests HTTP com cabeçalhos fictícios: X-Ray isolado, W3C isolado, ambos diferentes, X-Ray inválido e W3C válido, ausência/invalidade de ambos, Sampled=0, W3C não amostrado, baggage/tracestate, nova chamada sem contexto e cabeçalhos ambíguos. Todas as negativas de login retornaram 401. Uma tabela removida somente na fixture gerou 500 técnico com mensagem fixa, tipo e TraceId/SpanId do span HTTP no log; o SQL não foi exportado.
+
+Dezesseis chamadas dirigidas produziram 13 spans HTTP, quatro raízes distintas sem pai e 14 spans PostgreSQL (incluindo abertura inicial), todos ligados ao HTTP correspondente. As probes live/ready/startup retornaram 200 sem spans HTTP/SQL. Os marcadores fictícios de baggage/tracestate, nome/senha e texto SQL não apareceram na saída do Collector. O código também remove esses metadados antes de devolver/injetar contexto, sem depender apenas da sanitização ao encerrar spans.
+
+Inicializações com lista ausente/vazia, formato desconhecido/duplicado e escalar inválido foram rejeitadas com mensagem fixa sem valor recebido. Telemetria desabilitada iniciou mesmo com lista inválida. Conferência de inicialização não criou testes retidos, scripts ou executável novo.
+
+Restore/build Release e **1.100 testes existentes aprovados, zero falhas/ignorados**, incluindo PostgreSQL/Testcontainers. Publish com certificado RDS, manifesto e dependência oficial AWS, Kustomize base/hom/prd e OpenAPI idêntico (SHA-256 D784C3B554A65C4F8CFE732C0975B8BFEDAF78D67F9C6ED69E2B07220C5F5D84) aprovados. Geração com Runtime__Environment=hom e telemetria habilitada/endpoint inválido comprovou isolamento de AWS/telemetria. Avisos NU1903 e analisadores já existentes permanecem fora desta entrega. Processos/containers locais removidos; resultados locais ignorados em artifacts/gateway-api-correlation.
+
+### Limites e publicação posterior
+
+Não alterados Lambda, Gateway, Collectors, IAM, Terraform, workflows ou contratos. A integração http_proxy privada foi preservada. O deploy posterior precisa confirmar que X-Amzn-Trace-Id chega pelo Gateway/NLB, que TraceId/ParentSpanId correspondem aos segmentos nativos e que o New Relic reúne o material depois do polling. Não usar somente semelhança temporal ou igualdade de um atributo como comprovação da relação. Se houver perda de cabeçalhos na integração, diagnosticar e planejar a correção de Gateway separadamente.
+
+Próxima entrega: adaptar a Lambda à mesma precedência. Depois, api-deploy, publicação/provisionamento da autenticação e atualização Gateway para a nova versão numérica, sob condução do mantenedor. Não executados nesta implementação. E5.14 permanece parcial; correlação AWS ainda não comprovada, assim como a nova coleta CloudWatch preparada anteriormente. Não é necessário mudar a infraestrutura por causa deste adaptador da API.
+
+Referências: [propagador oficial AWS](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/53a7ac3288a03f988f06224adfad3f5702e4a6fb/src/OpenTelemetry.Extensions.AWS/Trace/AWSXRayPropagator.cs) e [instrumentação ASP.NET Core 1.19.0](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/Instrumentation.AspNetCore-1.19.0/src/OpenTelemetry.Instrumentation.AspNetCore/Implementation/HttpInListener.cs).
+
+## Testes unitários de configuração e propagação
+
+São testes de entrada e saída das classes e da composição, no projeto ControllerTests. Não usam BaseControllerTests porque não executam requisições HTTP nem iniciam a aplicação. Cada teste prepara um cenário, chama a classe e confere o resultado. Não há Collector, bootstrap AWS, banco, rede, exporter fictício ou dependência nova nesses testes.
+
+| Arquivo | O que verifica |
+|---|---|
+| GatewayTracePropagatorTests | Trace e pai recebidos; preferência X-Ray e ordem configurável; fallback W3C; cabeçalhos ausentes/inválidos/ambíguos; contexto não amostrado; remoção de baggage/tracestate; saída somente W3C; ausência de contexto reaproveitado entre chamadas. |
+| TelemetrySettingsTests | Telemetria desabilitada; ativação válida/inválida; ambiente/endpoint; formatos ausentes/vazios/repetidos/desconhecidos/escalares; mensagens fixas sem valores internos; rejeição de credenciais e destinos específicos por sinal; versão pelo commit ou fallback local. |
+| ObservabilityRegistrationTests | Registro do propagador/configuração quando habilitada e preservação do propagador global quando desabilitada. Não inicia host ou providers de telemetria. |
+| BusinessMetricOptionsTests | Não alterar métricas de outro meter; aplicar atributos permitidos aos contadores; aplicar atributos e limites configurados aos histogramas de duração. Usa apenas objetos Meter/Instrument e verifica a configuração devolvida. |
+
+Os testes de configuração partem do manifesto versionado e alteram somente a entrada exercitada. Os de propagação usam IDs fictícios literais, com TraceId e pai esperados visíveis nas asserções. Não precisam verificar o conteúdo de lotes OTLP nem coordenar threads ou tempos de exportação. Os dois testes de composição são sequenciais e restauram o propagador global ao terminar, inclusive se uma asserção falhar.
+
+~~~powershell
+dotnet test ControllerTests/ControllerTests.csproj --filter FullyQualifiedName~ControllerTests.Observability
+~~~
+
+A regressão completa continua executando os testes PostgreSQL existentes com Docker já ativo. O comando acima usa Debug, como o CI. O CI atual coleta cobertura e envia ao Sonar; nenhum workflow foi alterado. O Quality Gate definitivo depende da análise após o push do mantenedor. Esses testes comprovam a seleção/validação de contexto em código; a correlação real Gateway/API/Lambda/New Relic continua exigindo validação implantada.
+**Resultado local — 18/10/2026:** 50 novos casos unitários aprovados; regressão de 1.150 testes distintos aprovada, zero falhas/ignorados, incluindo PostgreSQL existente. Build Release sem os três apontamentos S3776/S3358/S1192. Pelo dotnet-coverage usado no CI, 43/45 linhas executáveis novas dos três arquivos de produção do PR estão cobertas (95,56%, diff local contra 020e95d); GatewayTracePropagator tem 20/20 linhas cobertas. OpenAPI idêntico, geração isolada de AWS/telemetria e publish linux-x64 com certificado RDS aprovados. Evidências locais ignoradas em artifacts/sonar-correlation-*. A nova análise Sonar remota será feita pelo CI após o push; nenhuma execução remota ou AWS nesta validação. Avisos anteriores de dependências/analisadores permanecem fora destes ajustes.
+**Correção da medição — 18/10/2026, segunda análise do PR #22:** o Sonar mediu 34/44 linhas novas (77,3%). A estimativa anterior de 95,56% expandia intervalos inteiros do XML, incluindo callbacks não executados; ela está invalidada. Contando somente start_line de cada entrada do relatório Debug, reproduzimos exatamente o resultado remoto antes dos ajustes. BusinessMetricOptions.CreateView torna a seleção verificável sem iniciar instrumentação; três novos testes exercitam outro meter, contador e histograma. Quatro arrays de asserções passaram a static readonly. Os 53 testes unitários passaram em Debug; contagem corrigida após os ajustes: 41/44 linhas novas (93,18%). Regressão Debug completa aprovada: 1.153 testes, zero falhas/ignorados, incluindo PostgreSQL/Docker existente. Build Release e publish linux-x64 com certificado RDS aprovados; OpenAPI idêntico (D784C3B554A65C4F8CFE732C0975B8BFEDAF78D67F9C6ED69E2B07220C5F5D84). Evidências ignoradas artifacts/sonar-recheck-*. A validação remota após push continua necessária; nenhuma execução remota ou operação AWS nesta revisão.

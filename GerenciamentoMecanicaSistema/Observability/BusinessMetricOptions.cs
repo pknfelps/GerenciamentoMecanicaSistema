@@ -1,3 +1,6 @@
+using OpenTelemetry.Metrics;
+using System.Diagnostics.Metrics;
+
 namespace GerenciamentoMecanicaSistema.Observability;
 
 public sealed class BusinessMetricOptions
@@ -5,6 +8,15 @@ public sealed class BusinessMetricOptions
     public int HistoryQueryTimeoutSeconds { get; init; }
     public double[] DurationBoundariesSeconds { get; init; } = [];
     public string[] Attributes { get; init; } = [];
+
+    public MetricStreamConfiguration? CreateView(Instrument instrument)
+    {
+        if (instrument.Meter.Name != OrderBusinessMetrics.MeterName)
+            return null;
+        if (instrument is Histogram<double>)
+            return new ExplicitBucketHistogramConfiguration { TagKeys = Attributes, Boundaries = DurationBoundariesSeconds };
+        return new MetricStreamConfiguration { TagKeys = Attributes };
+    }
 
     public void Validate()
     {

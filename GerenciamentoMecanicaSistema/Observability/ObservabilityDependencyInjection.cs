@@ -19,6 +19,8 @@ public static class ObservabilityDependencyInjection
         if (!settings.Enabled)
             return builder;
 
+        Sdk.SetDefaultTextMapPropagator(new GatewayTracePropagator(settings.InboundFormats));
+
         builder.Services.AddSingleton(settings);
         builder.Services.AddSingleton(settings.Collection);
         builder.Services.AddHttpContextAccessor();
@@ -64,10 +66,7 @@ public static class ObservabilityDependencyInjection
                 if (businessEnabled)
                 {
                     var business = builder.Configuration.GetSection("Telemetry:BusinessMetrics").Get<BusinessMetricOptions>()!;
-                    metrics.AddView(instrument => instrument.Meter.Name != OrderBusinessMetrics.MeterName ? null
-                        : instrument is System.Diagnostics.Metrics.Histogram<double>
-                            ? new ExplicitBucketHistogramConfiguration { TagKeys = business.Attributes, Boundaries = business.DurationBoundariesSeconds }
-                            : new MetricStreamConfiguration { TagKeys = business.Attributes });
+                    metrics.AddView(business.CreateView);
                 }
             })
             .UseOtlpExporter(OtlpExportProtocol.HttpProtobuf, settings.Endpoint!);
