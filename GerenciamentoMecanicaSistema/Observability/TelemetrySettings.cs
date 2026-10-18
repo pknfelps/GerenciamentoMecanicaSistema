@@ -4,10 +4,12 @@ namespace GerenciamentoMecanicaSistema.Observability;
 
 public sealed class TelemetrySettings
 {
+    private const string LocalEnvironment = "local";
+
     public bool Enabled { get; private init; }
     public Uri? Endpoint { get; private init; }
-    public string Environment { get; private init; } = "local";
-    public string Version { get; private init; } = "local";
+    public string Environment { get; private init; } = LocalEnvironment;
+    public string Version { get; private init; } = LocalEnvironment;
     public string[] InboundFormats { get; private init; } = [];
     public TelemetryCollectionOptions Collection { get; private init; } = new();
 
@@ -37,14 +39,27 @@ public sealed class TelemetrySettings
             || !string.IsNullOrEmpty(endpoint.Fragment))
             throw new InvalidOperationException("Endpoint de telemetria inválido ou ausente.");
 
-        var environment = configuration["Runtime:Environment"] ?? "local";
-        if (environment is not ("local" or "hom" or "prd"))
+        var environment = configuration["Runtime:Environment"] ?? LocalEnvironment;
+        if (environment is not (LocalEnvironment or "hom" or "prd"))
             throw new InvalidOperationException("Ambiente de telemetria inválido.");
 
         var collection = configuration.GetSection("Telemetry:Collection").Get<TelemetryCollectionOptions>()
             ?? throw new InvalidOperationException("Configuração de coleta de telemetria ausente.");
         collection.Validate();
 
+        return new()
+        {
+            Enabled = true,
+            Endpoint = endpoint,
+            Environment = environment,
+            Version = ReadVersion(typeof(Program).Assembly),
+            InboundFormats = ReadInboundFormats(configuration),
+            Collection = collection
+        };
+    }
+
+    private static string[] ReadInboundFormats(IConfiguration configuration)
+    {
         string[] inboundFormats;
         try
         {
@@ -59,15 +74,7 @@ public sealed class TelemetrySettings
             || inboundFormats.Distinct(StringComparer.Ordinal).Count() != inboundFormats.Length)
             throw new InvalidOperationException("Configuração de propagação de telemetria inválida.");
 
-        return new()
-        {
-            Enabled = true,
-            Endpoint = endpoint,
-            Environment = environment,
-            Version = ReadVersion(typeof(Program).Assembly),
-            InboundFormats = inboundFormats,
-            Collection = collection
-        };
+        return inboundFormats;
     }
 
     public static string ReadVersion(Assembly assembly)
@@ -76,6 +83,6 @@ public sealed class TelemetrySettings
         var metadata = informationalVersion?.Split('+', 2).ElementAtOrDefault(1);
         return metadata is { Length: >= 40 } && metadata[..40].All(Uri.IsHexDigit)
             ? metadata[..40].ToLowerInvariant()
-            : "local";
+            : LocalEnvironment;
     }
 }

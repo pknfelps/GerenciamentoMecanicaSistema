@@ -66,10 +66,14 @@ public static class ObservabilityDependencyInjection
                 if (businessEnabled)
                 {
                     var business = builder.Configuration.GetSection("Telemetry:BusinessMetrics").Get<BusinessMetricOptions>()!;
-                    metrics.AddView(instrument => instrument.Meter.Name != OrderBusinessMetrics.MeterName ? null
-                        : instrument is System.Diagnostics.Metrics.Histogram<double>
-                            ? new ExplicitBucketHistogramConfiguration { TagKeys = business.Attributes, Boundaries = business.DurationBoundariesSeconds }
-                            : new MetricStreamConfiguration { TagKeys = business.Attributes });
+                    metrics.AddView(instrument =>
+                    {
+                        if (instrument.Meter.Name != OrderBusinessMetrics.MeterName)
+                            return null;
+                        if (instrument is System.Diagnostics.Metrics.Histogram<double>)
+                            return new ExplicitBucketHistogramConfiguration { TagKeys = business.Attributes, Boundaries = business.DurationBoundariesSeconds };
+                        return new MetricStreamConfiguration { TagKeys = business.Attributes };
+                    });
                 }
             })
             .UseOtlpExporter(OtlpExportProtocol.HttpProtobuf, settings.Endpoint!);
