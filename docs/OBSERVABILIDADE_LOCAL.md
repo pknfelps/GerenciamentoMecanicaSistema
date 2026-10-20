@@ -12,6 +12,8 @@
 
 A instrumentação fica em `GerenciamentoMecanicaSistema/Observability`, na composição da API. Não há dependências OpenTelemetry em Domain/Application, spans manuais de negócio ou mudanças de persistência/transação. O console continua textual, com mensagens fixas e tipo do erro, sem stack trace.
 
+Falhas não tratadas no ponto de entrada agora encerram a execução normal com código 1 e uma linha fixa no stderr, contendo somente operação/tipo, após o descarte das métricas; a geração oficial do OpenAPI mantém seus diagnósticos de build. Cancelamento do chamador é registrado em Information com mensagem fixa e sem corpo/Problem Details; antes do início da resposta usa status técnico 499, preservando respostas já iniciadas. O contador de integração continua classificando canceled separadamente de timeout/failure. Cancelamento interno sem RequestAborted continua sujeito ao tratamento de falha 500. A implementação foi conferida localmente, com publicação/reconferência AWS pendentes.
+
 ## Configuração
 
 A fonte única é [deploy/kubernetes/base/observability.json](../deploy/kubernetes/base/observability.json). O Kustomize usa esse arquivo para criar o ConfigMap `mecanica-api-observability`; o Deployment o monta somente para leitura em `/app/Observability/observability.json`. A API copia o mesmo arquivo no build/publish para uso local e o lê pelo provider JSON nativo do .NET. Não há montagem de YAML por scripts, parser YAML ou duplicação das regras no appsettings.
@@ -248,3 +250,5 @@ Instrumentação de PostgreSQL, SSM e Secrets Manager, incluindo bootstrap e sep
 Usar o [roteiro consolidado](ROTEIRO_VALIDACAO_E5.md), com status por cenário, revisão/janela, evidências e restauração. A preparação não executa workflows/chamadas; falhas controladas têm autorização separada. O checklist atualizado permanece em docs/plano-fase-3/etapas/E5.md.
 
 A [validação de hom de 19/10 à noite](VALIDACAO_E5_HOM_2026-10-19.md) encontrou uma regressão na exportação dos três sinais da API, embora os fluxos HTTP passassem. O relatório distingue os critérios afetados das comprovações da Lambda, Kubernetes e CloudWatch; não concluir saúde a partir de widgets vazios.
+
+A [repetição de 20/10](VALIDACAO_E5_HOM_2026-10-20.md), após o deploy da correção, comprovou os três sinais da API, integrações e indicadores de OS. Três dashboards e 13 estatísticas CloudWatch foram conferidos; logs Gateway permanecem parciais (43/45). A conferência SQL direta autorizada posteriormente reconciliou os 13 eventos, preservação após exclusão, estoque e durações das três OSs; pod removido. Experimentos de falha/alertas continuam pendentes.

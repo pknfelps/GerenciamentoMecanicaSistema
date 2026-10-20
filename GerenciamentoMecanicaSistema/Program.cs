@@ -15,10 +15,24 @@ namespace GerenciamentoMecanicaSistema
 {
     public class Program
     {
-        public static async Task Main(string[] args)
+        public static async Task<int> Main(string[] args)
+        {
+            var generatingDocument = Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
+            try
+            {
+                await RunAsync(args, generatingDocument);
+                return 0;
+            }
+            catch (Exception exception) when (!generatingDocument)
+            {
+                Console.Error.WriteLine("Falha na inicialização ou execução da API. ExceptionType: {0}", exception.GetType().FullName);
+                return 1;
+            }
+        }
+
+        private static async Task RunAsync(string[] args, bool generatingDocument)
         {
             var builder = WebApplication.CreateBuilder(args);
-            var generatingDocument = Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
             if (!generatingDocument)
             {
                 var observability = new JsonConfigurationSource
