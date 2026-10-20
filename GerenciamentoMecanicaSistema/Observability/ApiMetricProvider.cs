@@ -27,6 +27,8 @@ public sealed class ApiMetricProvider : IDisposable
             return null;
 
         var configuration = builder.Configuration;
+        // Let the SDK append each signal path, including when the legacy setting supplied the base URL.
+        configuration["OTEL_EXPORTER_OTLP_ENDPOINT"] = settings.Endpoint!.AbsoluteUri;
         var metrics = Sdk.CreateMeterProviderBuilder()
             .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
             .SetResourceBuilder(ResourceBuilder.CreateEmpty()
@@ -52,7 +54,6 @@ public sealed class ApiMetricProvider : IDisposable
         metrics.AddOtlpExporter((exporter, reader) =>
         {
             exporter.Protocol = OtlpExportProtocol.HttpProtobuf;
-            exporter.Endpoint = settings.Endpoint!;
             exporter.TimeoutMilliseconds = configuration.GetValue<int>("OTEL_EXPORTER_OTLP_TIMEOUT");
             reader.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = configuration.GetValue<int>("OTEL_METRIC_EXPORT_INTERVAL");
             reader.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds = configuration.GetValue<int>("OTEL_METRIC_EXPORT_TIMEOUT");
