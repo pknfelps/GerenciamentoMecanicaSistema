@@ -64,6 +64,10 @@ Os ajustes operacionais abaixo ficam no arquivo declarativo e são lidos diretam
 
 `BSP` configura traces e `BLRP`, logs. O transporte continua HTTP/protobuf para um único endpoint, sem chave ou cabeçalhos de autenticação na API; overrides de endpoint/protocolo por sinal e headers OTLP são rejeitados com mensagem fixa para preservar esse contrato. O SDK acrescenta os caminhos de cada sinal, sem montar URLs por código próprio. Não há scripts novos.
 
+**Correção local de 19/10 à noite (20/10 UTC):** os exporters individuais deixaram de atribuir `OtlpExporterOptions.Endpoint`, pois esse setter desativa a inclusão automática dos caminhos no [SDK 1.19.1](https://github.com/open-telemetry/opentelemetry-dotnet/blob/core-1.19.1/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/OtlpExporterOptions.cs). A composição disponibiliza o endereço base já validado em `OTEL_EXPORTER_OTLP_ENDPOINT`, inclusive quando veio da alternativa legada. O SDK lê essa configuração e acrescenta `/v1/traces`, `/v1/metrics` e `/v1/logs`. Provider único de métricas antes do bootstrap, limites, filtros e manifesto permanecem preservados.
+
+Restore/build Release, **1.191 testes aprovados, zero falhas/ignorados**, OpenAPI idêntico, publish linux-x64 com certificado RDS e Kustomize hom/prd conferidos. Quatro casos simples novos verificam configuração padrão/legada, incluindo prefixo de URL; sem host/providers/rede nesses testes. Na conferência manual, Collector 0.161.0 e PostgreSQL descartáveis receberam os três sinais em ambos os modos: quatro spans HTTP, seis PostgreSQL com pais corretos e dois logs de falhas SQL locais correlacionados. Métricas HTTP/runtime/integrações recebidas, probes sem spans e marcadores sensíveis ausentes. Nenhuma suíte de Collector/exporter fictício ou script permanente foi criada. Processos/containers próprios removidos; evidências ignoradas em `artifacts/e5-exporter-fix/`. A correção ainda depende de deploy da API e nova validação AWS.
+
 ## Atualizar o ConfigMap
 
 Edite o arquivo declarativo e publique pelo fluxo normal do repositório. `kubectl apply -k` do workflow inclui o ConfigMap; o deploy de uma nova imagem reinicia os pods normalmente. O nome do ConfigMap é estável, sem sufixo de hash, para que atualizações não acumulem recursos e o `api-destroy` existente remova a configuração junto com o overlay.
@@ -238,3 +242,9 @@ A regressão completa continua executando os testes PostgreSQL existentes com Do
 Instrumentação de PostgreSQL, SSM e Secrets Manager, incluindo bootstrap e separação de probes/leituras de telemetria. Consulte [regras, ciclo de vida e validação](METRICAS_INTEGRACOES.md). Preparação local; publicação e comprovação dos novos sinais permanecem pendentes.
 
 **19/10/2026 — Métricas das integrações, regressão concluída:** suíte completa com Docker Linux, sem filtros: 1.187 testes API e 245 testes Lambda, zero falhas/ignorados. Cenários PostgreSQL novos e existentes aprovados. Implementação e validação local concluídas; publicação e comprovação dos novos sinais no New Relic permanecem pendentes. Evidências em artifacts/e5-integrations/full-tests e regras em METRICAS_INTEGRACOES.md.
+
+## Próxima conferência integrada da E5
+
+Usar o [roteiro consolidado](ROTEIRO_VALIDACAO_E5.md), com status por cenário, revisão/janela, evidências e restauração. A preparação não executa workflows/chamadas; falhas controladas têm autorização separada. O checklist atualizado permanece em docs/plano-fase-3/etapas/E5.md.
+
+A [validação de hom de 19/10 à noite](VALIDACAO_E5_HOM_2026-10-19.md) encontrou uma regressão na exportação dos três sinais da API, embora os fluxos HTTP passassem. O relatório distingue os critérios afetados das comprovações da Lambda, Kubernetes e CloudWatch; não concluir saúde a partir de widgets vazios.

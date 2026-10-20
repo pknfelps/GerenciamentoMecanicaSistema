@@ -316,3 +316,7 @@ API destroy consulta REST API e VPC Link do Gateway do ambiente antes de remover
 ## E5 — Métricas de acessos às integrações
 
 Instrumentação de PostgreSQL, SSM e Secrets Manager, incluindo bootstrap e separação de probes/leituras de telemetria. Consulte [regras, ciclo de vida e validação](docs/METRICAS_INTEGRACOES.md). Preparação local; publicação e comprovação dos novos sinais permanecem pendentes.
+
+### Roteiro de validação da E5
+
+A próxima sessão está organizada no [roteiro consolidado](docs/ROTEIRO_VALIDACAO_E5.md): implantação/revisões, fluxos, métricas, dashboards, os cinco alertas e cenários autorizados de falha. O documento distingue comprovações anteriores, execução pendente e limites aceitos.

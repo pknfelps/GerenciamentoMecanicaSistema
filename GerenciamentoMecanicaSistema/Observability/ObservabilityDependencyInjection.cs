@@ -19,6 +19,7 @@ public static class ObservabilityDependencyInjection
         if (!settings.Enabled)
             return builder;
 
+        builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"] = settings.Endpoint!.AbsoluteUri;
         Sdk.SetDefaultTextMapPropagator(new GatewayTracePropagator(settings.InboundFormats));
 
         builder.Services.AddMetrics();
@@ -67,7 +68,6 @@ public static class ObservabilityDependencyInjection
             .WithTracing(tracing => tracing.AddOtlpExporter(options =>
             {
                 options.Protocol = OtlpExportProtocol.HttpProtobuf;
-                options.Endpoint = settings.Endpoint!;
             }));
 
         builder.Logging.AddOpenTelemetry(options =>
@@ -77,7 +77,6 @@ public static class ObservabilityDependencyInjection
             options.AddOtlpExporter(exporter =>
             {
                 exporter.Protocol = OtlpExportProtocol.HttpProtobuf;
-                exporter.Endpoint = settings.Endpoint!;
             });
         });
         return builder;
