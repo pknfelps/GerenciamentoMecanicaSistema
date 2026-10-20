@@ -175,6 +175,32 @@ public sealed class TelemetrySettingsTests
         Assert.That(version, Is.EqualTo(expected));
     }
 
+    [TestCase("0")]
+    [TestCase("3001")]
+    [TestCase("private-invalid-value")]
+    public void RejectsInvalidStartupShutdownBudgetWithAFixedMessage(string value)
+    {
+        var configuration = CreateConfiguration();
+        configuration["Telemetry:StartupShutdownTimeoutMilliseconds"] = value;
+
+        var error = Assert.Throws<InvalidOperationException>(() => TelemetrySettings.Read(configuration));
+
+        Assert.That(error!.Message, Is.EqualTo("Configuração das métricas de integração inválida."));
+        Assert.That(error.InnerException, Is.Null);
+    }
+
+    [TestCase("private-field")]
+    [TestCase("integration")]
+    public void RejectsSensitiveOrDuplicateIntegrationDimensions(string value)
+    {
+        var configuration = CreateConfiguration();
+        configuration["Telemetry:IntegrationMetricAttributes:3"] = value;
+
+        var error = Assert.Throws<InvalidOperationException>(() => TelemetrySettings.Read(configuration));
+
+        Assert.That(error!.Message, Is.EqualTo("Configuração das métricas de integração inválida."));
+    }
+
     // Start from the versioned manifest; each test changes only the setting it exercises.
     private static IConfigurationRoot CreateConfiguration(string? formats = "[\"xray\",\"tracecontext\"]")
     {

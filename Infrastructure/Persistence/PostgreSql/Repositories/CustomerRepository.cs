@@ -1,4 +1,4 @@
-using Dapper;
+using Infrastructure.Observability;
 using Domain.Interface.Custumer;
 using Infrastructure.Persistence.PostgreSql.Models;
 using Infrastructure.Persistence.PostgreSql.Querying;
@@ -8,7 +8,7 @@ using System.Data;
 
 namespace Infrastructure.Persistence.PostgreSql.Repositories
 {
-    public class CustomerRepository(IDbConnection connection, DbTransactionContext? transactionContext = null) : BaseRepository(connection, transactionContext), ICustomerRepository
+    public class CustomerRepository(IDbConnection connection, DbTransactionContext? transactionContext = null, IntegrationMetrics? metrics = null) : BaseRepository(connection, transactionContext, metrics), ICustomerRepository
     {
         public static string RegisterCustomerSql { get; private set; } = """
                 INSERT INTO customers(id, name, document, phone, email, status)
@@ -37,13 +37,13 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
 
         public async Task<int> RegisterCustomer(ICustomer customer)
         {
-            return await Connection.ExecuteAsync(RegisterCustomerSql, CustomerDb.Create(customer), Transaction);
+            return await Database.ExecuteAsync(RegisterCustomerSql, CustomerDb.Create(customer), Transaction);
         }
 
         public async Task<IEnumerable<ICustomer>> GetCustomers(Guid? id = null, string name = "", string document = "")
         {
             var query = GetCustomersSql.BuildQuery(BuildQueryParameters(id, name, document));
-            var customers = await Connection.QueryAsync<CustomerDb>(query.Sql, query.Parameters, Transaction);
+            var customers = await Database.QueryAsync<CustomerDb>(query.Sql, query.Parameters, Transaction);
 
             return customers.Select(customer => customer.ToDomain());
         }
@@ -51,7 +51,7 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
         public async Task<ICustomer?> GetCustomer(Guid? id = null, string name = "", string document = "")
         {
             var query = GetCustomersSql.BuildQuery(BuildQueryParameters(id, name, document));
-            var customer = await Connection.QuerySingleOrDefaultAsync<CustomerDb>(query.Sql, query.Parameters, Transaction);
+            var customer = await Database.QuerySingleOrDefaultAsync<CustomerDb>(query.Sql, query.Parameters, Transaction);
 
             if (customer == null)
                 return null;
@@ -61,12 +61,12 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
 
         public async Task<int> UpdateCustomer(ICustomer customer)
         {
-            return await Connection.ExecuteAsync(UpdateCustomersql, CustomerDb.Create(customer), Transaction);
+            return await Database.ExecuteAsync(UpdateCustomersql, CustomerDb.Create(customer), Transaction);
         }
 
         public async Task<int> DeleteCustomer(Guid id)
         {
-            return await Connection.ExecuteAsync(DeleteCustomersql, new { id }, Transaction);
+            return await Database.ExecuteAsync(DeleteCustomersql, new { id }, Transaction);
         }
 
         private static Dictionary<string, object?> BuildQueryParameters(Guid? id = null, string name = "", string document = "")

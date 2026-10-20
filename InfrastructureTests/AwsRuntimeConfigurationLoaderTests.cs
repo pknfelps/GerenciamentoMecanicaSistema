@@ -1,3 +1,4 @@
+using Infrastructure.Observability;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
 using Amazon.SimpleSystemsManagement;
@@ -10,6 +11,7 @@ using System.Text.Json;
 
 namespace InfrastructureTests;
 
+[NonParallelizable]
 public class AwsRuntimeConfigurationLoaderTests
 {
     private const string JwtArn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:/mecanica/hom/base/jwt-test00";
@@ -75,6 +77,54 @@ public class AwsRuntimeConfigurationLoaderTests
     {
         _parameters.Dispose();
         _secrets.Dispose();
+    }
+
+    [Test]
+    public async Task SuccessfulBootstrapCountsOneParametersCallAndTwoSecretCalls()
+    {
+        using var listener = new IntegrationMetricListener();
+        using var metrics = new IntegrationMetrics();
+        var loader = new AwsRuntimeConfigurationLoader(_parameters, _secrets, metrics);
+
+        await loader.LoadAsync("hom", _certificatePath);
+
+        Assert.That(listener.Measurements.Select(point => (point["integration"], point["outcome"])), Is.EqualTo(new[]
+        {
+            ((object?)"ssm", (object?)"success"),
+            ((object?)"secretsmanager", (object?)"success"),
+            ((object?)"secretsmanager", (object?)"success")
+        }));
+    }
+
+    [Test]
+    public void MissingParametersDoNotTurnTheSuccessfulSdkCallIntoATransportFailure()
+    {
+        _response.Parameters.Clear();
+        using var listener = new IntegrationMetricListener();
+        using var metrics = new IntegrationMetrics();
+        var loader = new AwsRuntimeConfigurationLoader(_parameters, _secrets, metrics);
+
+        Assert.ThrowsAsync<InvalidOperationException>(() => loader.LoadAsync("hom", _certificatePath));
+
+        Assert.That(listener.Measurements.Single()["outcome"], Is.EqualTo("success"));
+    }
+
+    [Test]
+    public void FailedSecretReadIsMeasuredBeforeItsExceptionIsSanitized()
+    {
+        _secrets.GetSecretValueAsync(Arg.Any<GetSecretValueRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<GetSecretValueResponse>(new TimeoutException("private-sdk-value")));
+        using var listener = new IntegrationMetricListener();
+        using var metrics = new IntegrationMetrics();
+        var loader = new AwsRuntimeConfigurationLoader(_parameters, _secrets, metrics);
+
+        var error = Assert.ThrowsAsync<InvalidOperationException>(() => loader.LoadAsync("hom", _certificatePath));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(listener.Measurements.Select(point => point["outcome"]), Is.EqualTo(new[] { "success", "timeout" }));
+            Assert.That(error!.Message, Does.Not.Contain("private-sdk-value"));
+        });
     }
 
     [Test]

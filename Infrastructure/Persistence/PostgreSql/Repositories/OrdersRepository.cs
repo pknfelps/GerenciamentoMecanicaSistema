@@ -1,4 +1,4 @@
-using Dapper;
+using Infrastructure.Observability;
 using Domain.Interface.Order;
 using Domain.Interface.Service;
 using Domain.Interface.Stock;
@@ -10,7 +10,7 @@ using System.Data;
 
 namespace Infrastructure.Persistence.PostgreSql.Repositories
 {
-    public class OrdersRepository(IDbConnection connection, DbTransactionContext? transactionContext = null) : BaseRepository(connection, transactionContext), IOrdersRepository
+    public class OrdersRepository(IDbConnection connection, DbTransactionContext? transactionContext = null, IntegrationMetrics? metrics = null) : BaseRepository(connection, transactionContext, metrics), IOrdersRepository
     {
         public static string CreateServiceSql { get; private set; } = """
             INSERT INTO orders(id, customer_document, vehicle_license_plate, budget, status)
@@ -168,7 +168,7 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
             if (Transaction is null)
                 throw new InvalidOperationException("O bloqueio da ordem exige uma transação ativa.");
 
-            await Connection.QuerySingleOrDefaultAsync<Guid?>(
+            await Database.QuerySingleOrDefaultAsync<Guid?>(
                 "SELECT id FROM orders WHERE id = @Id FOR UPDATE;", new { Id = orderId }, Transaction);
         }
 
@@ -179,8 +179,8 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
 
             return await ExecuteInTransaction(async transaction =>
             {
-                var affected = await Connection.ExecuteAsync(CreateServiceSql, OrderDb.Create(serviceOrder), transaction);
-                await Connection.ExecuteAsync(InsertHistorySql, new
+                var affected = await Database.ExecuteAsync(CreateServiceSql, OrderDb.Create(serviceOrder), transaction);
+                await Database.ExecuteAsync(InsertHistorySql, new
                 {
                     EventId = Guid.NewGuid(),
                     OrderId = serviceOrder.Id,
@@ -197,14 +197,14 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
         public async Task<IEnumerable<IOrder>> GetOrders(Guid? id = null, string customer_document = "", string vehicle_license_plate = "")
         {
             var query = GetOrdersSql.BuildQuery(BuildQueryParameters(id, customer_document, vehicle_license_plate));
-            var orders = await Connection.QueryAsync<OrderDb>(query.Sql, query.Parameters, Transaction);
+            var orders = await Database.QueryAsync<OrderDb>(query.Sql, query.Parameters, Transaction);
 
             return orders.Select(order => order.ToDomain());
         }
 
         public async Task<IEnumerable<IOrder>> GetOperationalOrders()
         {
-            var orders = await Connection.QueryAsync<OrderDb>(
+            var orders = await Database.QueryAsync<OrderDb>(
                 GetOperationalOrdersSql,
                 new
                 {
@@ -224,7 +224,7 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
         public async Task<IOrder?> GetOrder(Guid? id = null, string customer_document = "", string vehicle_license_plate = "")
         {
             var query = GetOrdersSql.BuildQuery(BuildQueryParameters(id, customer_document, vehicle_license_plate));
-            var order = await Connection.QuerySingleOrDefaultAsync<OrderDb>(query.Sql, query.Parameters, Transaction);
+            var order = await Database.QuerySingleOrDefaultAsync<OrderDb>(query.Sql, query.Parameters, Transaction);
 
             if (order == null)
                 return null;
@@ -236,7 +236,7 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
         {
             return await ExecuteInTransaction(async transaction =>
             {
-                var previousStatus = await Connection.QuerySingleOrDefaultAsync<string>(
+                var previousStatus = await Database.QuerySingleOrDefaultAsync<string>(
                     "SELECT status FROM orders WHERE id = @Id FOR UPDATE;", new { order.Id }, transaction);
                 if (previousStatus is null)
                     return 0;
@@ -244,7 +244,7 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
                 var newStatus = order.Status.ToString();
                 if (previousStatus != newStatus)
                 {
-                    var latest = await Connection.QuerySingleOrDefaultAsync<OrderStatusHistoryDb>(
+                    var latest = await Database.QuerySingleOrDefaultAsync<OrderStatusHistoryDb>(
                         """
                         SELECT sequence, new_status AS NewStatus, occurred_at AS OccurredAt
                         FROM order_status_history WHERE order_id = @Id
@@ -264,7 +264,7 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
                     if (order.Status == WorkOrderStatus.Finished)
                         reason = completed ? "ServiceCompleted" : "BudgetRejected";
 
-                    await Connection.ExecuteAsync(InsertHistorySql, new
+                    await Database.ExecuteAsync(InsertHistorySql, new
                     {
                         EventId = Guid.NewGuid(),
                         OrderId = order.Id,
@@ -276,7 +276,7 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
                     }, transaction);
                 }
 
-                return await Connection.ExecuteAsync(UpdateOrderSql, new { order.Id, order.Budget, Status = newStatus }, transaction);
+                return await Database.ExecuteAsync(UpdateOrderSql, new { order.Id, order.Budget, Status = newStatus }, transaction);
             });
         }
 
@@ -285,61 +285,61 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
             if (Transaction is not null)
                 return await operation(Transaction);
 
-            using var transaction = Connection.BeginTransaction();
+            using var transaction = Database.BeginTransaction();
             try
             {
                 var affected = await operation(transaction);
-                transaction.Commit();
+                Database.Commit(transaction);
                 return affected;
             }
             catch
             {
-                transaction.Rollback();
+                Database.Rollback(transaction);
                 throw;
             }
         }
 
         public async Task<int> AddServiceToOrder(Guid orderId, IMechanicalService service)
         {
-            return await Connection.ExecuteAsync(AddServiceToOrderSql, new { Id = service.Id, orderId = orderId, Description = service.Description, Hours = service.Hours, PricePerHour = service.PricePerHour, Amount = service.Amount }, Transaction);
+            return await Database.ExecuteAsync(AddServiceToOrderSql, new { Id = service.Id, orderId = orderId, Description = service.Description, Hours = service.Hours, PricePerHour = service.PricePerHour, Amount = service.Amount }, Transaction);
         }
 
         public async Task<int> UpdateServiceOfOrder(Guid orderId, IMechanicalService service)
         {
-            return await Connection.ExecuteAsync(UpdateServiceAmountOfOrderSql, new { Id = service.Id, orderId = orderId, Amount = service.Amount }, Transaction);
+            return await Database.ExecuteAsync(UpdateServiceAmountOfOrderSql, new { Id = service.Id, orderId = orderId, Amount = service.Amount }, Transaction);
         }
 
         public async Task<int> RemoveServiceFromOrder(Guid orderId, Guid serviceId)
         {
-            return await Connection.ExecuteAsync(DeleteServiceFromOrderSql, new { orderId, serviceId }, Transaction);
+            return await Database.ExecuteAsync(DeleteServiceFromOrderSql, new { orderId, serviceId }, Transaction);
         }
 
         public async Task<int> AddMaterialToOrder(Guid orderId, IMaterial material)
         {
             var materialDb = MaterialDb.Create(material);
 
-            return await Connection.ExecuteAsync(AddMaterialToOrderSql, new { Id = materialDb.Id, orderId = orderId, Name = materialDb.Name, Brand = materialDb.Brand, Price = materialDb.Price, Amount = materialDb.Amount }, Transaction);
+            return await Database.ExecuteAsync(AddMaterialToOrderSql, new { Id = materialDb.Id, orderId = orderId, Name = materialDb.Name, Brand = materialDb.Brand, Price = materialDb.Price, Amount = materialDb.Amount }, Transaction);
         }
 
         public async Task<int> RemoveMaterialFromOrder(Guid orderId, Guid materialId)
         {
-            return await Connection.ExecuteAsync(RemoveMaterialFromOrderSql, new { orderId, materialId }, Transaction);
+            return await Database.ExecuteAsync(RemoveMaterialFromOrderSql, new { orderId, materialId }, Transaction);
         }
 
         public async Task<int> UpdateMaterialFromOrder(Guid orderId, IMaterial material)
         {
             var materialDb = MaterialDb.Create(material);
 
-            return await Connection.ExecuteAsync(UpdateMaterialFromOrderSql, new { order_id = orderId, Id = materialDb.Id, Amount = materialDb.Amount }, Transaction);
+            return await Database.ExecuteAsync(UpdateMaterialFromOrderSql, new { order_id = orderId, Id = materialDb.Id, Amount = materialDb.Amount }, Transaction);
         }
 
         public async Task<int> DeleteOrder(Guid orderId)
         {
             return await ExecuteInTransaction(async transaction =>
             {
-                await Connection.ExecuteAsync(DeleteServicesFromOrderSql, new { orderId }, transaction);
-                await Connection.ExecuteAsync(RemoveMaterialsFromOrderSql, new { orderId }, transaction);
-                return await Connection.ExecuteAsync(DeleteOrderSql, new { orderId }, transaction);
+                await Database.ExecuteAsync(DeleteServicesFromOrderSql, new { orderId }, transaction);
+                await Database.ExecuteAsync(RemoveMaterialsFromOrderSql, new { orderId }, transaction);
+                return await Database.ExecuteAsync(DeleteOrderSql, new { orderId }, transaction);
             });
         }
 
