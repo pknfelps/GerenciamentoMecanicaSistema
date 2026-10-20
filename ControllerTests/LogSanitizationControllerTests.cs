@@ -3,6 +3,9 @@ using Domain.Interface.Exceptions;
 using Domain.Interface.Order;
 using GerenciamentoMecanicaSistema.Middleware;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -33,6 +36,7 @@ public sealed class LogSanitizationControllerTests : BaseControllerTests
     [TestCase("domain", 400, LogLevel.Warning)]
     [TestCase("business", 422, LogLevel.Warning)]
     [TestCase("unexpected", 500, LogLevel.Error)]
+    [TestCase("internal-cancellation", 500, LogLevel.Error)]
     public async Task LogsOnlyTechnicalErrorDetailsAndRouteTemplate(string scenario, int status, LogLevel level)
     {
         var id = Guid.NewGuid();
@@ -99,6 +103,77 @@ public sealed class LogSanitizationControllerTests : BaseControllerTests
         await context.Response.Body.DisposeAsync();
     }
 
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task ClientCancellationLogsInformationWithoutWritingProblemDetails(bool taskCanceled)
+    {
+        using var cancellation = new CancellationTokenSource();
+        using var factory = LoggerFactory.Create(builder => builder.AddProvider(logs));
+        using var body = new MemoryStream();
+        var context = new DefaultHttpContext { RequestAborted = cancellation.Token, TraceIdentifier = "canceled-request" };
+        context.Response.Body = body;
+        context.Request.Method = "GET";
+        context.Request.Path = "/Orders/private-id/status";
+        context.SetEndpoint(new RouteEndpoint(_ => Task.CompletedTask,
+            RoutePatternFactory.Parse("Orders/{id}/status"), 0, EndpointMetadataCollection.Empty, "order-status"));
+        OperationCanceledException failure = taskCanceled
+            ? new TaskCanceledException(Sensitive, new Exception("private-inner"))
+            : new OperationCanceledException(Sensitive, new Exception("private-inner"));
+        failure.Data["private-key"] = "private-data";
+        var middleware = new ExceptionHandlingMiddleware(async _ =>
+        {
+            await Task.Yield();
+            await cancellation.CancelAsync();
+            throw failure;
+        }, factory.CreateLogger<ExceptionHandlingMiddleware>());
+
+        await middleware.InvokeAsync(context);
+
+        var entry = logs.Entries.Single(entry => entry.Properties.ContainsKey("ExceptionType"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(context.Response.StatusCode, Is.EqualTo(StatusCodes.Status499ClientClosedRequest));
+            Assert.That(context.Response.ContentType, Is.Null);
+            Assert.That(body.Length, Is.Zero);
+            Assert.That(entry.Level, Is.EqualTo(LogLevel.Information));
+            Assert.That(entry.Message, Does.StartWith("Requisição cancelada pelo cliente."));
+            Assert.That(entry.Properties["StatusCode"], Is.EqualTo(StatusCodes.Status499ClientClosedRequest));
+            Assert.That(entry.Properties["ExceptionType"], Is.EqualTo(failure.GetType().FullName));
+            Assert.That(entry.Properties["Route"], Is.EqualTo("Orders/{id}/status"));
+            Assert.That(entry.Properties["RequestId"], Is.EqualTo("canceled-request"));
+        });
+        AssertSafe(entry, "private-id");
+    }
+
+    [Test]
+    public async Task ClientCancellationPreservesAnAlreadyStartedResponse()
+    {
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync();
+        using var factory = LoggerFactory.Create(builder => builder.AddProvider(logs));
+        using var body = new MemoryStream();
+        var context = new DefaultHttpContext { RequestAborted = cancellation.Token };
+        var responseFeature = Substitute.For<IHttpResponseFeature>();
+        responseFeature.HasStarted.Returns(true);
+        responseFeature.StatusCode.Returns(StatusCodes.Status202Accepted);
+        context.Features.Set(responseFeature);
+        context.Response.Body = body;
+        var middleware = new ExceptionHandlingMiddleware(_ => Task.FromException(
+            new OperationCanceledException(Sensitive)), factory.CreateLogger<ExceptionHandlingMiddleware>());
+
+        await middleware.InvokeAsync(context);
+
+        var entry = logs.Entries.Single(entry => entry.Properties.ContainsKey("ExceptionType"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(context.Response.StatusCode, Is.EqualTo(StatusCodes.Status202Accepted));
+            Assert.That(body.Length, Is.Zero);
+            Assert.That(entry.Level, Is.EqualTo(LogLevel.Information));
+            Assert.That(entry.Properties["StatusCode"], Is.EqualTo(StatusCodes.Status202Accepted));
+        });
+        AssertSafe(entry);
+    }
+
     [Test]
     public async Task ConcurrentRequestsKeepSeparateTechnicalIdentifiers()
     {
@@ -139,6 +214,7 @@ public sealed class LogSanitizationControllerTests : BaseControllerTests
             "application" => new InvalidRequestException(Sensitive),
             "domain" => new DomainValidationException(Sensitive),
             "business" => new BusinessRuleException(Sensitive),
+            "internal-cancellation" => new OperationCanceledException(Sensitive, new Exception("private-inner")),
             _ => new InvalidOperationException(Sensitive, new Exception("private-inner"))
         };
         error.Data["private-key"] = "private-data";

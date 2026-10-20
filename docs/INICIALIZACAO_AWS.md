@@ -29,6 +29,8 @@ Todos os valores são validados antes de adicionar uma fonte em memória com `Jw
 
 O carregamento usa um prazo total de 45 segundos, cancelamento das chamadas e retry Standard com duas novas tentativas por operação. Erros interrompem a inicialização; mensagens não incluem respostas AWS, JSON dos Secrets, senhas, chaves ou a string de conexão completa.
 
+Na execução normal, o ponto de entrada captura a falha que impediria a API de iniciar, escreve no stderr somente `Falha na inicialização ou execução da API.` e `ExceptionType`, e encerra com código 1. Não entrega o objeto de exceção ao runtime para impressão automática de mensagem/inner/stack trace. O provider antecipado de métricas continua sendo descartado no caminho de falha, com o orçamento nativo existente. A geração oficial do OpenAPI preserva o comportamento próprio das ferramentas de build, sem AWS ou providers.
+
 ## PostgreSQL
 
 `NpgsqlConnectionStringBuilder` monta a conexão usando os valores atuais do SSM e a credencial da API, preservando os padrões existentes de pool e timeout. `ssl-mode` deve ser `verify-full`; a conexão exige TLS com verificação do certificado e hostname. `GssEncryptionMode=Disable` evita negociação GSS/Kerberos nesse caminho TLS.

@@ -72,6 +72,8 @@ As regras e os ajustes ficam em [deploy/kubernetes/base/observability.json](depl
 
 O código registra a instrumentação e aplica as regras antes de exportar/agregar: traces com verbo/modelo de rota, sem caminho/query, SQL, parâmetros, identificadores da conexão ou conteúdo original de exceções. Probes continuam produzindo respostas/métricas, sem spans HTTP/PostgreSQL. Logs preservam console textual e mensagens fixas; OTLP inclui TraceId/SpanId. Escopos continuam bloqueados em código; filtros de categorias e seleção das métricas usam configuração nativa do .NET. Métricas não contêm identidades e representam o processo, sem substituir métricas de nós/pods.
 
+Falha no bootstrap encerra a API com código 1 e mensagem fixa/tipo no stderr, sem stack trace automática. Cancelamento pelo cliente fica em Information, sem tentar enviar Problem Details; 499 é o status técnico quando a resposta ainda não começou, sem mudar o contrato dos clientes conectados. Veja o [procedimento de logs](docs/DEPLOY_API.md#sanitização-dos-logs--e4).
+
 O [procedimento local](docs/OBSERVABILIDADE_LOCAL.md) usa um Compose separado com Collector Contrib `0.161.0`, porta OTLP somente em localhost e saída debug, sem New Relic ou credenciais. Falha do Collector não altera respostas/readiness. A instrumentação/exportação foi comprovada localmente; E5.1–E5.3 permanecem parciais até implantação/ingestão externa. Manifestos incluem identidade e ConfigMap público de observabilidade; workflows e recursos AWS não foram alterados.
 
 Por decisão do mantenedor, todos os testes automatizados de telemetria da API foram removidos, incluindo métricas de negócio, instrumentação InMemory e transporte OTLP. A suíte preserva os testes funcionais e a sanitização dos logs de console; os testes HTTP executam com telemetria desabilitada. Instrumentação e configurações de produção permanecem inalteradas.
@@ -315,7 +317,7 @@ API destroy consulta REST API e VPC Link do Gateway do ambiente antes de remover
 
 ## E5 — Métricas de acessos às integrações
 
-Instrumentação de PostgreSQL, SSM e Secrets Manager, incluindo bootstrap e separação de probes/leituras de telemetria. Consulte [regras, ciclo de vida e validação](docs/METRICAS_INTEGRACOES.md). Preparação local; publicação e comprovação dos novos sinais permanecem pendentes.
+Instrumentação de PostgreSQL, SSM e Secrets Manager, incluindo bootstrap e separação de probes/leituras de telemetria. Consulte [regras, ciclo de vida e validação](docs/METRICAS_INTEGRACOES.md). A [conferência de hom de 20/10](docs/VALIDACAO_E5_HOM_2026-10-20.md) comprovou publicação, ingestão e painéis dos acessos bem-sucedidos; a consulta SQL direta reconciliou histórico, estoque e durações das três OSs. Falhas controladas e demais limites da E5 continuam separados.
 
 ### Roteiro de validação da E5
 

@@ -162,7 +162,7 @@ Validação local: restore/build Release; 1.191 testes aprovados, zero falhas/ig
 
 Transporte real conferido manualmente com Collector 0.161.0 e PostgreSQL descartáveis, nos modos padrão e legado. Cada modo exportou dois spans HTTP e três PostgreSQL com pais corretos, um log correlacionado de falha SQL local e métricas HTTP/runtime/integrações. Dez IDs de span distintos, sem spans de probes nem os marcadores sensíveis inspecionados. Processos/containers próprios removidos. Evidências em `artifacts/e5-exporter-fix/`, sem nova suíte de telemetria, exporter fictício ou script permanente.
 
-**A correção ainda não foi implantada.** Os resultados AWS acima continuam descrevendo a revisão com defeito; esta conferência local não substitui a repetição após o próximo api-deploy.
+**Situação ao concluir este relatório:** a correção ainda não havia sido implantada. Posteriormente, o mantenedor publicou a revisão corrigida e a [validação de 20/10](VALIDACAO_E5_HOM_2026-10-20.md) comprovou os três sinais na AWS. Os resultados acima continuam descrevendo a revisão anterior com defeito.
 
 ## Continuidade
 

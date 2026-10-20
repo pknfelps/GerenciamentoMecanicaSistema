@@ -45,6 +45,16 @@ namespace GerenciamentoMecanicaSistema.Middleware
 
                 await WriteProblemDetails(context, exception, GetStatusCode(exception));
             }
+            catch (OperationCanceledException exception) when (context.RequestAborted.IsCancellationRequested)
+            {
+                if (!context.Response.HasStarted)
+                    context.Response.StatusCode = StatusCodes.Status499ClientClosedRequest;
+
+                Logger.LogInformation(
+                    "Requisição cancelada pelo cliente. StatusCode: {StatusCode}. ExceptionType: {ExceptionType}. RequestId: {RequestId}. TraceId: {TraceId}. HttpMethod: {HttpMethod}. Route: {Route}",
+                    context.Response.StatusCode,
+                    exception.GetType().FullName, requestId, traceId, method, route);
+            }
             catch (Exception exception)
             {
                 Logger.LogError(

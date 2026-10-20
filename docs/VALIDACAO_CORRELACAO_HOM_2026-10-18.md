@@ -1,5 +1,9 @@
 # Validação de hom — propagação X-Ray/OTLP e CloudWatch
 
+**Logs Gateway reconferidos e lacuna diagnosticada:** [relatório](VALIDACAO_LOGS_GATEWAY_2026-10-20.md). Janela hom 13:10–13:19 UTC continua com 45 eventos no CloudWatch e 43 no New Relic, sem duplicação/request ID inesperado e com campos técnicos/sanitização conferidos. CloudTrail mostra consulta do Collector às 13:17:37 até 13:17:37.421; os dois eventos de 13:17:20–21 só foram ingeridos às 13:17:41. A consulta seguinte já começa em 13:17:37.421, deixando os eventos tardios atrás do cursor. Causa sustentada pelos horários/código, sem corpo da resposta CloudTrail disponível. Não é recuperação dos registros nem explicação universal de lacunas antigas. Sem restart/replay/tráfego ou configuração alterada; E5.14 mantém cobertura parcial e união X-Ray/OTLP separada.
+
+**União X-Ray/OTLP verificada na interface New Relic:** [relatório](VALIDACAO_UNIAO_XRAY_OTLP_2026-10-20.md). Critério de árvore única não atendido nos dois caminhos selecionados de hom: API e Lambda aparecem como Fragmented/Missing parent. Consulta histórica 13:10–13:19 UTC encontrou seis spans OTLP e nove nativos, sob quatro trace.id; pais/componentes coincidem, mas campos integrais de vínculo diferem. PostgreSQL permanece ligado corretamente à aplicação. Propagação está comprovada; união automática exige tratamento próprio, não novo tráfego/espera de polling. Nenhuma configuração, código ou recurso alterado; aba temporária fechada. E5.3/E5.14 continuam parciais, agora com falha do critério evidenciada.
+
 Conferência em 18/10/2026, após os deploys do mantenedor, no Gateway `ehrzyhusae`, stage `hom`, AWS `121754142617/us-east-1` e New Relic US `8626152`. Chamadas controladas, consultas AWS/Kubernetes e NRQL pela sessão do navegador. Sem workflows, deploy, restart, alterações IAM ou de cadastros. Tokens apenas em memória; nenhuma leitura da License Key.
 
 ## Revisões e saúde
