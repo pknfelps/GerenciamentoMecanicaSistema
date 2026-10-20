@@ -1,3 +1,4 @@
+using Infrastructure.Observability;
 using DependencyInjection;
 using GerenciamentoMecanicaSistema.Middleware;
 using GerenciamentoMecanicaSistema.OpenApi;
@@ -38,9 +39,10 @@ namespace GerenciamentoMecanicaSistema
                 options.AddOperationTransformer<BearerSecurityOperationTransformer>();
             });
 
-            var usesAwsConfiguration = !generatingDocument && await ConfigureRuntimeAsync(builder);
+            using var metrics = generatingDocument ? null : ApiMetricProvider.Create(builder);
+            var usesAwsConfiguration = !generatingDocument && await ConfigureRuntimeAsync(builder, metrics?.Integrations);
             if (!generatingDocument)
-                builder.AddApiObservability();
+                builder.AddApiObservability(metrics);
             var app = builder.Build();
 
             if (!generatingDocument)
@@ -67,11 +69,11 @@ namespace GerenciamentoMecanicaSistema
             await app.RunAsync();
         }
 
-        private static async Task<bool> ConfigureRuntimeAsync(WebApplicationBuilder builder)
+        private static async Task<bool> ConfigureRuntimeAsync(WebApplicationBuilder builder, IntegrationMetrics? metrics)
         {
             var runtimeConfiguration = await AwsRuntimeConfigurationLoader.LoadIfConfiguredAsync(
                 builder.Configuration,
-                Path.Combine(AppContext.BaseDirectory, "Certificates", "rds-ca.pem"));
+                Path.Combine(AppContext.BaseDirectory, "Certificates", "rds-ca.pem"), metrics: metrics);
             
             var usesAwsConfiguration = runtimeConfiguration is not null;
             if (usesAwsConfiguration)

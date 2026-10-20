@@ -1,8 +1,8 @@
+using Infrastructure.Observability;
 using Npgsql;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Infrastructure.Persistence.PostgreSql.Observability;
@@ -13,7 +13,7 @@ namespace GerenciamentoMecanicaSistema.Observability;
 
 public static class ObservabilityDependencyInjection
 {
-    public static WebApplicationBuilder AddApiObservability(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddApiObservability(this WebApplicationBuilder builder, ApiMetricProvider? metrics = null)
     {
         var settings = TelemetrySettings.Read(builder.Configuration);
         if (!settings.Enabled)
@@ -21,6 +21,10 @@ public static class ObservabilityDependencyInjection
 
         Sdk.SetDefaultTextMapPropagator(new GatewayTracePropagator(settings.InboundFormats));
 
+        builder.Services.AddMetrics();
+        builder.Services.AddSingleton(_ => metrics ?? ApiMetricProvider.Create(builder)!);
+        if (builder.Configuration.GetValue<bool>($"Metrics:EnabledMetrics:{IntegrationMetrics.MeterName}"))
+            builder.Services.AddSingleton(services => services.GetRequiredService<ApiMetricProvider>().Integrations!);
         builder.Services.AddSingleton(settings);
         builder.Services.AddSingleton(settings.Collection);
         builder.Services.AddHttpContextAccessor();
@@ -34,15 +38,15 @@ public static class ObservabilityDependencyInjection
             builder.Services.AddSingleton(business);
             builder.Services.AddSingleton<OrderBusinessMetrics>();
             builder.Services.AddSingleton<IOrderNotificationMetrics>(services => services.GetRequiredService<OrderBusinessMetrics>());
-            builder.Services.AddSingleton<IOrderMetricsHistoryReader>(_ => new OrderMetricsHistoryReader(
+            builder.Services.AddSingleton<IOrderMetricsHistoryReader>(services => new OrderMetricsHistoryReader(
                 builder.Configuration.GetConnectionString("DefaultConnection")
-                    ?? throw new InvalidOperationException("Conexão de leitura das métricas não configurada.")));
+                    ?? throw new InvalidOperationException("Conexão de leitura das métricas não configurada."), services.GetService<IntegrationMetrics>()));
             builder.Services.AddScoped<OrderBusinessMetricsFilter>();
             builder.Services.Configure<MvcOptions>(options => options.Filters.AddService<OrderBusinessMetricsFilter>());
         }
         builder.Services.AddOpenTelemetry()
             .ConfigureResource(resource => resource.Clear()
-                .AddService(builder.Environment.ApplicationName, serviceVersion: settings.Version, autoGenerateServiceInstanceId: false)
+                .AddService(builder.Configuration["OTEL_SERVICE_NAME"] ?? builder.Environment.ApplicationName, serviceVersion: settings.Version, autoGenerateServiceInstanceId: false)
                 .AddTelemetrySdk()
                 .AddAttributes([new("deployment.environment.name", settings.Environment)])
                 .AddEnvironmentVariableDetector())
@@ -60,21 +64,21 @@ public static class ObservabilityDependencyInjection
                 })
                 .AddNpgsql()
                 .AddProcessor(new SafeTraceProcessor(settings.Collection)))
-            .WithMetrics(metrics =>
+            .WithTracing(tracing => tracing.AddOtlpExporter(options =>
             {
-                metrics.AddView("http.server.*", new MetricStreamConfiguration { TagKeys = settings.Collection.HttpMetricAttributes });
-                if (businessEnabled)
-                {
-                    var business = builder.Configuration.GetSection("Telemetry:BusinessMetrics").Get<BusinessMetricOptions>()!;
-                    metrics.AddView(business.CreateView);
-                }
-            })
-            .UseOtlpExporter(OtlpExportProtocol.HttpProtobuf, settings.Endpoint!);
+                options.Protocol = OtlpExportProtocol.HttpProtobuf;
+                options.Endpoint = settings.Endpoint!;
+            }));
 
         builder.Logging.AddOpenTelemetry(options =>
         {
             builder.Configuration.GetSection("Logging:OpenTelemetry").Bind(options);
             options.IncludeScopes = false;
+            options.AddOtlpExporter(exporter =>
+            {
+                exporter.Protocol = OtlpExportProtocol.HttpProtobuf;
+                exporter.Endpoint = settings.Endpoint!;
+            });
         });
         return builder;
     }

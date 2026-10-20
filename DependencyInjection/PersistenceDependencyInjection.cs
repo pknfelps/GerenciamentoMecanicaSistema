@@ -1,3 +1,4 @@
+using Infrastructure.Observability;
 using Infrastructure.Persistence.PostgreSql.HealthChecks;
 using Infrastructure.Persistence.PostgreSql.Repositories;
 using Infrastructure.Persistence.PostgreSql.Transactions;
@@ -18,11 +19,20 @@ namespace DependencyInjection
             var connectionString = configuration.GetConnectionString(DbConnectionString)
                 ?? throw new InvalidOperationException($"Connection string '{DbConnectionString}' not found.");
 
-            services.AddScoped<IDbConnection>(_ =>
+            services.AddScoped<IDbConnection>(services =>
             {
                 var connection = new NpgsqlConnection(connectionString);
-                connection.Open();
-                return connection;
+                try
+                {
+                    IntegrationMetrics.Measure(services.GetService<IntegrationMetrics>(), "postgresql", "connection.open", "application",
+                        () => { connection.Open(); return true; });
+                    return connection;
+                }
+                catch
+                {
+                    connection.Dispose();
+                    throw;
+                }
             });
 
             services.AddScoped<DbTransactionContext>();

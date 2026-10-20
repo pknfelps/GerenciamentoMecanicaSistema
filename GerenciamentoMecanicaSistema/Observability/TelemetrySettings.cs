@@ -10,6 +10,8 @@ public sealed class TelemetrySettings
     public Uri? Endpoint { get; private init; }
     public string Environment { get; private init; } = LocalEnvironment;
     public string Version { get; private init; } = LocalEnvironment;
+    public int StartupShutdownTimeoutMilliseconds { get; private init; }
+    public string[] IntegrationMetricAttributes { get; private init; } = [];
     public string[] InboundFormats { get; private init; } = [];
     public TelemetryCollectionOptions Collection { get; private init; } = new();
 
@@ -47,8 +49,12 @@ public sealed class TelemetrySettings
             ?? throw new InvalidOperationException("Configuração de coleta de telemetria ausente.");
         collection.Validate();
 
+        var (shutdown, attributes) = ReadIntegrationMetrics(configuration);
+
         return new()
         {
+            StartupShutdownTimeoutMilliseconds = shutdown,
+            IntegrationMetricAttributes = attributes,
             Enabled = true,
             Endpoint = endpoint,
             Environment = environment,
@@ -56,6 +62,23 @@ public sealed class TelemetrySettings
             InboundFormats = ReadInboundFormats(configuration),
             Collection = collection
         };
+    }
+
+    private static (int Shutdown, string[] Attributes) ReadIntegrationMetrics(IConfiguration configuration)
+    {
+        try
+        {
+            var shutdown = configuration.GetValue<int>("Telemetry:StartupShutdownTimeoutMilliseconds");
+            var attributes = configuration.GetSection("Telemetry:IntegrationMetricAttributes").Get<string[]>() ?? [];
+            if (shutdown is < 1 or > 3000 || attributes.Length != 4
+                || !attributes.Order().SequenceEqual(new[] { "integration", "operation", "outcome", "purpose" }))
+                throw new InvalidOperationException();
+            return (shutdown, attributes);
+        }
+        catch (InvalidOperationException)
+        {
+            throw new InvalidOperationException("Configuração das métricas de integração inválida.");
+        }
     }
 
     private static string[] ReadInboundFormats(IConfiguration configuration)

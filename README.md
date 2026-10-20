@@ -312,3 +312,7 @@ O envio externo fica nos Collectors da infraestrutura/autenticação; a API pres
 ## Bloqueio de dependências no descarte — 17/10/2026
 
 API destroy consulta REST API e VPC Link do Gateway do ambiente antes de remover o overlay. Se algum existir, ou a consulta falhar, o descarte é bloqueado. O banco só pode ser removido depois de API e autenticação, e a base por último. Bootstrap/permissões e a associação de leitura Kubernetes da pipeline do banco devem ser publicados primeiro. [Mapa e critérios](docs/DESTRUICAO_AMBIENTE.md). Preparação local; nenhuma execução AWS realizada nesta implementação.
+
+## E5 — Métricas de acessos às integrações
+
+Instrumentação de PostgreSQL, SSM e Secrets Manager, incluindo bootstrap e separação de probes/leituras de telemetria. Consulte [regras, ciclo de vida e validação](docs/METRICAS_INTEGRACOES.md). Preparação local; publicação e comprovação dos novos sinais permanecem pendentes.

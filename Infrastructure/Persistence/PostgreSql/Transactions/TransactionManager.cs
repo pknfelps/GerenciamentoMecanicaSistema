@@ -1,12 +1,14 @@
 using Microsoft.Extensions.Logging;
 using Service.Interface.Persistence;
 using System.Data;
+using Infrastructure.Observability;
+using Infrastructure.Persistence.PostgreSql.Observability;
 
 namespace Infrastructure.Persistence.PostgreSql.Transactions
 {
-    public class TransactionManager(IDbConnection connection, DbTransactionContext transactionContext, ILogger<TransactionManager> logger) : ITransactionManager
+    public class TransactionManager(IDbConnection connection, DbTransactionContext transactionContext, ILogger<TransactionManager> logger, IntegrationMetrics? metrics = null) : ITransactionManager
     {
-        private IDbConnection Connection { get; } = connection;
+        private PostgreSqlOperations Database { get; } = new(connection, metrics);
         private DbTransactionContext TransactionContext { get; } = transactionContext;
         private ILogger<TransactionManager> Logger { get; } = logger;
 
@@ -24,19 +26,19 @@ namespace Infrastructure.Persistence.PostgreSql.Transactions
             if (TransactionContext.Current != null)
                 return await operation();
 
-            using var transaction = Connection.BeginTransaction();
+            using var transaction = Database.BeginTransaction();
             TransactionContext.Current = transaction;
 
             try
             {
                 var result = await operation();
-                transaction.Commit();
+                Database.Commit(transaction);
 
                 return result;
             }
             catch (Exception e)
             {
-                transaction.Rollback();
+                Database.Rollback(transaction);
                 Logger.LogError(
                     "Transação revertida após falha durante execução de operação persistente. ExceptionType: {ExceptionType}",
                     e.GetType().FullName);
