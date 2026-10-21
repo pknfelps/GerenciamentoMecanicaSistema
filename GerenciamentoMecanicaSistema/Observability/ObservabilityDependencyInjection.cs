@@ -20,7 +20,7 @@ public static class ObservabilityDependencyInjection
             return builder;
 
         builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"] = settings.Endpoint!.AbsoluteUri;
-        Sdk.SetDefaultTextMapPropagator(new GatewayTracePropagator(settings.InboundFormats));
+        Sdk.SetDefaultTextMapPropagator(new GatewayTracePropagator());
 
         builder.Services.AddMetrics();
         builder.Services.AddSingleton(_ => metrics ?? ApiMetricProvider.Create(builder)!);

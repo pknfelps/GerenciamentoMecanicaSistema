@@ -8,63 +8,60 @@ namespace ControllerTests.Observability;
 public sealed class GatewayTracePropagatorTests
 {
     private const string XRayHeader = "Root=1-6ad3c000-000000000000000000000001;Parent=0000000000000101;Sampled=1";
-    private const string XRayTraceId = "6ad3c000000000000000000000000001";
-    private const string XRayParentId = "0000000000000101";
     private const string W3CHeader = "00-00000000000000000000000000000002-0000000000000202-01";
     private const string W3CTraceId = "00000000000000000000000000000002";
     private const string W3CParentId = "0000000000000202";
     private static readonly string[] OutboundHeaderNames = ["traceparent"];
-    private static readonly string[] PropagationHeaderNames = ["X-Amzn-Trace-Id", "traceparent"];
 
     [Test]
-    public void ReadsTraceAndParentFromXRayHeader()
+    public void XRayHeaderAloneDoesNotSelectAParent()
     {
-        var context = Extract(new GatewayTracePropagator(["xray", "tracecontext"]),
+        var context = Extract(new GatewayTracePropagator(),
             new() { ["X-Amzn-Trace-Id"] = [XRayHeader] });
 
-        AssertParent(context, XRayTraceId, XRayParentId);
+        Assert.That(context.ActivityContext, Is.EqualTo(default(ActivityContext)));
     }
 
     [Test]
     public void ReadsTraceAndParentFromW3CHeader()
     {
-        var context = Extract(new GatewayTracePropagator(["xray", "tracecontext"]),
+        var context = Extract(new GatewayTracePropagator(),
             new() { ["traceparent"] = [W3CHeader] });
 
         AssertParent(context, W3CTraceId, W3CParentId);
     }
 
     [Test]
-    public void PrefersXRayWhenBothHeadersAreValid()
+    public void UsesW3CWhenBothHeadersAreValid()
     {
-        var context = Extract(new GatewayTracePropagator(["xray", "tracecontext"]),
-            new() { ["X-Amzn-Trace-Id"] = [XRayHeader], ["traceparent"] = [W3CHeader] });
-
-        AssertParent(context, XRayTraceId, XRayParentId);
-    }
-
-    [Test]
-    public void RespectsConfiguredOrderWhenW3CComesFirst()
-    {
-        var context = Extract(new GatewayTracePropagator(["tracecontext", "xray"]),
+        var context = Extract(new GatewayTracePropagator(),
             new() { ["X-Amzn-Trace-Id"] = [XRayHeader], ["traceparent"] = [W3CHeader] });
 
         AssertParent(context, W3CTraceId, W3CParentId);
     }
 
     [Test]
-    public void FallsBackToW3CWhenXRayIsInvalid()
+    public void InvalidW3CDoesNotFallBackToXRay()
     {
-        var context = Extract(new GatewayTracePropagator(["xray", "tracecontext"]),
+        var context = Extract(new GatewayTracePropagator(),
+            new() { ["X-Amzn-Trace-Id"] = [XRayHeader], ["traceparent"] = ["invalid-w3c"] });
+
+        Assert.That(context.ActivityContext, Is.EqualTo(default(ActivityContext)));
+    }
+
+    [Test]
+    public void InvalidXRayDoesNotInterfereWithW3C()
+    {
+        var context = Extract(new GatewayTracePropagator(),
             new() { ["X-Amzn-Trace-Id"] = ["invalid-xray"], ["traceparent"] = [W3CHeader] });
 
         AssertParent(context, W3CTraceId, W3CParentId);
     }
 
     [Test]
-    public void FallsBackToW3CWhenXRayHasMultipleValues()
+    public void MultipleXRayValuesDoNotInterfereWithW3C()
     {
-        var context = Extract(new GatewayTracePropagator(["xray", "tracecontext"]),
+        var context = Extract(new GatewayTracePropagator(),
             new() { ["X-Amzn-Trace-Id"] = [XRayHeader, XRayHeader], ["traceparent"] = [W3CHeader] });
 
         AssertParent(context, W3CTraceId, W3CParentId);
@@ -81,21 +78,22 @@ public sealed class GatewayTracePropagatorTests
             headers["traceparent"] = ["invalid-w3c"];
         }
 
-        var context = Extract(new GatewayTracePropagator(["xray", "tracecontext"]), headers);
+        var context = Extract(new GatewayTracePropagator(), headers);
 
         Assert.That(context.ActivityContext, Is.EqualTo(default(ActivityContext)));
     }
 
-    [TestCase("xray", "Root=1-6ad3c000-000000000000000000000001;Parent=0000000000000101;Sampled=0", XRayTraceId)]
-    [TestCase("tracecontext", "00-00000000000000000000000000000002-0000000000000202-00", W3CTraceId)]
-    public void PreservesContextFromAnUnsampledParent(string format, string value, string traceId)
+    [Test]
+    public void PreservesContextFromAnUnsampledW3CParent()
     {
-        var header = format == "xray" ? "X-Amzn-Trace-Id" : "traceparent";
-        var context = Extract(new GatewayTracePropagator([format]), new() { [header] = [value] });
+        var context = Extract(new GatewayTracePropagator(), new()
+        {
+            ["traceparent"] = ["00-00000000000000000000000000000002-0000000000000202-00"]
+        });
 
         Assert.Multiple(() =>
         {
-            Assert.That(context.ActivityContext.TraceId.ToString(), Is.EqualTo(traceId));
+            Assert.That(context.ActivityContext.TraceId.ToString(), Is.EqualTo(W3CTraceId));
             Assert.That(context.ActivityContext.TraceFlags, Is.EqualTo(ActivityTraceFlags.None));
         });
     }
@@ -110,7 +108,7 @@ public sealed class GatewayTracePropagatorTests
             ["baggage"] = ["document=private-document"]
         };
         var requestedHeaders = new List<string>();
-        var propagator = new GatewayTracePropagator(["tracecontext"]);
+        var propagator = new GatewayTracePropagator();
 
         var context = propagator.Extract(default, headers, (input, key) =>
         {
@@ -135,7 +133,7 @@ public sealed class GatewayTracePropagatorTests
         var context = new PropagationContext(activity,
             Baggage.Create(new Dictionary<string, string> { ["document"] = "private-document" }));
         var headers = new Dictionary<string, string>();
-        var propagator = new GatewayTracePropagator(["xray", "tracecontext"]);
+        var propagator = new GatewayTracePropagator();
 
         propagator.Inject(context, headers, static (output, key, value) => output[key] = value);
 
@@ -149,31 +147,35 @@ public sealed class GatewayTracePropagatorTests
     [Test]
     public void DoesNotReuseParentFromThePreviousRequest()
     {
-        var propagator = new GatewayTracePropagator(["xray", "tracecontext"]);
+        var propagator = new GatewayTracePropagator();
 
-        var first = Extract(propagator, new() { ["X-Amzn-Trace-Id"] = [XRayHeader] });
-        var second = Extract(propagator, new() { ["traceparent"] = [W3CHeader] });
+        var first = Extract(propagator, new() { ["traceparent"] = [W3CHeader] });
+        var second = Extract(propagator, new() { ["X-Amzn-Trace-Id"] = [XRayHeader] });
         var withoutHeaders = Extract(propagator, new());
 
-        AssertParent(first, XRayTraceId, XRayParentId);
-        AssertParent(second, W3CTraceId, W3CParentId);
+        AssertParent(first, W3CTraceId, W3CParentId);
+        Assert.That(second.ActivityContext, Is.EqualTo(default(ActivityContext)));
         Assert.That(withoutHeaders.ActivityContext, Is.EqualTo(default(ActivityContext)));
     }
 
     [Test]
-    public void DeclaresOnlyTraceHeadersInFields()
+    public void DeclaresOnlyTraceParentInFields()
     {
-        var propagator = new GatewayTracePropagator(["xray", "tracecontext"]);
+        var propagator = new GatewayTracePropagator();
 
-        Assert.That(propagator.Fields, Is.EquivalentTo(PropagationHeaderNames).IgnoreCase);
+        Assert.That(propagator.Fields, Is.EquivalentTo(OutboundHeaderNames).IgnoreCase);
     }
 
     [Test]
-    public void RejectsUnknownFormatWithoutIncludingItsValueInTheError()
+    public void AmbiguousW3CDoesNotFallBackToXRay()
     {
-        var error = Assert.Throws<InvalidOperationException>(() => new GatewayTracePropagator(["private-format"]));
+        var context = Extract(new GatewayTracePropagator(), new()
+        {
+            ["traceparent"] = [W3CHeader, W3CHeader],
+            ["X-Amzn-Trace-Id"] = [XRayHeader]
+        });
 
-        Assert.That(error!.Message, Is.EqualTo("Configuração de propagação de telemetria inválida."));
+        Assert.That(context.ActivityContext, Is.EqualTo(default(ActivityContext)));
     }
 
     private static PropagationContext Extract(GatewayTracePropagator propagator, Dictionary<string, string[]> headers) =>

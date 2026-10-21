@@ -67,7 +67,7 @@ flowchart LR
     LCOL -->|"OTLP HTTP/protobuf TLS"| NR
 ```
 
-Logs da aplicação/função têm um único caminho remoto via OTel; não duplicar sua ingestão por stdout/CloudWatch. O caminho CloudWatch do Gateway depende do Collector ativo. X-Ray possui atraso de polling e não alimenta alertas imediatos. A continuidade entre contextos W3C/AWS deve ser demonstrada, não presumida. Compatibilidade do receiver CloudWatch e da extensão Lambda será comprovada em E5.
+Logs da aplicação/função têm um único caminho remoto via OTel; não duplicar sua ingestão por stdout/CloudWatch. O caminho CloudWatch do Gateway depende do Collector ativo. X-Ray possui atraso de polling e não alimenta alertas imediatos. Por decisão de 20/10/2026, os dois caminhos permanecem separados: aplicações aceitam somente pai W3C e não usam os segmentos X-Ray como pai OTLP. A árvore única entre polling e OTLP foi retirada do escopo, não corrigida. A continuidade exigida passa a ser HTTP/invocação → PostgreSQL e logs da aplicação; [decisão e validação](../../TRACING_W3C_E_XRAY.md).
 
 **Gateway — 12/10/2026:** código local usa VPC Link V2 com SG reservado da base e NLB interno TCP 80; bootstrap fornece logging regional persistente. Gateway possui access logs JSON básicos/sete dias. O diagrama de observabilidade é alvo da E5 e não comprova Collector/New Relic/X-Ray implantados. [ADR 010](../adrs/010-GATEWAY-REST-V2.md).
 

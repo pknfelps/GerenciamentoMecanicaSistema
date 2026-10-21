@@ -92,9 +92,7 @@ public sealed class TelemetrySettings
         {
             throw new InvalidOperationException("Configuração de propagação de telemetria inválida.");
         }
-        if (inboundFormats.Length == 0
-            || inboundFormats.Any(format => format is not ("xray" or "tracecontext"))
-            || inboundFormats.Distinct(StringComparer.Ordinal).Count() != inboundFormats.Length)
+        if (inboundFormats.Length != 1 || inboundFormats[0] != "tracecontext")
             throw new InvalidOperationException("Configuração de propagação de telemetria inválida.");
 
         return inboundFormats;
