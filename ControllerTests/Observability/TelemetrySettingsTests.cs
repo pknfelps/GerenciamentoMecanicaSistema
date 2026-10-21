@@ -10,7 +10,7 @@ namespace ControllerTests.Observability;
 public sealed class TelemetrySettingsTests
 {
     private const string PropagationError = "Configuração de propagação de telemetria inválida.";
-    private static readonly string[] ExpectedInboundFormats = ["xray", "tracecontext"];
+    private static readonly string[] ExpectedInboundFormats = ["tracecontext"];
 
     [TestCase(null)]
     [TestCase("false")]
@@ -64,21 +64,21 @@ public sealed class TelemetrySettingsTests
         });
     }
 
-    [TestCase("[\"tracecontext\",\"xray\"]", new[] { "tracecontext", "xray" })]
-    [TestCase("[\"xray\"]", new[] { "xray" })]
-    [TestCase("[\"tracecontext\"]", new[] { "tracecontext" })]
-    public void PreservesTheOrderAndFormatsDeclaredInTheManifest(string formats, string[] expected)
+    [Test]
+    public void AcceptsOnlyW3CDeclaredInTheManifest()
     {
-        var configuration = CreateConfiguration(formats);
+        var configuration = CreateConfiguration("[\"tracecontext\"]");
 
         var settings = TelemetrySettings.Read(configuration);
 
-        Assert.That(settings.InboundFormats, Is.EqualTo(expected));
+        Assert.That(settings.InboundFormats, Is.EqualTo(ExpectedInboundFormats));
     }
 
     [TestCase(null, TestName = "RejectsMissingPropagationFormats")]
     [TestCase("[]", TestName = "RejectsEmptyPropagationFormats")]
-    [TestCase("[\"xray\",\"xray\"]", TestName = "RejectsDuplicatePropagationFormats")]
+    [TestCase("[\"tracecontext\",\"tracecontext\"]", TestName = "RejectsDuplicatePropagationFormats")]
+    [TestCase("[\"xray\"]", TestName = "RejectsXRayPropagation")]
+    [TestCase("[\"xray\",\"tracecontext\"]", TestName = "RejectsLegacyXRayPrecedence")]
     [TestCase("[\"private-format\"]", TestName = "RejectsUnknownPropagationFormat")]
     [TestCase("[\"XRAY\"]", TestName = "RejectsIncorrectlyCasedPropagationFormat")]
     [TestCase("\"private-value\"", TestName = "RejectsScalarPropagationFormats")]
@@ -202,7 +202,7 @@ public sealed class TelemetrySettingsTests
     }
 
     // Start from the versioned manifest; each test changes only the setting it exercises.
-    private static IConfigurationRoot CreateConfiguration(string? formats = "[\"xray\",\"tracecontext\"]")
+    private static IConfigurationRoot CreateConfiguration(string? formats = "[\"tracecontext\"]")
     {
         var manifestPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "Observability", "observability.json");
         var manifest = JsonNode.Parse(File.ReadAllText(manifestPath))!;

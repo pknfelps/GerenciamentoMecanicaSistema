@@ -12,7 +12,7 @@ namespace ControllerTests.Observability;
 [NonParallelizable]
 public sealed class ObservabilityRegistrationTests
 {
-    private static readonly string[] ExpectedInboundFormats = ["xray", "tracecontext"];
+    private static readonly string[] ExpectedInboundFormats = ["tracecontext"];
     private TextMapPropagator originalPropagator = null!;
 
     [SetUp]

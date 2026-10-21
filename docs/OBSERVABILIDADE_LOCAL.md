@@ -22,7 +22,7 @@ O arquivo entra como configuração de menor prioridade: appsettings, user-secre
 
 | Seção do arquivo | Responsabilidade |
 |---|---|
-| `Telemetry:Propagation:InboundFormats` | Ordem de extração dos propagadores oficiais; padrão `["xray", "tracecontext"]`. Somente esses formatos, não repetidos. Lista inválida/ausente com telemetria habilitada bloqueia inicialização. |
+| `Telemetry:Propagation:InboundFormats` | Somente `["tracecontext"]`. Lista ausente, vazia, duplicada ou com outro formato, inclusive X-Ray, impede inicialização quando habilitada. |
 | `Telemetry:Collection:ExcludedPaths` | Caminhos literais excluídos dos traces HTTP e de seu SQL; comparação sem distinção de maiúsculas e tolerando barra final. |
 | `Telemetry:Collection:HttpMethods` | Métodos reconhecidos para nomes seguros; demais usam marcador OTHER. |
 | `Telemetry:Collection:HttpTraceAttributes` / `DatabaseTraceAttributes` | Listas de atributos permitidos antes da exportação. |
@@ -180,7 +180,13 @@ Os manifests e Collectors de produção, o Compose manual e os preflights de cre
 
 **Validação após remoção de todos os testes de telemetria da API — 15/10/2026:** restore e build Release concluídos; 1.100 testes restantes aprovados (48 contratos, 525 controllers, 183 domínio, 149 infraestrutura e 195 serviços), zero falhas e zero ignorados. Corrigidas as referências à factory e aos auxiliares removidos; testes funcionais de OS usam a factory comum com telemetria desabilitada. Removidas as asserções de métricas das notificações e dos testes de persistência, o leitor exclusivo de medição e a dependência OpenTelemetry.Exporter.InMemory dos testes. Instrumentação de produção preservada. Evidências locais em `artifacts/api-telemetry-tests-removal`. Nenhuma operação AWS, workflow remoto ou deploy.
 
-## Propagação Gateway → API
+## Propagação W3C — decisão vigente de 20/10/2026
+
+API e Lambda continuam somente um `traceparent` W3C válido. Sem ele, iniciam um trace da aplicação, sem usar `X-Amzn-Trace-Id` ou `_X_AMZN_TRACE_ID` como pai OTLP. O manifesto exige `InboundFormats: ["tracecontext"]`; overrides antigos com `xray` precisam ser removidos antes da publicação. `GatewayTracePropagator` delega ao `TraceContextPropagator` oficial e remove baggage/tracestate, sem ler ou converter identificadores X-Ray. A referência direta ao pacote AWS foi retirada da API.
+
+X-Ray nativo e polling continuam independentes. A união automática não é requisito desta arquitetura: foi retirada do escopo pelo mantenedor após a fragmentação comprovada, não declarada corrigida. Permanecem os vínculos HTTP/invocação → PostgreSQL e os logs com os IDs OTLP da aplicação. W3C fornecido por um sistema que não exporta seus próprios spans ainda pode produzir pai externo ausente. [Decisão e conferência](TRACING_W3C_E_XRAY.md).
+
+## Propagação Gateway → API — histórico de 18/10/2026, substituído
 
 **Preparada e conferida localmente em 18/10/2026.** A configuração de menor prioridade continua no mesmo manifesto público, copiado no build/publish e montado pelo ConfigMap. Sem nova variável de workflow, toggle ou atualização dinâmica. Ordem versionada:
 
@@ -224,7 +230,7 @@ São testes de entrada e saída das classes e da composição, no projeto Contro
 
 | Arquivo | O que verifica |
 |---|---|
-| GatewayTracePropagatorTests | Trace e pai recebidos; preferência X-Ray e ordem configurável; fallback W3C; cabeçalhos ausentes/inválidos/ambíguos; contexto não amostrado; remoção de baggage/tracestate; saída somente W3C; ausência de contexto reaproveitado entre chamadas. |
+| GatewayTracePropagatorTests | Trace e pai W3C; X-Ray ignorado mesmo quando W3C está ausente/inválido/ambíguo; contexto não amostrado; remoção de baggage/tracestate; saída somente W3C; ausência de contexto reaproveitado entre chamadas. |
 | TelemetrySettingsTests | Telemetria desabilitada; ativação válida/inválida; ambiente/endpoint; formatos ausentes/vazios/repetidos/desconhecidos/escalares; mensagens fixas sem valores internos; rejeição de credenciais e destinos específicos por sinal; versão pelo commit ou fallback local. |
 | ObservabilityRegistrationTests | Registro do propagador/configuração quando habilitada e preservação do propagador global quando desabilitada. Não inicia host ou providers de telemetria. |
 | BusinessMetricOptionsTests | Não alterar métricas de outro meter; aplicar atributos permitidos aos contadores; aplicar atributos e limites configurados aos histogramas de duração. Usa apenas objetos Meter/Instrument e verifica a configuração devolvida. |
