@@ -1,11 +1,16 @@
 $kind: http-request
-url: "{{base_url}}/users"
+name: UpdateOwnUserMechanic
+url: '{{base_url}}/users'
 method: PATCH
 auth:
   type: bearer
   credentials:
-    token: "{{mechanic_token}}"
+  - key: token
+    value: '{{mechanic_token}}'
 body:
   type: json
-  content: '{"name": "Mechanic atualizado", "password": "NovaSenha@123"}'
-order: 5000
+  content: |
+    {
+      "name": "Mechanic atualizado",
+      "password": "NovaSenha@123"
+    }

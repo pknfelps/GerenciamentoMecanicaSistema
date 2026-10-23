@@ -147,6 +147,18 @@ public sealed class OpenApiContractTests
         });
     }
 
+    [Test]
+    public void BudgetDescribesExplicitBooleanAndSuccessfulDecision()
+    {
+        var operation = Operation("/Orders/{id}/budget", "patch");
+        Assert.That(operation.GetProperty("responses").TryGetProperty("200", out _), Is.True);
+        Assert.That(operation.GetProperty("responses").TryGetProperty("204", out _), Is.False);
+        var schema = document.RootElement.GetProperty("components").GetProperty("schemas").GetProperty("ApproveOrderRequest");
+        Assert.That(schema.GetProperty("properties").EnumerateObject().Select(property => property.Name), Is.EqualTo(new[] { "approved" }));
+        Assert.That(schema.GetProperty("required")[0].GetString(), Is.EqualTo("approved"));
+        Assert.That(schema.GetProperty("additionalProperties").GetBoolean(), Is.False);
+    }
+
     private JsonElement Operation(string path, string method) =>
         document.RootElement.GetProperty("paths").GetProperty(path).GetProperty(method);
 

@@ -206,6 +206,18 @@ jobs:
           echo "cluster=$cluster" >> "$GITHUB_OUTPUT"
           echo "namespace=$namespace" >> "$GITHUB_OUTPUT"
 
+      - name: Conferir contrato de envio privado
+        run: |
+          set -euo pipefail
+          aws ssm get-parameters --no-with-decryption --names \
+            "/mecanica/$DEPLOY_ENVIRONMENT/email/v1/invocation-arn" \
+            "/mecanica/$DEPLOY_ENVIRONMENT/email/v1/contract-version" > "$RUNNER_TEMP/email.json"
+          jq -e --arg arn "arn:aws:lambda:us-east-1:121754142617:function:mecanica-$DEPLOY_ENVIRONMENT-email:live" '
+            .InvalidParameters == [] and (.Parameters | length == 2 and all(.[]; .Type == "String") and
+            any(.[]; (.Name | endswith("/invocation-arn")) and .Value == $arn) and
+            any(.[]; (.Name | endswith("/contract-version")) and .Value == "1"))
+          ' "$RUNNER_TEMP/email.json" > /dev/null || { echo '::error::Conclua email-provision com contrato v1 antes do deploy da API.'; exit 1; }
+
       - name: Instalar kubectl
         uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
         with:

@@ -1,11 +1,15 @@
 $kind: http-request
-url: "{{base_url}}/stock/amount/{{material_id}}"
+name: AddMaterialAmount
+url: '{{base_url}}/stock/amount/{{material_id}}'
 method: POST
 auth:
   type: bearer
   credentials:
-    token: "{{mechanic_token}}"
+  - key: token
+    value: '{{mechanic_token}}'
 body:
   type: json
-  content: "{\r\n    \"Value\": 10\r\n}"
-order: 3000
+  content: |
+    {
+      "Value": 10
+    }

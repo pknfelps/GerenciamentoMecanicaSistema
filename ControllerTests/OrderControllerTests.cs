@@ -523,19 +523,19 @@ namespace ControllerTests
         public async Task MustApproveBudget()
         {
             UseToken("Customer");
-            var approve = new ApproveOrderRequest(ExistingOrder.CustomerDocument, true);
+            var approve = new ApproveOrderRequest(true);
             var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/budget", approve);
 
             await OrderService.Received(1).ApproveBudget(ExistingOrder.Id, approve.ToCommand(), TestIdentityId);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         }
 
         [Test]
         public async Task MustReturnNotFoundIfTryApproveBudgetThatNotExists()
         {
             UseToken("Customer");
-            var approve = new ApproveOrderRequest(ExistingOrder.CustomerDocument, true);
+            var approve = new ApproveOrderRequest(true);
             var response = await TestClient.PatchAsJsonAsync($"orders/{Guid.NewGuid()}/budget", approve);
 
             await OrderService.Received(1).ApproveBudget(Arg.Any<Guid>(), approve.ToCommand(), TestIdentityId);

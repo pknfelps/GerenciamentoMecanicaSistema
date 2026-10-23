@@ -75,12 +75,20 @@ public sealed class AwsRuntimeConfigurationLoader(
             ];
             var response = await IntegrationMetrics.MeasureAsync(metrics, "ssm", "get_parameters", "bootstrap",
                 () => parameters.GetParametersAsync(new GetParametersRequest
-            {
-                Names = [.. names],
-                WithDecryption = false
-            }, deadline.Token).WaitAsync(deadline.Token), cancellationToken);
+                {
+                    Names = [.. names],
+                    WithDecryption = false
+                }, deadline.Token).WaitAsync(deadline.Token), cancellationToken);
 
             var values = ReadParameters(response, names);
+            var emailPrefix = $"/mecanica/{environment}/email/v1/";
+            string[] emailNames = [emailPrefix + "invocation-arn", emailPrefix + "contract-version"];
+            var emailResponse = await IntegrationMetrics.MeasureAsync(metrics, "ssm", "get_parameters", "bootstrap",
+                () => parameters.GetParametersAsync(new GetParametersRequest { Names = [.. emailNames], WithDecryption = false }, deadline.Token)
+                    .WaitAsync(deadline.Token), cancellationToken);
+            var emailValues = ReadParameters(emailResponse, emailNames);
+            if (emailValues[emailNames[0]] != $"arn:aws:lambda:us-east-1:121754142617:function:mecanica-{environment}-email:live" || emailValues[emailNames[1]] != "1")
+                throw new ConfigurationValidationException("Email invocation metadata is invalid.");
             var port = ReadPort(values[databasePrefix + "port"]);
             if (values[databasePrefix + "api-db-user"] != "mecanica_api")
                 throw new ConfigurationValidationException("Database API user parameter must be mecanica_api.");
@@ -121,6 +129,8 @@ public sealed class AwsRuntimeConfigurationLoader(
             // Publish all four values together; failed reads never leave partial configuration.
             return new Dictionary<string, string?>
             {
+                ["Email:FunctionName"] = emailValues[emailNames[0]],
+                ["Email:ContractVersion"] = "1",
                 ["Jwt:Key"] = key,
                 ["Jwt:Issuer"] = values[basePrefix + "jwt-issuer"],
                 ["Jwt:Audience"] = values[basePrefix + "jwt-audience"],
@@ -146,10 +156,10 @@ public sealed class AwsRuntimeConfigurationLoader(
     {
         var response = await IntegrationMetrics.MeasureAsync(metrics, "secretsmanager", "get_secret_value", "bootstrap",
             () => secrets.GetSecretValueAsync(new GetSecretValueRequest
-        {
-            SecretId = arn,
-            VersionStage = "AWSCURRENT"
-        }, cancellationToken).WaitAsync(cancellationToken), callerCancellation);
+            {
+                SecretId = arn,
+                VersionStage = "AWSCURRENT"
+            }, cancellationToken).WaitAsync(cancellationToken), callerCancellation);
         return response.SecretString;
     }
 

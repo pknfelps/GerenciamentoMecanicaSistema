@@ -11,7 +11,7 @@
     <PackageReference Include="AWSSDK.SecretsManager" Version="4.0.100.15" />
     <PackageReference Include="AWSSDK.SimpleSystemsManagement" Version="4.0.104.1" />
     <PackageReference Include="Dapper" Version="2.1.79" />
-    <PackageReference Include="MailKit" Version="4.17.0" />
+    <PackageReference Include="AWSSDK.Lambda" Version="4.0.108.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.8" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.8" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />

@@ -46,10 +46,12 @@ namespace GerenciamentoMecanicaSistema
             }
 
             builder.Services.AddControllers();
+            builder.Services.AddHttpContextAccessor();
             builder.Services.AddOpenApi(options =>
             {
                 options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
                 options.AddDocumentTransformer<ApiDocumentTransformer>();
+                options.AddSchemaTransformer<BudgetRequestSchemaTransformer>();
                 options.AddOperationTransformer<BearerSecurityOperationTransformer>();
             });
 
@@ -65,7 +67,7 @@ namespace GerenciamentoMecanicaSistema
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
-                app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "mechanic api" ));
+                app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "mechanic api"));
             }
 
             if (!generatingDocument)
@@ -88,7 +90,7 @@ namespace GerenciamentoMecanicaSistema
             var runtimeConfiguration = await AwsRuntimeConfigurationLoader.LoadIfConfiguredAsync(
                 builder.Configuration,
                 Path.Combine(AppContext.BaseDirectory, "Certificates", "rds-ca.pem"), metrics: metrics);
-            
+
             var usesAwsConfiguration = runtimeConfiguration is not null;
             if (usesAwsConfiguration)
                 builder.Configuration.AddInMemoryCollection(runtimeConfiguration);
@@ -117,14 +119,16 @@ namespace GerenciamentoMecanicaSistema
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = jwtIssuer,
                     ValidAudience = jwtAudience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                    ClockSkew = TimeSpan.Zero
                 };
             });
 
             builder.Services
                 .AddApplication()
-                .AddInfrastructure(builder.Configuration, usesAwsConfiguration)
+                .AddInfrastructure(builder.Configuration, usesAwsConfiguration, provider => provider.GetRequiredService<IHttpContextAccessor>().HttpContext?.RequestAborted ?? default)
                 .AddPersistence(builder.Configuration);
+
 
             return usesAwsConfiguration;
         }

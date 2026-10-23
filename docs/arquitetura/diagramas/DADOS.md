@@ -1,6 +1,8 @@
-# Dados e histórico de OS
+# Modelo físico e histórico de OS
 
-O SQL versionado em `GerenciamentoMecanicaBancoDados/sql/Init.sql` permanece a fonte do esquema. Este diagrama descreve as relações atuais; não cria restrições ou índices.
+[Justificativa e relacionamentos](../BANCO_E_MODELO.md) · [SQL fonte](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/blob/develop/sql/Init.sql)
+
+Revisão de 22/10/2026: doze tabelas no Init.sql, incluindo os desafios/limites AE.3 ainda sem aplicação AWS. O ER descreve estrutura e vínculos; comprimentos/defaults/nulabilidade permanecem no SQL e na [documentação do esquema](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/blob/develop/docs/SCHEMA.md). Regras dos novos registros são implementadas em C#; não há CHECKs de negócio ou cascata.
 
 ```mermaid
 erDiagram
@@ -12,8 +14,8 @@ erDiagram
     }
     customers {
         uuid id PK
-        varchar document UK
         varchar name
+        varchar document UK
         varchar phone
         varchar email
         varchar status
@@ -21,6 +23,9 @@ erDiagram
     vehicles {
         uuid id PK
         varchar customer_document FK
+        varchar brand
+        varchar model
+        int year
         varchar license_plate UK
     }
     orders {
@@ -39,31 +44,62 @@ erDiagram
         timestamptz occurred_at
         varchar reason
     }
+    stock {
+        uuid id PK
+        varchar name
+        varchar brand
+        numeric price
+        int amount
+        int reserved_amount
+    }
     catalog {
         uuid id PK
         varchar description
         float hours
         numeric price_per_hour
     }
-    stock {
-        uuid id PK
-        integer amount
-        integer reserved_amount
+    order_materials {
+        uuid id FK
+        uuid order_id FK
+        varchar name
+        varchar brand
         numeric price
+        int amount
     }
     order_services {
         uuid id FK
         uuid order_id FK
-        integer amount
+        varchar description
         float hours
         numeric price_per_hour
+        int amount
     }
-    order_materials {
-        uuid id FK
-        uuid order_id FK
-        integer amount
-        numeric price
+    schema_initialization {
+        varchar version
+        char sha256
+        timestamptz initialized_at
     }
+    customer_auth_challenges {
+        uuid id PK
+        uuid customer_id
+        bytea code_salt
+        bytea code_verifier
+        timestamptz created_at
+        timestamptz expires_at
+        varchar state
+        integer failed_attempts
+        timestamptz consumed_at
+        timestamptz invalidated_at
+    }
+    customer_auth_request_limits {
+        uuid customer_id PK
+        timestamptz window_started_at
+        timestamptz window_expires_at
+        integer request_count
+        timestamptz last_requested_at
+    }
+    customers |o..o{ customer_auth_challenges : "vinculo logico sem FK"
+    customers |o..o| customer_auth_request_limits : "vinculo logico sem FK"
     customers ||--o{ vehicles : document
     customers ||--o{ orders : document
     vehicles ||--o{ orders : license_plate
@@ -74,12 +110,14 @@ erDiagram
     orders |o..o{ order_status_history : "correlacao logica sem FK"
 ```
 
-`users.password` contém o hash. `Customer` é identidade externa ao cadastro de usuários internos; seus JWTs usam o UUID de `customers`. As colunas de itens guardam os valores usados no orçamento, sem depender de alterações futuras do catálogo/estoque.
+`users` é independente de clientes/OSs; `password` guarda hash PBKDF2. Customer usa o UUID de `customers` no JWT, sem linha em `users`. As FKs operacionais referenciam documento/placa únicos, preservando o modelo existente; não foram migradas para UUID.
 
-O vínculo entre histórico e OS é lógico: `order_status_history.order_id` não tem FK para `orders`. Excluir a OS remove seus itens, mas preserva seus eventos e amostras concluídas. Excluir o banco encerra esse histórico. Permanecem as PKs/FKs/UNIQUE/NOT NULL existentes; não há novo CHECK, UNIQUE composto ou índice do histórico.
+Nos itens, `id` referencia catálogo/estoque, não é PK do item. Não há PK, UNIQUE composto ou cascade nessas tabelas. O código valida os itens e remove as dependências antes de excluir a OS. Descrições, marcas, horas e preços copiados são valores da OS, independentes de alterações posteriores do cadastro original.
 
-Criação grava Received/sequence=1 e a OS na mesma transação. Mutações bloqueiam a OS antes de reconstruí-la e validar a operação; status e evento são gravados juntos. As sequências desempatarão instantes iguais. Acesso aos materiais segue ordem consistente de UUID; seus saldos são lidos depois do bloqueio, na transação compartilhada. Exclusão em qualquer estado é atômica. Notificações são disparadas depois da transação da operação; não há promessa de entrega exatamente uma vez de SMTP/telemetria.
+A linha pontilhada é somente correlação: `order_id` não tem FK para `orders`. Eventos podem sobreviver ao DELETE da OS. Há PK do evento, mas não CHECK de transições nem UNIQUE/índice de `(order_id, sequence)`; a aplicação protege sequência/estado pela transação e bloqueio da OS. A credencial da API possui DML nas tabelas de domínio, incluindo histórico; preservação não é uma restrição append-only imposta pelos grants.
 
-Abertura deriva de sequence=1; conclusão de Finished/ServiceCompleted; entrega de Delivered. BudgetRejected não é conclusão do serviço. `dateFinished` e `duration` ficam nulos sem conclusão; duração real zero é válida. Dias/indicadores futuros usam as regras D07, sem tratar ausência como zero nem incluir retirada no tempo de atendimento. As listagens ordenam abertura/UUID; a operacional preserva a prioridade dos estados.
+`schema_initialization` é operacional, isolada do domínio: o Job grava versão/hash/horário na transação do esquema/seeds e exige um marcador compatível em reexecução. Não possui PK no SQL atual. API/auth não recebem acesso a essa tabela pelos grants de aplicação.
 
-Desempenho sem índice continua sujeito à medição; a ausência de índice é decisão do mantenedor. Testes locais de concorrência e rollback não substituem a conferência SQL/funcional posterior ao deploy em hom.
+`orders` guarda estado e orçamento, sem datas/duração redundantes. Abertura vem de `sequence=1`; conclusão de `Finished/ServiceCompleted`, não da recusa; entrega de `Delivered`. Sem conclusão, `dateFinished`/`duration` são nulos; duração real zero é válida. Destruir o banco encerra esse histórico.
+
+A AuthFunction deve consultar o cliente antes de gravar desafios/limites. Cliente inexistente retorna sem persistência, registrando somente log sanitizado. Tabelas novas usam UUID do cliente, sem FK/cascata, HMAC de documento ou UNIQUE por estado. Validação, consumo, substituição e tratamento dos registros após exclusão de cliente pertencem ao código C#; índices comuns apoiam consulta/limpeza.

@@ -41,7 +41,7 @@ namespace Service
 
             var customer = await DependenciesGateway.GetCustomerById(orderToCreate.CustomerId)
                 ?? throw new NotFoundException($"Cliente com ID \"{orderToCreate.CustomerId}\" não encontrado");
-            
+
             var vehicle = await DependenciesGateway.GetVehicleById(orderToCreate.VehicleId)
                 ?? throw new NotFoundException($"Veículo com ID \"{orderToCreate.VehicleId}\" não encontrado");
 
@@ -113,6 +113,13 @@ namespace Service
 
             var customer = await DependenciesGateway.GetCustomerById(customerId)
                 ?? throw new NotFoundException("Ordem não encontrada");
+            if (customer.Status != Domain.Interface.Custumer.CustomerStatus.Active)
+                throw new AccessDeniedException("Acesso não autorizado");
+            return await GetOwnedOrder(orderId, customer);
+        }
+
+        private async Task<IOrder> GetOwnedOrder(Guid orderId, Domain.Interface.Custumer.ICustomer customer)
+        {
             var order = await Repository.GetOrder(orderId, customer_document: customer.Document.Id);
             if (order is null || order.CustomerDocument.Id != customer.Document.Id)
                 throw new NotFoundException("Ordem não encontrada");
@@ -247,11 +254,12 @@ namespace Service
         {
             return TransactionManager.ExecuteInTransaction(async () =>
             {
+                var customer = await DependenciesGateway.GetCustomerById(customerId)
+                    ?? throw new NotFoundException("Ordem não encontrada");
+                if (customer.Status != Domain.Interface.Custumer.CustomerStatus.Active)
+                    throw new AccessDeniedException("Acesso não autorizado");
                 await Repository.LockOrder(orderId);
-                var order = await GetCustomerOrder(orderId, customerId);
-                var customerDocument = DocumentWrapper.CreateDocument(approve.CustomerDocument).Id;
-                if (order.CustomerDocument.Id != customerDocument)
-                    throw new BusinessRuleException("Documento de aprovação não está de acordo com o documento do cliente da ordem");
+                var order = await GetOwnedOrder(orderId, customer);
 
                 order.ApproveService(approve.Approved);
                 if (!approve.Approved)

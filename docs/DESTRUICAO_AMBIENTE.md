@@ -1,6 +1,6 @@
 # Mapa de descarte do ambiente AWS
 
-Atualizado em 17/10/2026 com os bloqueios de dependência preparados nos workflows. Sua implementação é validada localmente; a conferência operacional dos bloqueios fica para a próxima utilização autorizada. O descarte parcial de hom foi recuperado em 16/10, sem alterar este roteiro de ordem.
+Atualizado em 22/10/2026 com os bloqueios de dependência preparados nos workflows, incluindo a função email no base-destroy (AE.4). O workflow email-destroy será criado na AE.8; não está disponível ainda. Sua implementação é validada localmente; a conferência operacional dos bloqueios fica para a próxima utilização autorizada. O descarte parcial de hom foi recuperado em 16/10, sem alterar este roteiro de ordem.
 
 Para o ambiente atual, selecionar **branch `develop` e environment `hom`** em todos os workflows. Para produção, a correspondência é `main`/`prd`. Não misturar ambientes nem iniciar provisionamentos/deploys enquanto o descarte estiver em andamento.
 
@@ -11,7 +11,9 @@ flowchart TD
     A --> E["Aguardar ambos e conferir liberação das ENIs"]
     L --> E
     E --> D["3. database-destroy · BancoDados"]
+    E --> M["3. email-destroy · Serverless · futuro AE.8"]
     D --> B["4. base-destroy · Infraestrutura"]
+    M --> B
 ```
 
 ## Workflows e entradas
@@ -20,8 +22,9 @@ flowchart TD
 |---|---|---|---|---|
 | 1 | GerenciamentoMecanicaInfraestrutura | `gateway-destroy` | `environment`, `api_commit`, `auth_commit` | Plano Terraform → aprovação → apply salvo |
 | 2, em paralelo | GerenciamentoMecanicaSistema | **API destroy** (`api-destroy.yml`) | `environment` | O disparo manual autoriza a execução completa |
-| 2, em paralelo | GerenciamentoMecanicaAutenticacao | `auth-destroy` | `environment` | O disparo manual autoriza o `sam delete` |
+| 2, em paralelo | GerenciamentoMecanicaServerless | `auth-destroy` | `environment` | O disparo manual autoriza o `sam delete` |
 | 3 | GerenciamentoMecanicaBancoDados | `database-destroy` | `environment` | Plano Terraform → aprovação → apply salvo |
+| 3, futuro AE.8 | GerenciamentoMecanicaServerless | `email-destroy` (a criar) | `environment` previsto | Descarte SAM e inspeção, conforme plano AE |
 | 4 | GerenciamentoMecanicaInfraestrutura | `base-destroy` | `environment` | Plano Terraform → aprovação → apply salvo |
 
 No `gateway-destroy`, usar os mesmos **SHAs completos dos contratos** informados na última execução bem-sucedida de `gateway-provision`. Consultar os inputs/resumo daquela execução. Não usar digest da imagem, hash SHA-256 de arquivo ou ID da execução. Os contratos e checksums precisam continuar disponíveis no S3 até terminar esse destroy. A base e os parâmetros necessários da autenticação também devem continuar disponíveis durante seu plan/apply.
@@ -42,11 +45,11 @@ Não executar `database-destroy` enquanto API ou autenticação estiverem ativas
 |---|---|
 | API e autenticação | REST API e VPC Link mecanica-<ambiente>-gateway |
 | Banco | Deployment/HPA/ServiceAccount da API, pods e ReplicaSets; função auth, ENIs e regras de saída do SG auth |
-| Base | RDS, DB subnet group e SG do banco |
+| Base | RDS, DB subnet group e SG do banco; função email, ENIs e regras de saída de seu SG |
 
 AWS CLI consulta os nomes exatos em us-east-1, com paginação automática e resultados JSON. A ausência de parâmetros SSM ou o status de um workflow não são usados como prova de remoção. Resposta inválida, erro de consulta ou acesso negado interrompem o fluxo.
 
-Cada destroy verifica somente suas dependências diretas: API/auth checam Gateway; banco checa API/auth; base checa banco. A ordem é aplicada em cadeia pelos workflows, sem repetir as consultas das etapas anteriores.
+Cada destroy verifica somente suas dependências diretas: API/auth checam Gateway; banco checa API/auth; base checa banco e email. O futuro email-destroy também checará API/auth, sem depender do banco. A ordem é aplicada em cadeia pelos workflows, sem repetir as consultas das etapas anteriores.
 
 Quando o EKS existe, o banco consulta os objetos da API em default, mesmo que a API tenha zero réplicas. EKS deve permanecer até o final. Cluster comprovadamente ausente dispensa somente essa consulta Kubernetes; a autenticação continua sendo verificada pelo banco.
 
@@ -63,11 +66,20 @@ Durante a próxima utilização autorizada do ambiente, conferir:
 - Gateway existente bloqueia API/auth antes de suas exclusões.
 - Deployment da API com zero réplicas, HPA/ServiceAccount ou pods/ReplicaSets remanescentes bloqueiam o banco.
 - Função auth ausente, mas ENIs ou regras de saída ainda presentes, continua bloqueando o banco; auth-destroy também falha na conferência final de rede.
-- RDS em deleting, DB subnet group ou SG do banco remanescente bloqueiam base antes de remover Collector/manifestos.
+- RDS em deleting, DB subnet group ou SG do banco remanescente bloqueiam base antes de remover Collector/SMTP4dev/manifestos.
+- Função email, ENIs ou egress remanescentes também bloqueiam a base; SG email isolado é permitido porque pertence à base. O bloqueio não aguarda automaticamente liberação de rede.
 - Acesso negado ou erro de consulta interrompe a execução; ausência dos consumidores permite prosseguir pelo fluxo normal.
 - Recursos de prd não bloqueiam hom, nem o contrário: todas as buscas usam nomes exatos do ambiente.
 
 Esses cenários ainda não foram executados na AWS. Não criar recursos, provocar falhas ou executar destroys somente para testar esta implementação.
+
+## Dependência email — preparação local AE.4
+
+[Inspeção e bloqueios](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/AE4_INSPECAO_E_DESCARTE.md): base-destroy verifica banco e email antes do plan e novamente no apply, antes de remover Collector, namespace SMTP4dev ou qualquer outro manifesto da base. ListFunctions usa paginação/JSON e nome exato mecanica-<ambiente>-email; SG e interfaces são inspecionados sem transformar erros em ausência. A policy da base foi revisada no bootstrap para leitura Lambda regional; aplicar o plano aprovado dessa revisão antes de usar o workflow.
+
+Preparada a access entry da pipeline email com AmazonEKSViewPolicy/default, sem editar API, ler Secrets ou acessar a caixa SMTP. Email-destroy será criado junto dos workflows da AE.8: exigirá API/auth ausentes antes do SAM e conferirá ENIs/egress depois. Ainda não foi executado nem substituído por um workflow incompleto.
+
+Depois de remover API/auth, banco e email poderão ser descartados independentemente. Se email nunca tiver sido implantada, função ausente e SG sem resíduos permitem a base continuar, sem exigir execução de um destroy fictício. A existência do novo SG não cria dependência email → RDS. Base só pode ser retirada depois de ambos; isso preserva a rede usada por email e a caixa até o final. A ordem futura complementa o mapa anterior; comprovação de bloqueios na AWS continua pendente na AE.10. Não executar destroys para testar durante a implementação.
 
 ## Collector, recursos persistentes e recriação
 
@@ -84,6 +96,6 @@ Se algum workflow falhar, interromper a sequência e analisar a falha antes de d
 
 - [API destroy](../.github/workflows/api-destroy.yml)
 - [gateway-destroy](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/.github/workflows/gateway-destroy.yml)
-- [auth-destroy](https://github.com/pknfelps/GerenciamentoMecanicaAutenticacao/blob/develop/.github/workflows/auth-destroy.yml)
+- [auth-destroy](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/.github/workflows/auth-destroy.yml)
 - [database-destroy](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/blob/develop/.github/workflows/database-destroy.yml)
 - [base-destroy](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/.github/workflows/base-destroy.yml)

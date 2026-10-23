@@ -1,21 +1,18 @@
 $kind: http-request
-url: "{{base_url}}/customers/{{customer_id}}"
+name: UpdateCustomer
+url: '{{base_url}}/customers/{{customer_id}}'
 method: PATCH
 auth:
   type: bearer
   credentials:
-    token: "{{mechanic_token}}"
+  - key: token
+    value: '{{mechanic_token}}'
 body:
   type: json
-  content: "{\r
-
-    \    \"Name\": \"Ciclano\",\r
-
-    \    \"Document\": \"{{customer_document}}\",\r
-
-    \    \"Phone\": \"11912345678\",\r
-
-    \    \"Email\": \"ciclano.update@gmail.com\"\r
-
-    }"
-order: 3000
+  content: |
+    {
+      "Name": "Ciclano",
+      "Document": "{{customer_document}}",
+      "Phone": "11912345678",
+      "Email": "ciclano.update@gmail.com"
+    }

@@ -1,13 +1,14 @@
 $kind: http-request
-url: "{{base_url}}/users"
+name: GetUser
+url: '{{base_url}}/users'
 method: GET
 auth:
   type: bearer
   credentials:
-    token: "{{admin_token}}"
+  - key: token
+    value: '{{admin_token}}'
 queryParams:
-  - key: name
-    value: Teste
-  - key: role
-    value: Mechanic
-order: 2000
+- key: name
+  value: Teste
+- key: role
+  value: Mechanic

@@ -1,21 +1,18 @@
 $kind: http-request
-url: "{{base_url}}/customers"
+name: RegisterCustomer
+url: '{{base_url}}/customers'
 method: POST
 auth:
   type: bearer
   credentials:
-    token: "{{mechanic_token}}"
+  - key: token
+    value: '{{mechanic_token}}'
 body:
   type: json
-  content: "{\r
-
-    \    \"Name\": \"Ciclano\",\r
-
-    \    \"Document\": \"{{customer_document}}\",\r
-
-    \    \"Phone\": \"11912345678\",\r
-
-    \    \"Email\": \"ciclano@gmail.com\"\r
-
-    }"
-order: 1000
+  content: |
+    {
+      "Name": "Ciclano",
+      "Document": "{{customer_document}}",
+      "Phone": "11912345678",
+      "Email": "ciclano@gmail.com"
+    }

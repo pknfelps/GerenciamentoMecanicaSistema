@@ -1,17 +1,23 @@
 $kind: http-request
-url: "{{base_url}}/orders/{{order_id}}/budget"
+name: ApproveBudget
+url: '{{base_url}}/orders/{{order_id}}/budget'
 method: PATCH
 auth:
   type: bearer
   credentials:
-    token: "{{customer_token}}"
+  - key: token
+    value: '{{customer_token}}'
 body:
   type: json
-  content: "{\r
-
-    \    \"CustomerDocument\": \"{{customer_document}}\",\r
-
-    \    \"Approved\": true\r
-
-    }"
-order: 3000
+  content: |
+    {
+      "approved": true
+    }
+scripts:
+- type: afterResponse
+  code: |-
+    pm.test("Orçamento aprovado após persistência", () => {
+      pm.response.to.have.status(200);
+      pm.expect(pm.response.json().decision).to.equal("Approved");
+    });
+  language: text/javascript

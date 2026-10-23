@@ -1,65 +1,68 @@
 # Login interno e abertura de OS
 
-[Arquitetura](../README.md) · [Permissões e contratos](../ACESSO_E_AUTENTICACAO.md) · [Dados e métricas](../rfcs/003-DADOS-E-OBSERVABILIDADE.md)
+[Arquitetura](../README.md) · [Permissões](../ACESSO_E_AUTENTICACAO.md) · [Modelo de dados](../BANCO_E_MODELO.md)
 
-Fluxo alvo. Somente Mechanic abre OS. Admin gerencia usuários; Customer consulta status e decide o próprio orçamento.
+Fluxo atualizado nas AE.5/AE.7 e conferido localmente; implantação AWS do envio central segue na AE.10. A revisão anterior foi validada em hom antes da extra. Somente Mechanic abre OS; Admin administra usuários e Customer consulta/decide orçamento das próprias OSs. [Evidências integradas](../../REVISAO_E6_2026-10-21.md).
 
 ```mermaid
 sequenceDiagram
     actor M as Mecânico
     participant G as API Gateway
-    participant A as API via VPC Link e NLB
-    participant D as RDS PostgreSQL
-    participant O as OpenTelemetry
-    participant N as Handler de notificação na API
-    participant S as SMTP (somente local)
-    participant L as Log textual da API
-    M->>G: POST /authentication (credenciais internas)
-    G->>A: Encaminhar login
-    A->>D: Consultar usuário interno
-    D-->>A: Registro e hash
-    A->>A: Validar credenciais conforme contrato existente
-    A-->>G: 200 com JWT ou erro de login
-    G-->>M: Resposta do login
-    opt Login válido e solicitação de abertura
-        M->>G: POST /orders + Bearer JWT + dados
-        G->>A: Encaminhar criação
-        A->>A: Validar JWT e role Mechanic
-        alt Acesso inválido
-            A-->>G: Erro de autenticação/autorização
-        else Acesso permitido
-            A->>D: Consultar cliente/veículo e validar vínculo
-            D-->>A: Dados para validação
-            A->>A: Validar requisição e regras de negócio
-            alt Dados inválidos ou dependência ausente
-                A-->>G: Erro conforme contrato da rota
-            else Dados válidos
-                A->>D: BEGIN; resolver itens; bloquear materiais por UUID e reservar estoque
-                A->>D: Inserir OS Received, itens e histórico inicial UTC
-                alt Falha ao persistir
-                    A->>D: ROLLBACK
-                    A-->>G: Erro conforme contrato da rota
-                else Persistência bem-sucedida
-                    A->>D: COMMIT
-                    A->>O: Registrar criação confirmada (sem bloquear negócio)
-                    A->>N: Publicar evento de status, após commit
-                    alt Runtime hom/prd
-                        N->>L: Envio de e-mail simulado.
-                    else Runtime ausente (mesmo fluxo local sem Gateway)
-                        N->>S: Tentar enviar notificação ao cliente
-                        S-->>N: Resultado ou falha
-                    end
-                    N-->>A: Concluir tratamento (falha de notificação não desfaz OS)
-                    A-->>G: 201 com ID da OS
-                end
-            end
+    participant A as Controller da API
+    participant S as OrdersService
+    participant D as PostgreSQL
+    participant N as Handler de notificação
+    participant E as Adaptador Invoke
+    participant L as EmailFunction
+    participant P as SMTP4dev privado
+    participant F as Filtro de métricas HTTP
+    M->>G: POST /Authentication com name, password e role
+    G->>A: HTTP proxy
+    A->>D: Consultar credenciais internas
+    D-->>A: Cadastro e hash
+    A->>A: Validar senha e emitir JWT com UUID
+    A-->>G: 200 com token ou erro de login
+    G-->>M: Resposta
+    opt Login válido e abertura solicitada
+        M->>G: POST /Orders com cliente, veículo, itens e Bearer
+        G->>A: HTTP proxy
+        A->>A: Validar JWT, role Mechanic e request
+        A->>S: Criar OS
+        S->>D: Resolver cliente/veículo e verificar vínculo
+        S->>D: BEGIN e resolver serviços
+        S->>D: Bloquear materiais por UUID e reservar estoque
+        S->>D: Inserir OS Received, evento inicial UTC e itens
+        alt Falha antes do commit
+            S->>D: ROLLBACK
+            S-->>A: Propagar falha
+            A-->>G: Erro conforme contrato
+        else Persistência confirmada
+            S->>D: COMMIT
+            S->>N: Publicar evento de status e aguardar handler
+            N->>D: Consultar dados necessários à notificação
+            N->>E: Montar e enviar mensagem
+            E->>L: Invoke v1 sincrono no alias email do ambiente
+            L->>P: Construir MIME e capturar por SMTP
+            L-->>E: Captured ou falha sanitizada
+            E-->>N: Resultado da tentativa
+            N->>N: Registrar sucesso/falha da tentativa
+            Note over N,S: Falha tratada da notificação não desfaz a OS
+            N-->>S: Tratamento concluído
+            S-->>A: UUID da OS
+            A-->>F: Resultado 201 com UUID
+            F->>F: Contar criação após retorno bem-sucedido
+            F-->>G: Preservar resposta 201
         end
-        G-->>M: Resposta da aplicação
+        G-->>M: Resposta
     end
 ```
 
-A criação/itens/estoque e o histórico inicial são gravados na mesma transação. Nas alterações e exclusões, a API bloqueia a OS antes de carregar e validar o estado atual; materiais são bloqueados em ordem consistente de UUIDs. Assim, uma decisão concorrente não usa um estado anterior nem repete efeitos de estoque. Status/evento e exclusão dos itens/OS são atômicos, preservando o histórico após DELETE.
+Ordem conferida em `OrdersService.CreateServiceOrder`, `OrderNotificationEventHandler` e `OrderBusinessMetricsFilter`: **commit → handler aguardado → retorno do serviço/controller → métrica de criação**. O filtro não cria a transação e não registra sucesso antes de ela terminar. Falha da instrumentação não substitui o resultado de negócio. O desenho não representa fila nem execução independente da requisição.
 
-O [diagrama de dados](DADOS.md) registra as relações e projeções: conclusão/duração ausentes são null, não data mínima/zero artificial. As mudanças de consistência e contrato foram conferidas em hom em 14/10/2026; a sanitização dos logs e a simulação de e-mail foram validadas localmente e aguardam conferência da nova revisão na AWS. Os participantes OpenTelemetry continuam sendo o alvo da E5: instrumentação, exportação e reconciliação dos indicadores ainda precisam ser implementadas. Não considerar que todo o diagrama já está operacional.
+Cliente/veículo são resolvidos antes da transação de criação. Dentro dela, serviços são consultados e materiais bloqueados em ordem de UUID; reserva, OS, histórico inicial e itens têm confirmação ou rollback conjunto. Alterações posteriores bloqueiam a OS antes de reconstruir/validar o estado; exclusão remove itens/OS atomicamente, preservando histórico.
 
-O tratamento permanece no processamento da API, após o commit, como em `OrdersService` e `OrderNotificationEventHandler`. O handler continua consultando os dados necessários e EmailService monta a mensagem; IEmailSender define o destino do envio. Em hom/prd, LoggingEmailSender conclui e registra apenas `Envio de e-mail simulado.`, sem dados do envio ou entrega real. No modo local, MailKitEmailSender mantém SMTP, configurações e smtp4dev do Compose. A escolha usa o modo AWS já validado, não a máquina nem ASPNETCORE_ENVIRONMENT. Não há fila nem função de notificação nesta entrega. Falha de notificação não pode recriar a OS ou transformar a persistência confirmada em falha de criação. Um timeout percebido pelo consumidor depois do commit não oferece garantia de idempotência de uma nova requisição. A simulação está preparada para conferência após o deploy; SMTP funcional na AWS deixou de fazer parte da entrega por decisão do mantenedor.
+API usa LambdaEmailSender em todos os modos; somente EmailFunction tem MailKit/SMTP. A tentativa inclui consultas/montagem e pode falhar antes do Invoke. O envio é síncrono e limitado; falhas após commit são tratadas e contadas separadamente, sem desfazer a OS. mode=smtp identifica captura central, sem entrega externa. Pontos históricos simulated mantêm seu significado.
+
+Não há outbox, replay ou garantia de entrega única. Uma interrupção após commit pode perder notificação/telemetria; repetir a criação após timeout não recebe garantia de idempotência. O leitor de durações usa instantes persistidos e não é consultado para contar criação.
+
+O transporte serverless já foi preparado; processamento independente/assíncrono com fila/outbox permanece fora do escopo. [ADR 006](../adrs/006-NOTIFICACOES.md) e [ADR 011](../adrs/011-AUTENTICACAO-POR-CODIGO-E-EMAIL.md).

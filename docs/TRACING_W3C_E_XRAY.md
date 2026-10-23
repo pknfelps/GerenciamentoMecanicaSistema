@@ -27,7 +27,9 @@ Um pai W3C pertencente a sistema externo que não exporta spans ainda pode apare
 
 ## Publicação e critérios
 
-O mantenedor publicará a API e uma nova versão da autenticação, provisionará a função e atualizará o Gateway para consumir a versão numérica nova. Remover eventuais overrides antigos de `InboundFormats` com `xray`; não criar input, toggle ou variável nova. Coletores, IAM, SAM, tracing nativo, polling e workflows não precisam de alteração.
+**Conferência implantada:** os [dois caminhos públicos foram comprovados em hom em 21/10](VALIDACAO_TRACING_W3C_HOM_2026-10-21.md): API `9d1c0625…` e Lambda 12/`bf879cfe…`, consumida pelo Gateway `18af09dzw7`. Raízes próprias sem W3C, continuidade W3C inclusive não amostrada, 25 filhos PostgreSQL corretos e nove logs correlacionados na janela principal. A interface confirmou a árvore Lambda → PostgreSQL com três spans e sem Fragmented/Missing parent; a árvore da API foi conferida na rodada anterior. União X-Ray/OTLP continua fora do escopo. A publicação do artefato por si só não altera a função.
+
+Para futuras revisões, publicar a API e a autenticação, provisionar a função e atualizar o Gateway para consumir a versão numérica nova. Remover eventuais overrides antigos de `InboundFormats` com `xray`; não criar input, toggle ou variável nova. Coletores, IAM, SAM, tracing nativo, polling e workflows não precisam de alteração.
 
 Após a publicação, conferir separadamente:
 

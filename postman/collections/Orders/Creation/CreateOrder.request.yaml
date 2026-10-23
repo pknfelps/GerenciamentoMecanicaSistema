@@ -1,54 +1,40 @@
 $kind: http-request
 name: CreateOrder
-url: "{{base_url}}/orders"
+url: '{{base_url}}/orders'
 method: POST
 auth:
   type: bearer
   credentials:
-    token: "{{mechanic_token}}"
+  - key: token
+    value: '{{mechanic_token}}'
 body:
   type: json
-  content: "{\r
-
-    \    \"customerId\": \"{{customer_id}}\",\r
-
-    \    \"vehicleId\": \"{{vehicle_id}}\",\r
-
-    \    \"services\": [\r
-
-    \        {\r
-
-    \            \"id\": \"{{service_id}}\",\r
-
-    \            \"value\": 1\r
-
-    \        }\r
-
-    \    ],\r
-
-    \    \"materials\": [\r
-
-    \        {\r
-
-    \            \"id\": \"{{material_id}}\",\r
-
-    \            \"value\": 1\r
-
-    \        }\r
-
-    \    ]\r
-
-    }"
+  content: |
+    {
+      "customerId": "{{customer_id}}",
+      "vehicleId": "{{vehicle_id}}",
+      "services": [
+        {
+          "id": "{{service_id}}",
+          "value": 1
+        }
+      ],
+      "materials": [
+        {
+          "id": "{{material_id}}",
+          "value": 1
+        }
+      ]
+    }
 scripts:
-  - type: afterResponse
-    code: |-
-      pm.test("Ordem criada com sucesso", () => {
-        pm.response.to.have.status(201);
-      });
+- type: afterResponse
+  code: |-
+    pm.test("Ordem criada com sucesso", () => {
+      pm.response.to.have.status(201);
+    });
 
-      if (pm.response.code === 201) {
-        const response = pm.response.json();
-        pm.collectionVariables.set("order_id", response.id);
-      }
-    language: text/javascript
-order: 1000
+    if (pm.response.code === 201) {
+      const response = pm.response.json();
+      pm.environment.set("order_id", response.id);
+    }
+  language: text/javascript

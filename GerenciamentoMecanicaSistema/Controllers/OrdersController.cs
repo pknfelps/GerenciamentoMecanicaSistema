@@ -176,8 +176,8 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Description = "Token ou identidade inválida")]
         [ProducesResponseType(StatusCodes.Status403Forbidden, Description = "Perfil sem permissão para esta operação")]
         [ProducesResponseType(StatusCodes.Status404NotFound, Description = "Ordem não encontrada")]
-        [ProducesResponseType(StatusCodes.Status422UnprocessableEntity, Description = "Documento divergente ou estado incompatível")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status422UnprocessableEntity, Description = "Estado incompatível")]
+        [ProducesResponseType(typeof(BudgetDecisionResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
         public async Task<IActionResult> ApproveBudget([FromRoute, GuidValidation] Guid id, [FromBody] ApproveOrderRequest approveOrder)
@@ -187,7 +187,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
 
             await OrderService.ApproveBudget(id, approveOrder.ToCommand(), customerId);
 
-            return NoContent();
+            return Ok(new BudgetDecisionResponse(approveOrder.Approved ? "Approved" : "Refused"));
         }
 
         [HttpPatch("{id}/execution/start")]

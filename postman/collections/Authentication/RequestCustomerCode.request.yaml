@@ -1,0 +1,34 @@
+$kind: http-request
+name: RequestCustomerCode
+url: '{{gateway_url}}/customers/auth/request-code'
+method: POST
+headers:
+- key: Content-Type
+  value: application/json
+- key: Accept
+  value: application/json
+body:
+  type: json
+  content: |
+    {
+      "document": "{{customer_document}}"
+    }
+scripts:
+- type: beforeRequest
+  code: |-
+    pm.environment.unset("customer_challenge_id");
+    pm.environment.unset("customer_code");
+    pm.environment.unset("customer_token");
+  language: text/javascript
+- type: afterResponse
+  code: |-
+    pm.test("Pedido aceito sem expor o código", () => {
+      pm.response.to.have.status(202);
+      const result = pm.response.json();
+      pm.expect(result.challengeId).to.be.a("string");
+      pm.expect(result).not.to.have.property("code");
+    });
+    if (pm.response.code === 202) {
+      pm.environment.set("customer_challenge_id", pm.response.json().challengeId);
+    }
+  language: text/javascript

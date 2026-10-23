@@ -1,20 +1,15 @@
 using Service.Interface.Commands.Order;
-using GerenciamentoMecanicaSistema.Contracts.Validation;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
-namespace GerenciamentoMecanicaSistema.Contracts.Requests.Order
+namespace GerenciamentoMecanicaSistema.Contracts.Requests.Order;
+
+[JsonConverter(typeof(ApproveOrderRequestConverter))]
+public sealed class ApproveOrderRequest(bool approved)
 {
-    public class ApproveOrderRequest(string customerDocument, bool approved)
-    {
-        [Description("Número de documento do cliente")]
-        [Required, RegularDocumentExpression]
-        public string CustomerDocument { get; set; } = customerDocument;
-
-        [Description("Se o orçamento foi aprovado")]
-        [Required]
-        public bool Approved { get; set; } = approved;
-
-        public ApproveOrderCommand ToCommand() => new(CustomerDocument, Approved);
-    }
+    [Description("Decisão explícita do cliente sobre o orçamento")]
+    [Required, JsonRequired]
+    public bool Approved { get; } = approved;
+    public ApproveOrderCommand ToCommand() => new(Approved);
 }

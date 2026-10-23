@@ -88,7 +88,7 @@ public sealed class AuthorizationMatrixTests
         factory.OrderServiceMock.ClearReceivedCalls(); factory.UserServiceMock.ClearReceivedCalls();
         using var request = new HttpRequestMessage(path.EndsWith("budget", StringComparison.Ordinal) ? HttpMethod.Patch : HttpMethod.Get, path);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AuthorizationTestTokens.Create(role, id, duplicate));
-        if (request.Method == HttpMethod.Patch) request.Content = JsonContent.Create(new { customerDocument = "662.119.730-63", approved = true });
+        if (request.Method == HttpMethod.Patch) request.Content = JsonContent.Create(new { approved = true });
         using var response = await client.SendAsync(request);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
         await factory.OrderServiceMock.DidNotReceiveWithAnyArgs().GetCustomerOrderStatus(Guid.Empty, Guid.Empty);
@@ -107,14 +107,39 @@ public sealed class AuthorizationMatrixTests
     }
 
     [Test]
-    public async Task BudgetIdentityComesFromJwtNotExtraBodyField()
+    public async Task BudgetRejectsAnExtraIdentityField()
     {
         factory.OrderServiceMock.ClearReceivedCalls();
         using var request = new HttpRequestMessage(HttpMethod.Patch, $"/Orders/{OrderId}/budget");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AuthorizationTestTokens.Create("Customer", IdentityId.ToString()));
-        request.Content = JsonContent.Create(new { customerDocument = "662.119.730-63", approved = true, customerId = Guid.NewGuid() });
+        request.Content = JsonContent.Create(new { approved = true, customerId = Guid.NewGuid() });
         using var response = await client.SendAsync(request);
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
-        await factory.OrderServiceMock.Received(1).ApproveBudget(Guid.Parse(OrderId), Arg.Any<ApproveOrderCommand>(), IdentityId);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        await factory.OrderServiceMock.DidNotReceiveWithAnyArgs().ApproveBudget(Guid.Parse(OrderId), Arg.Any<ApproveOrderCommand>(), IdentityId);
     }
+    [TestCase("{}")]
+    [TestCase("{\"approved\":null}")]
+    [TestCase("{\"approved\":\"true\"}")]
+    [TestCase("{\"approved\":false,\"approved\":true}")]
+    [TestCase("{\"approved\":true,\"customerDocument\":\"52998224725\"}")]
+    public async Task BudgetRequiresExactlyOneExplicitBoolean(string body)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Patch, $"/Orders/{OrderId}/budget");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AuthorizationTestTokens.Create("Customer", IdentityId.ToString()));
+        request.Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json");
+        using var response = await client.SendAsync(request);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        await factory.OrderServiceMock.DidNotReceiveWithAnyArgs().ApproveBudget(default, default!, default);
+    }
+
+    [TestCase("Customer")]
+    [TestCase("Mechanic")]
+    public async Task ExpiredTokenHasNoFiveMinuteTolerance(string role)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"/Orders/{OrderId}/status");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AuthorizationTestTokens.Create(role, IdentityId.ToString(), expires: DateTime.UtcNow.AddSeconds(-3)));
+        using var response = await client.SendAsync(request);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+    }
+
 }
