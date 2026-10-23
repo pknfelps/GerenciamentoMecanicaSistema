@@ -1,6 +1,6 @@
 $kind: http-request
 name: RemoveServiceOfOrder
-url: '{{base_url}}/orders/{{order_id}}/services'
+url: '{{base_url}}/Orders/{{order_id}}/services'
 method: PATCH
 auth:
   type: bearer

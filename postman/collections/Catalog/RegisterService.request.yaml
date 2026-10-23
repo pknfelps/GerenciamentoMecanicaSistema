@@ -1,6 +1,6 @@
 $kind: http-request
 name: RegisterService
-url: '{{base_url}}/catalog'
+url: '{{base_url}}/Catalog'
 method: POST
 auth:
   type: bearer

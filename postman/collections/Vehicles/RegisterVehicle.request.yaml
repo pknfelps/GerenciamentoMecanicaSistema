@@ -1,6 +1,6 @@
 $kind: http-request
 name: RegisterVehicle
-url: '{{base_url}}/vehicles'
+url: '{{base_url}}/Vehicles'
 method: POST
 auth:
   type: bearer

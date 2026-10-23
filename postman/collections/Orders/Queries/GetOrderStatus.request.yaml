@@ -1,6 +1,6 @@
 $kind: http-request
 name: GetOrderStatus
-url: '{{base_url}}/orders/{{order_id}}/status'
+url: '{{base_url}}/Orders/{{order_id}}/status'
 method: GET
 auth:
   type: bearer

@@ -1,6 +1,6 @@
 $kind: http-request
 name: UpdateCustomer
-url: '{{base_url}}/customers/{{customer_id}}'
+url: '{{base_url}}/Customers/{{customer_id}}'
 method: PATCH
 auth:
   type: bearer

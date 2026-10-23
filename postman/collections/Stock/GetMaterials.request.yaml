@@ -1,6 +1,6 @@
 $kind: http-request
 name: GetMaterials
-url: '{{base_url}}/stock'
+url: '{{base_url}}/Stock'
 method: GET
 auth:
   type: bearer

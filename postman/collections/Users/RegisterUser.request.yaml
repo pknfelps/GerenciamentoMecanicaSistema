@@ -1,6 +1,6 @@
 $kind: http-request
 name: RegisterUser
-url: '{{base_url}}/users'
+url: '{{base_url}}/Users'
 method: POST
 auth:
   type: bearer

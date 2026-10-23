@@ -1,6 +1,6 @@
 $kind: http-request
 name: AddServiceToOrder
-url: '{{base_url}}/orders/{{order_id}}/services'
+url: '{{base_url}}/Orders/{{order_id}}/services'
 method: POST
 auth:
   type: bearer

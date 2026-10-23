@@ -94,3 +94,5 @@ O procedimento usual do mantenedor continua sendo compose down **sem --volumes**
 8. Conferir IAM real, VPC/SG/NLB, saúde/consumo no nó, cold start/congelamento/prazos reais e sanitização nos serviços AWS. Nenhum teste local certifica essas propriedades ou prd. Descarte segue Gateway → API/auth → banco/email → base e requer autorização própria.
 
 Não acrescentar testes de carga, concorrência/coexistência de publicação, alertas/dashboards, união X-Ray/OTLP, email externo, fila/outbox ou persistência de mensagens como requisito desta etapa. Limites/dispensas oficiais permanecem registrados; o aceite extra AWS ainda está aberto.
+
+**Atualização posterior — 23/10/2026:** a implantação e a conferência integrada de hom foram realizadas e estão registradas separadamente na [AE.10](AE10_VALIDACAO_HOM_2026-10-23.md), com resultados, ajustes encontrados e limites. As pendências AWS acima descrevem o encerramento original da AE.9; não substituem o registro posterior nem certificam prd.

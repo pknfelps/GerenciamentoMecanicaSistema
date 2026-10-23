@@ -1,6 +1,6 @@
 $kind: http-request
 name: UpdateOwnUserAdmin
-url: '{{base_url}}/users'
+url: '{{base_url}}/Users'
 method: PATCH
 auth:
   type: bearer

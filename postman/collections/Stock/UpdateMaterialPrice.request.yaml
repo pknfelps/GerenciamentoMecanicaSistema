@@ -1,6 +1,6 @@
 $kind: http-request
 name: UpdateMaterialPrice
-url: '{{base_url}}/stock/price/{{material_id}}'
+url: '{{base_url}}/Stock/price/{{material_id}}'
 method: PATCH
 auth:
   type: bearer

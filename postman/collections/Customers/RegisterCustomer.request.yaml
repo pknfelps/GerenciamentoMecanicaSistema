@@ -1,6 +1,6 @@
 $kind: http-request
 name: RegisterCustomer
-url: '{{base_url}}/customers'
+url: '{{base_url}}/Customers'
 method: POST
 auth:
   type: bearer
