@@ -216,3 +216,9 @@ As operações C# de criação/ativação/invalidação/consumo deste contrato f
 ## Implementação local AE.7 — 22/10/2026
 
 [Envio e acesso Customer na API](AE7_API_ENVIO_E_ACESSO_CUSTOMER.md) concluídos localmente: SMTP somente na EmailFunction, Invoke v1 com prazo/cancelamento, dois lotes SSM, cadastro Active, ClockSkew zero e orçamento explícito/200. 1.212 testes aprovados e caminho API container/SDK/SAM/SMTP4dev comprovado com dados fictícios, sem AWS. A métrica de notificações usa mode=smtp para a captura central em todos os ambientes; não significa entrega externa. Pontos históricos simulated preservados. Publicação/Gateway na AE.8, Postman/roteiro conjunto na AE.9.
+
+## Preparação local AE.8 — 22/10/2026
+
+[Workflows/SAM/Gateway preparados e validados localmente](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/AE8_WORKFLOWS_E_GATEWAY.md). Auth/email têm CI/publish/provision/destroy separados e reutilizáveis; VersionId fixado, checksum/artefatos imutáveis e prefixos distintos. Auth e deploy API exigem metadados email/v1 com alias live/contrato 1 antes de implantar. Email-destroy exige API/auth removidas; base-destroy já verifica banco/email. Gateway passa a exigir exatamente as duas rotas e OpenAPI auth 2.0.0, mantendo versão numérica auth e pacote Auth.Contracts 1.0.0. Sem Authorizer ou exposição pública email.
+
+438 testes Serverless, SAM/publish/transformação hom/prd, lint, Terraform e Kustomize aprovados; proteções/identidade GitHub reconferidas em modo somente leitura. Não houve workflow remoto ou aplicação AWS. Cadastrar AWS_EMAIL_ROLE_ARN após bootstrap aprovado; publicar coordenadamente na AE.10. Postman e roteiro conjunto continuam na AE.9, sem misturar o plano extra com os aceites oficiais.
