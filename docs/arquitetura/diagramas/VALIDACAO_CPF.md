@@ -1,78 +1,64 @@
-# Validação de CPF/CNPJ e acesso à própria OS
+# Documento, código de acesso e operações Customer
 
-[Arquitetura](../README.md) · [Contrato HTTP/JWT](../ACESSO_E_AUTENTICACAO.md)
+[Arquitetura](../README.md) · [Contrato HTTP/JWT](../ACESSO_E_AUTENTICACAO.md) · [AE.9 local](../../AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md)
 
-Fluxo implementado e conferido em hom. A Lambda valida documento/cadastro, sem senha, e emite JWT Customer; não cria cliente, usuário interno ou OS. O ambiente foi posteriormente removido. [Validação pública](../../VALIDACAO_TRACING_W3C_HOM_2026-10-21.md).
+Revisão AE.9, 23/10/2026. Código preparado e conferido localmente; publicação AWS do fluxo novo na AE.10. O nome histórico deste arquivo é preservado para manter links. CPF/CNPJ continua sendo validado, agora junto do código; não há Authorizer ou emissão por documento isolado.
 
 ```mermaid
 sequenceDiagram
-    actor C as Cliente
-    participant G as API Gateway
-    participant F as Lambda Validate
-    participant P as Runtime reutilizável
-    participant S as SSM e Secrets Manager
-    participant D as RDS PostgreSQL
-    participant A as API via VPC Link e NLB
-    C->>G: POST /customers/validate com document
-    G->>F: Proxy para versão numérica publicada
-    F->>F: Validar Content-Type, JSON, propriedades e Base64
-    alt Corpo inválido
-        F-->>G: 400 antes de inicializar autenticação AWS
-    else Corpo válido
-        F->>P: Obter runtime ou inicializar uma vez
-        opt Primeira inicialização válida ou nova tentativa após falha
-            P->>S: Parâmetros públicos e Secrets AWSCURRENT
-            S-->>P: JWT e credencial mecanica_auth
-        end
-        F->>F: Validar formato e dígitos CPF/CNPJ
-        alt Documento inválido
-            F-->>G: 400 sem consulta SQL
-        else Documento válido
-            F->>D: Abrir conexão sem pooling e consultar documento parametrizado
-            D-->>F: Cadastro e status
-            F->>F: Descartar conexão inclusive em erro
-            alt Cliente ausente ou Inactive
-                F-->>G: 401 genérico
-            else Cliente Active
-                F->>F: JWT HS256 com UUID do cliente e role Customer
-                F-->>G: 200 com token como string JSON
+    actor C as Cliente / Postman
+    participant G as Gateway
+    participant F as AuthFunction
+    participant D as PostgreSQL
+    participant E as EmailFunction
+    participant S as SMTP4dev privado
+    participant A as API
+    C->>G: POST request-code com document
+    G->>F: AWS_PROXY para versao numerica
+    F->>F: Validar JSON, limites UTF-8 e documento
+    alt Entrada invalida
+        F-->>C: 400 sem bootstrap SQL/AWS
+    else Entrada valida
+        F->>F: Obter runtime reutilizavel ou inicializar
+        F->>D: Consultar cadastro e elegibilidade
+        alt Ausente, Inactive ou email inutilizavel
+            F-->>C: 202 generico sem escrita ou envio
+        else Cliente elegivel
+            F->>D: Transacao e lock por cliente, criar Pending, commit
+            alt Cooldown ou limite atingido
+                F-->>C: 429 com Retry-After
+            else Solicitacao admitida
+                F->>E: Invoke v1 sincrono
+                E->>S: MIME e captura SMTP
+                alt Captura confirmada
+                    E-->>F: version 1, outcome captured
+                    F->>D: Ativar Ready condicionalmente
+                    F-->>C: 202 com challengeId, sem codigo
+                else Falha conhecida ou timeout
+                    F->>D: Tentar invalidar Pending
+                    F-->>C: 500 sanitizado, sem reembolso do limite
+                end
             end
         end
     end
-    Note over F,D: Falha técnica ou timeout tratado retorna 500, nunca 401
-    G-->>C: Resposta com Cache-Control no-store
-    opt Cliente consulta a própria OS
-        C->>G: GET /Orders/{id}/status com Bearer
-        G->>A: HTTP proxy
-        A->>A: Validar JWT, perfil e UUID obrigatório
-        A->>D: Resolver cliente pelo UUID e consultar vínculo da OS
-        D-->>A: Estado ou ausência
-        A-->>G: 200 ou 404 genérico para ausência/terceiro
-        G-->>C: Resultado
-    end
-    opt Cliente aprova ou recusa o próprio orçamento
-        C->>G: PATCH /Orders/{id}/budget com approved, documento e Bearer
-        G->>A: HTTP proxy
-        A->>A: Exigir Customer e resolver UUID
-        A->>D: Conferir titular e bloquear OS na transação
-        alt Cadastro ou vínculo ausente
-            A-->>G: 404 genérico
-        else Documento divergente ou estado incompatível
-            A-->>G: 422 sem alterar OS
-        else Decisão válida
-            A->>D: Atualizar OS e histórico e devolver reserva na recusa
-            A->>D: COMMIT
-            A->>A: Tratar notificação e métricas após commit
-            A-->>G: 204
-        end
-        G-->>C: Resultado
+    C->>S: Operador autorizado consulta a caixa privada
+    C->>G: POST verify-code com challengeId, code e document
+    G->>F: AWS_PROXY para a mesma versao numerica
+    F->>D: Verificar cadastro, prazo, tentativas e consumir atomicamente
+    alt Negativa
+        F-->>C: 401 generico, tentativa persistida quando aplicavel
+    else Consumo e commit confirmados
+        F-->>C: 200 com JWT Customer por dez minutos
+        C->>G: GET status ou PATCH budget com Bearer
+        G->>A: HTTP_PROXY via VPC Link e NLB
+        A->>A: Validar JWT, perfil e exp sem ClockSkew
+        A->>D: Exigir Customer Active e OS do mesmo UUID
+        A-->>C: Status ou 200 Approved / Refused apos commit
     end
 ```
 
-O runtime é inicializado antes da validação do documento pelo caso de uso: **corpo inválido** não inicializa autenticação; **corpo válido com documento inválido** pode inicializá-la, mas não consulta PostgreSQL. A observabilidade é composta antes desse bootstrap e pode existir mesmo numa chamada rejeitada.
+Bootstrap real exige hom/prd/us-east-1. Auth carrega dois lotes SSM (nove base/banco, dois email/v1), duas credenciais Secrets e reutiliza o runtime saudável. Prazo de configuração: oito segundos, subordinado ao tempo restante menos um segundo; flush compartilhado existente permanece limitado. Documento/JSON inválidos não iniciam autenticação. Localmente configuração é injetada, sem fallback produtivo de banco/JWT.
 
-O handler limita o processamento ao tempo restante menos um segundo; configuração AWS tem prazo de oito segundos e conexão/comando têm limites próprios, sujeitos ao prazo total. O runtime só guarda inicialização bem-sucedida e pode tentar novamente após falha. O data source é reutilizado como fábrica, com `Pooling=false`; cada consulta abre/fecha sua conexão. Não há leitura de Secret por requisição depois de inicializar com sucesso.
+Não manter transação durante Invoke/SMTP. Código tem oito dígitos, cinco minutos e cinco tentativas; cooldown de 60 s/cinco pedidos por hora para cliente existente/elegível. Pending não autentica; confirmação consome uma vez. Banco guarda salt/verificador, nunca o código em texto puro. Limpeza oportunista é limitada a 100 expirados por tabela após solicitação admitida, sem job/migration.
 
-JWT usa HS256, UUID/nome do cadastro, role Customer e expiração UTC + dez minutos. A API mantém sua tolerância de relógio de cinco minutos. Remoção/inativação não revoga tokens emitidos; operações próprias continuam dependendo da existência e vínculo dos recursos. Não há endpoint de inativação na entrega.
-
-400/401 são resultados esperados; falhas técnicas e timeout tratados retornam 500 sanitizado. Erros do próprio Gateway/runtime podem ter formato diferente. O contrato detalha também 401/403 e validação dos argumentos da API. Nenhum documento, token ou credencial é registrado nos logs.
+O mesmo JWT serve status e orçamento; a Lambda não consulta OS. CPF/CNPJ não aparece no JWT ou orçamento. Cliente inativado após emissão é bloqueado na API. Mensagem capturada pode ser perdida após reinício; pedir outra respeitando limites. Captura não é entrega externa, autenticação por caixa pessoal ou garantia única. Código/token/documento não entram em logs ou evidências.

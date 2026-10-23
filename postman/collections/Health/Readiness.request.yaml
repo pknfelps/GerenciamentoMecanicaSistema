@@ -1,4 +1,4 @@
 $kind: http-request
-url: "{{base_url}}/health/ready"
+name: Readiness
+url: '{{base_url}}/health/ready'
 method: GET
-order: 2000

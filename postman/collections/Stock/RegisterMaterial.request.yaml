@@ -1,21 +1,18 @@
 $kind: http-request
-url: "{{base_url}}/stock"
+name: RegisterMaterial
+url: '{{base_url}}/stock'
 method: POST
 auth:
   type: bearer
   credentials:
-    token: "{{mechanic_token}}"
+  - key: token
+    value: '{{mechanic_token}}'
 body:
   type: json
-  content: "{\r
-
-    \    \"Name\": \"Óleo de motor\",\r
-
-    \    \"Brand\": \"Lubrax\",\r
-
-    \    \"Price\": 10.99,\r
-
-    \    \"Amount\": 10\r
-
-    }"
-order: 1000
+  content: |
+    {
+      "Name": "Óleo de motor",
+      "Brand": "Lubrax",
+      "Price": 10.99,
+      "Amount": 10
+    }

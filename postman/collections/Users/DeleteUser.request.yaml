@@ -1,11 +1,12 @@
 $kind: http-request
-url: "{{base_url}}/users"
+name: DeleteUser
+url: '{{base_url}}/users'
 method: DELETE
 auth:
   type: bearer
   credentials:
-    token: "{{admin_token}}"
+  - key: token
+    value: '{{admin_token}}'
 queryParams:
-  - key: id
-    value: "{{user_id}}"
-order: 6000
+- key: id
+  value: '{{user_id}}'

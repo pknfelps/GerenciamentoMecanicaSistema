@@ -86,13 +86,14 @@ Seeds educacionais: Admin/Admin@123 e Mechanic/Mechanic@123, com hash PBKDF2. Lo
 | Mechanic | Cadastros operacionais/OS, GET/PATCH da própria conta e consulta de status |
 | Customer | JWT emitido pela Lambda; status e decisão de orçamento apenas das próprias OSs |
 
-Admin não herda acesso operacional. Customer não é linha de users. JWT contém Name/Role/NameIdentifier UUID, HS256 e expiração UTC + dez minutos; a validação mantém tolerância de relógio de cinco minutos. Não há refresh/revogação por atualização, remoção ou inativação; operações próprias ainda dependem do cadastro/vínculo.
+Admin não herda acesso operacional. Customer não é linha de users. JWT contém Name/Role/NameIdentifier UUID, HS256 e expiração UTC + dez minutos; a validação usa ClockSkew zero. Não há refresh/revogação por atualização, remoção ou inativação; operações próprias ainda dependem do cadastro/vínculo.
 
 PATCH /Users aceita somente name/password, pelo menos um presente; omitido preserva, nulo/vazio/desconhecido é inválido. UUID vem exclusivamente do JWT; não altera id/role. Sucesso 204, request 400, autenticação 401, perfil 403, conta ausente 404 e conflito de nome no mesmo perfil 409. DELETE /Users?id=<uuid> exige Admin, remove somente users, retorna 204/404; sem proteção de autoexclusão/último Admin. Recriar nome não transfere identidade de token anterior.
 
-Clientes nascem Active; PATCH cadastral não altera status e não há endpoint de inativação. Cliente Inactive não obtém novo JWT pela Lambda, sem revogar sessão emitida antes. OS de terceiro/ausente ou cliente necessário ausente retorna 404 genérico; orçamento exige Customer e documento correspondente, com 422 para divergência/estado incompatível.
+Clientes nascem Active; PATCH cadastral não altera status e não há endpoint de inativação. Cliente Inactive não obtém novo JWT e é bloqueado nas duas operações Customer mesmo com token ainda válido. OS de terceiro/ausente ou cliente necessário ausente retorna 404 genérico; orçamento exige Customer da própria OS e corpo somente approved booleano; retorna 200 Approved/Refused após commit e 422 para repetição/estado incompatível.
 
-Importar [collections](postman/collections) e [ambiente Postman](postman/environments/Dev.environment.yaml). Configurar base_url/gateway_url incluindo stage; logins preenchem admin_token/mechanic_token, e ValidateCustomerDocument preenche customer_token. Variáveis começam vazias. As coleções antigas ainda usam a rota de autenticação anterior; serão alinhadas na AE.9. No contrato AE local, usar request-code/verify-code e orçamento somente com approved. DELETE Users usa user_id da conta alvo. [Contrato completo](docs/arquitetura/ACESSO_E_AUTENTICACAO.md).
+Abrir a [Local View do Postman](postman/README.md) com os YAMLs existentes. RequestCustomerCode salva desafio; operador consulta SMTP4dev privado; VerifyCustomerCode salva JWT para status e orçamento. Ambientes Dev/Hom/Prd começam com sessões vazias, sem URLs AWS fixadas. Não há código em resposta pública, consulta de código pelo mecânico ou Authorizer. [Contrato completo](docs/arquitetura/ACESSO_E_AUTENTICACAO.md).
+
 
 ## OS, histórico e notificações
 
@@ -128,7 +129,7 @@ W3C traceparent é o único pai OTLP, sem baggage/tracestate. HTTP/PostgreSQL/lo
 dotnet build GerenciamentoMecanicaSistema.slnx -c Release -p:OpenApiGenerateDocuments=true
 ```
 
-Gera artifacts/openapi/openapi.json, OpenAPI 3.0, sem AWS/JWT/persistência. Build comum/Docker não gera. Bearer por operação reflete Authorize/AllowAnonymous. A API não implementa /customers/validate, atendido exclusivamente pela Lambda.
+Gera artifacts/openapi/openapi.json, OpenAPI 3.0, sem AWS/JWT/persistência. Build comum/Docker não gera. Bearer por operação reflete Authorize/AllowAnonymous. A API não implementa as duas rotas /customers/auth/*, atendidas pela AuthFunction; customers/validate foi retirado do contrato novo.
 
 | Workflow | Comportamento |
 |---|---|
@@ -160,3 +161,7 @@ A aprovação de orçamento agora recebe somente approved booleano e retorna 200
 ## Extra AE.8 — publicação coordenada preparada
 
 [Workflows auth/email e Gateway](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/AE8_WORKFLOWS_E_GATEWAY.md) preparados e validados localmente. api-deploy confere email/v1 (alias live do ambiente e contrato 1) antes de aplicar o Deployment; isso é conferência de metadados, não teste de SMTP. Bootstrap deve ser aprovado/aplicado antes de usar o novo guard. Provisionamento: base/SMTP4dev → banco e email → API/auth → Gateway com contratos novos. Nenhum workflow remoto ou deploy foi executado nesta etapa; Postman/roteiro conjunto seguem na AE.9.
+
+## Extra AE.9 — fluxo conjunto comprovado localmente
+
+[Resultados e roteiro AE.10](docs/AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md), 23/10/2026: handler auth com bootstrap injetado, SQL/grants reais, SDK/SAM/EmailFunction/SMTP4dev e API real conferidos. JWT do código aceito no status e em Approved/Refused, negativas e falha/perda da caixa validadas. **1.650 testes e 47 conferências manuais aprovados**. Postman, contratos e diagramas atualizados; OpenAPI inalterado nesta etapa. Recursos descartáveis removidos, sem aplicação AWS. Próximo passo: PRs e publicação integrada AE.10 autorizada.

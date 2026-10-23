@@ -1,0 +1,35 @@
+$kind: http-request
+name: VerifyCustomerCode
+url: '{{gateway_url}}/customers/auth/verify-code'
+method: POST
+headers:
+- key: Content-Type
+  value: application/json
+- key: Accept
+  value: application/json
+body:
+  type: json
+  content: |
+    {
+      "challengeId": "{{customer_challenge_id}}",
+      "code": "{{customer_code}}",
+      "document": "{{customer_document}}"
+    }
+scripts:
+- type: beforeRequest
+  code: pm.environment.unset("customer_token");
+  language: text/javascript
+- type: afterResponse
+  code: |-
+    pm.environment.unset("customer_code");
+    pm.test("Código confirmado e JWT recebido", () => {
+      pm.response.to.have.status(200);
+      pm.expect(pm.response.json()).to.be.a("string").and.not.empty;
+    });
+    if (pm.response.code === 200) {
+      const token = pm.response.json();
+      if (typeof token === "string" && token.length > 0) {
+        pm.environment.set("customer_token", token);
+      }
+    }
+  language: text/javascript

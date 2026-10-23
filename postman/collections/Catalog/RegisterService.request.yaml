@@ -1,21 +1,18 @@
 $kind: http-request
-url: "{{base_url}}/catalog"
+name: RegisterService
+url: '{{base_url}}/catalog'
 method: POST
 auth:
   type: bearer
   credentials:
-    token: "{{mechanic_token}}"
+  - key: token
+    value: '{{mechanic_token}}'
 body:
   type: json
-  content: "{\r
-
-    \    \"Description\": \"Troca de Óleo\",\r
-
-    \    \"Hours\": 1,\r
-
-    \    \"PricePerHour\": 50,\r
-
-    \    \"Amount\": 1\r
-
-    }"
-order: 1000
+  content: |
+    {
+      "Description": "Troca de Óleo",
+      "Hours": 1,
+      "PricePerHour": 50,
+      "Amount": 1
+    }

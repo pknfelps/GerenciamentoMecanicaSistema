@@ -1,3 +1,16 @@
+# ADR 006 — Conteúdo na origem e transporte centralizado
+
+**Revisão AE.9, 23/10/2026:** [ADR 011](011-AUTENTICACAO-POR-CODIGO-E-EMAIL.md) é a decisão vigente; implementação/comprovação local nas AE.5–AE.9, publicação AWS na AE.10. O aceite anterior de SMTP local/simulação hom é histórico e não foi reaberto.
+
+API preserva handler/EmailService/IEmailSender e regras/conteúdo das mensagens. Auth monta o código de acesso. Ambas invocam EmailFunction síncrona por IAM; somente a função email tem MIME/MailKit/SMTP, sem duplicar transporte nos consumidores. Alias live do ambiente/contrato v1, sem endpoint público, retry próprio ou captura de conteúdo em logs.
+
+Captura SMTP4dev privada/efêmera é usada em todos os modos, sem entrega externa/relay ou volume persistente. Operador consulta a caixa via port-forward autorizado; não recebe código pela resposta de autenticação ou por endpoint do mecânico. mode=smtp indica captura, não entrega pessoal; histórico simulated preservado.
+
+Notificação após commit da OS continua sendo aguardada e sua falha tratada não desfaz a operação. Auth só ativa desafio após captured; falha tenta invalidar sem reembolsar limite. Sem outbox/fila, recuperação automática, processamento independente da requisição ou entrega única. Interrupção/timeout pode perder ou duplicar mensagem. [Sequência](../diagramas/ABERTURA_OS.md) e [AE.9](../../AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md).
+
+<details>
+<summary>Histórico da decisão anterior — E4/E5/E6, sem vigência no código AE</summary>
+
 # ADR 006 — Notificações na API e envio simulado na AWS
 
 **Estado:** aceito e validado em hom. Formalização original: 16/09/2026; decisão de SMTP local/simulação AWS incorporada na E4.
@@ -36,3 +49,5 @@ Os estados locais, planos pendentes e alternativas abaixo registram o momento em
 ## Extra AE.7 — implementação local de 22/10/2026
 
 [Envio centralizado e acesso Customer](../../AE7_API_ENVIO_E_ACESSO_CUSTOMER.md): API usa Invoke v1 em todos os modos, sem transporte SMTP próprio ou logging de simulação. Cadastro Active/titularidade são conferidos nas operações Customer, orçamento aceita somente approved booleano e retorna decisão após commit, e ClockSkew é zero. Falhas de notificação continuam tratadas após persistência. Captura SMTP4dev não comprova entrega externa; mode=smtp identifica a captura central. Preparado/comprovado localmente com 1.212 testes; publicação/Gateway e aceite AWS permanecem nas etapas extras posteriores, sem reabrir aceites oficiais.
+
+</details>

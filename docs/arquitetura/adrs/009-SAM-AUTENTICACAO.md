@@ -1,10 +1,12 @@
+> **AE.9, 23/10/2026:** auth mantém versão numérica/Gateway; envio usa template/stack/config/alias próprios de EmailFunction no mesmo repositório. [ADR 011](011-AUTENTICACAO-POR-CODIGO-E-EMAIL.md) e [workflows AE.8](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/AE8_WORKFLOWS_E_GATEWAY.md). Novo fluxo preparado localmente, não implantado na AWS.
+
 # ADR 009 — Provisionamento da autenticação com SAM
 
 **Estado:** aceito em 11/10/2026; implementação/integração hom comprovadas. VersionId do ZIP da Lambda 13 conferido em 21/10; ambiente removido depois.
 
 **Contexto:** simplificar manutenção do provisionamento auth e usar o formato nativo Lambda ZIP/CloudFormation, preservando contrato/rede/IAM persistente.
 
-**Decisão vigente:** SAM CLI 1.167.0 executa build/package/deploy/delete com template.yaml e samconfig.toml. .NET 10/x86_64, 512 MB/15 s, sem concorrência reservada/provisionada. AWS::LanguageExtensions precede SAM e AutoPublishAliasAllProperties=true; live é auxiliar, Gateway consome ARN de versão numérica publicado no SSM.
+**Decisão vigente:** SAM CLI 1.167.0 executa build/package/deploy/delete com templates/auth.yaml e samconfig.auth.toml. .NET 10/x86_64, 512 MB/15 s, sem concorrência reservada/provisionada. AWS::LanguageExtensions precede SAM e AutoPublishAliasAllProperties=true; live é auxiliar, Gateway consome ARN de versão numérica publicado no SSM.
 
 ## Responsabilidades e operação
 

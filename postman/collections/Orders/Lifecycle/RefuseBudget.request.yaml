@@ -1,0 +1,23 @@
+$kind: http-request
+name: RefuseBudget
+url: '{{base_url}}/orders/{{order_id}}/budget'
+method: PATCH
+auth:
+  type: bearer
+  credentials:
+  - key: token
+    value: '{{customer_token}}'
+body:
+  type: json
+  content: |
+    {
+      "approved": false
+    }
+scripts:
+- type: afterResponse
+  code: |-
+    pm.test("Orçamento recusado após persistência", () => {
+      pm.response.to.have.status(200);
+      pm.expect(pm.response.json().decision).to.equal("Refused");
+    });
+  language: text/javascript

@@ -30,7 +30,7 @@ O [ER](diagramas/DADOS.md) inclui as doze tabelas do Init.sql revisado na AE.3, 
 | `orders` → `order_materials` → `stock` | Itens com nome, marca, preço e quantidade da OS |
 | `order_status_history` | Linha temporal com UUID da OS, sequência, estados, UTC e motivo; sem FK para sobreviver ao DELETE |
 | `schema_initialization` | Marcador operacional do Job; não é domínio nem mecanismo de migrações |
-| `customer_auth_challenges`/`customer_auth_request_limits` | Desafios e limites por UUID do cliente existente; sem FK, cascata ou regras de negócio no SQL; fluxo C# ainda pendente |
+| `customer_auth_challenges`/`customer_auth_request_limits` | Desafios e limites por UUID do cliente existente; sem FK, cascata ou regras de negócio no SQL; operações transacionais C# e fluxo por código implementados/validados localmente |
 
 As referências por documento/placa foram preservadas. UUID identifica entidades nos contratos/JWT, mas nem todas as FKs físicas são UUID. Os itens não possuem PK/UNIQUE composto no SQL atual. O documento não acrescenta relações, índices, cascades ou constraints ausentes.
 
@@ -61,8 +61,10 @@ Métricas HTTP de negócio são registradas após operação confirmada e podem 
 
 O Job grava 1.0.0/hash/horário na transação do esquema/seeds. Reexecução exige um único marcador compatível; banco não vazio sem marcador ou hash divergente falha. Grants são provisionados depois. Secrets temporários do Job são removidos ao final, inclusive em falha; Terraform usa ephemeral/write-only, sem senha em planos/estados.
 
-`mecanica_api` possui SELECT/INSERT/UPDATE/DELETE nas nove tabelas de domínio, incluindo histórico; não é append-only. `mecanica_auth` possui SELECT somente em id/name/document/status de customers. Ambos ficam sem acesso ao marcador pelos grants. Scripts SQL são a fonte das permissões, sem garantias adicionais presumidas pelo desenho.
+`mecanica_api` possui SELECT/INSERT/UPDATE/DELETE nas nove tabelas de domínio, incluindo histórico; não é append-only. `mecanica_auth` possui SELECT somente em id/name/document/status/email de customers e DML nas duas tabelas de desafios/limites. Ambos ficam sem acesso ao marcador pelos grants. Scripts SQL são a fonte das permissões, sem garantias adicionais presumidas pelo desenho.
 
 SQL direto, Inactive, transações, retenção, estoque e indicadores foram conferidos em hom na [revisão E6](../REVISAO_E6_2026-10-21.md); cenários locais têm alcance próprio. O [descarte final](../ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md) confirma remoção do RDS atual e documenta snapshot manual antigo, cuja exclusão foi confirmada pelo mantenedor em 22/10/2026, sem nova consulta AWS pelo agente ou afirmação de eliminação de todos os dados históricos da conta. Prd/coexistência não foram testados. Não houve novo teste ou mudança SQL nesta revisão.
 
 Referências: [RDS PostgreSQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html), [SQL/esquema](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/blob/develop/docs/SCHEMA.md) e [grants da API](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/blob/develop/sql/ProvisionApiUser.sql).
+
+Revisão AE.9 (23/10/2026): fluxo por código e grants atualizados no código/validação local; publicação AWS na AE.10. Sem migrations, schema/seeds adicionais ou novas constraints nesta revisão. [Conferência conjunta](../AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md).

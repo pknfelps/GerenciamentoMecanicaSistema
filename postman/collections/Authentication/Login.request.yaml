@@ -1,28 +1,30 @@
 $kind: http-request
-url: "{{base_url}}/authentication"
+name: Login
+url: '{{base_url}}/authentication'
 method: POST
+headers:
+- key: Content-Type
+  value: application/json
+- key: Accept
+  value: application/json
 body:
   type: json
-  content: "{\r
-
-    \  \"Name\": \"Admin\",\r
-
-    \  \"Password\": \"Admin@123\",\r
-
-    \  \"Role\": \"Admin\"\r
-
-    }"
+  content: |
+    {
+      "Name": "Admin",
+      "Password": "Admin@123",
+      "Role": "Admin"
+    }
 scripts:
-  - type: afterResponse
-    code: |-
-      pm.test("Login realizado com sucesso", () => {
-        pm.response.to.have.status(200);
-      });
+- type: afterResponse
+  code: |-
+    pm.test("Login realizado com sucesso", () => {
+      pm.response.to.have.status(200);
+    });
 
-      if (pm.response.code === 200) {
-        const body = pm.response.text();
-        const token = body.startsWith('"') ? pm.response.json() : body;
-        pm.environment.set("admin_token", token);
-      }
-    language: text/javascript
-order: 1000
+    if (pm.response.code === 200) {
+      const body = pm.response.text();
+      const token = body.startsWith('"') ? pm.response.json() : body;
+      pm.environment.set("admin_token", token);
+    }
+  language: text/javascript

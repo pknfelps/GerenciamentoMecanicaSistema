@@ -1,19 +1,19 @@
 # Arquitetura implementada — Fase 3
 
-Revisão E7 de 21/10/2026, baseada no código/configuração dos quatro repositórios e nas evidências da E4/E5/E6. O escopo comprovado é **hom**. A configuração de prd existe, mas prd/coexistência não foram validados. O ambiente hom está **destruído**; os desenhos representam a implantação validada, não disponibilidade atual.
+Revisão AE.9 de 23/10/2026, com código/contratos preparados e conferidos localmente nos quatro repositórios. Publicação/comprovação AWS do refinamento na AE.10. Evidências E4/E5/E6 registram hom anterior removido; não comprovam a nova autenticação/captura nem disponibilidade atual ou prd.
 
 [README da API](../../README.md) · [Revisão E6](../REVISAO_E6_2026-10-21.md) · [Encerramento e custos](../ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md)
 
 ## Visão vigente
 
-- Entrada REST Regional → VPC Link V2 → NLB interno Terraform → NodePort → API .NET no EKS. POST /customers/validate usa Lambda .NET 10/SAM e versão numérica.
+- Entrada REST Regional → VPC Link V2 → NLB interno Terraform → NodePort → API .NET no EKS. POST request-code/verify-code usa AuthFunction .NET 10/SAM e versão numérica.
 - Um nó t3.small, HPA 1–3 pods, NAT único e RDS PostgreSQL 16.15/db.t3.micro Single-AZ privado com TLS VerifyFull. Sem Aurora/auto-pause, Load Balancer Controller ou escalador de nós.
-- Admin/Mechanic internos; Customer emitido do cadastro pelo documento. JWT HS256/UUID; autorização e vínculo na API, sem authorizer JWT no Gateway.
+- Admin/Mechanic internos; Customer emitido após documento e código de uso único. JWT HS256/UUID; autorização e vínculo na API, sem authorizer JWT no Gateway.
 - SQL 1.0.0/Job em banco vazio; histórico transacional preservado após DELETE de OS, não após destruição do banco.
-- SMTP local; hom/prd simulam envio e registram mensagem fixa. Handler é aguardado após commit; não há fila ou função de notificações.
+- EmailFunction privada concentra MIME/SMTP em todos os modos; API/auth invocam por SDK/IAM. SMTP4dev efêmero e privado, sem relay/entrega externa. Handler é aguardado após commit; sem fila/outbox.
 - OTel API/Lambda → Collectors → New Relic. Kubernetes/CloudWatch no Collector EKS; X-Ray por integração nativa separada. Somente W3C seleciona pai OTLP.
 - Três dashboards e cinco alertas como código, persistentes; New Relic administrado por workflow manual independente do descarte AWS.
-- SSM v2 configura consumidores, sem protocolo de releases/prontidão. Base/banco/Gateway usam plano salvo/aprovação/apply; API/auth são manuais sem aprovação intermediária. Não há deploy automático após merge.
+- SSM base/database/auth/gateway v2 e email/v1 configuram consumidores, sem protocolo de releases/prontidão. Base/banco/Gateway usam plano salvo/aprovação/apply; API/auth/email são manuais sem aprovação intermediária. Não há deploy automático após merge.
 
 ## Documentos
 
@@ -22,7 +22,7 @@ Revisão E7 de 21/10/2026, baseada no código/configuração dos quatro reposit�
 | [Componentes](diagramas/COMPONENTES.md) | Rede, proprietários, identidades e caminhos de observabilidade |
 | [Validação CPF/CNPJ](diagramas/VALIDACAO_CPF.md) | Parsing, bootstrap reutilizável, JWT e autorização das próprias OSs |
 | [Abertura de OS](diagramas/ABERTURA_OS.md) | Login, transação, notificação aguardada e métricas após retorno |
-| [ER completo](diagramas/DADOS.md) | Dez tabelas, chaves físicas e correlação histórica sem FK |
+| [ER completo](diagramas/DADOS.md) | Doze tabelas, chaves físicas e correlação histórica sem FK |
 | [Banco e modelo](BANCO_E_MODELO.md) | Justificativa PostgreSQL/RDS, alternativas, alterações, relações e limites |
 | [Acesso/autenticação](ACESSO_E_AUTENTICACAO.md) | Matriz HTTP, códigos, claims e sessões |
 | [Contratos operacionais](CONTRATOS_ENTRE_REPOSITORIOS.md) | Catálogo SSM v2 real, artefatos, Secrets e ordem entre repositórios |
@@ -40,8 +40,9 @@ Revisão E7 de 21/10/2026, baseada no código/configuração dos quatro reposit�
 | Histórico e banco descartável | [ADR 003](adrs/003-BANCO-E-HISTORICO.md), com Aurora substituída pelo [ADR 007](adrs/007-RDS-FREE-PLAN.md) |
 | Repositórios/ambientes | [ADR 004](adrs/004-ENTREGA-E-AMBIENTES.md) |
 | Observabilidade | [ADR 005](adrs/005-OBSERVABILIDADE.md) |
-| Notificações e melhoria futura | [ADR 006](adrs/006-NOTIFICACOES.md) |
+| Conteúdo e transporte das mensagens | [ADR 006](adrs/006-NOTIFICACOES.md) |
 | Infraestrutura declarativa | [ADR 008](adrs/008-INFRAESTRUTURA-DECLARATIVA.md) |
+| Código de acesso e envio central | [ADR 011](adrs/011-AUTENTICACAO-POR-CODIGO-E-EMAIL.md) |
 | Auth SAM e ZIP versionado | [ADR 009](adrs/009-SAM-AUTENTICACAO.md) |
 
 Os ADRs mantêm registros anteriores em seções de histórico explicitamente sem vigência operacional. Menções históricas a Aurora, Service LoadBalancer/controller, SSM v1/releases, precedência X-Ray ou publicação ainda pendente não descrevem a configuração final. O texto vigente vem antes desse histórico.

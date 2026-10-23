@@ -1,34 +1,22 @@
-# E0 — Especificação de acesso e autenticação
+# Acesso e autenticação — contrato AE
 
-> Atualização extra AE.7 (22/10/2026), comprovada localmente: orçamento aceita somente approved e retorna decisão 200; Active/titularidade são conferidos em operações Customer e ClockSkew é zero para todos os JWTs. [Contrato e evidências](../AE7_API_ENVIO_E_ACESSO_CUSTOMER.md). Referências abaixo à emissão por documento/contrato anterior descrevem a revisão implantada antes da extra; publicação coordenada segue na AE.8.
+**Revisão de 23/10/2026, AE.9.** Descreve o código preparado nas AE.3–AE.8. A comprovação conjunta é local; a publicação AWS do contrato novo continua na AE.10. Os aceites hom anteriores à extra permanecem nas [evidências E6](../REVISAO_E6_2026-10-21.md), sem certificar a implantação destas alterações. [Contrato extra](../CONTRATOS_EXTRA_AUTENTICACAO_E_EMAIL.md) · [Roteiro AE.9](../AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md).
 
-> **Extra AE.1, 22/10/2026:** este documento mantém o contrato anterior implementado. A substituição de customers/validate por solicitação/confirmação de código, JWT sem vínculo à OS, Active e decisão 200 está consolidada no [contrato extra](../CONTRATOS_EXTRA_AUTENTICACAO_E_EMAIL.md), ainda não implementado. Não misturar decisões futuras com as evidências oficiais abaixo.
+## Identidades e responsabilidades
 
-- **Data:** 2026-09-13.
-- **Estado:** contrato implementado e validado no escopo hom nas evidências E4/E6; revisão documental de 21/10/2026. Ambiente removido após validação; prd não comprovado. [Revisão/evidências](../REVISAO_E6_2026-10-21.md).
-- **Referências:** [arquitetura](README.md), [identidade e permissões](adrs/001-IDENTIDADE.md) e [integração em execução](rfcs/001-EXECUCAO.md).
-- **Origem:** regras de negócio definidas pelo usuário nesta sessão; detalhes de contrato abaixo concretizam essas regras com base no código atual.
+Admin administra usuários internos; Mechanic opera cadastros/OSs e sua própria conta; Customer representa o cadastro do cliente. Admin não herda Mechanic. Customer consulta status e decide orçamento somente de suas OSs. JWT carrega UUID do cliente, sem vínculo a uma OS; o relacionamento é validado pela API. Não há Authorizer, status anônimo ou código/token emitido pelo mecânico.
 
-## 1. Identidades e responsabilidades
+O cliente solicita e confirma o código com seu CPF/CNPJ numérico. O operador consulta a captura privada SMTP4dev para simular a entrega; isso não comprova acesso à caixa pessoal. Não há e-mail externo. O pacote Auth.Contracts 1.0.0 permanece compartilhando documento/assinatura, sem contratos de SMTP ou entidades de OS.
 
-| Identidade | Responsabilidade |
-|---|---|
-| Admin | Cadastrar, consultar e remover usuários internos; atualizar somente a própria conta |
-| Mechanic | Gerenciar OSs e cadastros operacionais (clientes, veículos, estoque e catálogo); consultar/atualizar somente a própria conta |
-| Cliente | Validar o documento (CPF/CNPJ) pela função serverless; consultar o status e aprovar/recusar o orçamento da própria OS |
+## Matriz por endpoint
 
-O modelo de usuários internos passa de `User/Manager/Admin` para `Mechanic/Admin`. `Customer` será o valor da claim de perfil para tokens de cliente, sem transformar clientes em registros de usuários internos. Admin não herda permissões de Mechanic. Nenhum dos dois pode aprovar/recusar orçamento, nem alterar o login de outra conta. Update próprio não altera role.
-
-A escolha de `Mechanic` segue a sugestão registrada em D03.5. A consulta própria de usuário e a atribuição dos cadastros auxiliares a Mechanic são detalhamentos da separação de responsabilidades para os endpoints existentes.
-
-## 2. Matriz de permissões por endpoint
-
-As rotas são apresentadas em minúsculas para uniformizar o contrato; as atuais usam nomes de controllers no roteamento. Parâmetros de query existentes permanecem, salvo o detalhamento dos novos métodos de users. `Próprio` significa validar o vínculo com a identidade autenticada no servidor, não confiar na identificação enviada pelo consumidor.
+As rotas da API usam nomes de controllers e são apresentadas em minúsculas para leitura; o Gateway projeta as operações do OpenAPI. Próprio significa verificar a identidade no servidor, não confiar em CPF/UUID recebidos para escolher o titular.
 
 | Método | Rota | Admin | Mechanic | Cliente | Sem token | Execução |
 |---|---|---|---|---|---|---|
 | POST | `/authentication` | Sim | Sim | Não se aplica | Sim | API — autenticação interna |
-| POST | `/customers/validate` | Não se aplica | Não se aplica | Sim | Sim | Função serverless via Gateway — nova |
+| POST | `/customers/auth/request-code` | Não se aplica | Não se aplica | Sim | Sim | AuthFunction — solicitar código |
+| POST | `/customers/auth/verify-code` | Não se aplica | Não se aplica | Sim | Sim | AuthFunction — confirmar código e emitir JWT |
 | POST | `/users` | Sim | Não | Não | Não | API |
 | GET | `/users` | Sim | Próprio | Não | Não | API |
 | PATCH | `/users` | Próprio | Próprio | Não | Não | API — implementada e conferida em hom |
@@ -70,186 +58,40 @@ As rotas são apresentadas em minúsculas para uniformizar o contrato; as atuais
 | GET | `/health/ready` | Sim | Sim | Sim | Sim | API — probes |
 | GET | `/health/startup` | Sim | Sim | Sim | Sim | API — probes |
 
-Rotas de emissão de token não exigem token prévio: `/authentication` valida credenciais internas; `/customers/validate` valida documento/cadastro/status. Enviar um token a elas não dispensa essas verificações. A API mantém as validações de domínio e de estado da OS após a autorização.
 
-O OpenAPI `/openapi/v1.json` e a interface `/swagger` permanecem sem autenticação quando habilitados em desenvolvimento, como hoje. O código não as habilita em Staging/Production e o Gateway não publica essas rotas. Health checks continuam sem JWT para as probes; isso não determina exposição pública de todas essas rotas no Gateway.
+Probes são internas à API e não são publicadas pelo Gateway. Rotas de login/pedido/confirmação não exigem Bearer anterior; enviar JWT não evita verificação de credenciais ou código. Chamadas com sessão Customer válida reutilizam o Bearer nas operações de OS, sem repetir autenticação em cada endpoint.
 
-### Verificação de propriedade
+## Pedido e confirmação do código
 
-- **Update próprio:** obter o ID do usuário do token validado; nenhuma entrada pode selecionar outra conta.
-- **GET users:** Admin mantém a consulta atual por `name/role`. Para Mechanic, a consulta parametrizada é vinculada exclusivamente ao UUID autenticado, sem usar o nome do token. Filtros omitidos retornam a própria conta; filtros informados devem corresponder ao cadastro atual, ou retornam 403 sem consultar outra conta. Conta própria ausente retorna 404; senha/hash não são retornados.
-- **OS do cliente:** carregar a OS e verificar seu vínculo com o cliente identificado no token. A API resolve o cliente pelo UUID do token e consulta a OS por ID/documento cadastrado, verificando o vínculo antes da decisão de estado ou de alterações. OS inexistente, de outro cliente ou cliente ausente retornam o mesmo 404 com detail `Ordem não encontrada`, sem divulgar documentos. Não revalidar Active/Inactive para bloquear uma sessão já emitida.
-- **Aprovação:** manter o campo `approved`. O `customerDocument` existente, enquanto mantido por compatibilidade, deve corresponder à identidade autenticada e nunca substitui a verificação do titular. Admin e Mechanic recebem 403 mesmo que informem o documento correto. Documento inválido retorna 400; divergência na OS própria ou transição inválida retorna 422. O titular obrigatório é obtido do JWT, não de campos adicionais do request.
-
-### Respostas das rotas existentes — E4
-
-| Situação | Resposta |
-|---|---|
-| JWT ausente/inválido/expirado; identidade obrigatória ausente, duplicada, inválida ou vazia | 401 |
-| Perfil sem permissão; filtros próprios incompatíveis | 403 |
-| OS ausente/de outro cliente; cadastro necessário ausente | 404 |
-| Request inválido | 400 |
-| Documento divergente na OS própria ou transição inválida | 422 |
-| Falha inesperada | 500 |
-
-O helper HTTP exige um único NameIdentifier UUID válido em GET Users de Mechanic, PATCH Users de Admin/Mechanic e status/orçamento de Customer. As outras rotas preservam a validação JWT existente, sem exigência global de ID ou leitura de cadastro para cada token. ClaimsPrincipal fica nos controllers; serviços recebem UUID. Negativas de challenge/forbid preservam seus formatos atuais; filtros de conta usam AccessDeniedException/Problem Details. Testes percorrem as 37 ações protegidas e exercitam HTTP/PostgreSQL, incluindo estoque/histórico intactos nas negativas e token anterior à inativação. A conferência pelo Gateway de hom está registrada nas fontes E6; não foi estendida a prd.
-
-## 3. PATCH /users — atualizar a própria conta
-
-**Implementação local E4.11 em 13/10/2026:** Admin ou Mechanic alteram exclusivamente sua própria conta, selecionada pelo UUID do JWT. Publicação e conferência AWS no escopo hom estão registradas na revisão E6.
-
-```http
-PATCH /users
-Authorization: Bearer <token>
-Content-Type: application/json
-```
-
-```json
-{
-  "name": "mecanico atualizado",
-  "password": "NovaSenha@123"
-}
-```
-
-- `name` e `password` são opcionais; informar pelo menos um. Omitir preserva o valor atual. Nulo/vazio/whitespace explícito é inválido. Não usar JSON Patch.
-- Aceitar somente essas duas propriedades, mantendo nomes JSON sem distinção de maiúsculas. Rejeitar id, role e demais campos desconhecidos; indicadores de presença são privados e não integram o contrato JSON.
-- Nome segue a validação já existente (ao menos três caracteres, letras/espaços) e limite de 100 caracteres; senha segue as regras atuais e é gravada como hash, nunca retornada.
-- Exigir exatamente um NameIdentifier UUID válido e não vazio antes do serviço. Nome/perfil do token não selecionam o cadastro; perfil persistido e ID permanecem inalterados.
-- Reutilizar a checagem atual de nome/perfil, excluindo a própria conta da detecção de conflito. O mesmo nome em outro perfil não conflita.
-- Atualizar name/password por SQL fixo parametrizado pelo UUID, com COALESCE para campos omitidos. Nenhuma linha atualizada significa conta ausente. Não modificar esquema nem criar operação de revogação.
-
-| Código | Significado |
-|---|---|
-| 204 | Atualização concluída, sem corpo |
-| 401 | Token ausente/inválido/expirado ou identidade obrigatória inválida |
-| 403 | Perfil sem permissão |
-| 404 | Conta identificada pelo JWT inexistente |
-| 400 | Corpo/valores inválidos, campos proibidos ou nenhum campo informado |
-| 409 | Nome já utilizado por outro usuário do mesmo perfil |
-| 500 | Falha inesperada de execução/persistência |
-
-Contrato de erros alinhado à API por escolha do mantenedor em 13/10/2026, substituindo os códigos antigos desta operação. Preservar challenge/forbid e Problem Details. Mensagens não incluem senha, hash ou valores enviados.
-
-Após mudar nome/senha, o token assinado permanece válido até expirar; não exigir senha atual, gerar token novo ou revalidar cada requisição contra nome/senha. O UUID preserva a identificação da conta, inclusive se outro usuário reutilizar o login antigo. O próximo login usa os dados novos.
-
-## 4. DELETE /users — remover usuário
-
-**Implementação local E4.12 em 13/10/2026:** somente Admin. O alvo é selecionado pela query obrigatória `id` (UUID não vazio), sem corpo. Publicação e conferência AWS no escopo hom estão registradas na revisão E6.
-
-```http
-DELETE /users?id=<uuid-do-usuario>
-Authorization: Bearer <token-admin>
-```
-
-| Código | Significado |
-|---|---|
-| 204 | Remoção concluída, sem corpo |
-| 401 | Token ausente/inválido/expirado |
-| 403 | Perfil diferente de Admin |
-| 400 | ID ausente/inválido/vazio |
-| 404 | Usuário inexistente, inclusive numa segunda exclusão |
-| 500 | Falha inesperada de execução/persistência |
-
-Contrato de erros alinhado à API por escolha do mantenedor em 13/10/2026, substituindo os códigos antigos desta operação. Preservar challenge/forbid e Problem Details, sem credenciais ou dados cadastrais nas mensagens.
-
-O controller exige Admin pelo atributo Authorize, sem exigir NameIdentifier do autor nem consultar seu cadastro a cada requisição. A query identifica o alvo. O serviço valida UUID e executa DELETE fixo parametrizado; quantidade zero de linhas afetadas resulta em 404, sem SELECT prévio. Nenhuma tabela além de users é alterada.
-
-Mechanic não pode remover outros usuários nem a própria conta. Admin pode excluir Admin/Mechanic, inclusive sua própria conta e o último Admin; não há proteção adicional definida. A remoção impede novo login, mas não revoga JWTs anteriores. Rotas permitidas pelo perfil continuam aceitando o token até expirar; GET próprio de Mechanic e PATCH próprio retornam 404 ao resolver a conta removida. Reutilizar o nome em uma nova conta não transfere a identidade do token anterior.
-
-No Postman, `DeleteUser` usa admin_token e user_id inicialmente vazios. Preencher user_id com o UUID do cadastro a excluir, obtido na consulta de usuários.
-
-## 5. POST /customers/validate — validação serverless do documento (CPF/CNPJ)
-
-**Responsável:** função serverless. O Gateway direciona essa rota para a função, sem criar um login de cliente com senha ou uma segunda etapa de autenticação na API principal. O nome da rota não significa que a emissão será implementada no CustomersController da API.
-
-```http
-POST /customers/validate
-Content-Type: application/json
-```
-
-```json
-{
-  "document": "529.982.247-25"
-}
-```
-
-Documento ilustrativo para contrato/teste, sem associação a pessoa real. O mesmo campo document aceita CNPJ numérico, por exemplo 10.359.666/0001-94. Não há endpoint implementado a migrar.
-
-1. Validar corpo e document obrigatório em string. Aceitar CPF de 11 dígitos ou CNPJ numérico de 14 dígitos, com ou sem as respectivas máscaras do projeto. Rejeitar letras, espaços, formato incorreto, tamanho não suportado e dígitos verificadores inválidos.
-2. Reutilizar DocumentRules do pacote compartilhado, que identifica CPF/CNPJ e normaliza para comparação/consulta compatível com o cadastro: `XXX.XXX.XXX-XX` ou `XX.XXX.XXX/XXXX-XX`. Validar o formato HTTP antes da normalização; não restringir o fluxo somente a CPF.
-3. Consultar diretamente o cliente e seu status no RDS PostgreSQL, via Lambda .NET 10 com credencial de leitura limitada ([integração da função](rfcs/001-EXECUCAO.md)). Usar o mesmo formato canônico de documento do domínio.
-4. Cliente existente e Ativo recebe JWT de perfil Customer, conforme seção 6. Não exigir senha nem cadastrar um usuário interno para ele.
-
-| Código | Significado |
-|---|---|
-| 200 | Token válido no corpo, como string, seguindo a resposta atual de autenticação |
-| 401 | Documento válido sem cliente elegível: cadastro inexistente ou Inativo |
-| 400 | Corpo ou documento inválido |
-| 500 | Falha técnica tratada pelo handler, incluindo configuração, persistência e cancelamento pelo prazo disponível |
-
-Exemplo lógico do valor retornado em 200: `"<jwt>"`. Reutilizar a convenção de resposta de token da autenticação interna, sem introduzir envelope com campos de sessão/refresh token. Falhas inesperadas da função ou de sua integração continuam sujeitas a respostas 5xx de infraestrutura; não mascará-las como 401/400.
-
-**Contrato do handler — parte 4:** exigir `application/json`, aceitando `charset=utf-8` e nomes de cabeçalhos sem distinção de maiúsculas. O corpo contém exatamente uma propriedade `document`, em string obrigatória; rejeitar propriedades extras/duplicadas, nomes diferentes, valores nulos ou de outro tipo e JSON malformado. O transporte Base64 do evento REST proxy é aceito com UTF-8 estrito; erros de parsing retornam 400 antes de carregar configuração ou consultar o banco. Formato/dígitos do documento continuam validados pelo caso de uso.
-
-200 usa `application/json` com token como string JSON. 400/401/500 usam `application/problem+json` com `type: about:blank`, `status` correspondente, `instance: /customers/validate` e mensagens fixas:
-
-| Código | title | detail |
+| Operação | Corpo | Sucesso |
 |---|---|---|
-| 400 | Requisição inválida | O corpo ou documento informado é inválido. |
-| 401 | Autenticação não autorizada | Não foi possível autenticar o cliente. |
-| 500 | Erro interno do servidor | Não foi possível processar a autenticação. |
+| POST /customers/auth/request-code | document | 202 com challengeId e mensagem genérica |
+| POST /customers/auth/verify-code | challengeId, code, document | 200 com JWT como string JSON |
 
-Cadastro inexistente e Inativo produzem exatamente a mesma negativa. Todas as respostas do handler incluem `Cache-Control: no-store` e `isBase64Encoded: false`. Não expor documento, token, chave, senha, configuração ou exceções nos logs/erros. Falhas técnicas e cancelamento nunca são convertidos em documento inválido ou cliente inelegível. Respostas produzidas pelo próprio Gateway/runtime podem seguir outros formatos 5xx.
+JSON application/json de até 4 KiB UTF-8, inclusive após Base64. Campos estritos, nomes sem distinção de maiúsculas; extras, duplicações, null/tipo incorreto ou documento inválido retornam 400 antes de bootstrap/SQL. Document aceita CPF de 11 ou CNPJ numérico de 14 dígitos, com as máscaras do DocumentRules, normalizados para consulta. Código tem oito dígitos ASCII; challengeId é UUID não vazio. Não transportar documento pelo header/query/JWT.
 
-O contrato estático do produtor fica em [contracts/openapi.json](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/contracts/openapi.json), sem extensões AWS ou destinos de ambiente nesta entrega. Handler, IAM/rede/deploy/Gateway e aceitação do JWT pela API foram conferidos em hom; os resultados e limites estão na revisão E6.
+Pedido: cliente encontrado/Active/com e-mail utilizável → desafio Pending confirmado → Invoke síncrono EmailFunction → captura confirmada → Ready condicional → 202. Cadastro ausente/Inactive/sem e-mail utilizável recebe o mesmo 202 sem escrita, código, envio ou limpeza; apenas diagnóstico técnico fixo. 202 não confirma existência do cliente ou entrega. Sem consulta a OS na autenticação.
 
-## 6. JWT e autenticação interna
+Cooldown de 60 segundos e cinco solicitações admitidas/hora, por UUID de cliente elegível. Limite retorna 429 com Retry-After. Validade do código: cinco minutos; cinco tentativas incorretas invalidam. Documento divergente também consome tentativa. Código correto só retorna JWT após consumo/commit atômicos; replay, expiração, Pending/Invalidated/Consumed, cadastro ausente/Inactive recebem 401 genérico. Falha conhecida no envio impede ativação e tenta invalidar Pending, sem reembolsar limite nem mascarar a falha original.
 
-**Implementação E4 — primeira entrega:** cadastro/login internos aceitam somente Admin/Mechanic, com validação nominal antes do banco; perfis incompatíveis no corpo retornam 400, credenciais incorretas/cadastro ausente retornam 401. O emissor interno acrescenta NameIdentifier usando o UUID persistido, como já faz a Lambda para Customer. Por revisão solicitada em 13/10/2026, os mapeadores constroem o domínio diretamente, sem try/catch: identidade/perfil persistidos inválidos propagam DomainValidationException (400 pelo middleware), sem emitir JWT. Algoritmo, expiração e tolerância são preservados; a validação global ainda aceita tokens anteriores sem ID. A matriz das rotas existentes e o vínculo da OS estão implementados nesta entrega: Mechanic opera a oficina, Admin administra o cadastro de usuários e Customer acessa status/decisão de sua própria OS. Admin não herda permissões operacionais; PATCH próprio e DELETE estão implementados e conferidos em hom, incluindo negativas e sessões anteriores, conforme fontes E6.
+Todas as respostas têm Cache-Control: no-store. Erros usam problem+json com type=about:blank e instance de rota fixa, nunca caminho arbitrário. 400 inválido; 401 confirmação não autorizada; 429 limite; 500 erro técnico/timeout. Handler direto responde 404 na rota antiga/desconhecida e 405/Allow: POST no método incorreto; Gateway pode responder com seu próprio envelope quando a rota não existe. Não expor código, documento, destinatário, configuração ou exceção original em respostas de erro/logs.
 
-O JWT segue `Infrastructure/Authentication/JwtTokenGenerator.cs` e a validação de `GerenciamentoMecanicaSistema/Program.cs`:
+## Operações Customer e decisão do orçamento
 
-- Assinatura simétrica **HS256** com a configuração `Jwt:Key`; manter a exigência atual de chave com pelo menos 32 caracteres na API.
-- Emissão com expiração em **UTC + 10 minutos**, também para clientes. Preservar as opções de validação atuais, incluindo a tolerância de relógio do middleware; 10 minutos é o `exp` emitido, sem introduzir mudança implícita dessa tolerância.
-- Validar assinatura, issuer, audience e lifetime como hoje. Função e API devem ter configurações compatíveis por ambiente.
-- A API mantém a validação do Bearer token e a autorização por rota. A REST API do Gateway roteia a validação de documento à Lambda e as operações à API via VPC Link/NLB interno (D01.3–D01.5). Não introduzir authorizer JWT nativo incompatível com HS256. A chave compartilhada fica no Secrets Manager, com referências públicas SSM v2. A base administra Pod Identity da API; API/função carregam AWSCURRENT pelo SDK .NET na inicialização e mantêm em memória, sem fallback local em modo AWS ou cópia para Secret Kubernetes. Consumo conferido em hom; mudança de chave exige reinicialização. [Detalhamento](CONTRATOS_ENTRE_REPOSITORIOS.md).
-- Preservar as claims Name/Role e acrescentar o ID estável como NameIdentifier, ajuste mínimo derivado da regra de Update próprio já registrada em D03.4. Para internos: ID da tabela users, nome e role Admin/Mechanic. Para cliente: ID da tabela customers, nome e role Customer.
-- Gerar claims a partir do cadastro consultado. Payload de validação de documento não escolhe ID, role, issuer, audience ou expiração.
-- Não adicionar refresh token, blacklist, armazenamento de sessão nem revogação por atualização, remoção ou inativação.
+GET /Orders/{id}/status aceita Mechanic ou Customer. Customer exige cadastro Active antes de consultar a OS e vínculo da OS ao UUID do JWT. Ausência de cadastro, OS inexistente e outro titular produzem 404 genérico; Inactive produz 403. Mechanic mantém consulta operacional sem adquirir permissão de aprovar/recusar orçamento.
 
-O login **interno** continua em `POST /authentication`, com `name/password/role`, verificação do hash de senha e resposta 200 com token ou 401/400 conforme o fluxo atual. Passa a atender Admin e Mechanic; não é o caminho de validação de clientes. A ampliação de claims não altera algoritmo, formato JWT ou estratégia de sessão.
+PATCH /Orders/{id}/budget aceita **somente approved booleano explícito**, por exemplo {"approved":true}. Ausência, null, texto, extras (inclusive customerDocument/customerId) e duplicação produzem 400. CPF é verificado na confirmação do código, não repetido no orçamento. Após commit, responde 200 com {"decision":"Approved"} ou {"decision":"Refused"}; repetição/estado incompatível permanece 422. Diagnóstico concluído segue 204, sem token. Estoque, locks, histórico e rollback são preservados.
 
-## 7. Cadastro e status de clientes
+## JWT, cadastro e sessões
 
-**Implementação E4 — primeira entrega:** domínio e persistência da API representam Active/Inactive. `GET /Customers` retorna o campo `status` como string, incluindo clientes em ambos os estados. O cadastro define Active; a atualização preserva o estado carregado e não escreve a coluna status. Status ausente/desconhecido nos dados persistidos é falha técnica, sem fallback para Active. POST/PATCH não incluem status em seus contratos; um campo extra enviado é ignorado e não altera o estado. Fixtures PostgreSQL locais preparam Inactive para validar a preservação, sem operação pública de inativação. Cliente fictício Inactive foi conferido por SQL direto em hom, com preservação do estado no PATCH e negativa de nova emissão, sem revogar JWT anterior.
+HS256, issuer/audience por ambiente, UUID/nome/role e expiração UTC + dez minutos. Customer não contém CPF/CNPJ, e-mail, código, desafio ou ID da OS. API valida assinatura/algoritmo/emissor/audiência/prazo com **ClockSkew zero**, inclusive para Admin/Mechanic. Login interno mantém name/password/role e só emite Admin/Mechanic; Customer não possui login por senha.
 
-- Estados do modelo: Ativo e Inativo.
-- Novos clientes são criados como **Ativo** no servidor, independentemente de campo enviado pelo consumidor.
-- Criar esquema e seeds de banco vazio com clientes Ativos por padrão. D08.1 do plano dispensa a migração de clientes antigos porque o banco educacional é descartável; Inativo permanece disponível para fixtures de teste.
-- **Não implementar operação de inativação nesta etapa**, nem permitir que o PATCH genérico de clientes altere o status indiretamente. Não acrescentar campo editável de status aos contratos atuais.
-- A função continua consultando o status e rejeitando Inativo, atendendo ao requisito do PDF. Esse caso pode ser preparado por fixture de teste, sem adicionar endpoint administrativo.
-- A regra futura de inativação preserva sessões existentes. Isso não exige implementar a operação agora.
-- O DELETE de cliente já existente continua sendo exclusão, sujeito às regras atuais; não convertê-lo implicitamente em inativação.
+Inativação após emitir JWT não altera a assinatura, mas as duas operações Customer consultam Active e negam acesso. Não há endpoint público de inativação, refresh, revogação central, sessão por orçamento ou bypass por JWT no pedido/confirmação. PATCH cadastral preserva status. Exclusão/recriação não transfere identidade nem titularidade para outro UUID.
 
-## 8. Critérios e evidências E3/E4/E6
+## Execução e alcance
 
-- Percorrer a matriz por endpoint, incluindo acesso sem token e perfis sem permissão.
-- Comprovar que apenas Admin cadastra/remove usuários e que Admin não opera OSs.
-- Verificar Update próprio, tentativa de editar outra conta, alteração de role, login duplicado e troca/reutilização de login com token anterior.
-- Verificar todos os códigos definidos para PATCH/DELETE users sem alterar os contratos de erro dos endpoints existentes.
-- Validar CPF e CNPJ numérico com/sem máscara, formato/dígitos inválidos para ambos, cadastro ausente, Ativo e fixture Inativo.
-- Comprovar que `/customers/validate` executa na função e que seu token é aceito pela API com a configuração JWT escolhida.
-- Verificar assinatura, issuer/audience, expiração e isolamento dos perfis internos/cliente.
-- Rejeitar consulta/decisão sobre OS de outro cliente e aprovação/recusa com Admin ou Mechanic.
-- Validar remoção/Update com token anterior conforme as regras de preservação de sessão.
-- Verificar clientes novos/seeds como Ativo e ausência de alteração de status pelos contratos públicos.
+Auth inicializa uma vez por runtime saudável, com nova tentativa após falha. Produção exige hom/prd e us-east-1, bootstrap SSM/Secrets com limites existentes, TLS VerifyFull e usuário mecanica_auth. Localmente os testes/ensaio injetam configuração; não há fallback alternativo de banco/JWT no handler padrão.
 
-## 9. Conclusão desta parte da E0
+EmailFunction recebe Invoke v1 privado e concentra MIME/SMTP. API e auth montam suas mensagens e só confirmam captured com envelope válido. Código/caixa são efêmeros; PostgreSQL persiste salt/verificador e limites. Falha de notificação da OS não desfaz o commit; falha do envio do código impede confirmar desafio utilizável. Sem outbox, fila, reenvio automático ou entrega única.
 
-E0.2 e E0.3 ficam concluídas **como especificação**, com esta matriz e estes contratos. A implementação e a comprovação operacional permanecem em E3/E4/E6.
-
-Atualização em 2026-09-16: a E0 foi concluída como especificação. Componentes, comunicação, observabilidade e responsabilidades estão no [índice de arquitetura](README.md); o próximo trabalho é a E1. A consulta direta da Lambda ao banco foi consolidada em D01.5. Em 2026-10-02, D01.6 mudou o motor para RDS PostgreSQL sem reabrir as regras de negócio deste documento.
-
-Atualização em 2026-09-25, solicitada pelo usuário: a validação é do documento do cliente (CPF ou CNPJ), ampliando o requisito mínimo de CPF. O campo planejado da requisição passa de cpf para document. Esta definição substitui a restrição anterior a CPF; cadastro/status, JWT e permissões permanecem iguais.
-
-Revisão E7 de 21/10: contrato confrontado com controllers/handler e fontes da E6. Os critérios acima não são todos uma nova suíte AWS aprovada; consultar a matriz de evidências para cobertura local/hom, dispensas e limites. Nenhuma rota, sessão ou configuração foi alterada nesta revisão.
+[Postman](../../postman/README.md) mantém desafio/código/JWT somente na sessão local. Fluxo conjunto, negativas e limites estão no [registro AE.9](../AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md). Prd e execução AWS do novo contrato não são comprovadas pela validação local.

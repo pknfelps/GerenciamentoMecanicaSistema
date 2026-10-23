@@ -1,15 +1,16 @@
 $kind: http-request
-url: "{{base_url}}/catalog"
+name: GetServices
+url: '{{base_url}}/catalog'
 method: GET
 auth:
   type: bearer
   credentials:
-    token: "{{mechanic_token}}"
+  - key: token
+    value: '{{mechanic_token}}'
 queryParams:
-  - key: id
-    value: null
-    disabled: true
-  - key: description
-    value: null
-    disabled: true
-order: 2000
+- key: id
+  value: null
+  disabled: true
+- key: description
+  value: null
+  disabled: true

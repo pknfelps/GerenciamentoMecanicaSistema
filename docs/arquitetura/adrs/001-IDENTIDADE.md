@@ -1,12 +1,14 @@
+> **Revisão AE.9 — 23/10/2026:** [ADR 011](011-AUTENTICACAO-POR-CODIGO-E-EMAIL.md) substitui emissão por documento isolado. Não há Authorizer ou token por OS.
+
 # ADR 001 — Separar identidade interna e acesso do cliente
 
-**Estado:** aceito, implementado e validado em hom. Formalização original: 16/09/2026.
+**Estado:** aceito; base anterior validada em hom. Refinamento AE implementado/validado localmente, publicação AWS pendente na AE.10. Formalização original: 16/09/2026.
 
 **Contexto:** gestão de usuários, operação da oficina e decisão do cliente exigem permissões diferentes. A validação cadastral do cliente deve ocorrer na função serverless.
 
-**Decisão vigente:** users contém somente Admin/Mechanic. Admin cadastra/consulta/remove usuários; ambos atualizam somente a própria conta pelo UUID do JWT. Mechanic opera cadastros e OS; Admin não herda esse acesso. Customer é emitido pela Lambda a partir de customers Active, sem senha, e só consulta status/decide orçamento das próprias OSs. A API verifica JWT/perfil/vínculo, sem authorizer adicional no Gateway.
+**Decisão vigente:** users contém somente Admin/Mechanic. Admin cadastra/consulta/remove usuários; ambos atualizam somente a própria conta pelo UUID do JWT. Mechanic opera cadastros e OS; Admin não herda esse acesso. Customer é emitido pela Lambda após CPF/CNPJ e código de uso único para customers Active, sem senha, e só consulta status/decide orçamento das próprias OSs. A API verifica JWT/perfil/vínculo, sem authorizer adicional no Gateway.
 
-NameIdentifier UUID é emitido nos dois tipos de token. O UUID obrigatório é conferido nas operações próprias; outras rotas preservam autenticação por assinatura/perfil sem consulta global ao cadastro. Senha é hash PBKDF2, JWT usa HS256/dez minutos e a validação mantém ClockSkew de cinco minutos. PATCH/DELETE/inativação não revogam tokens; recursos necessários ainda precisam existir. Recriar nome não transfere identidade.
+NameIdentifier UUID é emitido nos dois tipos de token. O UUID obrigatório é conferido nas operações próprias; outras rotas preservam autenticação por assinatura/perfil sem consulta global ao cadastro. Senha é hash PBKDF2, JWT usa HS256/dez minutos e a validação usa ClockSkew zero. PATCH/DELETE não implementam revogação centralizada; as duas operações Customer verificam cadastro Active e vínculo, bloqueando inativação após emissão. Recriar nome não transfere identidade.
 
 **Alternativas:** Admin para tudo foi substituído. Login de cliente com senha, refresh/revogação centralizada e criação de OS por cliente não pertencem ao escopo.
 
