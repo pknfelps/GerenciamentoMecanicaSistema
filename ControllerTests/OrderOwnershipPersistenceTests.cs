@@ -114,7 +114,9 @@ public sealed class OrderOwnershipPersistenceTests
         UseToken("Mechanic", Guid.NewGuid());
         using var response = await client.PostAsJsonAsync("/Orders", new
         {
-            customerId, vehicleId, services = new[] { new { id = serviceId, value = 1 } },
+            customerId,
+            vehicleId,
+            services = new[] { new { id = serviceId, value = 1 } },
             materials = new[] { new { id = materialId, value = 1 } }
         });
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
@@ -154,12 +156,13 @@ public sealed class OrderOwnershipPersistenceTests
         }
         await CompleteDiagnosis(id);
         UseToken("Customer", customerId);
-        // Inactivation after issuance does not revoke this signed token.
-        await connection.ExecuteAsync("UPDATE customers SET status = 'Inactive' WHERE id = @Id", new { Id = customerId });
+        // Active state is checked independently from the signed JWT on every Customer operation.
         using var status = await client.GetAsync($"/Orders/{id}/status");
         Assert.That(status.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-        using var decision = await client.PatchAsJsonAsync($"/Orders/{id}/budget", new { customerDocument = "66211973063", approved });
-        Assert.That(decision.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+        using var decision = await client.PatchAsJsonAsync($"/Orders/{id}/budget", new { approved });
+        Assert.That(decision.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        using (var decisionJson = JsonDocument.Parse(await decision.Content.ReadAsStringAsync()))
+            Assert.That(decisionJson.RootElement.GetProperty("decision").GetString(), Is.EqualTo(approved ? "Approved" : "Refused"));
         if (approved)
         {
             UseToken("Mechanic", Guid.NewGuid());
@@ -199,7 +202,7 @@ public sealed class OrderOwnershipPersistenceTests
         UseToken("Customer", callerId);
         var before = await Snapshot();
         using var read = await client.GetAsync($"/Orders/{id}/status");
-        using var write = await client.PatchAsJsonAsync($"/Orders/{id}/budget", new { customerDocument = Document, approved = false });
+        using var write = await client.PatchAsJsonAsync($"/Orders/{id}/budget", new { approved = false });
         Assert.That(read.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         Assert.That(write.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         using var readError = JsonDocument.Parse(await read.Content.ReadAsStringAsync());
@@ -211,19 +214,32 @@ public sealed class OrderOwnershipPersistenceTests
     }
 
     [Test]
-    public async Task OwnerCannotDecideWithDivergentDocumentOrInvalidState()
+    public async Task InactivationAfterTokenIssuanceBlocksStatusAndBudgetWithoutChangingTheOrder()
+    {
+        var id = await CreateOrder();
+        await CompleteDiagnosis(id);
+        UseToken("Customer", customerId);
+        await connection.ExecuteAsync("UPDATE customers SET status='Inactive' WHERE id=@Id", new { Id = customerId });
+        var before = await Snapshot();
+        using var status = await client.GetAsync($"/Orders/{id}/status");
+        using var decision = await client.PatchAsJsonAsync($"/Orders/{id}/budget", new { approved = true });
+        Assert.That(status.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
+        Assert.That(decision.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
+        Assert.That(await Snapshot(), Is.EqualTo(before));
+    }
+
+    [Test]
+    public async Task OwnerCannotDecideInInvalidStateOrSendAnExtraDocument()
     {
         var id = await CreateOrder();
         UseToken("Customer", customerId);
         var before = await Snapshot();
-        using var state = await client.PatchAsJsonAsync($"/Orders/{id}/budget", new { customerDocument = Document, approved = true });
+        using var state = await client.PatchAsJsonAsync($"/Orders/{id}/budget", new { approved = true });
         Assert.That(state.StatusCode, Is.EqualTo(HttpStatusCode.UnprocessableEntity));
         Assert.That(await Snapshot(), Is.EqualTo(before));
         await CompleteDiagnosis(id);
         UseToken("Customer", customerId);
         before = await Snapshot();
-        using var document = await client.PatchAsJsonAsync($"/Orders/{id}/budget", new { customerDocument = OtherDocument, approved = false });
-        Assert.That(document.StatusCode, Is.EqualTo(HttpStatusCode.UnprocessableEntity));
         using var invalid = await client.PatchAsJsonAsync($"/Orders/{id}/budget", new { customerDocument = "invalid", approved = false });
         Assert.That(invalid.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         Assert.That(await Snapshot(), Is.EqualTo(before));
@@ -237,7 +253,7 @@ public sealed class OrderOwnershipPersistenceTests
         await CompleteDiagnosis(id);
         UseToken(role, Guid.NewGuid());
         var before = await Snapshot();
-        using var response = await client.PatchAsJsonAsync($"/Orders/{id}/budget", new { customerDocument = Document, approved = false });
+        using var response = await client.PatchAsJsonAsync($"/Orders/{id}/budget", new { approved = false });
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
         Assert.That(await Snapshot(), Is.EqualTo(before));
     }
@@ -251,7 +267,9 @@ public sealed class OrderOwnershipPersistenceTests
 
     private object NewOrderBody(int amount = 1) => new
     {
-        customerId, vehicleId, services = new[] { new { id = serviceId, value = 1 } },
+        customerId,
+        vehicleId,
+        services = new[] { new { id = serviceId, value = 1 } },
         materials = new[] { new { id = materialId, value = amount } }
     };
 
@@ -292,12 +310,12 @@ public sealed class OrderOwnershipPersistenceTests
         return responses;
     }
 
-    private async Task AssertSingleDecision(HttpResponseMessage[] responses)
+    private async Task AssertSingleDecision(HttpResponseMessage[] responses, HttpStatusCode success = HttpStatusCode.NoContent)
     {
         try
         {
             Assert.That(responses.Select(response => response.StatusCode),
-                Is.EquivalentTo(new[] { HttpStatusCode.NoContent, HttpStatusCode.UnprocessableEntity }));
+                Is.EquivalentTo(new[] { success, HttpStatusCode.UnprocessableEntity }));
             Assert.That(await connection.QuerySingleAsync<int>("SELECT reserved_amount FROM stock"), Is.EqualTo(1));
         }
         finally { foreach (var response in responses) response.Dispose(); }
@@ -309,12 +327,12 @@ public sealed class OrderOwnershipPersistenceTests
         var id = await CreateOrder();
         await CompleteDiagnosis(id);
         var responses = await RunContenders("orders", id,
-            () => SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/budget", new { customerDocument = Document, approved = true }, "Customer"),
-            () => SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/budget", new { customerDocument = Document, approved = false }, "Customer"));
+            () => SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/budget", new { approved = true }, "Customer"),
+            () => SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/budget", new { approved = false }, "Customer"));
         try
         {
             Assert.That(responses.Select(response => response.StatusCode),
-                Is.EquivalentTo(new[] { HttpStatusCode.NoContent, HttpStatusCode.UnprocessableEntity }));
+                Is.EquivalentTo(new[] { HttpStatusCode.OK, HttpStatusCode.UnprocessableEntity }));
             var status = await connection.QuerySingleAsync<string>("SELECT status FROM orders WHERE id = @Id", new { Id = id });
             Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM order_status_history WHERE order_id = @Id", new { Id = id }), Is.EqualTo(4));
             Assert.That(await connection.QuerySingleAsync<int>("SELECT reserved_amount FROM stock"), Is.EqualTo(status == "Finished" ? 0 : 1));
@@ -332,17 +350,17 @@ public sealed class OrderOwnershipPersistenceTests
         await CompleteDiagnosis(id);
         if (complete)
         {
-            using var approve = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/budget", new { customerDocument = Document, approved = true }, "Customer");
+            using var approve = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/budget", new { approved = true }, "Customer");
             using var start = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/execution/start");
             Assert.That(start.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         }
         var events = factory.Services.GetRequiredService<IApplicationEventDispatcher>();
         events.ClearReceivedCalls();
         var path = complete ? $"/Orders/{id}/execution/complete" : $"/Orders/{id}/budget";
-        var body = complete ? null : (object)new { customerDocument = Document, approved = false };
+        var body = complete ? null : (object)new { approved = false };
         var role = complete ? "Mechanic" : "Customer";
         await AssertSingleDecision(await RunContenders("orders", id,
-            () => SendAuthorized(HttpMethod.Patch, path, body, role), () => SendAuthorized(HttpMethod.Patch, path, body, role)));
+            () => SendAuthorized(HttpMethod.Patch, path, body, role), () => SendAuthorized(HttpMethod.Patch, path, body, role)), complete ? HttpStatusCode.NoContent : HttpStatusCode.OK);
         Assert.That(await connection.QuerySingleAsync<int>("SELECT amount FROM stock"), Is.EqualTo(complete ? 3 : 4));
         Assert.That(await connection.QuerySingleAsync<int>("SELECT count(*) FROM order_status_history WHERE order_id = @Id", new { Id = id }), Is.EqualTo(complete ? 6 : 4));
         if (complete) await events.Received(1).Publish(Arg.Any<Service.Interface.Events.Order.OrderStatusChangedEvent>());
@@ -426,11 +444,11 @@ public sealed class OrderOwnershipPersistenceTests
         if (operation == "consume")
         {
             await CompleteDiagnosis(secondOrder);
-            using var approve = await SendAuthorized(HttpMethod.Patch, $"/Orders/{secondOrder}/budget", new { customerDocument = Document, approved = true }, "Customer");
+            using var approve = await SendAuthorized(HttpMethod.Patch, $"/Orders/{secondOrder}/budget", new { approved = true }, "Customer");
             using var start = await SendAuthorized(HttpMethod.Patch, $"/Orders/{secondOrder}/execution/start");
         }
         var responses = await RunContenders("stock", materialId,
-            () => SendAuthorized(HttpMethod.Patch, $"/Orders/{firstOrder}/budget", new { customerDocument = Document, approved = false }, "Customer"),
+            () => SendAuthorized(HttpMethod.Patch, $"/Orders/{firstOrder}/budget", new { approved = false }, "Customer"),
             () => operation switch
             {
                 "replenish" => SendAuthorized(HttpMethod.Post, $"/Stock/amount/{materialId}", new { value = 2 }),
@@ -440,7 +458,7 @@ public sealed class OrderOwnershipPersistenceTests
             });
         try
         {
-            Assert.That(responses[0].StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+            Assert.That(responses[0].StatusCode, Is.EqualTo(HttpStatusCode.OK));
             var expected = operation switch
             {
                 "replenish" => HttpStatusCode.OK,
@@ -460,7 +478,7 @@ public sealed class OrderOwnershipPersistenceTests
         var id = await CreateOrder();
         await CreateOrder();
         await CompleteDiagnosis(id);
-        using var approve = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/budget", new { customerDocument = Document, approved = true }, "Customer");
+        using var approve = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/budget", new { approved = true }, "Customer");
         using var start = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/execution/start");
         var responses = await RunContenders("orders", id,
             () => SendAuthorized(HttpMethod.Delete, $"/Orders/{id}"),
@@ -485,7 +503,9 @@ public sealed class OrderOwnershipPersistenceTests
         await connection.ExecuteAsync("INSERT INTO stock VALUES (@Id, 'Second material', 'Test', 10, 5, 0)", new { Id = otherMaterial });
         object Body(Guid first, Guid second) => new
         {
-            customerId, vehicleId, services = new[] { new { id = serviceId, value = 1 } },
+            customerId,
+            vehicleId,
+            services = new[] { new { id = serviceId, value = 1 } },
             materials = new[] { new { id = first, value = 1 }, new { id = second, value = 1 } }
         };
         var firstLock = new[] { materialId, otherMaterial }.Min();
@@ -517,7 +537,7 @@ public sealed class OrderOwnershipPersistenceTests
         {
             await CompleteDiagnosis(id);
             using var decision = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/budget",
-                new { customerDocument = Document, approved = status == "Delivered" }, "Customer");
+                new { approved = status == "Delivered" }, "Customer");
             if (status == "Delivered")
                 foreach (var action in new[] { "execution/start", "execution/complete", "delivery" })
                 {
@@ -554,7 +574,7 @@ public sealed class OrderOwnershipPersistenceTests
         await connection.ExecuteAsync("UPDATE order_status_history SET occurred_at = @Started WHERE order_id = @Id AND sequence = 2",
             new { Started = opening.AddDays(1), Id = id });
         using var diagnosis = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/diagnosis/complete");
-        using var decision = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/budget", new { customerDocument = Document, approved }, "Customer");
+        using var decision = await SendAuthorized(HttpMethod.Patch, $"/Orders/{id}/budget", new { approved }, "Customer");
         if (approved)
             foreach (var action in new[] { "execution/start", "execution/complete" })
             {

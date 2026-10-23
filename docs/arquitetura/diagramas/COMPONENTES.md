@@ -1,74 +1,87 @@
 # Componentes e fronteiras
 
-[Arquitetura](../README.md) · [RFC de execução](../rfcs/001-EXECUCAO.md) · [RFC de entrega](../rfcs/002-ENTREGA.md)
+[Arquitetura](../README.md) · [Execução](../rfcs/001-EXECUCAO.md) · [Entrega](../rfcs/002-ENTREGA.md)
 
-Arquitetura alvo. O conjunto abaixo existe separadamente em **hom** e **prd**, na mesma conta AWS e região us-east-1. A coexistência é suportada; ativar somente um ambiente é uma opção de economia.
+Revisão de 21/10/2026 contra os quatro repositórios. O desenho representa a configuração implantada e validada em **hom**, removida ao encerrar a E6. Há configuração própria para prd, mas sua operação e a coexistência dos ambientes não foram comprovadas. [Evidências e estado final](../../ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md).
 
 ```mermaid
 flowchart LR
-    U["Oficina / cliente"] --> GW["API Gateway REST Regional"]
-    GW -->|"POST /customers/validate"| FN["Lambda .NET 10 — SAM/CloudFormation"]
-    GW -->|"Rotas da aplicação"| VL["VPC Link V2 — SG reservado"]
-    subgraph VPC["VPC exclusiva do ambiente — duas AZs"]
-        subgraph PRIV["Subnets privadas de workloads"]
-            NLB["NLB interno Terraform — TCP 80"] -->|"Instancias do ASG: 30080"| SVC["Service NodePort — 30080 → 8080"]
-            SVC --> API["API .NET no EKS"]
-            HPA["HPA 1–3 pods"] -.-> API
-            NODE["Um nó t3.small"] -.-> API
+    U["Oficina e cliente"] -->|HTTPS| GW["API Gateway REST Regional"]
+    GW -->|"POST /customers/validate"| FN["Lambda .NET 10 - versão numérica"]
+    GW -->|"HTTP proxy das rotas da API"| VL["VPC Link V2"]
+    subgraph VPC["VPC do ambiente - duas AZs"]
+        subgraph WORK["Subnets privadas de workloads"]
+            NLB["NLB interno - TCP 80"] -->|"ASG - TCP 30080"| SVC["Service NodePort - 30080 para 8080"]
+            SVC --> API["API .NET 10 no EKS"]
+            HPA["HPA - 1 a 3 pods"] -.-> API
+            NODE["Um nó t3.small - min/desired/max 1"] -.-> API
             LNET["Conectividade VPC da Lambda"]
+            COL["Collector - namespace observability"]
+            JOB["Job temporário - namespace database-init"]
         end
         subgraph DATA["Subnets privadas de banco"]
-            DB[("RDS PostgreSQL db.t3.micro — Single-AZ")]
+            DB[("RDS PostgreSQL 16.15 - db.t3.micro Single-AZ")]
         end
-        subgraph PUB["Subnet pública de suporte"]
-            NAT["Um NAT Gateway + EIP"] --> IGW["Internet Gateway"]
-        end
-        API --> DB
-        API -->|"Notificações hom/prd"| EMAILLOG["Envio de e-mail simulado — log da API"]
-        LNET -->|"SELECT de cliente"| DB
-        API -->|"Saída externa"| NAT
-        LNET -->|"Saída externa"| NAT
-        S3EP["Gateway endpoint S3"]
-        API -.-> S3EP
+        NAT["Um NAT Gateway e EIP"] --> IGW["Internet Gateway"]
+        API -->|"PostgreSQL com TLS VerifyFull"| DB
+        LNET -->|"SELECT de cliente com TLS"| DB
+        JOB -->|"Inicializar SQL e grants com TLS"| DB
+        API -->|"OTLP HTTP interno"| COL
+        API -->|"APIs AWS"| NAT
+        LNET -->|"APIs AWS e New Relic"| NAT
+        COL -->|"APIs AWS e New Relic"| NAT
+        S3EP["Gateway endpoint S3"] -.-> WORK
     end
-    VL -->|"TCP 80"| NLB
+    VL -->|"SG Gateway para SG NLB - TCP 80"| NLB
     FN -.-> LNET
-    IGW --> EXT["New Relic / APIs AWS"]
-    SM["Secrets Manager por ambiente"] -.-> API
+    API --> SIM["Notificações hom/prd - log simulado"]
+    ECR["ECR privado - imagem por digest"] -.->|"Pull pelo nó"| NODE
+    GH["GitHub Actions via OIDC"] --> CTL["Endpoint administrativo EKS - público e privado"]
+    CTL -.-> API
+    CTL -.-> JOB
+    SSM["SSM v2 - configuração pública"] -.-> API
+    SSM -.-> FN
+    SM["Secrets Manager - referências por ambiente"] -.-> API
     SM -.-> FN
-    GH["GitHub Actions via OIDC"] --> CTRL["Endpoint administrativo EKS público + privado"]
-    CTRL -.-> API
-    ECR["ECR privado compartilhado"] -.->|"Imagem por digest"| API
+    SM -.-> COL
 ```
 
-Terraform cria NLB/listener/target group e associação ao ASG. A AWS registra/remove suas instâncias; o Service NodePort encaminha para a API, sem controller. Health HTTP em /health/ready pela porta 30080; externalTrafficPolicy: Cluster. A Lambda é serviço gerenciado: o bloco representa conectividade à VPC, não execução no EKS. Template SAM com ZIP implementado ([ADR 009](../adrs/009-SAM-AUTENTICACAO.md)), implantação pendente; VPC/SG continuam na base Terraform e IAM runtime no bootstrap persistente. Auth administra somente duas saídas do SG reservado.
+O Job está no namespace `database-init`, no mesmo nó privado do EKS. A Lambda é um serviço gerenciado com conectividade VPC, não um pod. RDS não é publicamente acessível. Terraform da base administra NLB/listener/target group e associação ao ASG; não há Load Balancer Controller. O health do target usa HTTP `/health/ready` em 30080; o Service usa `externalTrafficPolicy: Cluster`.
 
-O Gateway é a entrada pública de negócio. O endpoint administrativo do EKS é outra superfície, autenticada por IAM e autorizada no cluster. NAT atende saída; RDS não recebe rota de internet. O HPA escala pods dentro da capacidade disponível: o nó único não oferece alta disponibilidade nem escalonamento automático de nós.
+HPA escala pods, não nós. Nó único, NAT único e RDS Single-AZ não oferecem alta disponibilidade entre AZs. Gateway encaminha o Bearer sem authorizer JWT; a API valida assinatura, emissor, audiência, prazo, perfil e vínculo quando exigido. Probes, Swagger e OpenAPI não são publicados pelo Gateway. O endpoint de negócio fica em `/mecanica/<ambiente>/gateway/v2/endpoint` e muda após recriação.
 
-Notificações de e-mail usam LoggingEmailSender em hom/prd e produzem somente o log fixo `Envio de e-mail simulado.`, sem SMTP ou entrega externa. SMTP/MailKit continuam na API exclusivamente no modo local (Runtime ausente), incluindo smtp4dev no Compose. A seleção usa o modo AWS validado, sem novas variáveis/recursos. A simulação foi implementada localmente; sua conferência na nova revisão AWS depende do deploy do mantenedor.
+## Propriedade e ciclo de vida
 
-S3 de estado, identidade OIDC, ECR e bucket separado de artefatos pertencem ao bootstrap compartilhado. VPC, EKS, RDS, função, Gateway, NLB e segredos de cada ambiente são independentes. A destruição de hom não remove prd nem o bootstrap.
+| Responsável | Recursos |
+|---|---|
+| Bootstrap persistente | Estado/artefatos S3, ECR, OIDC, IAM das pipelines/runtime, integração X-Ray e metadados dos Secrets New Relic |
+| Base Terraform | VPC/EKS, SGs reservados, NAT/S3 endpoint, NLB/ASG, JWT e Pod Identity API/Collector |
+| Banco Terraform e Job | RDS, SG/credenciais de banco, SQL/seeds e grants |
+| API | Deployment/HPA/ServiceAccount, imagem, contratos e negócio |
+| Auth SAM | Função/versão/alias, logs, egress do SG reservado e SSM auth/v2 |
+| Gateway Terraform | REST API, VPC Link V2, integrações, permissão de invocação e logs |
+
+Notificações permanecem no fluxo da API após commit. Hom/prd usam `LoggingEmailSender`, com mensagem fixa e sem entrega real. Localmente, sem `Runtime__Environment`, a API mantém SMTP/MailKit e smtp4dev. [ADR 006](../adrs/006-NOTIFICACOES.md).
 
 ## Caminhos de observabilidade
 
 ```mermaid
 flowchart LR
-    API["API: traces, métricas e logs OTel"] -->|"OTLP"| COL["Collector Contrib no EKS — uma réplica"]
-    K8S["Kubelet + API Kubernetes"] -->|"CPU, memória e estado"| COL
-    FN["Lambda instrumentada"] --> LCOL["Extensão Collector local"]
-    GW["API Gateway"] --> CW["CloudWatch: logs do Gateway e métricas AWS"]
-    AWS["Lambda / RDS: métricas AWS"] --> CW
-    CW -->|"Polling pelo receiver"| COL
-    GW --> XR["X-Ray: segmentos nativos AWS"]
-    FN -->|"Tracing nativo independente"| XR
-    XR -->|"Consulta regional pela role persistente"| LINK["Integração New Relic X-Ray — polling 5 min"]
-    LINK --> NR["New Relic"]
-    COL -->|"OTLP HTTP/protobuf TLS"| NR
-    LCOL -->|"OTLP HTTP/protobuf TLS"| NR
+    API["mecanica-api - HTTP e PostgreSQL, métricas e logs"] -->|OTLP| COL["Collector EKS - Contrib 0.161.0"]
+    K8S["Kubelet e API Kubernetes - 30 s"] --> COL
+    FN["mecanica-auth - invocação e PostgreSQL, métricas e logs"] -->|"OTLP loopback e flush limitado"| EXT["Extensão Collector 0.151.0 - layer 0.22.0"]
+    GW["Gateway - access logs JSON"] --> CW["CloudWatch"]
+    AWS["Métricas Gateway, Lambda e RDS"] --> CW
+    CW -->|"Polling de logs e 13 métricas"| COL
+    GW --> XR["X-Ray nativo"]
+    FN --> XR
+    XR -->|"Integração AWS por polling"| NR["New Relic US"]
+    COL -->|"OTLP HTTP/protobuf com TLS"| NR
+    EXT -->|"OTLP HTTP/protobuf com TLS"| NR
+    SM["Secrets Manager - License Key"] -.-> COL
+    SM -.-> EXT
 ```
 
-Logs da aplicação/função têm um único caminho remoto via OTel; não duplicar sua ingestão por stdout/CloudWatch. O caminho CloudWatch do Gateway depende do Collector ativo. X-Ray possui atraso de polling e não alimenta alertas imediatos. Por decisão de 20/10/2026, os dois caminhos permanecem separados: aplicações aceitam somente pai W3C e não usam os segmentos X-Ray como pai OTLP. A árvore única entre polling e OTLP foi retirada do escopo, não corrigida. A continuidade exigida passa a ser HTTP/invocação → PostgreSQL e logs da aplicação; [decisão e validação](../../TRACING_W3C_E_XRAY.md).
+API/Lambda propagam somente W3C `traceparent`: HTTP/invocação → PostgreSQL e logs correlacionados. X-Ray/polling é diagnóstico separado; a árvore única X-Ray/OTLP foi retirada do escopo, não corrigida. A License Key é lida pelos Collectors, não pela API nem pelo workflow. Logs de aplicação não são recoletados por stdout/CloudWatch.
 
-**Gateway — 12/10/2026:** código local usa VPC Link V2 com SG reservado da base e NLB interno TCP 80; bootstrap fornece logging regional persistente. Gateway possui access logs JSON básicos/sete dias. O diagrama de observabilidade é alvo da E5 e não comprova Collector/New Relic/X-Ray implantados. [ADR 010](../adrs/010-GATEWAY-REST-V2.md).
-
-**X-Ray → New Relic — preparação local de 15/10/2026:** o bloco de integração consulta X-Ray diretamente com a role do bootstrap mecanica-newrelic-xray (/mecanica/observability/), confiando somente na conta New Relic US e no ExternalId igual ao Account ID New Relic. Não utiliza o Collector, a License Key ou provider New Relic. Conexão manual apenas X-Ray/us-east-1 após plano salvo/aprovação/apply; role persistente, leitura compartilhada de hom/prd na conta/região, sem isolamento IAM por ambiente. Polling cinco minutos, primeira ingestão até vinte minutos, dados nativos fora da sanitização da aplicação; não alimentar alertas imediatos. Este desenho não comprova ativação/ingestão nem união dos contextos W3C/X-Ray. [Operação e critérios](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/NEW_RELIC.md#x-ray-nativo--new-relic--preparação-declarativa).
+Collector EKS coleta Kubernetes; kubeletstats cobre apenas o nó onde ele roda. CloudWatch tem atraso de dez minutos para métricas e retoma logs pelos últimos cinco minutos após restart, sem checkpoint/replay/deduplicação. Há lacunas aceitas. Três dashboards e cinco alertas pertencem à unidade persistente New Relic. [ADR 005 e limites](../adrs/005-OBSERVABILIDADE.md).

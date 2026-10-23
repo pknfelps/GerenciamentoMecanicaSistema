@@ -15,7 +15,7 @@ public sealed class OrderBusinessMetrics : IOrderNotificationMetrics
     private readonly string notificationMode;
     private readonly ILogger<OrderBusinessMetrics> logger;
 
-    public OrderBusinessMetrics(IMeterFactory factory, TelemetrySettings settings, ILogger<OrderBusinessMetrics> logger)
+    public OrderBusinessMetrics(IMeterFactory factory, ILogger<OrderBusinessMetrics> logger)
     {
         var meter = factory.Create(MeterName);
         created = meter.CreateCounter<long>("mecanica.orders.created", "{order}");
@@ -24,7 +24,7 @@ public sealed class OrderBusinessMetrics : IOrderNotificationMetrics
         processingFailures = meter.CreateCounter<long>("mecanica.orders.processing.failures", "{failure}");
         notifications = meter.CreateCounter<long>("mecanica.orders.notifications", "{attempt}");
         telemetryFailures = meter.CreateCounter<long>("mecanica.orders.telemetry.failures", "{failure}");
-        notificationMode = settings.Environment == "local" ? "smtp" : "simulated";
+        notificationMode = "smtp"; // SMTP4dev capture through EmailFunction in every environment.
         this.logger = logger;
     }
 

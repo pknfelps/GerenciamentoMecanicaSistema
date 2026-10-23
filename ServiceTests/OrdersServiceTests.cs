@@ -22,12 +22,13 @@ namespace ServiceTests
     public class OrdersServiceTests
     {
         [Test]
-        public async Task CustomerReadsOwnOrderWithoutRecheckingActiveStatus()
+        public async Task InactiveCustomerCannotReadOwnOrder()
         {
             var customer = new Domain.Customer.Customer(ExistingCustomer.Id, ExistingCustomer.Name, ExistingCustomer.Document,
                 ExistingCustomer.Phone, ExistingCustomer.Email, CustomerStatus.Inactive);
             DependenciesGateway.Configure().GetCustomerById(customer.Id).Returns(customer);
-            Assert.That(await Service.GetCustomerOrderStatus(ExistingReceivedOrder.Id, customer.Id), Is.EqualTo(WorkOrderStatus.Received));
+            Assert.ThrowsAsync<AccessDeniedException>(() => Service.GetCustomerOrderStatus(ExistingReceivedOrder.Id, customer.Id));
+            await Repository.DidNotReceiveWithAnyArgs().GetOrder(default);
         }
 
         [TestCase("other")]
@@ -43,7 +44,7 @@ namespace ServiceTests
             };
             var orderId = scenario == "missing-order" ? Guid.NewGuid() : ExistingReceivedOrder.Id;
             var read = Assert.ThrowsAsync<NotFoundException>(() => Service.GetCustomerOrderStatus(orderId, customerId));
-            var write = Assert.ThrowsAsync<NotFoundException>(() => Service.ApproveBudget(orderId, new(ExistingCustomer.Document, false), customerId));
+            var write = Assert.ThrowsAsync<NotFoundException>(() => Service.ApproveBudget(orderId, new(false), customerId));
             Assert.That(read!.Message, Is.EqualTo("Ordem não encontrada"));
             Assert.That(write!.Message, Is.EqualTo(read.Message));
             await Repository.DidNotReceiveWithAnyArgs().UpdateOrder(default!);
@@ -1097,7 +1098,7 @@ namespace ServiceTests
         [Test]
         public async Task MustApproveBudget()
         {
-            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(ExistingReceivedOrder.CustomerDocument.Id, true), ExistingCustomer.Id);
+            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(true), ExistingCustomer.Id);
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id, ExistingCustomer.Document);
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -1105,11 +1106,10 @@ namespace ServiceTests
         }
 
         [Test]
-        public async Task MustApproveBudgetWithUnformattedDocument()
+        public async Task ApprovalUsesOnlyTheAuthenticatedCustomerIdentity()
         {
-            var unformattedDocument = string.Concat(ExistingReceivedOrder.CustomerDocument.Id.Where(char.IsDigit));
 
-            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(unformattedDocument, true), ExistingCustomer.Id);
+            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(true), ExistingCustomer.Id);
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id, ExistingCustomer.Document);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
@@ -1118,7 +1118,7 @@ namespace ServiceTests
         [Test]
         public async Task MustRefuseBudget()
         {
-            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(ExistingReceivedOrder.CustomerDocument.Id, false), ExistingCustomer.Id);
+            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(false), ExistingCustomer.Id);
 
             await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id, ExistingCustomer.Document);
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -1128,7 +1128,7 @@ namespace ServiceTests
         [Test]
         public async Task MustRefuseBudgetWithPartsToRestore()
         {
-            await Service.ApproveBudget(ExistingOrderInDiagnosisId, new(ExistingOrderInDiagnosis.CustomerDocument.Id, false), ExistingCustomer.Id);
+            await Service.ApproveBudget(ExistingOrderInDiagnosisId, new(false), ExistingCustomer.Id);
 
             await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId, ExistingCustomer.Document);
             await StockService.ReceivedWithAnyArgs(2).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -1138,7 +1138,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotApproveOrRefuseBudgetIfOrderNotExists()
         {
-            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(Guid.NewGuid(), new("681.487.685-11", false), ExistingCustomer.Id));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(Guid.NewGuid(), new(false), ExistingCustomer.Id));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -1146,19 +1146,22 @@ namespace ServiceTests
         }
 
         [Test]
-        public async Task MustNotApproveOrRefuseBudgetWithWrongDocument()
+        public async Task InactiveCustomerCannotReadOrDecideBeforeTheOrderIsQueried()
         {
-            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(ExistingOrderInDiagnosisId, new("000.000.000-00", false), ExistingCustomer.Id));
-
-            await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
-            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
-            await Repository.ReceivedWithAnyArgs(0).UpdateOrder(Arg.Any<IOrder>());
+            var inactive = Substitute.For<ICustomer>();
+            inactive.Status.Returns(CustomerStatus.Inactive);
+            DependenciesGateway.Configure().GetCustomerById(Arg.Any<Guid>()).Returns(Task.FromResult<ICustomer?>(inactive));
+            Assert.ThrowsAsync<AccessDeniedException>(() => Service.GetCustomerOrderStatus(ExistingReceivedOrder.Id, ExistingCustomer.Id));
+            Assert.ThrowsAsync<AccessDeniedException>(() => Service.ApproveBudget(ExistingReceivedOrder.Id, new(false), ExistingCustomer.Id));
+            await Repository.DidNotReceiveWithAnyArgs().GetOrder(default);
+            await Repository.DidNotReceiveWithAnyArgs().LockOrder(default);
+            await Repository.DidNotReceiveWithAnyArgs().UpdateOrder(default!);
         }
 
         [Test]
         public async Task MustFailToApproveOrRefuseBudget()
         {
-            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(ExistingTestOrder.Id, new(ExistingTestOrder.CustomerDocument.Id, false), ExistingCustomer.Id));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(ExistingTestOrder.Id, new(false), ExistingCustomer.Id));
 
             await Repository.Received(1).GetOrder(ExistingTestOrder.Id, ExistingCustomer.Document);
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());

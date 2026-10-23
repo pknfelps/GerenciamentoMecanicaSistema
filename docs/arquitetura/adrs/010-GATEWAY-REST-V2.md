@@ -1,4 +1,29 @@
-# ADR 010 — Gateway REST com VPC Link V2
+# ADR 010 — Gateway REST Regional com VPC Link V2
+
+**Estado:** aceito em 12/10/2026, implementado e validado em hom; ambiente posteriormente removido.
+
+**Contexto:** integrar API privada e função por contratos fixos, com ciclo de vida separado da base.
+
+**Decisão vigente:** unidade gateway/ e estado/workflows próprios no repositório infra. REST Regional com stage hom/prd; VPC Link V2 em subnets privadas usa SG reservado da base. SG permite Gateway → NLB TCP 80 e avaliação inbound PrivateLink fica **on**. NLB/ASG/NodePort pertencem à base, sem controller.
+
+Terraform projeta OpenAPI 3.0 verificados: HTTP_PROXY para a API e AWS_PROXY para versão numérica Lambda; normaliza nomes de parâmetros variáveis mantendo mapeamento ao backend. Não publica health/ANY/rota genérica. Remove modelos/security Bearer incompatíveis do documento importado, preservando os contratos originais completos. Autorização JWT/perfil/vínculo permanece na API, sem authorizer.
+
+Base/auth são consumidos por SSM público; contratos por S3 com checksum/commit, sem Secrets ou estado remoto. API/auth novos exigem novo plano Gateway quando muda contrato/versão. Mantenedor informa environment/api_commit/auth_commit. Plan → aprovação sem AWS → apply do mesmo plano/SHA/contratos, artefato por ID e sete dias, sem replan.
+
+**Logs e tracing:** access logs JSON/sete dias contêm IDs, método/modelo de rota, status/latências/tamanho e xrayTraceId. Sem corpo/headers/query, execution logs OFF, data tracing/cache/métricas detalhadas por método desligados. X-Ray é configurado por variável/tfvars: hom true, prd false; padrão da variável false. A Lambda tem tracing nativo sempre ativo, independentemente dessa variável. CloudWatch/polling New Relic são diagnóstico com limites aceitos, sem união automática OTLP/X-Ray.
+
+Bootstrap possui service-linked role, role de logs e configuração regional persistentes; Gateway administra seu log group, integração, permissão de invocação e sete parâmetros gateway/v2. Endpoint é publicado em SSM e muda ao recriar; não versionar URL transitória como endereço disponível permanente.
+
+**Consequências e comprovação:** Gateway deve ser atualizado para nova versão numérica auth; acesso saudável depende de backends/banco. Descartá-lo antes de API/auth. Entrada pública, respostas/JWT e logs foram conferidos em hom; não estender a prd ou prometer cobertura completa dos logs. [Evidências E5](../../ENCERRAMENTO_E5_2026-10-21.md) e [descarte final](../../ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md).
+
+[Operação Gateway](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/GATEWAY.md) · [Contratos](../CONTRATOS_ENTRE_REPOSITORIOS.md).
+
+Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados. [Arquitetura](../README.md) · [Evidências E6](../../REVISAO_E6_2026-10-21.md).
+
+<details>
+<summary>Histórico anterior à revisão E7 — registros preservados, sem vigência operacional</summary>
+
+Os estados locais, planos pendentes e alternativas abaixo registram o momento em que foram escritos. A decisão e o alcance atuais estão acima; este histórico não autoriza operações nem reabre pendências aceitas.
 
 **Estado:** aceito em 12/10/2026; código validado localmente, implantação e comprovação HTTP na AWS pendentes.
 
@@ -17,3 +42,5 @@ Bootstrap mantém service-linked role, role restrita de logs e configuração re
 **Validação local:** Terraform fmt/validate, workflows actionlint/ShellCheck, contratos S3/checksums, composição de 27 caminhos/37 operações hom/prd, políticas Access Analyzer e simulação IAM. O plano bootstrap tem 10 criações/4 alterações/nenhuma exclusão; aplicação pendente. A rede/backends hom estão descartados; importação AWS, encaminhamento sem prefixo stage, respostas HTTP, logs e compatibilidade JWT API/Lambda serão conferidos após recriação/deploy. E3/E2.12 permanecem abertas.
 
 Rastreabilidade: D01/D09, E3.3/E3.4/E3.8/E3.11. [Contratos](../CONTRATOS_ENTRE_REPOSITORIOS.md) · [Operação Gateway](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/GATEWAY.md) · [VPC Link V2 REST](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-private-integration.html) · [Limites OpenAPI AWS](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-known-issues.html).
+
+</details>

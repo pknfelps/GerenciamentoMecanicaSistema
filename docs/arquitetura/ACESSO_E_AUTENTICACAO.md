@@ -1,7 +1,11 @@
 # E0 — Especificação de acesso e autenticação
 
+> Atualização extra AE.7 (22/10/2026), comprovada localmente: orçamento aceita somente approved e retorna decisão 200; Active/titularidade são conferidos em operações Customer e ClockSkew é zero para todos os JWTs. [Contrato e evidências](../AE7_API_ENVIO_E_ACESSO_CUSTOMER.md). Referências abaixo à emissão por documento/contrato anterior descrevem a revisão implantada antes da extra; publicação coordenada segue na AE.8.
+
+> **Extra AE.1, 22/10/2026:** este documento mantém o contrato anterior implementado. A substituição de customers/validate por solicitação/confirmação de código, JWT sem vínculo à OS, Active e decisão 200 está consolidada no [contrato extra](../CONTRATOS_EXTRA_AUTENTICACAO_E_EMAIL.md), ainda não implementado. Não misturar decisões futuras com as evidências oficiais abaixo.
+
 - **Data:** 2026-09-13.
-- **Estado:** especificação consolidada; autorização das rotas existentes e vínculo da OS implementados/testados localmente na E4 em 13/10/2026. PATCH próprio e DELETE implementados/testados localmente; deploy/conferência AWS desta entrega pendentes.
+- **Estado:** contrato implementado e validado no escopo hom nas evidências E4/E6; revisão documental de 21/10/2026. Ambiente removido após validação; prd não comprovado. [Revisão/evidências](../REVISAO_E6_2026-10-21.md).
 - **Referências:** [arquitetura](README.md), [identidade e permissões](adrs/001-IDENTIDADE.md) e [integração em execução](rfcs/001-EXECUCAO.md).
 - **Origem:** regras de negócio definidas pelo usuário nesta sessão; detalhes de contrato abaixo concretizam essas regras com base no código atual.
 
@@ -27,8 +31,8 @@ As rotas são apresentadas em minúsculas para uniformizar o contrato; as atuais
 | POST | `/customers/validate` | Não se aplica | Não se aplica | Sim | Sim | Função serverless via Gateway — nova |
 | POST | `/users` | Sim | Não | Não | Não | API |
 | GET | `/users` | Sim | Próprio | Não | Não | API |
-| PATCH | `/users` | Próprio | Próprio | Não | Não | API — implementada localmente |
-| DELETE | `/users` | Sim | Não | Não | Não | API — implementada localmente |
+| PATCH | `/users` | Próprio | Próprio | Não | Não | API — implementada e conferida em hom |
+| DELETE | `/users` | Sim | Não | Não | Não | API — implementada e conferida em hom |
 | POST | `/customers` | Não | Sim | Não | Não | API |
 | GET | `/customers` | Não | Sim | Não | Não | API |
 | PATCH | `/customers/{id}` | Não | Sim | Não | Não | API |
@@ -68,7 +72,7 @@ As rotas são apresentadas em minúsculas para uniformizar o contrato; as atuais
 
 Rotas de emissão de token não exigem token prévio: `/authentication` valida credenciais internas; `/customers/validate` valida documento/cadastro/status. Enviar um token a elas não dispensa essas verificações. A API mantém as validações de domínio e de estado da OS após a autorização.
 
-O OpenAPI `/openapi/v1.json` e a interface `/swagger` permanecem sem autenticação quando habilitados em desenvolvimento, como hoje. A exposição dessas ferramentas fora desse ambiente será tratada na arquitetura de deploy. Health checks continuam sem JWT para as probes; isso não determina exposição pública de todas essas rotas no Gateway.
+O OpenAPI `/openapi/v1.json` e a interface `/swagger` permanecem sem autenticação quando habilitados em desenvolvimento, como hoje. O código não as habilita em Staging/Production e o Gateway não publica essas rotas. Health checks continuam sem JWT para as probes; isso não determina exposição pública de todas essas rotas no Gateway.
 
 ### Verificação de propriedade
 
@@ -88,11 +92,11 @@ O OpenAPI `/openapi/v1.json` e a interface `/swagger` permanecem sem autenticaç
 | Documento divergente na OS própria ou transição inválida | 422 |
 | Falha inesperada | 500 |
 
-O helper HTTP exige um único NameIdentifier UUID válido em GET Users de Mechanic, PATCH Users de Admin/Mechanic e status/orçamento de Customer. As outras rotas preservam a validação JWT existente, sem exigência global de ID ou leitura de cadastro para cada token. ClaimsPrincipal fica nos controllers; serviços recebem UUID. Negativas de challenge/forbid preservam seus formatos atuais; filtros de conta usam AccessDeniedException/Problem Details. Testes percorrem as 37 ações protegidas e exercitam HTTP/PostgreSQL, incluindo estoque/histórico intactos nas negativas e token anterior à inativação. A conferência pelo Gateway continua pendente de deploy.
+O helper HTTP exige um único NameIdentifier UUID válido em GET Users de Mechanic, PATCH Users de Admin/Mechanic e status/orçamento de Customer. As outras rotas preservam a validação JWT existente, sem exigência global de ID ou leitura de cadastro para cada token. ClaimsPrincipal fica nos controllers; serviços recebem UUID. Negativas de challenge/forbid preservam seus formatos atuais; filtros de conta usam AccessDeniedException/Problem Details. Testes percorrem as 37 ações protegidas e exercitam HTTP/PostgreSQL, incluindo estoque/histórico intactos nas negativas e token anterior à inativação. A conferência pelo Gateway de hom está registrada nas fontes E6; não foi estendida a prd.
 
 ## 3. PATCH /users — atualizar a própria conta
 
-**Implementação local E4.11 em 13/10/2026:** Admin ou Mechanic alteram exclusivamente sua própria conta, selecionada pelo UUID do JWT. Publicação e conferência AWS desta entrega permanecem pendentes.
+**Implementação local E4.11 em 13/10/2026:** Admin ou Mechanic alteram exclusivamente sua própria conta, selecionada pelo UUID do JWT. Publicação e conferência AWS no escopo hom estão registradas na revisão E6.
 
 ```http
 PATCH /users
@@ -130,7 +134,7 @@ Após mudar nome/senha, o token assinado permanece válido até expirar; não ex
 
 ## 4. DELETE /users — remover usuário
 
-**Implementação local E4.12 em 13/10/2026:** somente Admin. O alvo é selecionado pela query obrigatória `id` (UUID não vazio), sem corpo. Publicação e conferência AWS desta entrega permanecem pendentes.
+**Implementação local E4.12 em 13/10/2026:** somente Admin. O alvo é selecionado pela query obrigatória `id` (UUID não vazio), sem corpo. Publicação e conferência AWS no escopo hom estão registradas na revisão E6.
 
 ```http
 DELETE /users?id=<uuid-do-usuario>
@@ -197,18 +201,18 @@ Exemplo lógico do valor retornado em 200: `"<jwt>"`. Reutilizar a convenção d
 
 Cadastro inexistente e Inativo produzem exatamente a mesma negativa. Todas as respostas do handler incluem `Cache-Control: no-store` e `isBase64Encoded: false`. Não expor documento, token, chave, senha, configuração ou exceções nos logs/erros. Falhas técnicas e cancelamento nunca são convertidos em documento inválido ou cliente inelegível. Respostas produzidas pelo próprio Gateway/runtime podem seguir outros formatos 5xx.
 
-O contrato estático do produtor fica em [contracts/openapi.json](https://github.com/pknfelps/GerenciamentoMecanicaAutenticacao/blob/develop/contracts/openapi.json), sem extensões AWS ou destinos de ambiente nesta entrega. Handler e fluxo estão preparados para validação local; IAM/rede/deploy/Gateway e aceitação real do JWT pela API permanecem pendentes.
+O contrato estático do produtor fica em [contracts/openapi.json](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/contracts/openapi.json), sem extensões AWS ou destinos de ambiente nesta entrega. Handler, IAM/rede/deploy/Gateway e aceitação do JWT pela API foram conferidos em hom; os resultados e limites estão na revisão E6.
 
 ## 6. JWT e autenticação interna
 
-**Implementação E4 — primeira entrega:** cadastro/login internos aceitam somente Admin/Mechanic, com validação nominal antes do banco; perfis incompatíveis no corpo retornam 400, credenciais incorretas/cadastro ausente retornam 401. O emissor interno acrescenta NameIdentifier usando o UUID persistido, como já faz a Lambda para Customer. Por revisão solicitada em 13/10/2026, os mapeadores constroem o domínio diretamente, sem try/catch: identidade/perfil persistidos inválidos propagam DomainValidationException (400 pelo middleware), sem emitir JWT. Algoritmo, expiração e tolerância são preservados; a validação global ainda aceita tokens anteriores sem ID. A matriz das rotas existentes e o vínculo da OS estão implementados nesta entrega: Mechanic opera a oficina, Admin administra o cadastro de usuários e Customer acessa status/decisão de sua própria OS. Admin não herda permissões operacionais; PATCH próprio e DELETE estão implementados localmente. Validação desta entrega é local; PR/deploy e conferência AWS ficam com o mantenedor.
+**Implementação E4 — primeira entrega:** cadastro/login internos aceitam somente Admin/Mechanic, com validação nominal antes do banco; perfis incompatíveis no corpo retornam 400, credenciais incorretas/cadastro ausente retornam 401. O emissor interno acrescenta NameIdentifier usando o UUID persistido, como já faz a Lambda para Customer. Por revisão solicitada em 13/10/2026, os mapeadores constroem o domínio diretamente, sem try/catch: identidade/perfil persistidos inválidos propagam DomainValidationException (400 pelo middleware), sem emitir JWT. Algoritmo, expiração e tolerância são preservados; a validação global ainda aceita tokens anteriores sem ID. A matriz das rotas existentes e o vínculo da OS estão implementados nesta entrega: Mechanic opera a oficina, Admin administra o cadastro de usuários e Customer acessa status/decisão de sua própria OS. Admin não herda permissões operacionais; PATCH próprio e DELETE estão implementados e conferidos em hom, incluindo negativas e sessões anteriores, conforme fontes E6.
 
 O JWT segue `Infrastructure/Authentication/JwtTokenGenerator.cs` e a validação de `GerenciamentoMecanicaSistema/Program.cs`:
 
 - Assinatura simétrica **HS256** com a configuração `Jwt:Key`; manter a exigência atual de chave com pelo menos 32 caracteres na API.
 - Emissão com expiração em **UTC + 10 minutos**, também para clientes. Preservar as opções de validação atuais, incluindo a tolerância de relógio do middleware; 10 minutos é o `exp` emitido, sem introduzir mudança implícita dessa tolerância.
 - Validar assinatura, issuer, audience e lifetime como hoje. Função e API devem ter configurações compatíveis por ambiente.
-- A API mantém a validação do Bearer token e a autorização por rota. A REST API do Gateway roteia a validação de documento à Lambda e as operações à API via VPC Link/NLB interno (D01.3–D01.5). Não introduzir authorizer JWT nativo incompatível com HS256. A chave compartilhada fica no Secrets Manager, com referências públicas SSM v2. A infraestrutura da E2.12 prepara Pod Identity da API; API/função carregarão AWSCURRENT pelo SDK .NET na inicialização e manterão em memória, sem fallback local ou cópia para Secret Kubernetes. Implementação da infraestrutura preparada; aplicação e consumo dos runtimes permanecem pendentes. [Detalhamento](CONTRATOS_ENTRE_REPOSITORIOS.md).
+- A API mantém a validação do Bearer token e a autorização por rota. A REST API do Gateway roteia a validação de documento à Lambda e as operações à API via VPC Link/NLB interno (D01.3–D01.5). Não introduzir authorizer JWT nativo incompatível com HS256. A chave compartilhada fica no Secrets Manager, com referências públicas SSM v2. A base administra Pod Identity da API; API/função carregam AWSCURRENT pelo SDK .NET na inicialização e mantêm em memória, sem fallback local em modo AWS ou cópia para Secret Kubernetes. Consumo conferido em hom; mudança de chave exige reinicialização. [Detalhamento](CONTRATOS_ENTRE_REPOSITORIOS.md).
 - Preservar as claims Name/Role e acrescentar o ID estável como NameIdentifier, ajuste mínimo derivado da regra de Update próprio já registrada em D03.4. Para internos: ID da tabela users, nome e role Admin/Mechanic. Para cliente: ID da tabela customers, nome e role Customer.
 - Gerar claims a partir do cadastro consultado. Payload de validação de documento não escolhe ID, role, issuer, audience ou expiração.
 - Não adicionar refresh token, blacklist, armazenamento de sessão nem revogação por atualização, remoção ou inativação.
@@ -217,7 +221,7 @@ O login **interno** continua em `POST /authentication`, com `name/password/role`
 
 ## 7. Cadastro e status de clientes
 
-**Implementação E4 — primeira entrega:** domínio e persistência da API representam Active/Inactive. `GET /Customers` retorna o campo `status` como string, incluindo clientes em ambos os estados. O cadastro define Active; a atualização preserva o estado carregado e não escreve a coluna status. Status ausente/desconhecido nos dados persistidos é falha técnica, sem fallback para Active. POST/PATCH não incluem status em seus contratos; um campo extra enviado é ignorado e não altera o estado. Fixtures PostgreSQL locais preparam Inactive para validar a preservação, sem operação pública de inativação. Conferência de Inactive real na AWS continua pendente.
+**Implementação E4 — primeira entrega:** domínio e persistência da API representam Active/Inactive. `GET /Customers` retorna o campo `status` como string, incluindo clientes em ambos os estados. O cadastro define Active; a atualização preserva o estado carregado e não escreve a coluna status. Status ausente/desconhecido nos dados persistidos é falha técnica, sem fallback para Active. POST/PATCH não incluem status em seus contratos; um campo extra enviado é ignorado e não altera o estado. Fixtures PostgreSQL locais preparam Inactive para validar a preservação, sem operação pública de inativação. Cliente fictício Inactive foi conferido por SQL direto em hom, com preservação do estado no PATCH e negativa de nova emissão, sem revogar JWT anterior.
 
 - Estados do modelo: Ativo e Inativo.
 - Novos clientes são criados como **Ativo** no servidor, independentemente de campo enviado pelo consumidor.
@@ -227,7 +231,7 @@ O login **interno** continua em `POST /authentication`, com `name/password/role`
 - A regra futura de inativação preserva sessões existentes. Isso não exige implementar a operação agora.
 - O DELETE de cliente já existente continua sendo exclusão, sujeito às regras atuais; não convertê-lo implicitamente em inativação.
 
-## 8. Verificações planejadas para E3/E4/E6
+## 8. Critérios e evidências E3/E4/E6
 
 - Percorrer a matriz por endpoint, incluindo acesso sem token e perfis sem permissão.
 - Comprovar que apenas Admin cadastra/remove usuários e que Admin não opera OSs.
@@ -247,3 +251,5 @@ E0.2 e E0.3 ficam concluídas **como especificação**, com esta matriz e estes 
 Atualização em 2026-09-16: a E0 foi concluída como especificação. Componentes, comunicação, observabilidade e responsabilidades estão no [índice de arquitetura](README.md); o próximo trabalho é a E1. A consulta direta da Lambda ao banco foi consolidada em D01.5. Em 2026-10-02, D01.6 mudou o motor para RDS PostgreSQL sem reabrir as regras de negócio deste documento.
 
 Atualização em 2026-09-25, solicitada pelo usuário: a validação é do documento do cliente (CPF ou CNPJ), ampliando o requisito mínimo de CPF. O campo planejado da requisição passa de cpf para document. Esta definição substitui a restrição anterior a CPF; cadastro/status, JWT e permissões permanecem iguais.
+
+Revisão E7 de 21/10: contrato confrontado com controllers/handler e fontes da E6. Os critérios acima não são todos uma nova suíte AWS aprovada; consultar a matriz de evidências para cobertura local/hom, dispensas e limites. Nenhuma rota, sessão ou configuração foi alterada nesta revisão.

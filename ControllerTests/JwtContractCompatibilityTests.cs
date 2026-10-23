@@ -95,12 +95,12 @@ public class JwtContractCompatibilityTests
     }
 
     [Test]
-    public async Task PreservesApiClockSkew()
+    public async Task RejectsExpiredTokensWithoutClockSkew()
     {
-        Assert.That(options.TokenValidationParameters.ClockSkew, Is.EqualTo(TimeSpan.FromMinutes(5)));
+        Assert.That(options.TokenValidationParameters.ClockSkew, Is.EqualTo(TimeSpan.Zero));
         var token = CreateIssuer(new OffsetClock(-14)).Generate("cadastro", "Admin");
         var result = await options.TokenHandlers[0].ValidateTokenAsync(token, options.TokenValidationParameters);
-        Assert.That(result.IsValid, Is.True);
+        Assert.That(result.IsValid, Is.False);
     }
 
     private static JwtIssuer CreateIssuer(TimeProvider? clock = null) =>

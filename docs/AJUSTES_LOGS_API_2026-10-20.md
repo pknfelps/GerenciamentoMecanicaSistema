@@ -1,5 +1,7 @@
 # E5 — Ajustes de logging da API — 20/10/2026
 
+**Atualização de 21/10:** ajuste publicado e bootstrap reconferido no EKS: código 1, linha fixa/tipo, zero frames e métrica SSM failure=1 recebida. O caminho Information/499 de cancelamento continuou inconclusivo na AWS, preservando a comprovação local abaixo. E5 encerrada por aceite do mantenedor com essa limitação explícita. Ver [encerramento e reconferência](ENCERRAMENTO_E5_2026-10-21.md).
+
 **Implementados e comprovados localmente:** saída segura da falha de inicialização e tratamento de cancelamento pelo cliente. Nenhum deploy, chamada AWS/New Relic, mudança de infraestrutura, Collector ou workflow foi realizado. Base a8ba2615d9fe918fc161d975fabd406b54fd0ff2 com alterações locais ainda não publicadas; o mesmo SHA de metadados no publish não significa que esse binário já esteja implantado.
 
 ## Alterações

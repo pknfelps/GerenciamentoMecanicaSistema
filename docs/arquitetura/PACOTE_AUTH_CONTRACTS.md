@@ -1,20 +1,18 @@
 # Pacote Auth.Contracts
 
-[Arquitetura](README.md) · [Contrato entre repositórios](CONTRATOS_ENTRE_REPOSITORIOS.md) · [API do pacote](../../GerenciamentoMecanica.Auth.Contracts/README.md)
+[Arquitetura](README.md) · [Contratos operacionais](CONTRATOS_ENTRE_REPOSITORIOS.md) · [API do pacote](../../GerenciamentoMecanica.Auth.Contracts/README.md)
 
-Implementação inicial: **GerenciamentoMecanica.Auth.Contracts 1.0.0**, .NET 10. API referencia o projeto local; autenticação consome o nupkg com `Version="[1.0.0]"`. A extração abrange CPF e CNPJ. A versão 1.0.0 foi publicada no S3 em 2026-09-25; o sucesso do workflow de consumo remoto foi confirmado pelo mantenedor. A extração não implementa Lambda, autorização de rotas, alteração de perfis ou acesso a banco.
+Revisão de 21/10/2026. GerenciamentoMecanica.Auth.Contracts 1.0.0/.NET 10 compartilha CPF/CNPJ numérico e JWT. API referencia o projeto local; autenticação usa PackageReference exata [1.0.0], sem checkout ou ProjectReference entre repositórios. Pacote já publicado e consumo remoto comprovado; isso não constitui prova independente de todas as funções do sistema.
 
 ## Conteúdo e compatibilidade
 
-- Documentos: CpfRules e CnpjRules validam os cálculos numéricos existentes e produzem a máscara canônica. DocumentRules identifica o tipo e permite uso genérico. Corrigida a dupla máscara nas chamadas diretas de CPF e CNPJ; o formato persistido permanece igual.
-- Erros continuam DomainValidationException na API. O pacote expõe FormatException e não referencia o domínio. Document/Cpf/Cnpj/DocumentWrapper delegam ao pacote, sem algoritmo duplicado. O wrapper deixa de eliminar letras/espaços antes da validação; os contratos HTTP existentes já rejeitam esses formatos.
-- JWT: assinatura HS256, Name/Role com os nomes serializados anteriores, expiração de dez minutos. Validação da API, incluindo ClockSkew de cinco minutos, permanece intacta.
-- NameIdentifier opcional está disponível para os futuros consumidores E3/E4. O gerador interno atual continua emitindo Name/Role; alterar o login e as permissões pertence à adequação da aplicação.
-- O legado aceita pontuação arbitrária e sequências repetidas que passam no cálculo. A extração caracteriza esse comportamento em testes. A validação HTTP estrita exigida por customers/validate continua pendente na implementação da função; normalização não comprova cadastro ou elegibilidade.
+DocumentRules/CpfRules/CnpjRules preservam cálculos/canonização do legado; pacote não inclui controllers, banco ou domínio de OS. A Lambda faz validação estrita de formato antes de delegar dígitos/máscara; não é suporte a CNPJ alfanumérico. A API adapta FormatException para suas regras de domínio.
 
-O pacote depende apenas de System.IdentityModel.Tokens.Jwt; não carrega controllers, serviços de negócio, repositórios, configuração ou credenciais.
+JwtIssuer usa HS256, Name/Role, ID opcional como NameIdentifier e prazo UTC de dez minutos. Os emissores atuais de API/Lambda **já fornecem UUID persistido**; opcionalidade do pacote não significa que as operações próprias aceitam identidade inválida. Validação API mantém ClockSkew de cinco minutos. O pacote não conhece Secrets, issuer/audience de ambientes ou revogação de sessão.
 
-## Validar e empacotar
+## Produzir e publicar
+
+No repositório API, os scripts existentes continuam sendo usados pelo workflow auth-contracts:
 
 ```powershell
 dotnet test Auth.Contracts.Tests -c Release
@@ -24,59 +22,26 @@ pwsh -File scripts/Pack-AuthContracts.ps1
 pwsh -File scripts/tests/Test-AuthContractsDistribution.ps1
 ```
 
-A saída fica em artifacts/auth-contracts, com nupkg e sidecar de 64 caracteres hexadecimais minúsculos mais LF. O script estabiliza datas e IDs do envelope ZIP gerado pelo SDK 10. DLL, nuspec e README permanecem intactos. Dois empacotamentos dos mesmos inputs/toolchain devem ter o mesmo hash. Mudança de SDK, dependências ou commit pode mudar os bytes; uma divergência nunca autoriza sobrescrever a versão.
+Esses comandos não acessam RDS. O empacotamento estabiliza o envelope ZIP e produz nupkg/sidecar em artifacts/auth-contracts. Mudança de SDK/dependências/commit pode mudar bytes; divergência exige versão nova, sem sobrescrever uma já publicada. Pacote com mudanças não commitadas é somente para teste.
 
-O nuspec registra o commit do checkout. Um pacote local com alterações não commitadas serve para testes, não para evidência de release. Para a publicação definitiva, usar o artefato produzido pelo checkout da execução GitHub; o upload desse mesmo artefato pode ser feito pelo workflow ou pela CLI local.
+Auth-contracts verifica PRs relevantes e permite dispatch. Publicação manual com publish=true usa develop/hom ou main/prd, OIDC/variáveis existentes e o artefato já testado da mesma execução. Não recompila após assumir a role. Os scripts produtor Pack/Publish permanecem; os antigos scripts consumidores do repositório auth foram retirados.
 
-## Publicar
+Nupkg e sidecar usam If-None-Match. PreconditionFailed permite baixar/comparar bytes idênticos; divergência, acesso negado ou rede falham, sem sobrescrita. Uma reexecução completa apenas os objetos faltantes. Versão é compartilhada entre ambientes, sem deploy de API/EKS/RDS ou release SSM para publicar o pacote.
 
-O [workflow auth-contracts](../../.github/workflows/auth-contracts.yml) executa verificação/empacotamento nos PRs relevantes e por execução manual, sem autenticar AWS no job de verificação. O push não dispara um segundo CI. Commits novos cancelam os checks antigos do mesmo PR; publicações manuais ficam isoladas dessa concorrência. Publicação é manual, com publish=true, usando develop/hom ou main/prd e as variáveis AWS_REGION, AWS_ROLE_ARN e ARTIFACTS_BUCKET existentes.
+## Consumir na autenticação
 
-O GitHub exige que o workflow com workflow_dispatch esteja na branch padrão para disponibilizar a execução manual; integrar o arquivo conforme a governança do repositório antes de executar. Não alterar a branch padrão nem promover código à main automaticamente para contornar isso.
+Auth-ci/auth-publish baixam via AWS CLI os dois objetos da versão exata, conferem SHA-256 e separam cache NuGet pelo hash. NuGet.Config reserva o ID ao feed local artifacts/auth-contracts; ContractTests valida o pacote independentemente dos projetos de produção.
 
-O job de publicação usa o nupkg já testado da mesma execução; não recompila após assumir a role. O script:
-
-1. Confere nome/versão e sidecar.
-2. Publica em packages/GerenciamentoMecanica.Auth.Contracts/1.0.0/ usando If-None-Match: *.
-3. Em PreconditionFailed, baixa o objeto e compara seus bytes por SHA-256; conteúdo diferente encerra a operação.
-4. Publica/verifica o sidecar por último. Rerun pode completar uma publicação parcial.
-5. Não trata AccessDenied ou falhas de rede como existência do pacote.
-
-O artefato é compartilhado pelos ambientes: publicar uma versão uma vez e consumi-la em hom/prd. Promover a aplicação não exige recompilar/republicar o pacote. Alterações do pacote exigem incremento explícito de versão e atualização do consumidor. O pacote não escreve release SSM da API nem exige banco/EKS disponíveis.
-
-### Publicação pela CLI local
-
-Os scripts podem ser executados nesta máquina com PowerShell 7 e AWS CLI autenticada com permissões no bucket. Eles não dependem de branch Git nem usam OIDC do GitHub. Uma execução local comprova o acesso da identidade da CLI; não comprova o acesso das roles das pipelines.
-
-Para a versão definitiva, validar auth-contracts no PR da API e integrar os repositórios à develop. Baixar o artefato auth-contracts dessa execução e extrair o nupkg e o sidecar juntos. Publicar esses mesmos bytes, sem recompilar, preserva o vínculo com o CI e evita diferenças de pacote entre máquinas/commits.
-
-Na raiz da API, ajustando o caminho do artefato baixado:
+Referência 1.0.0: b9080cea9d303722ac072e89421505d728126cdb52d57549da4328b1e18ab4e9. Na raiz da autenticação, com AWS CLI autenticada e leitura autorizada:
 
 ```powershell
-pwsh -File scripts/Publish-AuthContracts.ps1 -PackagePath C:/artefatos/GerenciamentoMecanica.Auth.Contracts.1.0.0.nupkg -Bucket mecanica-artifacts-121754142617-us-east-1
+New-Item -ItemType Directory -Force artifacts/auth-contracts
+aws s3api get-object --bucket mecanica-artifacts-121754142617-us-east-1 --expected-bucket-owner 121754142617 --key packages/GerenciamentoMecanica.Auth.Contracts/1.0.0/GerenciamentoMecanica.Auth.Contracts.1.0.0.nupkg artifacts/auth-contracts/GerenciamentoMecanica.Auth.Contracts.1.0.0.nupkg
+aws s3api get-object --bucket mecanica-artifacts-121754142617-us-east-1 --expected-bucket-owner 121754142617 --key packages/GerenciamentoMecanica.Auth.Contracts/1.0.0/GerenciamentoMecanica.Auth.Contracts.1.0.0.nupkg.sha256 artifacts/auth-contracts/GerenciamentoMecanica.Auth.Contracts.1.0.0.nupkg.sha256
+Get-FileHash artifacts/auth-contracts/GerenciamentoMecanica.Auth.Contracts.1.0.0.nupkg -Algorithm SHA256
+Get-Content artifacts/auth-contracts/GerenciamentoMecanica.Auth.Contracts.1.0.0.nupkg.sha256
 ```
 
-Depois, executar o comando de consumo S3 da seção seguinte na raiz da autenticação. Nenhum deploy de API/Lambda/banco é necessário para essa verificação. A integração à develop é a recomendação para rastreabilidade da versão; não é uma exigência técnica do script local.
+Comparar ambos com a referência antes do restore; não executar pacote divergente. Usar cache separado conforme [README auth](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/README.md#consumo-do-authcontracts). Não há Get-AuthContracts.ps1/Test-AuthContracts.ps1 no consumidor atual. S3 não é feed NuGet HTTP: os arquivos são baixados antes do restore.
 
-Somente integrar à develop não disponibiliza necessariamente Run workflow: o workflow manual também precisa existir na branch padrão. Enquanto esse requisito não estiver atendido, é possível publicar o artefato do CI e validar seu consumo pela CLI sem antecipar a promoção da aplicação à main.
-
-## Consumir sem checkout da API
-
-No [repositório de autenticação](https://github.com/pknfelps/GerenciamentoMecanicaAutenticacao), scripts/Get-AuthContracts.ps1 lê a versão exata do projeto consumidor, baixa pacote/sidecar do S3, verifica checksum e identidade/versão do nuspec, e então disponibiliza o feed local. ExpectedSha256 permite conferir também uma referência externa, quando houver manifesto.
-
-scripts/Test-AuthContracts.ps1 restaura com NuGet.Config e cache separado pelo hash verificado, e executa ContractTests. Package source mapping reserva o ID do contrato para o feed local. Não copiar fontes nem usar ProjectReference para outro repositório.
-
-```powershell
-# Na raiz do repositório de autenticação, com AWS CLI autenticada:
-pwsh -File scripts/Test-AuthContracts.ps1 -Bucket mecanica-artifacts-121754142617-us-east-1
-
-# Alternativa local: receber somente o nupkg e seu .sha256.
-pwsh -File scripts/Test-AuthContracts.ps1 -PackagePath C:/artefatos/GerenciamentoMecanica.Auth.Contracts.1.0.0.nupkg
-```
-
-Na parte 6, auth-ci e auth-publish substituem auth-contracts-check no consumidor, usando role CI restrita a leitura do pacote/checksum. O produtor API permanece com seu fluxo atual. A publicação inicial foi comprovada no [run 36205335338](https://github.com/pknfelps/GerenciamentoMecanicaSistema/actions/runs/36205335338), em develop/hom. SHA-256 do nupkg 1.0.0: b9080cea9d303722ac072e89421505d728126cdb52d57549da4328b1e18ab4e9. O mantenedor confirmou o sucesso do workflow de consumo remoto após essa publicação. Essa validação do pacote não comprova implantação da função nem validação em prd.
-
-## Referências
-
-- [PackageReference e versões NuGet](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files).
-- [PutObject e escrita condicional](https://docs.aws.amazon.com/cli/latest/reference/s3api/put-object.html).
+[Publicação inicial](https://github.com/pknfelps/GerenciamentoMecanicaSistema/actions/runs/36205335338), [pipeline produtor](../../.github/workflows/auth-contracts.yml), [consumo/deploy auth](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/DEPLOY.md) e [cadeia de integração hom](../EVIDENCIAS_CICD_E_PROTECOES_2026-10-21.md). Não houve nova publicação, execução de scripts ou alteração de pacote nesta revisão.
