@@ -1,6 +1,6 @@
 $kind: http-request
 name: DeleteOrder
-url: '{{base_url}}/orders/{{order_id}}'
+url: '{{base_url}}/Orders/{{order_id}}'
 method: DELETE
 auth:
   type: bearer

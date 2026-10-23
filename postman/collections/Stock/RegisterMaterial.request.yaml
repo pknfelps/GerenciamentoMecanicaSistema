@@ -1,6 +1,6 @@
 $kind: http-request
 name: RegisterMaterial
-url: '{{base_url}}/stock'
+url: '{{base_url}}/Stock'
 method: POST
 auth:
   type: bearer

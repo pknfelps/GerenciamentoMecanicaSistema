@@ -1,6 +1,6 @@
 $kind: http-request
 name: DeleteUser
-url: '{{base_url}}/users'
+url: '{{base_url}}/Users'
 method: DELETE
 auth:
   type: bearer

@@ -1,6 +1,6 @@
 $kind: http-request
 name: StartExecution
-url: '{{base_url}}/orders/{{order_id}}/execution/start'
+url: '{{base_url}}/Orders/{{order_id}}/execution/start'
 method: PATCH
 auth:
   type: bearer

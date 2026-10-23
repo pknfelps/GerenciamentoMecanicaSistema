@@ -27,7 +27,9 @@ namespace GerenciamentoMecanicaSistema.Controllers
         {
             var orderId = await OrderService.CreateServiceOrder(orderToCreate.ToCommand());
 
-            return CreatedAtAction(nameof(CreateOrder), new { id = orderId }, new CreateOrderResponse(orderId));
+            // Resolve against the caller's URL to preserve HTTPS and the Gateway stage without trusting proxy headers.
+            var collectionPath = Request.Path.Value?.EndsWith('/') == true ? string.Empty : "Orders/";
+            return Created($"{collectionPath}{orderId}/status", new CreateOrderResponse(orderId));
         }
 
         [HttpGet("{id}/status")]

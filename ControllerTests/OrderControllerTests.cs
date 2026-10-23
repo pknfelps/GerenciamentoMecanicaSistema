@@ -192,10 +192,13 @@ namespace ControllerTests
             });
         }
 
-        [Test]
-        public async Task MustCreateOrder()
+        [TestCase("Orders")]
+        [TestCase("Orders/")]
+        public async Task MustCreateOrderWithLocationThatPreservesPublicAddress(string path)
         {
-            var response = await TestClient.PostAsJsonAsync($"orders", OrderToCreate);
+            TestClient.DefaultRequestHeaders.Add("X-Forwarded-Host", "untrusted.example");
+            TestClient.DefaultRequestHeaders.Add("X-Forwarded-Proto", "http");
+            var response = await TestClient.PostAsJsonAsync(path, OrderToCreate);
             var createdOrder = await response.Content.ReadFromJsonAsync<CreateOrderResponse>();
 
             await OrderService.Received(1).CreateServiceOrder(
@@ -205,7 +208,25 @@ namespace ControllerTests
             {
                 Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
                 Assert.That(createdOrder?.Id, Is.EqualTo(ExistingOrder.Id));
-                Assert.That(response.Headers.Location?.Query, Does.Contain(ExistingOrder.Id.ToString()));
+                Assert.That(response.Headers.Location, Is.Not.Null);
+            });
+
+            var location = response.Headers.Location!;
+            Assert.That(location.IsAbsoluteUri, Is.False);
+            Assert.Multiple(() =>
+            {
+                Assert.That(new Uri(new Uri($"https://gateway.example/hom/{path}"), location).AbsoluteUri,
+                    Is.EqualTo($"https://gateway.example/hom/Orders/{ExistingOrder.Id}/status"));
+                Assert.That(new Uri(new Uri($"https://gateway.example/prd/{path}"), location).AbsoluteUri,
+                    Is.EqualTo($"https://gateway.example/prd/Orders/{ExistingOrder.Id}/status"));
+            });
+
+            var statusResponse = await TestClient.GetAsync(new Uri(response.RequestMessage!.RequestUri!, location));
+            var orderStatus = await statusResponse.Content.ReadFromJsonAsync<OrderStatusResponse>();
+            Assert.Multiple(() =>
+            {
+                Assert.That(statusResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+                Assert.That(orderStatus?.Id, Is.EqualTo(ExistingOrder.Id));
             });
         }
 

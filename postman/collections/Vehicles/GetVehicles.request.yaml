@@ -1,6 +1,6 @@
 $kind: http-request
 name: GetVehicles
-url: '{{base_url}}/vehicles'
+url: '{{base_url}}/Vehicles'
 method: GET
 auth:
   type: bearer

@@ -1,6 +1,6 @@
 $kind: http-request
 name: AddMaterialAmount
-url: '{{base_url}}/stock/amount/{{material_id}}'
+url: '{{base_url}}/Stock/amount/{{material_id}}'
 method: POST
 auth:
   type: bearer

@@ -6,6 +6,10 @@ Recursos YAML no formato já usado pelo workspace (`.postman/resources.yaml`). A
 
 Dev aponta somente a API para localhost:8080; a autenticação local integrada é conferida pelo handler com bootstrap injetado, sem endpoint HTTP alternativo. Hom/Prd começam sem URLs. Após implantação autorizada, copiar o endpoint atual com stage do catálogo gateway/v2/endpoint para **base_url e gateway_url** do ambiente correspondente. Não reutilizar URL de ambiente destruído ou misturar ambientes.
 
+Preservar o casing do contrato publicado: `/Authentication`, `/Customers`, `/Vehicles`, `/Catalog`, `/Stock`, `/Users` e `/Orders`. O Gateway diferencia maiúsculas de minúsculas. As rotas da autenticação Customer continuam `/customers/auth/request-code` e `/customers/auth/verify-code`; probes continuam `/health/...`.
+
+CreateOrder mantém 201 e o corpo com id. O Location é relativo à URL da requisição e aponta para a consulta de status: `Orders/<id>/status` (ou `<id>/status` quando a criação usa `/Orders/`). Ao resolvê-lo contra a URL chamada, o cliente preserva domínio, HTTPS e stage, por exemplo `/hom/Orders/<id>/status`. Não concatenar Location diretamente à base_url nem tratá-lo como URL absoluta.
+
 Tokens, desafio, código e IDs começam vazios. Manter valores capturados apenas no contexto local do Postman; não exportar/sincronizar valores de sessão ou console/relatórios com corpos/headers sensíveis para o Git. Nenhum script imprime código/token. O documento preenchido é o seed educacional fictício; substituir pelos dados fictícios do cenário quando necessário.
 
 ## Sequência manual
@@ -26,7 +30,7 @@ Sem Bearer nas rotas de OS → 401; Admin/Mechanic no orçamento → 403; Custom
 
 Não rodar a pasta Lifecycle inteira como se fosse um cenário linear: ela inclui decisões alternativas e DELETE. Scripts de resposta descrevem o caminho positivo; uma negativa intencional gera falha nesses asserts, sem indicar erro de instrumentação. A coleção não faz chamadas administrativas ao SMTP4dev nem captura automaticamente códigos.
 
-Publicação do novo Gateway/auth permanece na AE.10. [Roteiro e evidências locais AE.9](../docs/AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md).
+O fluxo novo foi implantado e conferido em hom na [AE.10](../docs/AE10_VALIDACAO_HOM_2026-10-23.md). A correção posterior do Location foi preparada localmente e ainda precisa de publicação da API/reconferência no Gateway. [Roteiro e evidências locais AE.9](../docs/AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md).
 
 ## Formato versionado
 

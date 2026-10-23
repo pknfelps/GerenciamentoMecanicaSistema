@@ -1,6 +1,6 @@
 $kind: http-request
 name: GetDetailedOrders
-url: '{{base_url}}/orders/details?id={{order_id}}'
+url: '{{base_url}}/Orders/details?id={{order_id}}'
 method: GET
 auth:
   type: bearer

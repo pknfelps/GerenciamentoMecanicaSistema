@@ -1,6 +1,6 @@
 $kind: http-request
 name: GetServices
-url: '{{base_url}}/catalog'
+url: '{{base_url}}/Catalog'
 method: GET
 auth:
   type: bearer

@@ -1,6 +1,6 @@
 $kind: http-request
 name: GetUser
-url: '{{base_url}}/users'
+url: '{{base_url}}/Users'
 method: GET
 auth:
   type: bearer
