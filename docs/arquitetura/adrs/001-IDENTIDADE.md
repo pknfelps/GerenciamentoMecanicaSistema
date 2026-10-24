@@ -1,8 +1,8 @@
-> **Revisão AE.9 — 23/10/2026:** [ADR 011](011-AUTENTICACAO-POR-CODIGO-E-EMAIL.md) substitui emissão por documento isolado. Não há Authorizer ou token por OS.
+> **Decisão atual:** [ADR 011](011-AUTENTICACAO-POR-CODIGO-E-EMAIL.md) substitui emissão por documento isolado. Não há Authorizer ou token por OS.
 
 # ADR 001 — Separar identidade interna e acesso do cliente
 
-**Estado:** aceito; base anterior validada em hom. Refinamento AE implementado/validado localmente, publicação AWS pendente na AE.10. Formalização original: 16/09/2026.
+**Estado:** aceito e implementado; autenticação por documento/código e operações Customer conferidas em hom. Formalização original: 16/09/2026.
 
 **Contexto:** gestão de usuários, operação da oficina e decisão do cliente exigem permissões diferentes. A validação cadastral do cliente deve ocorrer na função serverless.
 
@@ -34,7 +34,3 @@ Os estados locais, planos pendentes e alternativas abaixo registram o momento em
 **Comprovação:** implementar em E3/E4 e testar em E6 emissão/consumo do token, isolamento entre clientes e atualização exclusiva do próprio usuário. [Contrato normativo](../ACESSO_E_AUTENTICACAO.md) · [RFC 001](../rfcs/001-EXECUCAO.md).
 
 </details>
-
-## Extra AE.7 — implementação local de 22/10/2026
-
-[Acesso e autenticação](../ACESSO_E_AUTENTICACAO.md): API usa Invoke v1 em todos os modos, sem transporte SMTP próprio ou logging de simulação. Cadastro Active/titularidade são conferidos nas operações Customer, orçamento aceita somente approved booleano e retorna decisão após commit, e ClockSkew é zero. Falhas de notificação continuam tratadas após persistência. Captura SMTP4dev não comprova entrega externa; mode=smtp identifica a captura central. Preparado/comprovado localmente com 1.212 testes; publicação/Gateway e aceite AWS permanecem nas etapas extras posteriores, sem reabrir aceites oficiais.

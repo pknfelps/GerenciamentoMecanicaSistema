@@ -28,8 +28,6 @@ API/auth montam suas mensagens e invocam EmailFunction privada por SDK/IAM, em t
 
 Secrets são resolvidos em runtime por identidades restritas, sem valores em manifestos/pipeline. Logs usam mensagem fixa/tipo, sem stack trace, SQL, payload, documento ou credenciais. API/Lambda aceitam somente pai W3C; PostgreSQL/logs seguem a árvore da aplicação. X-Ray nativo/polling é diagnóstico independente, sem promessa de união automática ao OTLP.
 
-Nenhuma nova execução AWS nesta revisão.
-
 Fundamentação: [ADR 001](../adrs/001-IDENTIDADE.md), [ADR 002](../adrs/002-REDE-AWS.md), [ADR 006](../adrs/006-NOTIFICACOES.md), [ADR 009](../adrs/009-SAM-AUTENTICACAO.md) e [ADR 010](../adrs/010-GATEWAY-REST-V2.md).
 
-Decisão extra: [ADR 011](../adrs/011-AUTENTICACAO-POR-CODIGO-E-EMAIL.md). A implantação/comprovação AWS do contrato novo fica na AE.10, sem afirmar prd ou união X-Ray/OTLP.
+Decisão de autenticação e envio: [ADR 011](../adrs/011-AUTENTICACAO-POR-CODIGO-E-EMAIL.md). Configuração hom/prd não comprova disponibilidade atual ou união X-Ray/OTLP.

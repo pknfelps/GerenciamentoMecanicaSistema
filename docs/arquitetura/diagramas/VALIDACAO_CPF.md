@@ -20,10 +20,11 @@ sequenceDiagram
         alt Ausente, Inactive ou email inutilizavel
             F-->>C: 202 generico sem escrita ou envio
         else Cliente elegivel
-            F->>D: Transacao e lock por cliente, criar Pending, commit
+            F->>D: Conferir limites em transacao com lock por cliente
             alt Cooldown ou limite atingido
                 F-->>C: 429 com Retry-After
             else Solicitacao admitida
+                F->>D: Persistir limite e novo Pending, substituir anteriores, commit
                 F->>E: Invoke v1 sincrono
                 E->>S: MIME e captura SMTP
                 alt Captura confirmada

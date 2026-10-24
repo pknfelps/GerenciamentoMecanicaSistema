@@ -8,50 +8,50 @@ O cliente solicita e confirma o código com seu CPF/CNPJ numérico. O operador c
 
 ## Matriz por endpoint
 
-As rotas da API usam nomes de controllers e são apresentadas em minúsculas para leitura; o Gateway projeta as operações do OpenAPI. Próprio significa verificar a identidade no servidor, não confiar em CPF/UUID recebidos para escolher o titular.
+As rotas abaixo preservam o casing do OpenAPI publicado: o Gateway diferencia maiúsculas de minúsculas. Somente as rotas customers/auth e health permanecem em minúsculas. Próprio significa verificar a identidade no servidor, não confiar em CPF/UUID recebidos para escolher o titular.
 
 | Método | Rota | Admin | Mechanic | Cliente | Sem token | Execução |
 |---|---|---|---|---|---|---|
-| POST | `/authentication` | Sim | Sim | Não se aplica | Sim | API — autenticação interna |
+| POST | `/Authentication` | Sim | Sim | Não se aplica | Sim | API — autenticação interna |
 | POST | `/customers/auth/request-code` | Não se aplica | Não se aplica | Sim | Sim | AuthFunction — solicitar código |
 | POST | `/customers/auth/verify-code` | Não se aplica | Não se aplica | Sim | Sim | AuthFunction — confirmar código e emitir JWT |
-| POST | `/users` | Sim | Não | Não | Não | API |
-| GET | `/users` | Sim | Próprio | Não | Não | API |
-| PATCH | `/users` | Próprio | Próprio | Não | Não | API — implementada e conferida em hom |
-| DELETE | `/users` | Sim | Não | Não | Não | API — implementada e conferida em hom |
-| POST | `/customers` | Não | Sim | Não | Não | API |
-| GET | `/customers` | Não | Sim | Não | Não | API |
-| PATCH | `/customers/{id}` | Não | Sim | Não | Não | API |
-| DELETE | `/customers/{id}` | Não | Sim | Não | Não | API |
-| POST | `/vehicles` | Não | Sim | Não | Não | API |
-| GET | `/vehicles` | Não | Sim | Não | Não | API |
-| PATCH | `/vehicles/{id}` | Não | Sim | Não | Não | API |
-| DELETE | `/vehicles/{id}` | Não | Sim | Não | Não | API |
-| POST | `/catalog` | Não | Sim | Não | Não | API |
-| GET | `/catalog` | Não | Sim | Não | Não | API |
-| PATCH | `/catalog/{id}` | Não | Sim | Não | Não | API |
-| DELETE | `/catalog/{serviceId}` | Não | Sim | Não | Não | API |
-| POST | `/stock` | Não | Sim | Não | Não | API |
-| GET | `/stock` | Não | Sim | Não | Não | API |
-| POST | `/stock/amount/{id}` | Não | Sim | Não | Não | API |
-| PATCH | `/stock/amount/{id}` | Não | Sim | Não | Não | API |
-| PATCH | `/stock/price/{id}` | Não | Sim | Não | Não | API |
-| DELETE | `/stock/{id}` | Não | Sim | Não | Não | API |
-| POST | `/orders` | Não | Sim | Não | Não | API |
-| GET | `/orders/{id}/status` | Não | Sim | Própria OS | Não | API |
-| GET | `/orders/operational` | Não | Sim | Não | Não | API |
-| GET | `/orders/details` | Não | Sim | Não | Não | API |
-| PATCH | `/orders/{id}/diagnosis/start` | Não | Sim | Não | Não | API |
-| POST | `/orders/{id}/services` | Não | Sim | Não | Não | API |
-| PATCH | `/orders/{id}/services` | Não | Sim | Não | Não | API |
-| POST | `/orders/{id}/materials` | Não | Sim | Não | Não | API |
-| PATCH | `/orders/{id}/materials` | Não | Sim | Não | Não | API |
-| PATCH | `/orders/{id}/diagnosis/complete` | Não | Sim | Não | Não | API |
-| PATCH | `/orders/{id}/budget` | Não | Não | Própria OS | Não | API |
-| PATCH | `/orders/{id}/execution/start` | Não | Sim | Não | Não | API |
-| PATCH | `/orders/{id}/execution/complete` | Não | Sim | Não | Não | API |
-| PATCH | `/orders/{id}/delivery` | Não | Sim | Não | Não | API |
-| DELETE | `/orders/{id}` | Não | Sim | Não | Não | API |
+| POST | `/Users` | Sim | Não | Não | Não | API |
+| GET | `/Users` | Sim | Próprio | Não | Não | API |
+| PATCH | `/Users` | Próprio | Próprio | Não | Não | API |
+| DELETE | `/Users` | Sim | Não | Não | Não | API |
+| POST | `/Customers` | Não | Sim | Não | Não | API |
+| GET | `/Customers` | Não | Sim | Não | Não | API |
+| PATCH | `/Customers/{id}` | Não | Sim | Não | Não | API |
+| DELETE | `/Customers/{id}` | Não | Sim | Não | Não | API |
+| POST | `/Vehicles` | Não | Sim | Não | Não | API |
+| GET | `/Vehicles` | Não | Sim | Não | Não | API |
+| PATCH | `/Vehicles/{id}` | Não | Sim | Não | Não | API |
+| DELETE | `/Vehicles/{id}` | Não | Sim | Não | Não | API |
+| POST | `/Catalog` | Não | Sim | Não | Não | API |
+| GET | `/Catalog` | Não | Sim | Não | Não | API |
+| PATCH | `/Catalog/{id}` | Não | Sim | Não | Não | API |
+| DELETE | `/Catalog/{serviceId}` | Não | Sim | Não | Não | API |
+| POST | `/Stock` | Não | Sim | Não | Não | API |
+| GET | `/Stock` | Não | Sim | Não | Não | API |
+| POST | `/Stock/amount/{id}` | Não | Sim | Não | Não | API |
+| PATCH | `/Stock/amount/{id}` | Não | Sim | Não | Não | API |
+| PATCH | `/Stock/price/{id}` | Não | Sim | Não | Não | API |
+| DELETE | `/Stock/{id}` | Não | Sim | Não | Não | API |
+| POST | `/Orders` | Não | Sim | Não | Não | API |
+| GET | `/Orders/{id}/status` | Não | Sim | Própria OS | Não | API |
+| GET | `/Orders/operational` | Não | Sim | Não | Não | API |
+| GET | `/Orders/details` | Não | Sim | Não | Não | API |
+| PATCH | `/Orders/{id}/diagnosis/start` | Não | Sim | Não | Não | API |
+| POST | `/Orders/{id}/services` | Não | Sim | Não | Não | API |
+| PATCH | `/Orders/{id}/services` | Não | Sim | Não | Não | API |
+| POST | `/Orders/{id}/materials` | Não | Sim | Não | Não | API |
+| PATCH | `/Orders/{id}/materials` | Não | Sim | Não | Não | API |
+| PATCH | `/Orders/{id}/diagnosis/complete` | Não | Sim | Não | Não | API |
+| PATCH | `/Orders/{id}/budget` | Não | Não | Própria OS | Não | API |
+| PATCH | `/Orders/{id}/execution/start` | Não | Sim | Não | Não | API |
+| PATCH | `/Orders/{id}/execution/complete` | Não | Sim | Não | Não | API |
+| PATCH | `/Orders/{id}/delivery` | Não | Sim | Não | Não | API |
+| DELETE | `/Orders/{id}` | Não | Sim | Não | Não | API |
 | GET | `/health/live` | Sim | Sim | Sim | Sim | API — probes |
 | GET | `/health/ready` | Sim | Sim | Sim | Sim | API — probes |
 | GET | `/health/startup` | Sim | Sim | Sim | Sim | API — probes |

@@ -16,7 +16,7 @@
 
 ## Gatilhos, aprovação e estado
 
-CI roda em PR/manual; não publica automaticamente a aplicação após merge. `develop/hom` e `main/prd` são conferidos nos fluxos de ambiente. Provisionamentos/destroys são manuais, com OIDC e versões de actions conforme cada workflow versionado. A diferença em relação ao R06 original está registrada e sua análise foi adiada pelo mantenedor; esta revisão não altera gatilhos nem declara atendimento ao deploy automático após merge.
+CI roda em PR/manual; não publica automaticamente a aplicação após merge. `develop/hom` e `main/prd` são conferidos nos fluxos de ambiente. Provisionamentos/destroys são manuais, com OIDC e versões de actions conforme cada workflow versionado. O fluxo manual não atende à exigência original de deploy automático após merge; os gatilhos permanecem manuais por decisão do mantenedor.
 
 Base/banco/Gateway: plan salva binário/texto → Environment de aprovação sem AWS → apply do mesmo SHA/plano/execução. Artefato por ID, sete dias; plano obsoleto exige nova execução/aprovação, sem replan no apply. Estados S3 próprios por componente/ambiente usam versionamento e lock nativo. Consumidores leem parâmetros públicos SSM v2, sem terraform_remote_state. SSM configura recursos; sua presença não comprova prontidão.
 

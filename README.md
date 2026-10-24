@@ -4,18 +4,24 @@ API .NET da oficina: usuários, clientes, veículos, catálogo, estoque e ciclo 
 
 ## Componentes e repositórios
 
-```mermaid
+~~~mermaid
 flowchart LR
-    HTTP["Controllers ASP.NET Core"] --> SERVICE["Service - casos de uso"]
-    SERVICE --> DOMAIN["Domain - regras"]
-    SERVICE --> PORTS["Service.Interface - contratos"]
-    PORTS --> INFRA["Infrastructure - adaptadores"]
-    INFRA --> DB[("PostgreSQL via Npgsql e Dapper")]
-    INFRA --> EMAIL["Invoke → EmailFunction → captura SMTP4dev"]
-    DI["DependencyInjection e Program"] -.-> HTTP
-    DI -.-> INFRA
-    HTTP --> OTEL["Observability - composição e métricas HTTP"]
-```
+    GW["Gateway / cliente HTTP"] --> HTTP["Controllers e JWT"]
+    subgraph APP["Repositorio da API"]
+        HTTP --> SERVICE["Service: casos de uso"]
+        SERVICE --> DOMAIN["Domain: regras de negocio"]
+        SERVICE --> PORTS["Interfaces de persistencia"]
+        INFRA["Infrastructure: PostgreSQL"] -.->|implementa| PORTS
+        SERVICE --> EMAIL["Adaptador Invoke"]
+        DI["Program e DependencyInjection"] -.-> HTTP
+        DI -.-> INFRA
+        HTTP -.-> OTEL["OpenTelemetry"]
+        INFRA -.-> OTEL
+    end
+    INFRA -->|TLS| DB[("RDS PostgreSQL")]
+    EMAIL -->|IAM / alias live| FN["EmailFunction privada"]
+    OTEL -->|OTLP| COL["Collector da infraestrutura"]
+~~~
 
 | Repositório | Responsabilidade |
 |---|---|
@@ -24,7 +30,7 @@ flowchart LR
 | [Banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/tree/develop) | RDS/credenciais, SQL/seeds e Job de inicialização |
 | [Serverless](https://github.com/pknfelps/GerenciamentoMecanicaServerless/tree/develop) | AuthFunction/documento+código/JWT e EmailFunction/transporte SMTP privado |
 
-Domain.Interface/Service.Interface definem contratos. Infrastructure implementa PostgreSQL, JWT/hash e envio; DependencyInjection compõe os serviços. Consultas públicas de usuários não retornam senha/hash. [Componentes AWS](docs/arquitetura/diagramas/COMPONENTES.md), [sequências](docs/arquitetura/README.md) e [banco/ER](docs/arquitetura/BANCO_E_MODELO.md).
+Setas contínuas representam chamadas/integrações; pontilhadas representam implementação, composição ou instrumentação. Domain.Interface/Service.Interface definem contratos. Infrastructure implementa PostgreSQL, JWT/hash e envio; DependencyInjection compõe os serviços. Consultas públicas de usuários não retornam senha/hash. [Componentes AWS](docs/arquitetura/diagramas/COMPONENTES.md), [sequências](docs/arquitetura/README.md) e [banco/ER](docs/arquitetura/BANCO_E_MODELO.md).
 
 ## Tecnologias e build
 
@@ -46,7 +52,7 @@ docker build --file GerenciamentoMecanicaSistema/Dockerfile --tag gerenciamento-
 
 1. Copiar [.env.example](.env.example) para .env; definir POSTGRES_PASSWORD e JWT_KEY com pelo menos 32 caracteres. .env é ignorado pelo Git.
 2. Executar `docker compose up -d db smtp`.
-3. Preparar banco **vazio** com o SQL do [repositório de banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/blob/develop/README.md#execução-local-opcional). Compose não cria tabelas/seeds nem sincroniza arquivos entre repositórios.
+3. Preparar banco **vazio** com o SQL do [repositório de banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/blob/develop/README.md#execução-local). Compose não cria tabelas/seeds nem sincroniza arquivos entre repositórios.
 4. Iniciar a EmailFunction no SAM local conforme o [README Serverless](https://github.com/pknfelps/GerenciamentoMecanicaServerless#emailfunction-local), usando a rede do Compose e listener acessível ao container. Depois executar `docker compose up --build -d api`; conferir `docker compose ps` e `docker compose logs -f api`.
 
 O SMTP4dev usa a [configuração local](deploy/smtp4dev/appsettings.json): caixa em memória, no máximo 100 mensagens/sessões, relay desabilitado e conteúdo ausente do stdout. Reiniciar perde a caixa. O volume SMTP antigo deixa de ser montado, sem exclusão automática; o volume db_data permanece.

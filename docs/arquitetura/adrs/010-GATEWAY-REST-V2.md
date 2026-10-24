@@ -1,4 +1,4 @@
-> **AE.9, 23/10/2026:** Gateway preparado para request-code/verify-code (POST), OpenAPI auth 2.0.0 e duas permissões de invocação específicas para a versão numérica. customers/validate foi retirado; sem Authorizer ou endpoint público email. Publicação AWS do novo contrato permanece AE.10; evidências hom abaixo são anteriores à extra.
+> O Gateway publica request-code/verify-code (POST), OpenAPI auth 2.0.0 e permissões de invocação para a versão numérica. A rota customers/validate foi retirada; não há Authorizer ou endpoint público email.
 
 # ADR 010 — Gateway REST Regional com VPC Link V2
 

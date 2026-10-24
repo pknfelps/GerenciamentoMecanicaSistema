@@ -19,7 +19,7 @@ RDS provisionado não escala a zero. A economia escolhida é destruir/recriar o 
 
 ## Relações e responsabilidades
 
-O [ER](diagramas/DADOS.md) inclui as doze tabelas do Init.sql revisado na AE.3, incluindo as duas tabelas de autenticação:
+O [ER](diagramas/DADOS.md) inclui as doze tabelas do Init.sql, incluindo as duas tabelas de autenticação:
 
 | Grupo | Relação e finalidade |
 |---|---|

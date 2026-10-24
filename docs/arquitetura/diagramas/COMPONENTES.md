@@ -1,4 +1,4 @@
-# Componentes e fronteiras — extra AE
+# Componentes e fronteiras
 
 [Arquitetura](../README.md) · [Execução](../rfcs/001-EXECUCAO.md) · [Entrega](../rfcs/002-ENTREGA.md)
 
@@ -14,7 +14,9 @@ flowchart LR
             NLB["Mesmo NLB interno - TCP 80 e 2525"]
             NLB -->|"ASG - TCP 30080"| SVC["Service API NodePort"]
             SVC --> API["API .NET 10 no EKS"]
-            NLB -->|"ASG - TCP 30025"| SMTP["SMTP4dev efemero - namespace smtp4dev"]
+            NLB -->|"ASG - TCP 30025"| SMTPSVC["Service SMTP NodePort"]
+            SMTPSVC -->|"TCP 2525"| SMTP["SMTP4dev efemero - namespace smtp4dev"]
+            WEB["Service web ClusterIP - porta 80"] -->|"HTTP 8080"| SMTP
             ENIA["Conectividade VPC auth"]
             ENIE["Conectividade VPC email"] -->|"SG email para SG NLB - TCP 2525"| NLB
             HPA["HPA 1 a 3 pods / um no t3.small"] -.-> API
@@ -34,7 +36,7 @@ flowchart LR
     VL -->|"SG Gateway para NLB - TCP 80"| NLB
     AUTH -.-> ENIA
     EMAIL -.-> ENIE
-    OP["Operador com kubeconfig autorizado"] -->|"port-forward localhost - web ClusterIP"| SMTP
+    OP["Operador com kubeconfig autorizado"] -->|"port-forward localhost"| WEB
     SSM["SSM base/database/auth/Gateway v2 + email v1"] -.-> API
     SSM -.-> AUTH
     SSM -.->|"Resolvido somente no deploy"| EMAIL
@@ -68,7 +70,7 @@ flowchart LR
     API["mecanica-api"] -->|OTLP| COL["Collector EKS 0.161.0"]
     K8S["Kubelet / API Kubernetes - 30 s"] --> COL
     AUTH["mecanica-auth"] -->|"OTLP loopback / flush limitado"| EXT["Extensao Collector 0.151.0 - layer 0.22.0"]
-    GW["Gateway access logs"] --> CW["CloudWatch"]
+    GW["Gateway REST"] -->|"Access logs"| CW["CloudWatch"]
     METRICS["13 metricas Gateway / auth Lambda / RDS"] --> CW
     CW -->|Polling| COL
     GW --> XR["X-Ray nativo"]
@@ -76,9 +78,11 @@ flowchart LR
     XR -->|Polling separado| NR["New Relic US"]
     COL -->|"OTLP HTTPS"| NR
     EXT -->|"OTLP HTTPS"| NR
+    SM["Secrets Manager"] -.->|"License Key"| EXT
+    SM -.->|"License Key / Pod Identity"| COL
     EMAIL["EmailFunction - JSON sanitizado"] --> EL["Seu log group CloudWatch"]
 ```
 
-Email não ganhou providers OTel, dashboard, alerta ou coleta CloudWatch própria nesta extra. API/auth mantêm W3C, SQL/logs correlacionados, sanitização e exportação existentes. Não propagar X-Ray como pai OTLP ou afirmar união automática. Código/destinatário/MIME ficam na caixa privada, não nos logs/telemetria.
+EmailFunction possui somente logs JSON no CloudWatch, sem providers OTel, dashboard, alerta ou coleta CloudWatch própria. API/auth mantêm W3C, SQL/logs correlacionados, sanitização e exportação existentes. Não propagar X-Ray como pai OTLP ou afirmar união automática. Código/destinatário/MIME ficam na caixa privada, não nos logs/telemetria.
 
 Coletores leem License Key no Secrets Manager, nunca via API/pipeline. Coleta kubelet cobre o nó do Collector; métricas CloudWatch têm atraso de dez minutos, logs retomam cinco minutos sem checkpoint/deduplicação.
