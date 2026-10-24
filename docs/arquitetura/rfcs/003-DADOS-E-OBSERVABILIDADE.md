@@ -45,12 +45,8 @@ Três dashboards como código: operação/API/Kubernetes, ordens de serviço e i
 
 Cinco alertas, com condições hom/prd separadas: falha técnica de OS, falha de notificação de OS, CPU do nó acima de 80% da alocável por cinco minutos, working set acima de 85% da memória alocável por cinco minutos e API com menos de uma réplica disponível por dois minutos. Falhas OS/notificação disparam com soma ≥1 na janela de 300 s. Sem preenchimento de lacunas; dez minutos sem sinal encerram incidentes sem abrir por ausência, sem comprovar recuperação. Na revisão AE, mode=smtp representa captura central na EmailFunction/SMTP4dev em todos os modos; falha é do fluxo de notificação, sem afirmar entrega externa. Pontos históricos simulated mantêm seu significado.
 
-Recebimento de abertura/encerramento dos três cenários exercitados (processamento, notificação e disponibilidade) foi confirmado; disparos CPU/memória e carga foram dispensados. Não foram acrescentados alertas fora dos cinco aprovados. [Encerramento E5 e ressalvas](../../ENCERRAMENTO_E5_2026-10-21.md): logs Gateway parciais, cancelamento AWS inconclusivo, aviso de descarte da métrica nativa de threads e limites de filas/retentativas. Essas limitações não são próximos testes obrigatórios nem certificação de prd.
-
-SQL/indicadores, integrações e continuidade W3C foram conferidos nas fontes da [E6](../../REVISAO_E6_2026-10-21.md). Ambiente removido depois da validação; [custos e persistências](../../ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md). Nenhuma nova coleta/teste/deploy ou alteração de produção nesta revisão documental.
+Logs Gateway podem ter lacunas. O cancelamento e a entrega de telemetria dependem do ambiente/runtime; filas limitadas não garantem preservação de todos os sinais. Não interpretar ausência como recuperação ou saúde.
 
 Fundamentação: [ADR 003](../adrs/003-BANCO-E-HISTORICO.md), [ADR 005](../adrs/005-OBSERVABILIDADE.md) e [ADR 006](../adrs/006-NOTIFICACOES.md).
 
 AE.9, 23/10/2026: invocações auth incluem pedido/confirmação; filtrar authenticated para logins. EmailFunction possui somente log JSON sanitizado no seu CloudWatch; esta extra não adiciona OTel/coleta/dashboards/alertas próprios para ela. Os sinais e aceites E5 existentes não foram redesenhados.
-
-**Consolidação posterior — 23/10/2026:** AE.10 concluída em hom, com [fluxo integrado](../../AE10_VALIDACAO_HOM_2026-10-23.md), [SQL/inativação/limites](../../AE10_CONFERENCIAS_FINAIS_HOM_2026-10-23.md) e [estado da entrega](../../CONSOLIDACAO_ENTREGA_2026-10-23.md). As menções anteriores à ausência de operações AWS descrevem a revisão documental/local; a comprovação posterior está nessas fontes. Não certifica prd, envio externo ou processamento assíncrono independente.

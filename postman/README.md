@@ -1,6 +1,6 @@
-# Postman — fluxo AE
+# Postman
 
-Recursos YAML no formato já usado pelo workspace (`.postman/resources.yaml`). Abrir a Local View/sincronização Git do Postman; não importar os YAMLs como se fossem uma collection JSON v2.1. Nenhuma sincronização ou edição do workspace remoto foi executada nesta etapa.
+Recursos YAML no formato já usado pelo workspace (`.postman/resources.yaml`). Abrir a Local View/sincronização Git do Postman; não importar os YAMLs como se fossem uma collection JSON v2.1.
 
 ## Ambientes e segurança
 
@@ -30,8 +30,6 @@ Sem Bearer nas rotas de OS → 401; Admin/Mechanic no orçamento → 403; Custom
 
 Não rodar a pasta Lifecycle inteira como se fosse um cenário linear: ela inclui decisões alternativas e DELETE. Scripts de resposta descrevem o caminho positivo; uma negativa intencional gera falha nesses asserts, sem indicar erro de instrumentação. A coleção não faz chamadas administrativas ao SMTP4dev nem captura automaticamente códigos.
 
-O fluxo novo foi implantado e conferido em hom na [AE.10](../docs/AE10_VALIDACAO_HOM_2026-10-23.md). Após novo deploy em 23/10/2026, criação 201 e GET 200 do Location relativo foram reconferidos pelo Gateway, preservando domínio/HTTPS/stage. Os caminhos canônicos de login, clientes e veículos também responderam 200. [Roteiro e evidências locais AE.9](../docs/AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md).
-
 ## Formato versionado
 
-Requisições normalizadas ao schema oficial Postman Collection Format v3: name explícito, headers/credentials como listas key/value, JSON de corpo legível e sem order legado ignorado pelo schema. A sequência de negócio é a descrita acima; não inferir cenário linear pela ordenação visual de arquivos. [Schema oficial](https://schema.postman.com/collection/json/v3.0.0/draft-07/collection.json). Validação local cobre estrutura/JSON e sintaxe dos scripts; não equivale a sincronização ou execução da sessão Postman na AWS.
+Requisições normalizadas ao schema oficial Postman Collection Format v3: name explícito, headers/credentials como listas key/value, JSON de corpo legível e sem order legado ignorado pelo schema. A sequência de negócio é a descrita acima; não inferir cenário linear pela ordenação visual de arquivos. [Schema oficial](https://schema.postman.com/collection/json/v3.0.0/draft-07/collection.json).

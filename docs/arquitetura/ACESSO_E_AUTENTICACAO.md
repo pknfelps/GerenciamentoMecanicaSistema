@@ -1,6 +1,4 @@
-# Acesso e autenticação — contrato AE
-
-**Revisão de 23/10/2026, AE.9.** Descreve o código preparado nas AE.3–AE.8. A comprovação conjunta é local; a publicação AWS do contrato novo continua na AE.10. Os aceites hom anteriores à extra permanecem nas [evidências E6](../REVISAO_E6_2026-10-21.md), sem certificar a implantação destas alterações. [Contrato extra](../CONTRATOS_EXTRA_AUTENTICACAO_E_EMAIL.md) · [Roteiro AE.9](../AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md).
+# Acesso e autenticação
 
 ## Identidades e responsabilidades
 
@@ -58,7 +56,6 @@ As rotas da API usam nomes de controllers e são apresentadas em minúsculas par
 | GET | `/health/ready` | Sim | Sim | Sim | Sim | API — probes |
 | GET | `/health/startup` | Sim | Sim | Sim | Sim | API — probes |
 
-
 Probes são internas à API e não são publicadas pelo Gateway. Rotas de login/pedido/confirmação não exigem Bearer anterior; enviar JWT não evita verificação de credenciais ou código. Chamadas com sessão Customer válida reutilizam o Bearer nas operações de OS, sem repetir autenticação em cada endpoint.
 
 ## Pedido e confirmação do código
@@ -94,4 +91,4 @@ Auth inicializa uma vez por runtime saudável, com nova tentativa após falha. P
 
 EmailFunction recebe Invoke v1 privado e concentra MIME/SMTP. API e auth montam suas mensagens e só confirmam captured com envelope válido. Código/caixa são efêmeros; PostgreSQL persiste salt/verificador e limites. Falha de notificação da OS não desfaz o commit; falha do envio do código impede confirmar desafio utilizável. Sem outbox, fila, reenvio automático ou entrega única.
 
-[Postman](../../postman/README.md) mantém desafio/código/JWT somente na sessão local. Fluxo conjunto, negativas e limites estão no [registro AE.9](../AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md). Prd e execução AWS do novo contrato não são comprovadas pela validação local.
+[Postman](../../postman/README.md) mantém desafio/código/JWT somente na sessão local. Testes locais não comprovam disponibilidade da implantação ou entrega externa de e-mail.

@@ -1,8 +1,15 @@
-## .NET build outputs, local tooling and environment files
+# Local implementation plans and development checklists
+[Pp][Ll][Aa][Nn]*.md
+*_PLANEJAD[OA].md
+*_planejad[oa].md
+/docs/plano-*/
+/docs/planos/
+/docs/plans/
+/docs/implementation-plans/
+/docs/ROTEIRO_VALIDACAO_*.md
+/docs/MIGRACAO_DECLARATIVA.md
 
-# Local implementation plan and session history
-/PLANO_FASE_3.md
-/docs/plano-fase-3/
+## .NET build outputs, local tooling and environment files
 
 # Build results
 [Dd]ebug/
@@ -76,3 +83,7 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+
+# Detailed procedures, development reports and evidence stay local.
+/docs/*.md
+!/docs/SCHEMA.md

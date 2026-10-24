@@ -1,6 +1,6 @@
 # RFC 002 — Entrega e contratos entre componentes
 
-**Estado:** fluxos AE preparados e validados localmente; revisão AE.9 de 23/10/2026. Evidências hom anteriores não comprovam o contrato novo. [Arquitetura](../README.md) · [Contrato SSM/artefatos](../CONTRATOS_ENTRE_REPOSITORIOS.md)
+**Estado:** implementada. [Arquitetura](../README.md) · [Contratos entre componentes](../CONTRATOS_ENTRE_REPOSITORIOS.md).
 
 ## Responsabilidades
 
@@ -36,14 +36,12 @@ Descartar: **Gateway → API e auth → banco e email → base**. API/auth consu
 
 Base remove Collector/manifestos antes do EKS. Banco remove Job antes do RDS; skip_final_snapshot=true para dados descartáveis. Bootstrap, artefatos, IAM persistente e unidade New Relic ficam fora do descarte normal. O mantenedor coordena componentes; locks/concurrency locais não são coordenação global entre repositórios.
 
-## Integridade e evidências
+## Integridade
 
-OpenAPI/NuGet/template SAM usam SHA-256 e escrita condicional; conteúdo divergente não sobrescreve versão existente. ECR tem tags imutáveis e deploy por digest. ZIP SAM permanece em prefixo gravável/versionado: fixar VersionId estabiliza a seleção, sem tornar a chave write-once. [Conferência implantada](../../VALIDACAO_PROTECAO_ARTEFATOS_2026-10-21.md).
+OpenAPI/NuGet/template SAM usam SHA-256 e escrita condicional; conteúdo divergente não sobrescreve versão existente. ECR tem tags imutáveis e deploy por digest. ZIP SAM permanece em prefixo gravável/versionado: fixar VersionId estabiliza a seleção, sem tornar a chave write-once.
 
-[PRs/CI/CD/proteções](../../EVIDENCIAS_CICD_E_PROTECOES_2026-10-21.md) e [descarte final/custos](../../ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md) comprovam hom no alcance descrito. Prd/coexistência, concorrência de publicação e rollback não foram exercitados como novos testes; dispensas/adiamento não equivalem a aprovação desses cenários.
+Prd/coexistência, concorrência de publicação e rollback não foram exercitados como novos testes; dispensas/adiamento não equivalem a aprovação desses cenários.
 
 Decisões: [ADR 004](../adrs/004-ENTREGA-E-AMBIENTES.md), [ADR 008](../adrs/008-INFRAESTRUTURA-DECLARATIVA.md), [ADR 009](../adrs/009-SAM-AUTENTICACAO.md) e [ADR 010](../adrs/010-GATEWAY-REST-V2.md).
 
-[AE.8: prefixos, VersionId, cadastro de AWS_EMAIL_ROLE_ARN e bloqueios](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/AE8_WORKFLOWS_E_GATEWAY.md). [AE.9: validação local](../../AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md). Nenhuma execução remota ou plano/apply AWS nesta revisão.
-
-**Consolidação posterior — 23/10/2026:** AE.10 concluída em hom, com [fluxo integrado](../../AE10_VALIDACAO_HOM_2026-10-23.md), [SQL/inativação/limites](../../AE10_CONFERENCIAS_FINAIS_HOM_2026-10-23.md) e [estado da entrega](../../CONSOLIDACAO_ENTREGA_2026-10-23.md). As menções anteriores à ausência de operações AWS descrevem a revisão documental/local; a comprovação posterior está nessas fontes. Não certifica prd, envio externo ou processamento assíncrono independente.
+[Workflows Serverless](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/.github/workflows).

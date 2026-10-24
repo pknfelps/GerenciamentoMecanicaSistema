@@ -12,9 +12,9 @@ Imagens usam ECR/digest; OpenAPI/NuGet/template SAM são publicados com checksum
 
 **Alternativas e consequências:** OIDC substitui chaves duráveis no GitHub. Bootstrap e artefatos persistem entre ativações. Locks/concurrency de um repositório não serializam todos os componentes; o mantenedor coordena a ordem. Não há candidatos/release v1/gerações no fluxo vigente; os registros v1 abaixo são históricos.
 
-**Comprovação:** PRs/CI/CD, proteções e cadeia de destroy hom em [evidências](../../EVIDENCIAS_CICD_E_PROTECOES_2026-10-21.md), com [custos/ausência final](../../ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md). Coexistência/concorrência/rollback dispensados não viram testes aprovados.
+Coexistência/concorrência/rollback dispensados não viram testes aprovados.
 
-Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados. [Arquitetura](../README.md) · [Evidências E6](../../REVISAO_E6_2026-10-21.md).
+Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados.
 
 <details>
 <summary>Histórico anterior à revisão E7 — registros preservados, sem vigência operacional</summary>

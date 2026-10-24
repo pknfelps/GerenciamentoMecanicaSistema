@@ -2,7 +2,7 @@
 
 [Justificativa e relacionamentos](../BANCO_E_MODELO.md) · [SQL fonte](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/blob/develop/sql/Init.sql)
 
-Revisão de 22/10/2026: doze tabelas no Init.sql, incluindo os desafios/limites AE.3 ainda sem aplicação AWS. O ER descreve estrutura e vínculos; comprimentos/defaults/nulabilidade permanecem no SQL e na [documentação do esquema](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/blob/develop/docs/SCHEMA.md). Regras dos novos registros são implementadas em C#; não há CHECKs de negócio ou cascata.
+O ER representa as doze tabelas do Init.sql; tipos, comprimentos e nulabilidade permanecem no SQL. Regras de negócio são implementadas em C#.
 
 ```mermaid
 erDiagram

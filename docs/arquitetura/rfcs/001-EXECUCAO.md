@@ -1,6 +1,6 @@
 # RFC 001 — Execução, identidade e integração
 
-**Estado:** contrato AE preparado e validado localmente; revisão AE.9 de 23/10/2026. A comprovação hom anterior refere-se ao contrato anterior, não ao envio/código novos. Registro original: 16/09/2026. O ambiente foi removido após a validação. [Arquitetura](../README.md) · [Evidências E6](../../REVISAO_E6_2026-10-21.md)
+**Estado:** implementada; contratos de execução e limites descritos abaixo.
 
 ## Problema e solução
 
@@ -28,8 +28,8 @@ API/auth montam suas mensagens e invocam EmailFunction privada por SDK/IAM, em t
 
 Secrets são resolvidos em runtime por identidades restritas, sem valores em manifestos/pipeline. Logs usam mensagem fixa/tipo, sem stack trace, SQL, payload, documento ou credenciais. API/Lambda aceitam somente pai W3C; PostgreSQL/logs seguem a árvore da aplicação. X-Ray nativo/polling é diagnóstico independente, sem promessa de união automática ao OTLP.
 
-Hom comprovou emissão/consumo JWT, negativas, vínculo Customer/OS, perfis, transações e sanitização nas [fontes E6](../../REVISAO_E6_2026-10-21.md). Prd/coexistência e carga não foram comprovados; demais limites estão nos encerramentos [E5](../../ENCERRAMENTO_E5_2026-10-21.md) e [E6](../../ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md). Nenhuma nova execução AWS nesta revisão.
+Nenhuma nova execução AWS nesta revisão.
 
 Fundamentação: [ADR 001](../adrs/001-IDENTIDADE.md), [ADR 002](../adrs/002-REDE-AWS.md), [ADR 006](../adrs/006-NOTIFICACOES.md), [ADR 009](../adrs/009-SAM-AUTENTICACAO.md) e [ADR 010](../adrs/010-GATEWAY-REST-V2.md).
 
-Decisão extra: [ADR 011](../adrs/011-AUTENTICACAO-POR-CODIGO-E-EMAIL.md). [AE.9 e limites da comprovação local](../../AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md). A implantação/comprovação AWS do contrato novo fica na AE.10, sem afirmar prd ou união X-Ray/OTLP.
+Decisão extra: [ADR 011](../adrs/011-AUTENTICACAO-POR-CODIGO-E-EMAIL.md). A implantação/comprovação AWS do contrato novo fica na AE.10, sem afirmar prd ou união X-Ray/OTLP.

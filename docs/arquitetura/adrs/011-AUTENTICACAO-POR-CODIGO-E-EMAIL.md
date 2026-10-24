@@ -1,6 +1,6 @@
 # ADR 011 — Código de acesso e transporte SMTP centralizado
 
-**23/10/2026 — decisão aceita, implementada e comprovada localmente e na AWS em hom; AE.10 concluída.** Preserva os aceites oficiais anteriores e seus limites. [Fluxo integrado](../../AE10_VALIDACAO_HOM_2026-10-23.md), [conferências finais](../../AE10_CONFERENCIAS_FINAIS_HOM_2026-10-23.md) e [plano extra](../../PLANO_EXTRA_AUTENTICACAO_E_EMAIL.md). Não certifica prd ou entrega externa de e-mail.
+**Estado:** decisão aceita e implementada. Não representa entrega externa de e-mail ou garantia de operação em produção.
 
 ## Decisão
 
@@ -19,11 +19,5 @@ Banco vazio recebe desafios/limites no Init.sql; sem migrations ou CHECKs/FKs/ca
 Emissão por documento isolado e Lambda Authorizer foram substituídos: não cobriam uma sessão uniforme para status/decisão e identidade forte do cliente. Código devolvido publicamente ou acesso gerado pelo mecânico não foram adotados. Não há email real, painel próprio, refresh/revogação central, sessão por OS, envio independente com fila ou garantia única.
 
 Captura não comprova propriedade do e-mail pessoal. Caixa desaparece em reinícios; código pode estar no banco sem estar consultável na caixa, ou captura ocorrer antes de timeout. Pedir novo código respeitando limites; sem recuperação automática. SQL é descartável com o banco; nenhuma rotina reconstrói desafios/mensagens.
-
-## Evidências e implantação
-
-[AE.9](../../AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md) registra testes e o ensaio com handler real/SQL/grants, SDK real, SAM/EmailFunction, SMTP4dev e API. Bootstrap AWS foi injetado, sem novo fallback produtivo ou executável permanente. Isso não comprova IAM, Gateway, VPC/NLB, cold start/congelamento/capacidade reais ou prd.
-
-A AE.10 acrescentou a comprovação AWS de auth:14/email:1, captura privada por API/auth, JWT/titularidade/Active, Approved/Refused, falha/recuperação SMTP, SQL/grants/limpeza, limite horário e negativas. Relatórios de duração/memória são amostras, sem garantia de capacidade ou todo cenário de congelamento. Essas evidências complementam o ensaio local, sem converter suas limitações em testes aprovados.
 
 Esta decisão substitui o transporte/simulação do [ADR 006](006-NOTIFICACOES.md) e a emissão de cliente por documento isolado do [ADR 001](001-IDENTIDADE.md), mantendo seus registros históricos e regras internas. [Contratos](../ACESSO_E_AUTENTICACAO.md) · [Componentes](../diagramas/COMPONENTES.md).

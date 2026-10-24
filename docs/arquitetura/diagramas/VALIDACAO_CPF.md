@@ -1,9 +1,5 @@
 # Documento, código de acesso e operações Customer
 
-[Arquitetura](../README.md) · [Contrato HTTP/JWT](../ACESSO_E_AUTENTICACAO.md) · [AE.9 local](../../AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md)
-
-Revisão AE.9, 23/10/2026. Código preparado e conferido localmente; publicação AWS do fluxo novo na AE.10. O nome histórico deste arquivo é preservado para manter links. CPF/CNPJ continua sendo validado, agora junto do código; não há Authorizer ou emissão por documento isolado.
-
 ```mermaid
 sequenceDiagram
     actor C as Cliente / Postman

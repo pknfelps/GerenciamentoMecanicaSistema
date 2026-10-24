@@ -43,5 +43,3 @@ Get-Content artifacts/auth-contracts/GerenciamentoMecanica.Auth.Contracts.1.0.0.
 ```
 
 Comparar ambos com a referência antes do restore; não executar pacote divergente. Usar cache separado conforme [README auth](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/README.md#consumo-do-authcontracts). Não há Get-AuthContracts.ps1/Test-AuthContracts.ps1 no consumidor atual. S3 não é feed NuGet HTTP: os arquivos são baixados antes do restore.
-
-[Publicação inicial](https://github.com/pknfelps/GerenciamentoMecanicaSistema/actions/runs/36205335338), [pipeline produtor](../../.github/workflows/auth-contracts.yml), [consumo/deploy auth](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/DEPLOY.md) e [cadeia de integração hom](../EVIDENCIAS_CICD_E_PROTECOES_2026-10-21.md). Não houve nova publicação, execução de scripts ou alteração de pacote nesta revisão.

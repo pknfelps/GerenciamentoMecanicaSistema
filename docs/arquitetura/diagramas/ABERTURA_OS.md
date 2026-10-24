@@ -2,8 +2,6 @@
 
 [Arquitetura](../README.md) · [Permissões](../ACESSO_E_AUTENTICACAO.md) · [Modelo de dados](../BANCO_E_MODELO.md)
 
-Fluxo atualizado nas AE.5/AE.7 e conferido localmente; implantação AWS do envio central segue na AE.10. A revisão anterior foi validada em hom antes da extra. Somente Mechanic abre OS; Admin administra usuários e Customer consulta/decide orçamento das próprias OSs. [Evidências integradas](../../REVISAO_E6_2026-10-21.md).
-
 ```mermaid
 sequenceDiagram
     actor M as Mecânico

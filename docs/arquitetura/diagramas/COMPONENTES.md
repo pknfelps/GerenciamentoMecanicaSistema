@@ -2,8 +2,6 @@
 
 [Arquitetura](../README.md) · [Execução](../rfcs/001-EXECUCAO.md) · [Entrega](../rfcs/002-ENTREGA.md)
 
-Revisão AE.9 de 23/10/2026: representa o código preparado e conferido localmente. O novo fluxo ainda não foi implantado/comprovado na AWS. Hom anterior foi removido após E6; não apresentar os desenhos como disponibilidade atual ou prova de prd.
-
 ```mermaid
 flowchart LR
     U["Oficina / cliente"] -->|HTTPS| GW["Gateway REST Regional"]
@@ -83,4 +81,4 @@ flowchart LR
 
 Email não ganhou providers OTel, dashboard, alerta ou coleta CloudWatch própria nesta extra. API/auth mantêm W3C, SQL/logs correlacionados, sanitização e exportação existentes. Não propagar X-Ray como pai OTLP ou afirmar união automática. Código/destinatário/MIME ficam na caixa privada, não nos logs/telemetria.
 
-Coletores leem License Key no Secrets Manager, nunca via API/pipeline. Coleta kubelet cobre o nó do Collector; métricas CloudWatch têm atraso de dez minutos, logs retomam cinco minutos sem checkpoint/deduplicação. Três dashboards/cinco alertas persistentes preservados; [limites E5](../../ENCERRAMENTO_E5_2026-10-21.md).
+Coletores leem License Key no Secrets Manager, nunca via API/pipeline. Coleta kubelet cobre o nó do Collector; métricas CloudWatch têm atraso de dez minutos, logs retomam cinco minutos sem checkpoint/deduplicação.

@@ -1,8 +1,8 @@
-> **AE.9, 23/10/2026:** auth mantém versão numérica/Gateway; envio usa template/stack/config/alias próprios de EmailFunction no mesmo repositório. [ADR 011](011-AUTENTICACAO-POR-CODIGO-E-EMAIL.md) e [workflows AE.8](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/AE8_WORKFLOWS_E_GATEWAY.md). Novo fluxo preparado localmente, não implantado na AWS.
+> AuthFunction usa versão numérica no Gateway; EmailFunction possui template, stack, configuração e alias próprios no mesmo repositório. [ADR 011](011-AUTENTICACAO-POR-CODIGO-E-EMAIL.md).
 
 # ADR 009 — Provisionamento da autenticação com SAM
 
-**Estado:** aceito em 11/10/2026; implementação/integração hom comprovadas. VersionId do ZIP da Lambda 13 conferido em 21/10; ambiente removido depois.
+**Estado:** aceito e implementado. Os ZIPs são selecionados por Bucket/Key/Version.
 
 **Contexto:** simplificar manutenção do provisionamento auth e usar o formato nativo Lambda ZIP/CloudFormation, preservando contrato/rede/IAM persistente.
 
@@ -30,7 +30,7 @@ Template e sidecar em contracts/auth/<commit>/sam-<ambiente>.json são imutávei
 
 Provision confere checksum, bucket/prefixo/commit e head-object --version-id com tamanho positivo, e sam deploy consome Code.S3ObjectVersion. GetObjectVersion já era permitido. A nova versão corrente da chave não altera a seleção publicada; isso não transforma a chave em write-once.
 
-Conferência AWS da revisão 01225acd…: Lambda 13 Active, stack UPDATE_COMPLETE, mesma versão no template publicado/original/processado e SHA-256 do ZIP igual a CodeSha256. [Evidência detalhada](../../VALIDACAO_PROTECAO_ARTEFATOS_2026-10-21.md). Republicação/concorrência reais não foram exercitadas como testes; concorrência foi dispensada.
+Conferência AWS da revisão 01225acd…: Lambda 13 Active, stack UPDATE_COMPLETE, mesma versão no template publicado/original/processado e SHA-256 do ZIP igual a CodeSha256. Republicação/concorrência reais não foram exercitadas como testes; concorrência foi dispensada.
 
 ## Descarte e observabilidade
 
@@ -38,9 +38,9 @@ sam delete usa o prefixo operacional sam/auth/<ambiente>/changesets. No SAM CLI 
 
 SAM fixa OTel/X-Ray/New Relic sempre ativos, layer Collector 0.22.0 e YAML empacotado. Função não recebe License Key em variáveis; extensão a lê pelo Secrets Manager e compartilha a role da função. W3C da aplicação e X-Ray nativo ficam separados. [ADR 005](005-OBSERVABILIDADE.md).
 
-[Operação auth](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/DEPLOY.md) e [encerramento hom](../../ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md). Sem novo build/deploy/destroy nesta revisão; prd não validado.
+Sem novo build/deploy/destroy nesta revisão; prd não validado.
 
-Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados. [Arquitetura](../README.md) · [Evidências E6](../../REVISAO_E6_2026-10-21.md).
+Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados.
 
 <details>
 <summary>Histórico anterior à revisão E7 — registros preservados, sem vigência operacional</summary>

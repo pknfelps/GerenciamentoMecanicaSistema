@@ -16,9 +16,9 @@
 
 **Consequências e comprovação:** código/manifestos separados por proprietário, sem helpers próprios para gerar infraestrutura. Credenciais de runtime e roles são persistentes no bootstrap para permitir limpeza de ENIs da Lambda. Testes de negócio permanecem nos projetos .NET; suites operacionais/Collector removidas não foram recriadas.
 
-[Fluxo/ordem atuais](../rfcs/002-ENTREGA.md), [contratos v2](../CONTRATOS_ENTRE_REPOSITORIOS.md) e [descarte hom comprovado](../../ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md). Não executar alterações, destruição ou recuperação automaticamente a partir do histórico.
+Não executar alterações, destruição ou recuperação automaticamente a partir do histórico.
 
-Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados. [Arquitetura](../README.md) · [Evidências E6](../../REVISAO_E6_2026-10-21.md).
+Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados.
 
 <details>
 <summary>Histórico anterior à revisão E7 — registros preservados, sem vigência operacional</summary>
