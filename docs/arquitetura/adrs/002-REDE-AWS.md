@@ -10,9 +10,9 @@ Cada ambiente tem VPC, duas AZs com subnets públicas/workloads/banco, NAT/EIP �
 
 **Alternativas e consequências:** HTTP API não foi adotada; REST atende à composição OpenAPI e tracing/logs escolhidos. Cache/execution logs/data tracing ficam desligados. Um nó/NAT e banco Single-AZ limitam disponibilidade; não representam capacidade produtiva validada ou alta disponibilidade entre AZs. Gateway/NLB/EKS/NAT e armazenamento têm custos próprios.
 
-**Comprovação:** entrada Gateway, JWT, rede privada, pull ECR, probes e HPA foram conferidos nas evidências de hom. [Descarte final e custos](../../ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md). Coexistência/prd e carga não foram testados. [Componentes](../diagramas/COMPONENTES.md).
+**Comprovação:** entrada Gateway, JWT, rede privada, pull ECR, probes e HPA foram conferidos nas evidências de hom. Coexistência/prd e carga não foram testados. [Componentes](../diagramas/COMPONENTES.md).
 
-Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados. [Arquitetura](../README.md) · [Evidências E6](../../REVISAO_E6_2026-10-21.md).
+Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados.
 
 <details>
 <summary>Histórico anterior à revisão E7 — registros preservados, sem vigência operacional</summary>

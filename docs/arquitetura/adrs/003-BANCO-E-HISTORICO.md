@@ -10,7 +10,7 @@
 
 **Comprovação:** SQL direto, projeções, transações, recusa, retenção após DELETE e indicadores conhecidos conferidos em hom, com cenários locais adicionais delimitados. ER completo em [DADOS](../diagramas/DADOS.md); regras de medição na [RFC 003](../rfcs/003-DADOS-E-OBSERVABILIDADE.md).
 
-Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados. [Arquitetura](../README.md) · [Evidências E6](../../REVISAO_E6_2026-10-21.md).
+Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados.
 
 <details>
 <summary>Histórico anterior à revisão E7 — registros preservados, sem vigência operacional</summary>

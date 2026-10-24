@@ -1,8 +1,8 @@
-# Arquitetura implementada — Fase 3
+# Arquitetura do sistema
 
-Revisão AE.9 de 23/10/2026, com código/contratos preparados e conferidos localmente nos quatro repositórios. Publicação/comprovação AWS do refinamento na AE.10. Evidências E4/E5/E6 registram hom anterior removido; não comprovam a nova autenticação/captura nem disponibilidade atual ou prd.
+Visão dos componentes, contratos, modelo de dados e decisões arquiteturais da oficina.
 
-[README da API](../../README.md) · [Revisão E6](../REVISAO_E6_2026-10-21.md) · [Encerramento e custos](../ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md)
+[README da API](../../README.md) · [Postman](../../postman/README.md)
 
 ## Visão vigente
 
@@ -24,6 +24,7 @@ Revisão AE.9 de 23/10/2026, com código/contratos preparados e conferidos local
 | [Abertura de OS](diagramas/ABERTURA_OS.md) | Login, transação, notificação aguardada e métricas após retorno |
 | [ER completo](diagramas/DADOS.md) | Doze tabelas, chaves físicas e correlação histórica sem FK |
 | [Banco e modelo](BANCO_E_MODELO.md) | Justificativa PostgreSQL/RDS, alternativas, alterações, relações e limites |
+| [Contratos HTTP/JWT/Invoke](CONTRATOS_AUTENTICACAO_E_EMAIL.md) | Regras de autenticação e transporte interno |
 | [Acesso/autenticação](ACESSO_E_AUTENTICACAO.md) | Matriz HTTP, códigos, claims e sessões |
 | [Contratos operacionais](CONTRATOS_ENTRE_REPOSITORIOS.md) | Catálogo SSM v2 real, artefatos, Secrets e ordem entre repositórios |
 | [Auth.Contracts](PACOTE_AUTH_CONTRACTS.md) | Produção/consumo do nupkg exato, checksum e compatibilidade |
@@ -47,10 +48,6 @@ Revisão AE.9 de 23/10/2026, com código/contratos preparados e conferidos local
 
 Os ADRs mantêm registros anteriores em seções de histórico explicitamente sem vigência operacional. Menções históricas a Aurora, Service LoadBalancer/controller, SSM v1/releases, precedência X-Ray ou publicação ainda pendente não descrevem a configuração final. O texto vigente vem antes desse histórico.
 
-## Comprovação e limites aceitos
+## Limites
 
-[E5 encerrada por aceite](../ENCERRAMENTO_E5_2026-10-21.md): três sinais, indicadores/SQL, Collectors, dashboards e alertas demonstrados no alcance registrado. X-Ray/OTLP separados; logs Gateway parciais, cancelamento AWS inconclusivo e aviso de métrica nativa preservados. CPU/memória/carga dispensados não são testes aprovados nem novas pendências automáticas.
-
-[E6 encerrada no escopo acordado](../ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md): fontes funcionais, PRs/CI/CD/proteções, VersionId SAM, descarte final e custos estimados. Concorrência de publicação/coexistência/rollback dispensados; análise da diferença workflows manuais/R06 adiada. Isso não altera o requisito original ou certifica prd.
-
-Sem promessa de entrega única para notificações/telemetria, recuperação de sinais, alta disponibilidade ou capacidade sob carga. Ativação futura exige a ordem documentada e autorização do mantenedor; nenhuma operação AWS foi executada na revisão E7.
+Topologia de um nó/NAT único/RDS Single-AZ, SMTP4dev efêmero sem entrega externa e telemetria sem garantia única. Workflows de implantação são manuais; preparação hom/prd não certifica operação em produção. X-Ray e OTLP permanecem separados.

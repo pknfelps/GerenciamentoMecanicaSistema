@@ -1,42 +1,36 @@
 # Sistema de Gerenciamento de Mecânica
 
-API .NET da oficina: usuários, clientes, veículos, catálogo, estoque e ciclo de ordens de serviço. Reúne regras de negócio, persistência PostgreSQL, autenticação interna, notificações e observabilidade. A validação cadastral de clientes é uma Lambda separada.
-
-## Estado e evidências
-
-E4/E5/E6 foram concluídas no **escopo hom acordado**, incluindo JWT entre Lambda/API, autorização, histórico/estoque, telemetria, dashboards e alertas no alcance registrado. O ambiente foi destruído em 21/10/2026; não há endpoint hom ativo. Prd/coexistência, carga e demais cenários dispensados não foram comprovados. Workflows são manuais, sem deploy automático após merge; análise da diferença R06 foi adiada.
-
-- [Revisão integrada e fontes](docs/REVISAO_E6_2026-10-21.md).
-- [PRs, CI/CD e proteções](docs/EVIDENCIAS_CICD_E_PROTECOES_2026-10-21.md).
-- [Observabilidade: aceite e limitações](docs/ENCERRAMENTO_E5_2026-10-21.md).
-- [VersionId SAM e proteção de artefatos](docs/VALIDACAO_PROTECAO_ARTEFATOS_2026-10-21.md).
-- [Descarte final, persistências e custos estimados](docs/ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md).
-
-A próxima etapa é documentação/vídeo/PDF da entrega. Avisos transitivos de dependências/analisadores e limites aceitos não foram corrigidos ou ocultados por esta revisão documental.
+API .NET da oficina: usuários, clientes, veículos, catálogo, estoque e ciclo de ordens de serviço. Reúne regras de negócio, persistência PostgreSQL, autenticação interna, notificações e observabilidade. AuthFunction autentica clientes por documento e código; EmailFunction centraliza o transporte SMTP privado.
 
 ## Componentes e repositórios
 
-```mermaid
+~~~mermaid
 flowchart LR
-    HTTP["Controllers ASP.NET Core"] --> SERVICE["Service - casos de uso"]
-    SERVICE --> DOMAIN["Domain - regras"]
-    SERVICE --> PORTS["Service.Interface - contratos"]
-    PORTS --> INFRA["Infrastructure - adaptadores"]
-    INFRA --> DB[("PostgreSQL via Npgsql e Dapper")]
-    INFRA --> EMAIL["Invoke → EmailFunction → captura SMTP4dev"]
-    DI["DependencyInjection e Program"] -.-> HTTP
-    DI -.-> INFRA
-    HTTP --> OTEL["Observability - composição e métricas HTTP"]
-```
+    GW["Gateway / cliente HTTP"] --> HTTP["Controllers e JWT"]
+    subgraph APP["Repositorio da API"]
+        HTTP --> SERVICE["Service: casos de uso"]
+        SERVICE --> DOMAIN["Domain: regras de negocio"]
+        SERVICE --> PORTS["Interfaces de persistencia"]
+        INFRA["Infrastructure: PostgreSQL"] -.->|implementa| PORTS
+        SERVICE --> EMAIL["Adaptador Invoke"]
+        DI["Program e DependencyInjection"] -.-> HTTP
+        DI -.-> INFRA
+        HTTP -.-> OTEL["OpenTelemetry"]
+        INFRA -.-> OTEL
+    end
+    INFRA -->|TLS| DB[("RDS PostgreSQL")]
+    EMAIL -->|IAM / alias live| FN["EmailFunction privada"]
+    OTEL -->|OTLP| COL["Collector da infraestrutura"]
+~~~
 
 | Repositório | Responsabilidade |
 |---|---|
 | Este | API/camadas/testes, Dockerfile/Compose, Deployment/HPA/ServiceAccount, OpenAPI e Auth.Contracts |
 | [Infraestrutura](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/tree/develop) | Bootstrap/rede/EKS/NLB/Service, Gateway, Collector Kubernetes e recursos New Relic |
 | [Banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/tree/develop) | RDS/credenciais, SQL/seeds e Job de inicialização |
-| [Autenticação](https://github.com/pknfelps/GerenciamentoMecanicaServerless/tree/develop) | Lambda/SAM, documento CPF/CNPJ e JWT Customer |
+| [Serverless](https://github.com/pknfelps/GerenciamentoMecanicaServerless/tree/develop) | AuthFunction/documento+código/JWT e EmailFunction/transporte SMTP privado |
 
-Domain.Interface/Service.Interface definem contratos. Infrastructure implementa PostgreSQL, JWT/hash e envio; DependencyInjection compõe os serviços. Consultas públicas de usuários não retornam senha/hash. [Componentes AWS](docs/arquitetura/diagramas/COMPONENTES.md), [sequências](docs/arquitetura/README.md) e [banco/ER](docs/arquitetura/BANCO_E_MODELO.md).
+Setas contínuas representam chamadas/integrações; pontilhadas representam implementação, composição ou instrumentação. Domain.Interface/Service.Interface definem contratos. Infrastructure implementa PostgreSQL, JWT/hash e envio; DependencyInjection compõe os serviços. Consultas públicas de usuários não retornam senha/hash. [Componentes AWS](docs/arquitetura/diagramas/COMPONENTES.md), [sequências](docs/arquitetura/README.md) e [banco/ER](docs/arquitetura/BANCO_E_MODELO.md).
 
 ## Tecnologias e build
 
@@ -58,8 +52,8 @@ docker build --file GerenciamentoMecanicaSistema/Dockerfile --tag gerenciamento-
 
 1. Copiar [.env.example](.env.example) para .env; definir POSTGRES_PASSWORD e JWT_KEY com pelo menos 32 caracteres. .env é ignorado pelo Git.
 2. Executar `docker compose up -d db smtp`.
-3. Preparar banco **vazio** com o SQL do [repositório de banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/blob/develop/README.md#execução-local-opcional). Compose não cria tabelas/seeds nem sincroniza arquivos entre repositórios.
-4. Iniciar a EmailFunction no SAM local conforme o [procedimento AE.7](docs/AE7_API_ENVIO_E_ACESSO_CUSTOMER.md), usando a rede do Compose e listener acessível ao container. Depois executar `docker compose up --build -d api`; conferir `docker compose ps` e `docker compose logs -f api`.
+3. Preparar banco **vazio** com o SQL do [repositório de banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/blob/develop/README.md#execução-local). Compose não cria tabelas/seeds nem sincroniza arquivos entre repositórios.
+4. Iniciar a EmailFunction no SAM local conforme o [README Serverless](https://github.com/pknfelps/GerenciamentoMecanicaServerless#emailfunction-local), usando a rede do Compose e listener acessível ao container. Depois executar `docker compose up --build -d api`; conferir `docker compose ps` e `docker compose logs -f api`.
 
 O SMTP4dev usa a [configuração local](deploy/smtp4dev/appsettings.json): caixa em memória, no máximo 100 mensagens/sessões, relay desabilitado e conteúdo ausente do stdout. Reiniciar perde a caixa. O volume SMTP antigo deixa de ser montado, sem exclusão automática; o volume db_data permanece.
 
@@ -94,7 +88,6 @@ Clientes nascem Active; PATCH cadastral não altera status e não há endpoint d
 
 Abrir a [Local View do Postman](postman/README.md) com os YAMLs existentes. RequestCustomerCode salva desafio; operador consulta SMTP4dev privado; VerifyCustomerCode salva JWT para status e orçamento. Ambientes Dev/Hom/Prd começam com sessões vazias, sem URLs AWS fixadas. Não há código em resposta pública, consulta de código pelo mecânico ou Authorizer. [Contrato completo](docs/arquitetura/ACESSO_E_AUTENTICACAO.md).
 
-
 ## OS, histórico e notificações
 
 Mechanic abre a OS; diagnóstico → orçamento Customer → execução → entrega, com ramo de recusa. Estoque/itens/OS/eventos confirmam na mesma transação. Mutações bloqueiam a OS e materiais seguem ordem de UUID. Histórico sobrevive ao DELETE individual, mas não à destruição do banco; não há CHECK/índice/UNIQUE de sequência no SQL por decisão registrada.
@@ -115,13 +108,13 @@ Após commit o serviço publica e aguarda o handler; ele consulta dados/monta a 
 | Telemetry__Enabled | Opt-in local; hom true e prd false nos overlays atuais |
 | OTEL_EXPORTER_OTLP_ENDPOINT | Destino OTLP absoluto HTTP/HTTPS, sem credenciais/query/fragmento |
 
-Bootstrap lê SSM v2/AWSCURRENT de JWT e database/api, com prazo total de 45 s, identidade por Pod Identity e valores em memória. TLS VerifyFull/CA RDS; sem fallback local em modo AWS ou Secret Kubernetes JWT. Erro inicial encerra com código 1 e mensagem fixa/tipo no stderr, sem stack trace. [Inicialização](docs/INICIALIZACAO_AWS.md).
+Bootstrap lê SSM v2/AWSCURRENT de JWT e database/api, com prazo total de 45 s, identidade por Pod Identity e valores em memória. TLS VerifyFull/CA RDS; sem fallback local em modo AWS ou Secret Kubernetes JWT. Erro inicial encerra com código 1 e mensagem fixa/tipo no stderr, sem stack trace.
 
 Probes anônimas: /health/startup, /health/ready e /health/live; não são publicadas pelo Gateway. Swagger/OpenAPI só são habilitados em Development, não em Staging/Production.
 
 OTel usa o [manifesto](deploy/kubernetes/base/observability.json), ConfigMap estável read-only e um provider por sinal. Métricas identificam acontecimentos; configuração seleciona atributos/dimensões/coleta. Console textual é preservado, sem escopos/caminho bruto, mensagem original de exceção, stack trace, SQL, documento, token ou credenciais. Atributos técnicos e IDs de correlação são permitidos; UUID/OS não são dimensões de métricas.
 
-W3C traceparent é o único pai OTLP, sem baggage/tracestate. HTTP/PostgreSQL/logs correlacionados; probes/SQL associado sem spans, preservando métricas. X-Ray/polling é separado. Exportação usa Collector da infraestrutura e não recebe License Key na API. [Procedimento local](docs/OBSERVABILIDADE_LOCAL.md), [indicadores](docs/OBSERVABILIDADE_NEGOCIO.md), [integrações](docs/METRICAS_INTEGRACOES.md), [tracing](docs/TRACING_W3C_E_XRAY.md) e [aceite/limites E5](docs/ENCERRAMENTO_E5_2026-10-21.md).
+W3C traceparent é o único pai OTLP, sem baggage/tracestate. HTTP/PostgreSQL/logs correlacionados; probes/SQL associado sem spans, preservando métricas. X-Ray/polling é separado. Exportação usa Collector da infraestrutura e não recebe License Key na API. [Indicadores, coleta e limites](docs/arquitetura/rfcs/003-DADOS-E-OBSERVABILIDADE.md).
 
 ## OpenAPI, pipelines e deploy
 
@@ -139,29 +132,10 @@ Gera artifacts/openapi/openapi.json, OpenAPI 3.0, sem AWS/JWT/persistência. Bui
 | [api-destroy](.github/workflows/api-destroy.yml) | Manual: checar Gateway, remover overlay/recursos da API e conferir ausência |
 | [aws-oidc-check](.github/workflows/aws-oidc-check.yml) | Diagnóstico manual de identidade/acesso, não prova completa de deploy |
 
-Deploy exige develop/hom ou main/prd, OIDC/Environments, bootstrap/base/Collector/banco/Job disponíveis e License Key cadastrada pelo mantenedor. Mesma revisão nos dois jobs; tag sha-commit-run-attempt e deploy por digest. Contrato/checksum S3 são imutáveis por commit. Não publica /api/v2/ nem usa estado de outro repositório. Aguarda rollout por 600 s; diagnóstico sem rollback automático próprio.
+Deploy exige develop/hom ou main/prd, OIDC/Environments, bootstrap/base/Collector/banco/Job e email/v1 disponíveis e License Key cadastrada pelo mantenedor. Mesma revisão nos dois jobs; tag sha-commit-run-attempt e deploy por digest. Contrato/checksum S3 são imutáveis por commit. Não publica /api/v2/ nem usa estado de outro repositório. Aguarda rollout por 600 s; diagnóstico sem rollback automático próprio.
 
-[Kustomize base/hom/prd](deploy/kubernetes) e [procedimento completo](docs/DEPLOY_API.md). Deployment/HPA/ServiceAccount pertencem à API; Service/NLB à infraestrutura. Base local Kustomize mantém referências locais anteriores; overlays AWS removem db-secrets e usam identidade/runtime AWS. Docker Hub dessa base não é o caminho de publicação AWS.
+[Kustomize base/hom/prd](deploy/kubernetes) e [workflow de deploy](.github/workflows/api-deploy.yml). Deployment/HPA/ServiceAccount pertencem à API; Service/NLB à infraestrutura. Base local Kustomize mantém referências locais anteriores; overlays AWS removem db-secrets e usam identidade/runtime AWS. Docker Hub dessa base não é o caminho de publicação AWS.
 
-Provisionar: bootstrap → base/Collector → banco/Job → API e auth → Gateway. Descartar: Gateway → API/auth → banco → base, com [bloqueios de dependência](docs/DESTRUICAO_AMBIENTE.md). ECR/artefatos/estados e recursos New Relic persistem. Sem deploy automático por push/merge ou aprovação implícita de operações futuras.
+Provisionar: bootstrap → base/Collector/SMTP4dev → banco/Job e email → API/auth → Gateway. Descartar: Gateway → API/auth → banco/email → base, com os bloqueios definidos nos [contratos entre repositórios](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md). ECR/artefatos/estados e recursos New Relic persistem. Sem deploy automático por push/merge ou aprovação implícita de operações futuras.
 
-O endpoint ativo é obtido de /mecanica/<ambiente>/gateway/v2/endpoint após provisionamento. Não usar URLs de rodadas destruídas. [GitHub Actions](https://github.com/pknfelps/GerenciamentoMecanicaSistema/actions) · [Arquitetura/ADRs/RFCs](docs/arquitetura/README.md) · [Operação New Relic](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/NEW_RELIC.md). Vídeo/PDF ainda pertencem à próxima parte da E7. Por decisão do mantenedor, o acesso ocorre pelos quatro repositórios públicos, sem convite individual de avaliadores; visibilidade confirmada no GitHub em 21/10/2026.
-
-
-## Refinamento extra planejado — autenticação e envio de e-mails
-
-Decisão de 22/10/2026, com autenticação/envio e integração da API comprovados localmente, publicação pendente: cliente solicita/confirma código, lê-se a mensagem capturada no SMTP4dev privado para os testes e a autenticação emite JWT Customer sem vínculo a OS. A API continua responsável por titularidade/Active e decisão de orçamento, com retorno 200/Approved ou Refused e approved explícito. O transporte de e-mail está centralizado em EmailFunction, invocada pela API e AuthFunction na implementação local. SMTP4dev AWS não terá persistência de mensagens ou relay externo; desafios ficam no PostgreSQL.
-
-O repositório de funções agora é GerenciamentoMecanicaServerless. AE.2 organizou AuthFunction/AuthFunctionTests, estrutura EmailFunction/EmailFunctionTests e caminhos auth, preservando contratos e recursos existentes. GitHub/raiz/remote renomeados, proteções/Environments e CI/OIDC conferidos. Transição inicial e retirada da confiança antiga aprovadas/aplicadas; Terraform posterior sem diferenças. A função de envio tem handler, transporte e template SAM preparados/validados localmente na AE.5; os consumidores e workflows ainda serão integrados. Nenhum deploy da função email foi executado. Os checklists oficiais E5/E6/E7 permanecem separados. [Plano extra AE.1–AE.10](docs/PLANO_EXTRA_AUTENTICACAO_E_EMAIL.md).
-
-AE.1–AE.7 preparadas e validadas nos seus respectivos escopos em 22/10/2026: [contratos HTTP/JWT/Invoke](docs/CONTRATOS_EXTRA_AUTENTICACAO_E_EMAIL.md) e [migração/OIDC](docs/AE2_FINALIZACAO_OIDC_2026-10-22.md). [EmailFunction e evidências locais](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/AE5_EMAIL_FUNCTION.md): regressão de 419 testes aprovada e captura SAM/Compose conferida. [Autenticação por código implementada e validada localmente na AE.6](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/AE6_AUTENTICACAO_POR_CODIGO.md), com 438 testes aprovados e publicação coordenada ainda pendente. Endpoints da API preservados; a próxima etapa extra é AE.8 — SAM, workflows e Gateway. [AE.7 concluída localmente](docs/AE7_API_ENVIO_E_ACESSO_CUSTOMER.md): envio central, cliente ativo, orçamento explícito e 1.212 testes aprovados, sem implantação. Alterações locais seguem para PR do mantenedor.
-
-A aprovação de orçamento agora recebe somente approved booleano e retorna 200 com decision Approved/Refused; cadastro Customer inativo recebe 403 antes de consultar a OS. A expiração JWT é estrita (ClockSkew zero), inclusive para usuários internos. O contrato/OpenAPI novo e a autenticação por código serão publicados coordenadamente na AE.8.
-
-## Extra AE.8 — publicação coordenada preparada
-
-[Workflows auth/email e Gateway](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/AE8_WORKFLOWS_E_GATEWAY.md) preparados e validados localmente. api-deploy confere email/v1 (alias live do ambiente e contrato 1) antes de aplicar o Deployment; isso é conferência de metadados, não teste de SMTP. Bootstrap deve ser aprovado/aplicado antes de usar o novo guard. Provisionamento: base/SMTP4dev → banco e email → API/auth → Gateway com contratos novos. Nenhum workflow remoto ou deploy foi executado nesta etapa; Postman/roteiro conjunto seguem na AE.9.
-
-## Extra AE.9 — fluxo conjunto comprovado localmente
-
-[Resultados e roteiro AE.10](docs/AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md), 23/10/2026: handler auth com bootstrap injetado, SQL/grants reais, SDK/SAM/EmailFunction/SMTP4dev e API real conferidos. JWT do código aceito no status e em Approved/Refused, negativas e falha/perda da caixa validadas. **1.650 testes e 47 conferências manuais aprovados**. Postman, contratos e diagramas atualizados; OpenAPI inalterado nesta etapa. Recursos descartáveis removidos, sem aplicação AWS. Próximo passo: PRs e publicação integrada AE.10 autorizada.
+O endpoint do ambiente é publicado em /mecanica/<ambiente>/gateway/v2/endpoint. [GitHub Actions](https://github.com/pknfelps/GerenciamentoMecanicaSistema/actions) · [Arquitetura/ADRs/RFCs](docs/arquitetura/README.md) · [Dashboards e alertas](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/observability/newrelic/README.md).

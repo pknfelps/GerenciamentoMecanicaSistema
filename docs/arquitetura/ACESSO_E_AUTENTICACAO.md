@@ -1,6 +1,4 @@
-# Acesso e autenticação — contrato AE
-
-**Revisão de 23/10/2026, AE.9.** Descreve o código preparado nas AE.3–AE.8. A comprovação conjunta é local; a publicação AWS do contrato novo continua na AE.10. Os aceites hom anteriores à extra permanecem nas [evidências E6](../REVISAO_E6_2026-10-21.md), sem certificar a implantação destas alterações. [Contrato extra](../CONTRATOS_EXTRA_AUTENTICACAO_E_EMAIL.md) · [Roteiro AE.9](../AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md).
+# Acesso e autenticação
 
 ## Identidades e responsabilidades
 
@@ -10,54 +8,53 @@ O cliente solicita e confirma o código com seu CPF/CNPJ numérico. O operador c
 
 ## Matriz por endpoint
 
-As rotas da API usam nomes de controllers e são apresentadas em minúsculas para leitura; o Gateway projeta as operações do OpenAPI. Próprio significa verificar a identidade no servidor, não confiar em CPF/UUID recebidos para escolher o titular.
+As rotas abaixo preservam o casing do OpenAPI publicado: o Gateway diferencia maiúsculas de minúsculas. Somente as rotas customers/auth e health permanecem em minúsculas. Próprio significa verificar a identidade no servidor, não confiar em CPF/UUID recebidos para escolher o titular.
 
 | Método | Rota | Admin | Mechanic | Cliente | Sem token | Execução |
 |---|---|---|---|---|---|---|
-| POST | `/authentication` | Sim | Sim | Não se aplica | Sim | API — autenticação interna |
+| POST | `/Authentication` | Sim | Sim | Não se aplica | Sim | API — autenticação interna |
 | POST | `/customers/auth/request-code` | Não se aplica | Não se aplica | Sim | Sim | AuthFunction — solicitar código |
 | POST | `/customers/auth/verify-code` | Não se aplica | Não se aplica | Sim | Sim | AuthFunction — confirmar código e emitir JWT |
-| POST | `/users` | Sim | Não | Não | Não | API |
-| GET | `/users` | Sim | Próprio | Não | Não | API |
-| PATCH | `/users` | Próprio | Próprio | Não | Não | API — implementada e conferida em hom |
-| DELETE | `/users` | Sim | Não | Não | Não | API — implementada e conferida em hom |
-| POST | `/customers` | Não | Sim | Não | Não | API |
-| GET | `/customers` | Não | Sim | Não | Não | API |
-| PATCH | `/customers/{id}` | Não | Sim | Não | Não | API |
-| DELETE | `/customers/{id}` | Não | Sim | Não | Não | API |
-| POST | `/vehicles` | Não | Sim | Não | Não | API |
-| GET | `/vehicles` | Não | Sim | Não | Não | API |
-| PATCH | `/vehicles/{id}` | Não | Sim | Não | Não | API |
-| DELETE | `/vehicles/{id}` | Não | Sim | Não | Não | API |
-| POST | `/catalog` | Não | Sim | Não | Não | API |
-| GET | `/catalog` | Não | Sim | Não | Não | API |
-| PATCH | `/catalog/{id}` | Não | Sim | Não | Não | API |
-| DELETE | `/catalog/{serviceId}` | Não | Sim | Não | Não | API |
-| POST | `/stock` | Não | Sim | Não | Não | API |
-| GET | `/stock` | Não | Sim | Não | Não | API |
-| POST | `/stock/amount/{id}` | Não | Sim | Não | Não | API |
-| PATCH | `/stock/amount/{id}` | Não | Sim | Não | Não | API |
-| PATCH | `/stock/price/{id}` | Não | Sim | Não | Não | API |
-| DELETE | `/stock/{id}` | Não | Sim | Não | Não | API |
-| POST | `/orders` | Não | Sim | Não | Não | API |
-| GET | `/orders/{id}/status` | Não | Sim | Própria OS | Não | API |
-| GET | `/orders/operational` | Não | Sim | Não | Não | API |
-| GET | `/orders/details` | Não | Sim | Não | Não | API |
-| PATCH | `/orders/{id}/diagnosis/start` | Não | Sim | Não | Não | API |
-| POST | `/orders/{id}/services` | Não | Sim | Não | Não | API |
-| PATCH | `/orders/{id}/services` | Não | Sim | Não | Não | API |
-| POST | `/orders/{id}/materials` | Não | Sim | Não | Não | API |
-| PATCH | `/orders/{id}/materials` | Não | Sim | Não | Não | API |
-| PATCH | `/orders/{id}/diagnosis/complete` | Não | Sim | Não | Não | API |
-| PATCH | `/orders/{id}/budget` | Não | Não | Própria OS | Não | API |
-| PATCH | `/orders/{id}/execution/start` | Não | Sim | Não | Não | API |
-| PATCH | `/orders/{id}/execution/complete` | Não | Sim | Não | Não | API |
-| PATCH | `/orders/{id}/delivery` | Não | Sim | Não | Não | API |
-| DELETE | `/orders/{id}` | Não | Sim | Não | Não | API |
+| POST | `/Users` | Sim | Não | Não | Não | API |
+| GET | `/Users` | Sim | Próprio | Não | Não | API |
+| PATCH | `/Users` | Próprio | Próprio | Não | Não | API |
+| DELETE | `/Users` | Sim | Não | Não | Não | API |
+| POST | `/Customers` | Não | Sim | Não | Não | API |
+| GET | `/Customers` | Não | Sim | Não | Não | API |
+| PATCH | `/Customers/{id}` | Não | Sim | Não | Não | API |
+| DELETE | `/Customers/{id}` | Não | Sim | Não | Não | API |
+| POST | `/Vehicles` | Não | Sim | Não | Não | API |
+| GET | `/Vehicles` | Não | Sim | Não | Não | API |
+| PATCH | `/Vehicles/{id}` | Não | Sim | Não | Não | API |
+| DELETE | `/Vehicles/{id}` | Não | Sim | Não | Não | API |
+| POST | `/Catalog` | Não | Sim | Não | Não | API |
+| GET | `/Catalog` | Não | Sim | Não | Não | API |
+| PATCH | `/Catalog/{id}` | Não | Sim | Não | Não | API |
+| DELETE | `/Catalog/{serviceId}` | Não | Sim | Não | Não | API |
+| POST | `/Stock` | Não | Sim | Não | Não | API |
+| GET | `/Stock` | Não | Sim | Não | Não | API |
+| POST | `/Stock/amount/{id}` | Não | Sim | Não | Não | API |
+| PATCH | `/Stock/amount/{id}` | Não | Sim | Não | Não | API |
+| PATCH | `/Stock/price/{id}` | Não | Sim | Não | Não | API |
+| DELETE | `/Stock/{id}` | Não | Sim | Não | Não | API |
+| POST | `/Orders` | Não | Sim | Não | Não | API |
+| GET | `/Orders/{id}/status` | Não | Sim | Própria OS | Não | API |
+| GET | `/Orders/operational` | Não | Sim | Não | Não | API |
+| GET | `/Orders/details` | Não | Sim | Não | Não | API |
+| PATCH | `/Orders/{id}/diagnosis/start` | Não | Sim | Não | Não | API |
+| POST | `/Orders/{id}/services` | Não | Sim | Não | Não | API |
+| PATCH | `/Orders/{id}/services` | Não | Sim | Não | Não | API |
+| POST | `/Orders/{id}/materials` | Não | Sim | Não | Não | API |
+| PATCH | `/Orders/{id}/materials` | Não | Sim | Não | Não | API |
+| PATCH | `/Orders/{id}/diagnosis/complete` | Não | Sim | Não | Não | API |
+| PATCH | `/Orders/{id}/budget` | Não | Não | Própria OS | Não | API |
+| PATCH | `/Orders/{id}/execution/start` | Não | Sim | Não | Não | API |
+| PATCH | `/Orders/{id}/execution/complete` | Não | Sim | Não | Não | API |
+| PATCH | `/Orders/{id}/delivery` | Não | Sim | Não | Não | API |
+| DELETE | `/Orders/{id}` | Não | Sim | Não | Não | API |
 | GET | `/health/live` | Sim | Sim | Sim | Sim | API — probes |
 | GET | `/health/ready` | Sim | Sim | Sim | Sim | API — probes |
 | GET | `/health/startup` | Sim | Sim | Sim | Sim | API — probes |
-
 
 Probes são internas à API e não são publicadas pelo Gateway. Rotas de login/pedido/confirmação não exigem Bearer anterior; enviar JWT não evita verificação de credenciais ou código. Chamadas com sessão Customer válida reutilizam o Bearer nas operações de OS, sem repetir autenticação em cada endpoint.
 
@@ -94,4 +91,4 @@ Auth inicializa uma vez por runtime saudável, com nova tentativa após falha. P
 
 EmailFunction recebe Invoke v1 privado e concentra MIME/SMTP. API e auth montam suas mensagens e só confirmam captured com envelope válido. Código/caixa são efêmeros; PostgreSQL persiste salt/verificador e limites. Falha de notificação da OS não desfaz o commit; falha do envio do código impede confirmar desafio utilizável. Sem outbox, fila, reenvio automático ou entrega única.
 
-[Postman](../../postman/README.md) mantém desafio/código/JWT somente na sessão local. Fluxo conjunto, negativas e limites estão no [registro AE.9](../AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md). Prd e execução AWS do novo contrato não são comprovadas pela validação local.
+[Postman](../../postman/README.md) mantém desafio/código/JWT somente na sessão local. Testes locais não comprovam disponibilidade da implantação ou entrega externa de e-mail.

@@ -1,7 +1,5 @@
 # Contratos operacionais entre repositórios
 
-**Revisão AE.9 — 23/10/2026:** contratos do código preparado localmente nas AE.3–AE.8, sem aplicação AWS nesta revisão. [Contrato extra](../CONTRATOS_EXTRA_AUTENTICACAO_E_EMAIL.md) e [evidências/roteiro AE.9](../AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md). Evidências hom de E5/E6 pertencem à implantação anterior, encerrada em 21/10; não certificam os catálogos novos.
-
 ## Fontes e convenções
 
 Conta 121754142617, região us-east-1; environment hom|prd validado. Metadados base/database/auth/gateway usam v2; email usa `/mecanica/<ambiente>/email/v1/<campo>`. Todos são String; listas usam JSON. Não há terraform_remote_state entre repositórios, release/candidato/geração v1 ou validade de prontidão por timestamp. SSM configura destinos; Job/rollout/HTTP comprovam operação.
@@ -99,7 +97,7 @@ Endpoint muda após destroy/recreate; não é URL estável a ser hardcoded no co
 | Template email | contracts/email/<commit>/sam-<ambiente>.json e checksum; sem OpenAPI público |
 | Auth.Contracts | packages/GerenciamentoMecanica.Auth.Contracts/1.0.0/ e checksum; versão exata no consumidor |
 
-OpenAPI/template/NuGet usam escrita condicional e comparação de bytes em reexecução, sem sobrescrever conteúdo divergente. ZIP é exceção de gravação condicional do SAM; VersionId fixa a seleção, sem tornar a chave imutável. Republicação idêntica conserva a versão original depois de comparar os bytes do ZIP/template. Templates antigos sem Version exigem commit novo; provision usa head-object --version-id e SAM Code.S3ObjectVersion. [Conferência implantada](../VALIDACAO_PROTECAO_ARTEFATOS_2026-10-21.md).
+OpenAPI/template/NuGet usam escrita condicional e comparação de bytes em reexecução, sem sobrescrever conteúdo divergente. ZIP é exceção de gravação condicional do SAM; VersionId fixa a seleção, sem tornar a chave imutável. Republicação idêntica conserva a versão original depois de comparar os bytes do ZIP/template. Templates antigos sem Version exigem commit novo; provision usa head-object --version-id e SAM Code.S3ObjectVersion.
 
 API gera OpenAPI 3.0 da mesma revisão via OpenApiGenerateDocuments=true, sem inicializar AWS/JWT/banco. Auth publica contrato 3.0 estático sem destino/extensões AWS. NuGet 1.0.0 tem hash fixado no workflow consumidor; API referencia o projeto local. Contratos são globais por commit/versão, não Secret ou prova de exclusividade de ambiente. S3 é armazenamento do nupkg, não feed NuGet nativo.
 
@@ -107,10 +105,4 @@ API gera OpenAPI 3.0 da mesma revisão via OpenApiGenerateDocuments=true, sem in
 
 Bootstrap aprovado → base/Collector/SMTP4dev → banco/Job e email-publish/email-provision (independentes) → API e auth-publish/auth-provision → Gateway com commits fixos e OpenAPI auth 2.0.0. Terraform base/banco/Gateway e New Relic usam plano salvo/aprovação/apply exato; API/auth/email usam seus fluxos manuais sem aprovação intermediária. CI não faz deploy automático após merge; diferença R06 registrada e análise adiada.
 
-Destroy: Gateway → API/auth → banco/email → base, com checagens diretas dos consumidores. Erros/ENIs pendentes bloqueiam; sem novo marcador SSM, exclusão forçada ou espera automática. Email-destroy exige API/auth ausentes; base-destroy exige banco/email ausentes. SAM CLI 1.167.0 preserva ZIP com CodeUri objeto; contratos, ECR, estados, IAM bootstrap e recursos New Relic persistem. RDS atual é descartável, mas snapshots manuais antigos podem permanecer; [inventário final/custos](../ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md).
-
-## Evidências e alcance
-
-Configuração/consumo JWT/RDS, contratos, integração Gateway e autorização foram comprovados em hom nas [fontes E6](../REVISAO_E6_2026-10-21.md). VersionId Lambda 13 e descarte posterior conferidos em 21/10. Prd/coexistência/concorrência de publicação/rollback não são testes aprovados; dispensas e limites aceitos permanecem explícitos. Esta revisão não publica catálogo novo, migra SSM, executa AWS ou altera código.
-
-AE.8 preparou entradas auth/email e quatro reusable-*.yml, com allowlists, prefixos e roles por componente. Cadastro de AWS_EMAIL_ROLE_ARN após bootstrap e comprovação IAM/rotas reais continuam na AE.10; não foram executados nesta revisão.
+Destroy: Gateway → API/auth → banco/email → base, com checagens diretas dos consumidores. Erros/ENIs pendentes bloqueiam; sem novo marcador SSM, exclusão forçada ou espera automática. Email-destroy exige API/auth ausentes; base-destroy exige banco/email ausentes. SAM CLI 1.167.0 preserva ZIP com CodeUri objeto; contratos, ECR, estados, IAM bootstrap e recursos New Relic persistem.

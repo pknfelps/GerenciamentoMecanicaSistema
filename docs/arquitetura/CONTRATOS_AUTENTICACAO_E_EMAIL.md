@@ -1,6 +1,8 @@
-# AE.1 — Contratos de autenticação do cliente e envio centralizado
+# Contratos de autenticação do cliente e envio centralizado
 
-**22/10/2026 — contratos revisados após orientação do mantenedor: inicialização de banco vazio, regras em C# e nenhuma gravação para cliente inexistente.** As duas tabelas da AE.3 ficam no Init.sql; componentes transacionais, grants e limpeza preparados e validados localmente; composição HTTP, rede e publicação continuam nas etapas próprias. Complementa o [plano extra AE](PLANO_EXTRA_AUTENTICACAO_E_EMAIL.md), sem alterar os aceites ou o contrato implantado da Fase 3. As escolhas numéricas são decisões deste projeto.
+Especificação HTTP, JWT e Invoke da API, AuthFunction e EmailFunction. A autenticação por documento e código e a captura privada SMTP4dev usam os contratos abaixo.
+
+[Arquitetura](README.md) · [Acesso e permissões](ACESSO_E_AUTENTICACAO.md) · [Catálogos entre repositórios](CONTRATOS_ENTRE_REPOSITORIOS.md)
 
 ## 1. Fronteiras e compatibilidade
 
@@ -8,7 +10,7 @@
 - EmailFunction recebe mensagens prontas e concentra MIME/conexão/envio SMTP. Não consulta clientes, desafios ou OSs, não emite JWT e não tem endpoint HTTP público.
 - API valida o JWT, o cadastro Active, a titularidade e as regras da OS. Não chama autenticação antes de cada operação.
 - SMTP4dev captura mensagens em hom/prd demonstrativos; sem relay, entrega externa ou persistência da caixa. O acesso operacional à captura simula o recebimento pelo cliente.
-- Remover POST /customers/validate no contrato e no Gateway na publicação coordenada. Não manter emissão por documento isolado, entrada REQUEST/Authorizer ou token vinculado a orçamento/OS.
+- POST /customers/validate não integra o contrato ou o Gateway. Não manter emissão por documento isolado, entrada REQUEST/Authorizer ou token vinculado a orçamento/OS.
 - Não alterar o pacote GerenciamentoMecanica.Auth.Contracts 1.0.0 para transportar contratos de e-mail. Preservar seus formatos de identidade/assinatura na implementação do JWT.
 
 ## 2. Regras HTTP comuns
@@ -162,67 +164,12 @@ Reutilizar o NLB **interno** da base, sem renomear/substituir o recurso atual ou
 
 SG reservado da EmailFunction pertence à base; NLB permite entrada 2525 exclusivamente desse SG, além das regras atuais da API. Nós permitem 30025 proveniente somente do SG NLB. SAM email administra egress somente para NLB:2525; não há acesso HTTPS do código, pois não utiliza AWS SDK ou extensão. A função usa subnets privadas já existentes. Sem CIDR público, endpoint público SMTP, hostNetwork, IP fixo de pod/nó ou exposição web pelo NLB. Revisar regras atuais de SG antes de aplicar, sem abrir portas por conveniência.
 
-**Limite explícito do ambiente demonstrativo:** SMTP interno usará TCP sem TLS/autenticação, como a captura local atual, restrito por SG e sem relay. Isso não cifra o código no trajeto dentro da VPC e não é solução de e-mail pessoal para produção real. Não desabilitar validação de certificados para simular TLS. HTTPS da invocação AWS e TLS VerifyFull do RDS permanecem. TLS SMTP exigiria uma entrega própria de nome/certificado/confiança; não será prometido implicitamente por se tratar de rede privada.
+**Limite explícito do ambiente demonstrativo:** SMTP interno usa TCP sem TLS/autenticação, como a captura local atual, restrito por SG e sem relay. Isso não cifra o código no trajeto dentro da VPC e não é solução de e-mail pessoal para produção real. Não desabilitar validação de certificados para simular TLS. HTTPS da invocação AWS e TLS VerifyFull do RDS permanecem. TLS SMTP exigiria uma entrega própria de nome/certificado/confiança; não será prometido implicitamente por se tratar de rede privada.
 
-SMTP4dev rnwood/smtp4dev:3.15.0, uma réplica, sem PVC: ServerOptions:Database vazio (banco em memória), NumberOfMessagesToKeep=100 e NumberOfSessionsToKeep=100; RelayOptions:SmtpServer vazio e AutomaticEmails vazio, sem configurar credencial/destino de relay. UI somente ClusterIP/port-forward autenticado. Os [manifestos preparados na AE.4](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/AE4_SMTP4DEV_MANIFESTOS.md) limitam a mensagem MIME a 512 KiB, sem ampliar o contrato Invoke v1/corpos, e bloqueiam alterações pela interface. JSON somente leitura, diretórios temporários em memória e filtro de logs sem conteúdo; captura, retenção e perda após reinício conferidas no Docker, com capacidade/acesso AWS pendentes. A [configuração da versão fixada](https://github.com/rnwood/smtp4dev/blob/3.15.0/Rnwood.Smtp4dev/appsettings.json) documenta banco em memória e opções de relay. O Compose local foi alinhado na AE.5: configuração em deploy/smtp4dev/appsettings.json, caixa em memória, relay desabilitado, limite de 100 mensagens/sessões e tmpfs, sem montar smtp_data. Um volume antigo não é apagado automaticamente; o volume PostgreSQL permanece preservado. Captura e perda da caixa após restart foram conferidas com SAM e Compose.
+SMTP4dev rnwood/smtp4dev:3.15.0, uma réplica, sem PVC: ServerOptions:Database vazio (banco em memória), NumberOfMessagesToKeep=100 e NumberOfSessionsToKeep=100; RelayOptions:SmtpServer vazio e AutomaticEmails vazio, sem configurar credencial/destino de relay. UI somente ClusterIP/port-forward autenticado. Os [Manifestos SMTP4dev](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/kubernetes/smtp4dev) limitam a mensagem MIME a 512 KiB, sem ampliar o contrato Invoke v1/corpos, e bloqueiam alterações pela interface. JSON somente leitura, diretórios temporários em memória e filtro de logs sem conteúdo; caixa efêmera sem promessa de capacidade máxima. A [configuração da versão fixada](https://github.com/rnwood/smtp4dev/blob/3.15.0/Rnwood.Smtp4dev/appsettings.json) documenta banco em memória e opções de relay. O Compose local usa a mesma configuração: configuração em deploy/smtp4dev/appsettings.json, caixa em memória, relay desabilitado, limite de 100 mensagens/sessões e tmpfs, sem montar smtp_data. Um volume antigo não é apagado automaticamente; o volume PostgreSQL permanece preservado.
 
-Catálogo novo da base /mecanica/<ambiente>/base/v2/: smtp-host (DNS do NLB), smtp-port (2525) e email-security-group-id. Preservar chaves existentes. Provision email resolve esses metadados e os coloca como configuração não secreta da função; não consulta SSM para cada envio e não guarda configuração SMTP na API/auth. [Rede e recursos SSM preparados na AE.4](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/AE4_REDE_SMTP.md), com validação Terraform local; aplicação e conectividade AWS permanecem pendentes; egress/catálogo/alias do SAM email foram preparados localmente na AE.5.
+Catálogo novo da base /mecanica/<ambiente>/base/v2/: smtp-host (DNS do NLB), smtp-port (2525) e email-security-group-id. Preservar chaves existentes. Provision email resolve esses metadados e os coloca como configuração não secreta da função; não consulta SSM para cada envio e não guarda configuração SMTP na API/auth. [Rede SMTP](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/terraform/smtp-network.tf).
 
 Catálogo separado /mecanica/<ambiente>/email/v1/: function-name, function-version numérica, invocation-arn do alias live, contract-version=1 e zip-key. Stack email publica via CloudFormation, seguindo proprietário/proteção dos catálogos atuais. API/auth carregam invocation-arn/contract-version na inicialização reutilizada; não buscam ARN em cada request. Conceder leitura somente dessas chaves e Invoke somente do alias exato do ambiente. Atualizar alias com contrato v1 compatível; versão incompatível exige contrato/prefixo e migração próprios.
 
-API passa a invocar envio também localmente, retirando seu transporte MailKit e o adaptador de simulação quando AE.7 estiver concluída. Manter SMTP exclusivamente no projeto EmailFunction; sem referência Npgsql/JWT/domínio auth em seu publish. Nomes físicos auth, pacote compartilhado, serviço mecanica-auth e catálogos auth/v2 não mudam apenas por mover pastas/repositório.
-
-## 9. Execução local e sequência
-
-EmailFunction executa pelo SAM oficial, sem outro executável. Com Docker aberto, usar sam build --template-file templates/email.yaml e sam local start-lambda --template .aws-sam/build/template.yaml --host 127.0.0.1 --port 3001 --docker-network <rede-compose>. O template local/build não pode exigir leitura AWS ou layer remota para o transporte de e-mail. SMTP host é o nome smtp na rede Compose, porta 25. Configuração local não tem credenciais SMTP.
-
-Cliente SDK da API usa endpoint local http://127.0.0.1:3001 quando executada no host; em container Docker Desktop usa http://host.docker.internal:3001, com listener SAM explicitamente acessível ao container somente na execução local. Essa exposição local deve ser declarada no comando, não ativada na AWS. FunctionName local é o identificador lógico EmailFunction; região us-east-1 e credenciais fictícias locais apenas para assinatura contra o emulador. Em hom/prd, proibir override de endpoint e exigir alias ARN do ambiente; não criar fallback automático quando AWS falhar.
-
-Variáveis locais explícitas Email__InvocationEndpoint e Email__FunctionName são somente de execução sem Runtime__Environment; não versionar credenciais reais. O [procedimento AE.5](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/AE5_EMAIL_FUNCTION.md) fornece comandos SAM/Compose conferidos localmente. A integração do cliente Invoke na API e seu caminho container → SAM permanecem na AE.7. [SAM local start-lambda](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-cli-command-reference-sam-local-start-lambda.html) é o emulador oficial de Invoke; validação local de IAM não será alegada.
-
-Auth continua exigindo Runtime__Environment=hom|prd e AWS_REGION na inicialização real; não criar configuração alternativa de banco/JWT só para esta entrega. Nos testes locais, bootstrap/configuração são injetados, PostgreSQL é descartável e o sender pode usar o handler real EmailFunction ou SAM local. O mesmo contrato v1 é usado por API/auth. Não criar modo que devolva o código publicamente ou teste que dependa de AWS real.
-
-Ordem: AE.2 organiza projetos/identidade → AE.3 banco e AE.4 rede/permissões → AE.5 envio → AE.6 auth e AE.7 API → AE.8 publicação/Gateway → AE.9 comprovação local final → AE.10 AWS autorizada. Preparar contratos antes de publicar qualquer consumidor. O descarte continua Gateway → API/auth → banco/email → base.
-
-## 10. Critérios e revisão de dependências
-
-| Componente | Alteração contratual necessária |
-|---|---|
-| Bootstrap | Transição OIDC do nome do repo; roles runtime/pipeline email; API/auth Invoke alias e catálogo email; sem acesso SQL/JWT da função email |
-| Base | SMTP4dev efêmero, listener/target group/SG/NodePort, ASG attachment e catálogo SMTP; base-destroy exige banco e email ausentes |
-| Banco | Init.sql em banco vazio com duas tabelas/índices comuns; sem migrations/regras de negócio SQL; grants mínimos nelas e SELECT email de customers para mecanica_auth |
-| Serverless auth | Dois parsers/casos de uso, limite durável, código/consumo/JWT; retirar validate/REQUEST; runtime/flush/sanitização preservados |
-| Serverless email | Projeto, testes, template/stack/role/SG/alias/catálogo/ZIP próprios; SMTP e contrato v1 |
-| API | Sender Invoke nos dois modos, Active/titularidade, ClockSkew zero, body approved estrito e decisão 200 |
-| Gateway | Contrato auth com duas rotas e permissões Invoke específicas; consumidores de auth numérica preservados; sem Authorizer |
-| CI/publicação | Reutilizáveis e entradas por função, VersionId/artefatos separados, required checks após rename; nenhuma chamada de envio público |
-| Postman | request-code salva challengeId; operador lê SMTP4dev; verify-code salva string JWT; status/decisão usam Bearer; não imprimir/salvar token em evidências |
-
-Comprovar posteriormente: requests estritos, cliente inexistente sem gravação/limpeza/envio e com log sanitizado, limites somente após elegibilidade, zeros iniciais, cinco tentativas, expiração, reenvio, falha/timeout SMTP, resposta capturada perdida, concorrência e consumo único; Active após login; OS de outro titular; mesma mensagem v1 via API/auth; erro FunctionError com HTTP 200; caixa perdida; sanitização e regressões existentes. São critérios de AE.3–AE.9, não testes executados pela consolidação documental.
-
-As proteções de códigos temporários tomam como referência a [OWASP](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html). SG do NLB pode restringir origem/targets conforme a [documentação AWS](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-security-groups.html). Configuração não equivale a comprovação: conectividade, comportamento SAM/Docker, recursos do nó, captura, publicação e uso real precisam das etapas seguintes. Renomeação remota, plano/apply e alterações de GitHub/AWS não foram executados na AE.1.
-
-
-## Preparação transacional AE.3
-
-As operações C# de criação/ativação/invalidação/consumo deste contrato foram preparadas e validadas localmente em 22/10/2026: [implementação e testes](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/AE3_OPERACOES_TRANSACIONAIS.md). Elas não substituem ainda os endpoints atuais nem invocam envio. [Grants restritos preparados e validados localmente](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/blob/develop/docs/AE3_PERMISSOES_AUTENTICACAO_2026-10-22.md); [Limpeza implementada e validada localmente](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/AE3_LIMPEZA_EXPIRADOS.md); composição HTTP permanece na AE.6. O resultado interno com código/e-mail não é o DTO de resposta pública e nunca deve ser serializado ou logado como tal.
-
-## Implementação local AE.6 — 22/10/2026
-
-[Handler, casos de uso, Invoke e evidências](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/AE6_AUTENTICACAO_POR_CODIGO.md). OpenAPI Serverless 2.0.0 substitui a rota antiga pelas duas rotas; publicar coordenadamente com Gateway na AE.8. Bootstrap preserva oito segundos, agora com lotes SSM de nove metadados base/database e dois email/v1, mais duas leituras de Secrets. Alias/ambiente/contrato 1 são validados; Invoke sem retry, logs de resposta ou override de endpoint AWS.
-
-438 testes locais aprovados, com fluxo PostgreSQL/captura SMTP real, ativação, confirmação e JWT; AWS Invoke/bootstrap injetados nos testes, sem certificar IAM/VPC/runtime AWS. Métricas de invocações passam a incluir pedidos de código e confirmações; filtrar authenticated para logins efetivos. Próxima etapa AE.7 mantém esta entrega separada das regras da API, ainda sem alteração de seus contratos.
-
-## Implementação local AE.7 — 22/10/2026
-
-[Envio e acesso Customer na API](AE7_API_ENVIO_E_ACESSO_CUSTOMER.md) concluídos localmente: SMTP somente na EmailFunction, Invoke v1 com prazo/cancelamento, dois lotes SSM, cadastro Active, ClockSkew zero e orçamento explícito/200. 1.212 testes aprovados e caminho API container/SDK/SAM/SMTP4dev comprovado com dados fictícios, sem AWS. A métrica de notificações usa mode=smtp para a captura central em todos os ambientes; não significa entrega externa. Pontos históricos simulated preservados. Publicação/Gateway na AE.8, Postman/roteiro conjunto na AE.9.
-
-## Preparação local AE.8 — 22/10/2026
-
-[Workflows/SAM/Gateway preparados e validados localmente](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/AE8_WORKFLOWS_E_GATEWAY.md). Auth/email têm CI/publish/provision/destroy separados e reutilizáveis; VersionId fixado, checksum/artefatos imutáveis e prefixos distintos. Auth e deploy API exigem metadados email/v1 com alias live/contrato 1 antes de implantar. Email-destroy exige API/auth removidas; base-destroy já verifica banco/email. Gateway passa a exigir exatamente as duas rotas e OpenAPI auth 2.0.0, mantendo versão numérica auth e pacote Auth.Contracts 1.0.0. Sem Authorizer ou exposição pública email.
-
-438 testes Serverless, SAM/publish/transformação hom/prd, lint, Terraform e Kustomize aprovados; proteções/identidade GitHub reconferidas em modo somente leitura. Não houve workflow remoto ou aplicação AWS. Cadastrar AWS_EMAIL_ROLE_ARN após bootstrap aprovado; publicar coordenadamente na AE.10. Postman e roteiro conjunto continuam na AE.9, sem misturar o plano extra com os aceites oficiais.
-
-## AE.9 — consolidação e comprovação local, 23/10/2026
-
-[Registro e roteiro de publicação](AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md). Postman, contratos normativos, RFCs, ADRs e diagramas alinhados ao código AE. Confirmação real de código gerou JWT aceito pela API real para status antes do orçamento e decisão Approved/Refused; titularidade/Active, falha de SMTP e perda da caixa conferidos. Bootstrap auth injetado apenas na composição em memória; nenhum fallback produtivo ou mock de transporte Invoke, novo executável ou script operacional foi criado. 1.650 testes existentes e 47 conferências conjuntas aprovados. Implantação/comprovação AWS continua pendente na AE.10, com autorização própria.
+A API invoca o envio também localmente; não mantém transporte MailKit nem adaptador de simulação. Manter SMTP exclusivamente no projeto EmailFunction; sem referência Npgsql/JWT/domínio auth em seu publish. Nomes físicos auth, pacote compartilhado, serviço mecanica-auth e catálogos auth/v2 não mudam apenas por mover pastas/repositório.

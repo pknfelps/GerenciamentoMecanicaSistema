@@ -10,11 +10,11 @@ SSM database/v2 publica endpoint/porta/database/ssl-mode/schema/hash e referênc
 
 **Alternativas e consequências:** preservar PostgreSQL/SQL/Dapper evita remodelar as transações existentes. RDS provisionado não pausa/escala a zero automaticamente. O ciclo econômico escolhido é destruir/recriar dados educacionais, não manter armazenamento/backups gratuitos ou alta disponibilidade produtiva. db.t3.micro/nó único foram avaliados em fluxos funcionais, sem prova de capacidade sob carga.
 
-**Comprovação:** disponibilidade, rede/TLS, esquema/Job/grants, API/Lambda/JWT, histórico SQL e descarte hom registrados na [E6](../../REVISAO_E6_2026-10-21.md). [Encerramento/custos](../../ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md) documenta snapshot manual antigo e persistências; o mantenedor confirmou a exclusão desse snapshot em 22/10/2026, sem nova consulta AWS pelo agente. Não se alega ausência total de cobrança ou de dados históricos. Prd/coexistência e carga não testados. Não executar recuperação/limpeza de estado como parte desta revisão.
+Não se alega ausência total de cobrança ou de dados históricos. Prd/coexistência e carga não testados. Não executar recuperação/limpeza de estado como parte desta revisão.
 
 Referência: [RDS PostgreSQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html). O registro original de transição fica no histórico abaixo.
 
-Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados. [Arquitetura](../README.md) · [Evidências E6](../../REVISAO_E6_2026-10-21.md).
+Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados.
 
 <details>
 <summary>Histórico anterior à revisão E7 — registros preservados, sem vigência operacional</summary>
@@ -31,7 +31,7 @@ Os estados locais, planos pendentes e alternativas abaixo registram o momento em
 
 **Transição:** o apply anterior deixou cinco recursos no estado de hom: `terraform_data.base_release`, DB subnet group, SG e duas regras de ingresso. Revisar e aprovar o plano exato de destroy pelo workflow antigo; verificar estado vazio e ausência dos recursos na AWS. Só depois revisar Terraform, policies IAM, scripts, workflow e checks de ausência para `aws_db_instance`. Preservar aprovação, recapture da base e separação hom/prd. Não alterar state manualmente em caso de divergência; investigar antes de continuar.
 
-**Comprovação:** plan limpo para cada ambiente, disponibilidade da versão/classe e IAM efetivo; apply aprovado, endpoint privado e TLS `VerifyFull`, SQL/seeds e `database/v1/release` validados; teste integrado da API/Lambda e destruição sem remanescentes. O [registro de replanejamento](../../plano-fase-3/RESULTADO_E2_2_REPLANEJAMENTO_RDS.md) acompanha pendências.
+**Comprovação:** plan limpo para cada ambiente, disponibilidade da versão/classe e IAM efetivo; apply aprovado, endpoint privado e TLS `VerifyFull`, SQL/seeds e `database/v1/release` validados; teste integrado da API/Lambda e destruição sem remanescentes. A [documentação do banco e modelo](../BANCO_E_MODELO.md) reúne a decisão e os limites da implementação.
 
 Fontes: [RDS e Free Tier](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html), [criação em VPC](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateDBInstance.html), [parada temporária](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_StopInstance.html), [Free Plan](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier-plans.html).
 

@@ -1,9 +1,5 @@
 # Documento, código de acesso e operações Customer
 
-[Arquitetura](../README.md) · [Contrato HTTP/JWT](../ACESSO_E_AUTENTICACAO.md) · [AE.9 local](../../AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md)
-
-Revisão AE.9, 23/10/2026. Código preparado e conferido localmente; publicação AWS do fluxo novo na AE.10. O nome histórico deste arquivo é preservado para manter links. CPF/CNPJ continua sendo validado, agora junto do código; não há Authorizer ou emissão por documento isolado.
-
 ```mermaid
 sequenceDiagram
     actor C as Cliente / Postman
@@ -24,10 +20,11 @@ sequenceDiagram
         alt Ausente, Inactive ou email inutilizavel
             F-->>C: 202 generico sem escrita ou envio
         else Cliente elegivel
-            F->>D: Transacao e lock por cliente, criar Pending, commit
+            F->>D: Conferir limites em transacao com lock por cliente
             alt Cooldown ou limite atingido
                 F-->>C: 429 com Retry-After
             else Solicitacao admitida
+                F->>D: Persistir limite e novo Pending, substituir anteriores, commit
                 F->>E: Invoke v1 sincrono
                 E->>S: MIME e captura SMTP
                 alt Captura confirmada

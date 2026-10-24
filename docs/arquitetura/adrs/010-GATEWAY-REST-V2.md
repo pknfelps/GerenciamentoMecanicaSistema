@@ -1,4 +1,4 @@
-> **AE.9, 23/10/2026:** Gateway preparado para request-code/verify-code (POST), OpenAPI auth 2.0.0 e duas permissões de invocação específicas para a versão numérica. customers/validate foi retirado; sem Authorizer ou endpoint público email. Publicação AWS do novo contrato permanece AE.10; evidências hom abaixo são anteriores à extra.
+> O Gateway publica request-code/verify-code (POST), OpenAPI auth 2.0.0 e permissões de invocação para a versão numérica. A rota customers/validate foi retirada; não há Authorizer ou endpoint público email.
 
 # ADR 010 — Gateway REST Regional com VPC Link V2
 
@@ -16,11 +16,11 @@ Base/auth são consumidos por SSM público; contratos por S3 com checksum/commit
 
 Bootstrap possui service-linked role, role de logs e configuração regional persistentes; Gateway administra seu log group, integração, permissão de invocação e sete parâmetros gateway/v2. Endpoint é publicado em SSM e muda ao recriar; não versionar URL transitória como endereço disponível permanente.
 
-**Consequências e comprovação:** Gateway deve ser atualizado para nova versão numérica auth; acesso saudável depende de backends/banco. Descartá-lo antes de API/auth. Entrada pública, respostas/JWT e logs foram conferidos em hom; não estender a prd ou prometer cobertura completa dos logs. [Evidências E5](../../ENCERRAMENTO_E5_2026-10-21.md) e [descarte final](../../ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md).
+**Consequências e comprovação:** Gateway deve ser atualizado para nova versão numérica auth; acesso saudável depende de backends/banco. Descartá-lo antes de API/auth. Entrada pública, respostas/JWT e logs foram conferidos em hom; não estender a prd ou prometer cobertura completa dos logs.
 
-[Operação Gateway](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/GATEWAY.md) · [Contratos](../CONTRATOS_ENTRE_REPOSITORIOS.md).
+[Configuração do Gateway](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/gateway) · [Contratos](../CONTRATOS_ENTRE_REPOSITORIOS.md).
 
-Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados. [Arquitetura](../README.md) · [Evidências E6](../../REVISAO_E6_2026-10-21.md).
+Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados.
 
 <details>
 <summary>Histórico anterior à revisão E7 — registros preservados, sem vigência operacional</summary>
@@ -43,6 +43,6 @@ Bootstrap mantém service-linked role, role restrita de logs e configuração re
 
 **Validação local:** Terraform fmt/validate, workflows actionlint/ShellCheck, contratos S3/checksums, composição de 27 caminhos/37 operações hom/prd, políticas Access Analyzer e simulação IAM. O plano bootstrap tem 10 criações/4 alterações/nenhuma exclusão; aplicação pendente. A rede/backends hom estão descartados; importação AWS, encaminhamento sem prefixo stage, respostas HTTP, logs e compatibilidade JWT API/Lambda serão conferidos após recriação/deploy. E3/E2.12 permanecem abertas.
 
-Rastreabilidade: D01/D09, E3.3/E3.4/E3.8/E3.11. [Contratos](../CONTRATOS_ENTRE_REPOSITORIOS.md) · [Operação Gateway](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/GATEWAY.md) · [VPC Link V2 REST](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-private-integration.html) · [Limites OpenAPI AWS](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-known-issues.html).
+Rastreabilidade: D01/D09, E3.3/E3.4/E3.8/E3.11. [Contratos](../CONTRATOS_ENTRE_REPOSITORIOS.md) · [Configuração do Gateway](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/gateway) · [VPC Link V2 REST](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-private-integration.html) · [Limites OpenAPI AWS](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-known-issues.html).
 
 </details>
