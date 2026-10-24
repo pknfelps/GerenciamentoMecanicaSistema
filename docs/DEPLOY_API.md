@@ -4,9 +4,11 @@ O [workflow API deploy](../.github/workflows/api-deploy.yml) executa **Publicar 
 
 ## Pré-requisitos
 
+EmailFunction do ambiente deve estar provisionada e publicar email/v1/invocation-arn e contract-version=1. API deploy confere esses metadados antes de aplicar o Deployment; isso não equivale a testar SMTP. [Comprovação atual em hom](AE10_VALIDACAO_HOM_2026-10-23.md).
+
 - Workflow publicado também na branch padrão `main`, para aparecer **Run workflow**. Manter a versão que será executada em `develop` para hom e `main` para prd. A primeira execução será `develop/hom`.
 - Environment com `AWS_REGION=us-east-1` e `AWS_ROLE_ARN=arn:aws:iam::121754142617:role/mecanica/pipelines/mecanica-<ambiente>-api-github`. Não são necessárias chaves AWS, senhas de banco ou JWT nas variáveis/secrets do GitHub.
-- Base e banco do ambiente provisionados: ECR compartilhado com tags imutáveis, EKS/acesso da pipeline, Service NodePort, Pod Identity Agent, associação `default/gerenciamento-api`, policies de leitura JWT/banco e parâmetros SSM v2. Schema, seeds e usuário `mecanica_api` devem estar inicializados. O sucesso do deploy da infra hom foi informado pelo mantenedor; a conexão real do runtime ainda requer validação.
+- Base e banco do ambiente provisionados: ECR compartilhado com tags imutáveis, EKS/acesso da pipeline, Service NodePort, Pod Identity Agent, associação `default/gerenciamento-api`, policies de leitura JWT/banco e parâmetros SSM v2. Schema, seeds e usuário `mecanica_api` devem estar inicializados. Consumo real do RDS, Active/JWT e envio centralizado foram conferidos em hom na AE.10; essa evidência não certifica novas implantações ou prd.
 
 O workflow exige conta `121754142617`, região `us-east-1`, repositório GitHub `pknfelps/GerenciamentoMecanicaSistema`, role exata do ambiente e combinação `develop/hom` ou `main/prd`. Consulta somente três parâmetros públicos da base:
 

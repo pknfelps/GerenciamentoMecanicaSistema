@@ -1,10 +1,10 @@
 # Sistema de Gerenciamento de Mecânica
 
-API .NET da oficina: usuários, clientes, veículos, catálogo, estoque e ciclo de ordens de serviço. Reúne regras de negócio, persistência PostgreSQL, autenticação interna, notificações e observabilidade. A validação cadastral de clientes é uma Lambda separada.
+API .NET da oficina: usuários, clientes, veículos, catálogo, estoque e ciclo de ordens de serviço. Reúne regras de negócio, persistência PostgreSQL, autenticação interna, notificações e observabilidade. AuthFunction autentica clientes por documento e código; EmailFunction centraliza o transporte SMTP privado.
 
 ## Estado e evidências
 
-E4/E5/E6 foram concluídas no **escopo hom acordado**, incluindo JWT entre Lambda/API, autorização, histórico/estoque, telemetria, dashboards e alertas no alcance registrado. O ambiente foi destruído em 21/10/2026; não há endpoint hom ativo. Prd/coexistência, carga e demais cenários dispensados não foram comprovados. Workflows são manuais, sem deploy automático após merge; análise da diferença R06 foi adiada.
+E4/E5/E6 foram concluídas no **escopo hom acordado**, preservando limites e dispensas. Em 23/10/2026, hom foi reprovisionado e a extra AE foi concluída: autenticação por código, captura privada, autorização, SQL/limites/inativação e recuperação SMTP. [Consolidação e fontes](docs/CONSOLIDACAO_ENTREGA_2026-10-23.md). O descarte/custo de 21/10 é histórico, sem certificar ausência atual ou prd. Workflows são manuais; a diferença R06 foi adiada.
 
 - [Revisão integrada e fontes](docs/REVISAO_E6_2026-10-21.md).
 - [PRs, CI/CD e proteções](docs/EVIDENCIAS_CICD_E_PROTECOES_2026-10-21.md).
@@ -12,7 +12,7 @@ E4/E5/E6 foram concluídas no **escopo hom acordado**, incluindo JWT entre Lambd
 - [VersionId SAM e proteção de artefatos](docs/VALIDACAO_PROTECAO_ARTEFATOS_2026-10-21.md).
 - [Descarte final, persistências e custos estimados](docs/ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md).
 
-A próxima etapa é documentação/vídeo/PDF da entrega. Avisos transitivos de dependências/analisadores e limites aceitos não foram corrigidos ou ocultados por esta revisão documental.
+A documentação está consolidada; faltam vídeo, publicação, PDF e conferência/submissão. Avisos transitivos de dependências/analisadores e limites aceitos não foram corrigidos ou ocultados por esta revisão documental.
 
 ## Componentes e repositórios
 
@@ -34,7 +34,7 @@ flowchart LR
 | Este | API/camadas/testes, Dockerfile/Compose, Deployment/HPA/ServiceAccount, OpenAPI e Auth.Contracts |
 | [Infraestrutura](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/tree/develop) | Bootstrap/rede/EKS/NLB/Service, Gateway, Collector Kubernetes e recursos New Relic |
 | [Banco](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/tree/develop) | RDS/credenciais, SQL/seeds e Job de inicialização |
-| [Autenticação](https://github.com/pknfelps/GerenciamentoMecanicaServerless/tree/develop) | Lambda/SAM, documento CPF/CNPJ e JWT Customer |
+| [Serverless](https://github.com/pknfelps/GerenciamentoMecanicaServerless/tree/develop) | AuthFunction/documento+código/JWT e EmailFunction/transporte SMTP privado |
 
 Domain.Interface/Service.Interface definem contratos. Infrastructure implementa PostgreSQL, JWT/hash e envio; DependencyInjection compõe os serviços. Consultas públicas de usuários não retornam senha/hash. [Componentes AWS](docs/arquitetura/diagramas/COMPONENTES.md), [sequências](docs/arquitetura/README.md) e [banco/ER](docs/arquitetura/BANCO_E_MODELO.md).
 
@@ -139,29 +139,25 @@ Gera artifacts/openapi/openapi.json, OpenAPI 3.0, sem AWS/JWT/persistência. Bui
 | [api-destroy](.github/workflows/api-destroy.yml) | Manual: checar Gateway, remover overlay/recursos da API e conferir ausência |
 | [aws-oidc-check](.github/workflows/aws-oidc-check.yml) | Diagnóstico manual de identidade/acesso, não prova completa de deploy |
 
-Deploy exige develop/hom ou main/prd, OIDC/Environments, bootstrap/base/Collector/banco/Job disponíveis e License Key cadastrada pelo mantenedor. Mesma revisão nos dois jobs; tag sha-commit-run-attempt e deploy por digest. Contrato/checksum S3 são imutáveis por commit. Não publica /api/v2/ nem usa estado de outro repositório. Aguarda rollout por 600 s; diagnóstico sem rollback automático próprio.
+Deploy exige develop/hom ou main/prd, OIDC/Environments, bootstrap/base/Collector/banco/Job e email/v1 disponíveis e License Key cadastrada pelo mantenedor. Mesma revisão nos dois jobs; tag sha-commit-run-attempt e deploy por digest. Contrato/checksum S3 são imutáveis por commit. Não publica /api/v2/ nem usa estado de outro repositório. Aguarda rollout por 600 s; diagnóstico sem rollback automático próprio.
 
 [Kustomize base/hom/prd](deploy/kubernetes) e [procedimento completo](docs/DEPLOY_API.md). Deployment/HPA/ServiceAccount pertencem à API; Service/NLB à infraestrutura. Base local Kustomize mantém referências locais anteriores; overlays AWS removem db-secrets e usam identidade/runtime AWS. Docker Hub dessa base não é o caminho de publicação AWS.
 
-Provisionar: bootstrap → base/Collector → banco/Job → API e auth → Gateway. Descartar: Gateway → API/auth → banco → base, com [bloqueios de dependência](docs/DESTRUICAO_AMBIENTE.md). ECR/artefatos/estados e recursos New Relic persistem. Sem deploy automático por push/merge ou aprovação implícita de operações futuras.
+Provisionar: bootstrap → base/Collector/SMTP4dev → banco/Job e email → API/auth → Gateway. Descartar: Gateway → API/auth → banco/email → base, com [bloqueios de dependência](docs/DESTRUICAO_AMBIENTE.md). ECR/artefatos/estados e recursos New Relic persistem. Sem deploy automático por push/merge ou aprovação implícita de operações futuras.
 
 O endpoint ativo é obtido de /mecanica/<ambiente>/gateway/v2/endpoint após provisionamento. Não usar URLs de rodadas destruídas. [GitHub Actions](https://github.com/pknfelps/GerenciamentoMecanicaSistema/actions) · [Arquitetura/ADRs/RFCs](docs/arquitetura/README.md) · [Operação New Relic](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/NEW_RELIC.md). Vídeo/PDF ainda pertencem à próxima parte da E7. Por decisão do mantenedor, o acesso ocorre pelos quatro repositórios públicos, sem convite individual de avaliadores; visibilidade confirmada no GitHub em 21/10/2026.
 
 
-## Refinamento extra planejado — autenticação e envio de e-mails
+## Autenticação por código e envio centralizado — concluídos em hom
 
-Decisão de 22/10/2026, com autenticação/envio e integração da API comprovados localmente, publicação pendente: cliente solicita/confirma código, lê-se a mensagem capturada no SMTP4dev privado para os testes e a autenticação emite JWT Customer sem vínculo a OS. A API continua responsável por titularidade/Active e decisão de orçamento, com retorno 200/Approved ou Refused e approved explícito. O transporte de e-mail está centralizado em EmailFunction, invocada pela API e AuthFunction na implementação local. SMTP4dev AWS não terá persistência de mensagens ou relay externo; desafios ficam no PostgreSQL.
+**23/10/2026:** AE.1–AE.10 concluídas nos respectivos escopos. Cliente solicita e confirma documento/desafio/código; AuthFunction emite JWT Customer por UUID. API exige Active/titularidade, permite status antes do orçamento e retorna 200/Approved ou Refused na decisão. Código/JWT nunca são devolvidos no orçamento nem nos logs.
 
-O repositório de funções agora é GerenciamentoMecanicaServerless. AE.2 organizou AuthFunction/AuthFunctionTests, estrutura EmailFunction/EmailFunctionTests e caminhos auth, preservando contratos e recursos existentes. GitHub/raiz/remote renomeados, proteções/Environments e CI/OIDC conferidos. Transição inicial e retirada da confiança antiga aprovadas/aplicadas; Terraform posterior sem diferenças. A função de envio tem handler, transporte e template SAM preparados/validados localmente na AE.5; os consumidores e workflows ainda serão integrados. Nenhum deploy da função email foi executado. Os checklists oficiais E5/E6/E7 permanecem separados. [Plano extra AE.1–AE.10](docs/PLANO_EXTRA_AUTENTICACAO_E_EMAIL.md).
+API/auth invocam EmailFunction por IAM; somente ela implementa MIME/SMTP. SMTP4dev privado no EKS captura mensagens sem relay externo e perde a caixa ao recriar o pod. O operador consulta a interface por port-forward; não há login de cliente por senha, Authorizer, token por OS ou endpoint de debug do mecânico.
 
-AE.1–AE.7 preparadas e validadas nos seus respectivos escopos em 22/10/2026: [contratos HTTP/JWT/Invoke](docs/CONTRATOS_EXTRA_AUTENTICACAO_E_EMAIL.md) e [migração/OIDC](docs/AE2_FINALIZACAO_OIDC_2026-10-22.md). [EmailFunction e evidências locais](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/AE5_EMAIL_FUNCTION.md): regressão de 419 testes aprovada e captura SAM/Compose conferida. [Autenticação por código implementada e validada localmente na AE.6](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/AE6_AUTENTICACAO_POR_CODIGO.md), com 438 testes aprovados e publicação coordenada ainda pendente. Endpoints da API preservados; a próxima etapa extra é AE.8 — SAM, workflows e Gateway. [AE.7 concluída localmente](docs/AE7_API_ENVIO_E_ACESSO_CUSTOMER.md): envio central, cliente ativo, orçamento explícito e 1.212 testes aprovados, sem implantação. Alterações locais seguem para PR do mantenedor.
+[Fluxo AWS e correções](docs/AE10_VALIDACAO_HOM_2026-10-23.md) · [SQL, inativação e limites](docs/AE10_CONFERENCIAS_FINAIS_HOM_2026-10-23.md) · [Plano extra](docs/PLANO_EXTRA_AUTENTICACAO_E_EMAIL.md) · [Ensaio local AE.9](docs/AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md).
 
-A aprovação de orçamento agora recebe somente approved booleano e retorna 200 com decision Approved/Refused; cadastro Customer inativo recebe 403 antes de consultar a OS. A expiração JWT é estrita (ClockSkew zero), inclusive para usuários internos. O contrato/OpenAPI novo e a autenticação por código serão publicados coordenadamente na AE.8.
+A regressão da correção final aprovou 1.213 testes API, sem falhas/ignorados, e preservou o OpenAPI. Na AWS: auth:14/email:1, Approved/Refused até Delivered, isolamento entre clientes, falha/recuperação SMTP, consumo/tentativas/grants/limpeza SQL, limite horário e Inactive antes/depois do JWT conferidos. Location de criação foi corrigido e reconferido pelo Gateway. Não é comprovação de prd, e-mail externo ou capacidade sob carga.
 
-## Extra AE.8 — publicação coordenada preparada
+O transporte serverless já está implementado; processamento assíncrono independente de notificações de OS permanece evolução futura. Sem fila/outbox, retry próprio ou garantia única. [ADR 006](docs/arquitetura/adrs/006-NOTIFICACOES.md) · [ADR 011](docs/arquitetura/adrs/011-AUTENTICACAO-POR-CODIGO-E-EMAIL.md).
 
-[Workflows auth/email e Gateway](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/AE8_WORKFLOWS_E_GATEWAY.md) preparados e validados localmente. api-deploy confere email/v1 (alias live do ambiente e contrato 1) antes de aplicar o Deployment; isso é conferência de metadados, não teste de SMTP. Bootstrap deve ser aprovado/aplicado antes de usar o novo guard. Provisionamento: base/SMTP4dev → banco e email → API/auth → Gateway com contratos novos. Nenhum workflow remoto ou deploy foi executado nesta etapa; Postman/roteiro conjunto seguem na AE.9.
-
-## Extra AE.9 — fluxo conjunto comprovado localmente
-
-[Resultados e roteiro AE.10](docs/AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md), 23/10/2026: handler auth com bootstrap injetado, SQL/grants reais, SDK/SAM/EmailFunction/SMTP4dev e API real conferidos. JWT do código aceito no status e em Approved/Refused, negativas e falha/perda da caixa validadas. **1.650 testes e 47 conferências manuais aprovados**. Postman, contratos e diagramas atualizados; OpenAPI inalterado nesta etapa. Recursos descartáveis removidos, sem aplicação AWS. Próximo passo: PRs e publicação integrada AE.10 autorizada.
+Novas operações AWS e a publicação dos documentos dependem do mantenedor; esta consolidação não executou workflows, deploys ou destroys.

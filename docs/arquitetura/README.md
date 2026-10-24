@@ -1,6 +1,6 @@
 # Arquitetura implementada — Fase 3
 
-Revisão AE.9 de 23/10/2026, com código/contratos preparados e conferidos localmente nos quatro repositórios. Publicação/comprovação AWS do refinamento na AE.10. Evidências E4/E5/E6 registram hom anterior removido; não comprovam a nova autenticação/captura nem disponibilidade atual ou prd.
+Consolidação de 23/10/2026: código/contratos dos quatro repositórios e refinamento AE implantados e comprovados em hom. [Fluxo integrado](../AE10_VALIDACAO_HOM_2026-10-23.md), [SQL/inativação/limites](../AE10_CONFERENCIAS_FINAIS_HOM_2026-10-23.md) e [estado da entrega](../CONSOLIDACAO_ENTREGA_2026-10-23.md). Evidências E4/E5/E6 preservam as revisões e o descarte anterior; não certificam prd ou disponibilidade contínua.
 
 [README da API](../../README.md) · [Revisão E6](../REVISAO_E6_2026-10-21.md) · [Encerramento e custos](../ENCERRAMENTO_E6_E_CUSTOS_2026-10-21.md)
 

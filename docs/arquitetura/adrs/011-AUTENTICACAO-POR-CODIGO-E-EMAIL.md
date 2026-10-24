@@ -1,6 +1,6 @@
 # ADR 011 — Código de acesso e transporte SMTP centralizado
 
-**23/10/2026 — decisão aceita, implementada e comprovada localmente na extra AE; publicação/comprovação AWS pendentes na AE.10.** Preserva os aceites oficiais anteriores E5/E6/E7. [Plano extra](../../PLANO_EXTRA_AUTENTICACAO_E_EMAIL.md).
+**23/10/2026 — decisão aceita, implementada e comprovada localmente e na AWS em hom; AE.10 concluída.** Preserva os aceites oficiais anteriores e seus limites. [Fluxo integrado](../../AE10_VALIDACAO_HOM_2026-10-23.md), [conferências finais](../../AE10_CONFERENCIAS_FINAIS_HOM_2026-10-23.md) e [plano extra](../../PLANO_EXTRA_AUTENTICACAO_E_EMAIL.md). Não certifica prd ou entrega externa de e-mail.
 
 ## Decisão
 
@@ -23,5 +23,7 @@ Captura não comprova propriedade do e-mail pessoal. Caixa desaparece em reiníc
 ## Evidências e implantação
 
 [AE.9](../../AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md) registra testes e o ensaio com handler real/SQL/grants, SDK real, SAM/EmailFunction, SMTP4dev e API. Bootstrap AWS foi injetado, sem novo fallback produtivo ou executável permanente. Isso não comprova IAM, Gateway, VPC/NLB, cold start/congelamento/capacidade reais ou prd.
+
+A AE.10 acrescentou a comprovação AWS de auth:14/email:1, captura privada por API/auth, JWT/titularidade/Active, Approved/Refused, falha/recuperação SMTP, SQL/grants/limpeza, limite horário e negativas. Relatórios de duração/memória são amostras, sem garantia de capacidade ou todo cenário de congelamento. Essas evidências complementam o ensaio local, sem converter suas limitações em testes aprovados.
 
 Esta decisão substitui o transporte/simulação do [ADR 006](006-NOTIFICACOES.md) e a emissão de cliente por documento isolado do [ADR 001](001-IDENTIDADE.md), mantendo seus registros históricos e regras internas. [Contratos](../ACESSO_E_AUTENTICACAO.md) · [Componentes](../diagramas/COMPONENTES.md).

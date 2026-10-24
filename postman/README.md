@@ -30,7 +30,7 @@ Sem Bearer nas rotas de OS → 401; Admin/Mechanic no orçamento → 403; Custom
 
 Não rodar a pasta Lifecycle inteira como se fosse um cenário linear: ela inclui decisões alternativas e DELETE. Scripts de resposta descrevem o caminho positivo; uma negativa intencional gera falha nesses asserts, sem indicar erro de instrumentação. A coleção não faz chamadas administrativas ao SMTP4dev nem captura automaticamente códigos.
 
-O fluxo novo foi implantado e conferido em hom na [AE.10](../docs/AE10_VALIDACAO_HOM_2026-10-23.md). A correção posterior do Location foi preparada localmente e ainda precisa de publicação da API/reconferência no Gateway. [Roteiro e evidências locais AE.9](../docs/AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md).
+O fluxo novo foi implantado e conferido em hom na [AE.10](../docs/AE10_VALIDACAO_HOM_2026-10-23.md). Após novo deploy em 23/10/2026, criação 201 e GET 200 do Location relativo foram reconferidos pelo Gateway, preservando domínio/HTTPS/stage. Os caminhos canônicos de login, clientes e veículos também responderam 200. [Roteiro e evidências locais AE.9](../docs/AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md).
 
 ## Formato versionado
 

@@ -1,5 +1,7 @@
 # Revisão documental E7 — 21/10/2026
 
+**Complemento de 23/10/2026:** [consolidação atual](CONSOLIDACAO_ENTREGA_2026-10-23.md) incorpora AE.10 concluída em hom, nome Serverless, novo fluxo de autenticação/envio e fontes finais. O relatório abaixo preserva as fontes/revisões/visibilidade e o estado de 21/10; suas menções a simulação, nome antigo, pendências futuras ou ambiente destruído não substituem o estado posterior.
+
 ## Escopo e resultado
 
 Concluída a revisão documental E7.1–E7.5 dos quatro repositórios, contra código/configuração e evidências existentes. E5/E6 permanecem encerradas no escopo hom acordado. O ambiente foi destruído pelo mantenedor; não houve novo teste AWS, provisionamento, publicação, commit, push ou PR nesta revisão.

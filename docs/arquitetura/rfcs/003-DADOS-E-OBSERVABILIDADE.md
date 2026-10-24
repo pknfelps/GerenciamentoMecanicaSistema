@@ -52,3 +52,5 @@ SQL/indicadores, integrações e continuidade W3C foram conferidos nas fontes da
 Fundamentação: [ADR 003](../adrs/003-BANCO-E-HISTORICO.md), [ADR 005](../adrs/005-OBSERVABILIDADE.md) e [ADR 006](../adrs/006-NOTIFICACOES.md).
 
 AE.9, 23/10/2026: invocações auth incluem pedido/confirmação; filtrar authenticated para logins. EmailFunction possui somente log JSON sanitizado no seu CloudWatch; esta extra não adiciona OTel/coleta/dashboards/alertas próprios para ela. Os sinais e aceites E5 existentes não foram redesenhados.
+
+**Consolidação posterior — 23/10/2026:** AE.10 concluída em hom, com [fluxo integrado](../../AE10_VALIDACAO_HOM_2026-10-23.md), [SQL/inativação/limites](../../AE10_CONFERENCIAS_FINAIS_HOM_2026-10-23.md) e [estado da entrega](../../CONSOLIDACAO_ENTREGA_2026-10-23.md). As menções anteriores à ausência de operações AWS descrevem a revisão documental/local; a comprovação posterior está nessas fontes. Não certifica prd, envio externo ou processamento assíncrono independente.

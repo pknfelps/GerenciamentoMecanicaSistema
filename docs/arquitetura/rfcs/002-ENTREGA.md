@@ -45,3 +45,5 @@ OpenAPI/NuGet/template SAM usam SHA-256 e escrita condicional; conteúdo diverge
 Decisões: [ADR 004](../adrs/004-ENTREGA-E-AMBIENTES.md), [ADR 008](../adrs/008-INFRAESTRUTURA-DECLARATIVA.md), [ADR 009](../adrs/009-SAM-AUTENTICACAO.md) e [ADR 010](../adrs/010-GATEWAY-REST-V2.md).
 
 [AE.8: prefixos, VersionId, cadastro de AWS_EMAIL_ROLE_ARN e bloqueios](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/docs/AE8_WORKFLOWS_E_GATEWAY.md). [AE.9: validação local](../../AE9_VALIDACAO_LOCAL_E_DOCUMENTACAO.md). Nenhuma execução remota ou plano/apply AWS nesta revisão.
+
+**Consolidação posterior — 23/10/2026:** AE.10 concluída em hom, com [fluxo integrado](../../AE10_VALIDACAO_HOM_2026-10-23.md), [SQL/inativação/limites](../../AE10_CONFERENCIAS_FINAIS_HOM_2026-10-23.md) e [estado da entrega](../../CONSOLIDACAO_ENTREGA_2026-10-23.md). As menções anteriores à ausência de operações AWS descrevem a revisão documental/local; a comprovação posterior está nessas fontes. Não certifica prd, envio externo ou processamento assíncrono independente.
