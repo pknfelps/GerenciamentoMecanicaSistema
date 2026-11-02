@@ -105,7 +105,7 @@ Após commit o serviço publica e aguarda o handler; ele consulta dados/monta a 
 | Runtime__Environment | Ausente: local/SAM; hom/prd: bootstrap AWS/alias email; vazio/inválido rejeitado |
 | AWS_REGION | us-east-1 no modo AWS |
 | Email__InvocationEndpoint / Email__FunctionName | Local: SAM HTTP permitido / EmailFunction; AWS: alias via catálogo, sem endpoint override |
-| Telemetry__Enabled | Opt-in local; hom true e prd false nos overlays atuais |
+| Telemetry__Enabled | Opt-in local; habilitada nos overlays hom e prd |
 | OTEL_EXPORTER_OTLP_ENDPOINT | Destino OTLP absoluto HTTP/HTTPS, sem credenciais/query/fragmento |
 
 Bootstrap lê SSM v2/AWSCURRENT de JWT e database/api, com prazo total de 45 s, identidade por Pod Identity e valores em memória. TLS VerifyFull/CA RDS; sem fallback local em modo AWS ou Secret Kubernetes JWT. Erro inicial encerra com código 1 e mensagem fixa/tipo no stderr, sem stack trace.
