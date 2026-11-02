@@ -1,12 +1,12 @@
 # ADR 004 — Quatro repositórios e configuração por ambiente
 
-**Estado:** aceito e implementado, com fluxo hom comprovado. Coexistência/prd não exercitados; análise da diferença R06 adiada pelo mantenedor.
+**Estado:** aceito e implementado, com fluxo hom comprovado. Coexistência/prd não exercitados; gatilhos automáticos preparados em 02/11/2026, com comprovação após publicação.
 
 **Contexto:** separar código, plataforma, banco e autenticação, preservando contratos/versionamento e descarte sem remover recursos compartilhados.
 
 **Decisão vigente:** API, infraestrutura, banco e autenticação têm repositórios/pipelines próprios. Develop corresponde a hom e main a prd. Recursos/SSM/roles e estados são separados por componente/ambiente; o bootstrap é persistente. Terraform usa S3 versionado/locking nativo, sem DynamoDB; auth usa stack SAM/CloudFormation. Metadados SSM v2 são configuração, não release/prontidão; consumidores não leem estados de outros repositórios.
 
-CI valida PRs/manual. Publicações/provisionamentos são manuais: base/banco/Gateway/New Relic preservam plano salvo → aprovação → apply exato; API e auth seguem seus fluxos manuais sem aprovação intermediária. Isso não comprova deploy automático após merge do R06 original. Não houve autorização para modificar gatilhos nesta revisão.
+CI preserva validações de PR/manual. Push/merge em develop/hom ou main/prd inicia deploy em cada repositório: API publica/implanta, banco planeja/aplica e inicializa, Serverless publica ambos os componentes e implanta email antes de auth, infraestrutura aplica base antes de chamar Gateway. Terraform mantém plano salvo → aprovação → apply exato; SAM/API não ganham aprovação intermediária. Os gatilhos foram autorizados e preparados localmente em 02/11/2026; a execução automática real será comprovada após publicar as alterações. Disparos manuais continuam disponíveis; destroy e New Relic permanecem manuais.
 
 Imagens usam ECR/digest; OpenAPI/NuGet/template SAM são publicados com checksum e escrita condicional. ZIP SAM tem chave versionada gravável, mas o template fixa VersionId. Estado/dashboards/alertas New Relic são compartilhados e independentes dos destroys AWS. [RFC 002](../rfcs/002-ENTREGA.md).
 

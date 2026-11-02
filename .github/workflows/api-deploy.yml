@@ -1,6 +1,8 @@
 name: API deploy
 
 on:
+  push:
+    branches: [develop, main]
   workflow_dispatch:
     inputs:
       environment:
@@ -13,7 +15,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: api-deploy-${{ inputs.environment }}
+  group: api-deploy-${{ inputs.environment || (github.ref_name == 'develop' && 'hom' || 'prd') }}
   cancel-in-progress: false
 
 defaults:
@@ -29,7 +31,7 @@ jobs:
     name: Publicar
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    environment: ${{ inputs.environment }}
+    environment: ${{ inputs.environment || (github.ref_name == 'develop' && 'hom' || 'prd') }}
     permissions:
       contents: read
       id-token: write
@@ -37,7 +39,7 @@ jobs:
       image-uri: ${{ steps.image.outputs.uri }}
       digest: ${{ steps.build.outputs.digest }}
     env:
-      DEPLOY_ENVIRONMENT: ${{ inputs.environment }}
+      DEPLOY_ENVIRONMENT: ${{ inputs.environment || (github.ref_name == 'develop' && 'hom' || 'prd') }}
       AWS_REGION: ${{ vars.AWS_REGION }}
       AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
     steps:
@@ -151,12 +153,12 @@ jobs:
     needs: publish
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    environment: ${{ inputs.environment }}
+    environment: ${{ inputs.environment || (github.ref_name == 'develop' && 'hom' || 'prd') }}
     permissions:
       contents: read
       id-token: write
     env:
-      DEPLOY_ENVIRONMENT: ${{ inputs.environment }}
+      DEPLOY_ENVIRONMENT: ${{ inputs.environment || (github.ref_name == 'develop' && 'hom' || 'prd') }}
       AWS_REGION: ${{ vars.AWS_REGION }}
       AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
       IMAGE_URI: ${{ needs.publish.outputs.image-uri }}
