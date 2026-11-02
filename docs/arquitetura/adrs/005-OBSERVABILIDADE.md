@@ -7,11 +7,11 @@
 ## Decisão vigente
 
 - API compõe OTel na entrada, com manifesto observability.json; nenhum projeto de domínio/serviço depende do SDK OTel. Meter nativo identifica acontecimentos; configuração seleciona coleta/dimensões/exportação.
-- API envia OTLP ao Collector EKS Contrib 0.161.0. O provider de métricas nasce antes do bootstrap e é reutilizado; bootstrap malsucedido tem encerramento/exportação final limitado a 3.000 ms. Local é opt-in; overlay hom habilita e prd permanece false.
+- API envia OTLP ao Collector EKS Contrib 0.161.0. O provider de métricas nasce antes do bootstrap e é reutilizado; bootstrap malsucedido tem encerramento/exportação final limitado a 3.000 ms. Local é opt-in; overlays hom e prd habilitam telemetria.
 - Lambda reutiliza providers por handler, com invocação/PostgreSQL e dois instrumentos de autenticação, além do meter de integrações. SAM habilita OTel/X-Ray/New Relic permanentemente. Layer Collector 0.22.0 inclui Collector 0.151.0, loopback, decouple e sem batch periódico adicional. Flush da aplicação compartilha até 500 ms entre sinais e preserva reserva de resposta; isso não garante entrega após freeze/encerramento.
 - Logs da API mantêm console textual; Lambda mantém uma linha JSON técnica. Mensagem fixa/tipo, sem stack trace ou mensagem original de exceção. OTLP é o único caminho remoto dos logs da aplicação, sem recoletar stdout/CloudWatch. Atributos/nomes são sanitizados antes de exportar, sem SQL, payload, credenciais ou identidade de negócio nas dimensões.
 - **W3C somente:** traceparent válido é pai OTLP; sem ele, nova raiz da aplicação. PostgreSQL/logs se relacionam com essa raiz. Baggage/tracestate são descartados. Sampler coleta chamadas da aplicação mesmo com pai não amostrado; probes/SQL associado são excluídos dos traces da API.
-- **X-Ray separado:** Gateway/Lambda emitem segmentos nativos por amostragem AWS; integração oficial New Relic faz polling. União automática X-Ray/OTLP foi retirada do escopo, não corrigida. Segmentos nativos não passam pela sanitização da aplicação e não são fonte de alerta imediato.
+- **X-Ray separado:** Gateway hom/prd e autenticação emitem segmentos nativos por amostragem AWS; integração oficial New Relic faz polling. União automática X-Ray/OTLP foi retirada do escopo, não corrigida. Segmentos nativos não passam pela sanitização da aplicação e não são fonte de alerta imediato.
 - Collector EKS coleta 23 métricas Kubernetes e enriquece sinais API por pod/namespace/Deployment. Kubeletstats cobre apenas o nó do Collector. CloudWatch consulta 13 estatísticas Gateway/Lambda/RDS por minuto, com atraso de dez minutos; logs Gateway retomam cinco minutos por restart, sem checkpoint/deduplicação/backfill.
 - Collectors leem License Key do Secrets Manager pelo provider nativo alpha; valor não vai para Git, imagem/ZIP, variáveis Lambda, Kubernetes Secret ou estado Terraform. Pod Identity controla o Collector EKS; extensão compartilha a role da função. Rotação exige nova inicialização. Falha inicial de leitura impede o Collector; filas/retries externos são limitados e perdas são possíveis.
 
@@ -29,4 +29,10 @@ A unidade persistente observability/newrelic tem backend próprio, prevent_destr
 
 Configuração declarativa foi preferida a listas operacionais duplicadas no código. Console textual foi preservado, sem novo stack de logs. Não foi adotado agente adicional, coleta duplicada, métrica de negócio por contagem de spans ou recuperação robusta. Filas em memória e timeouts não substituem garantias transacionais.
 
-Filas/retries limitados podem perder sinais. Logs Gateway podem ter lacunas; encerramento de incidente por ausência não comprova recuperação. A topologia atual não comprova capacidade sob carga ou operação de prd.
+Filas/retries limitados podem perder sinais. Logs Gateway podem ter lacunas; encerramento de incidente por ausência não comprova recuperação. Conferência funcional em prd não comprova capacidade sob carga ou alta disponibilidade.
+
+## Alcance da conferência em hom e prd
+
+Em 02/11/2026, autenticação OTLP, logs de acesso do Gateway, 23 métricas Kubernetes e 13 métricas CloudWatch foram observados no New Relic nos dois ambientes. Após habilitar a telemetria da API e o X-Ray do Gateway em prd, novas chamadas comprovaram métricas HTTP, spans HTTP/PostgreSQL, log correlacionado e ingestão dos segmentos nativos por xray.polling. Os atributos proibidos conferidos estavam ausentes dos sinais OTLP amostrados; isso não se aplica aos segmentos nativos AWS.
+
+Indicadores de OS e reconciliação SQL, falhas controladas e disparo/recebimento de alertas permanecem no alcance anteriormente comprovado em hom. Não foram repetidos em prd, nem foram feitos testes de carga ou disparo dos alertas de CPU/memória. A validação é pontual, sem garantia de disponibilidade futura ou união X-Ray/OTLP. [Detalhamento do alcance](../rfcs/003-DADOS-E-OBSERVABILIDADE.md#validação-em-hom-e-prd).

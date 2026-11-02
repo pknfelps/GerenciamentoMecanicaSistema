@@ -30,4 +30,4 @@ Secrets são resolvidos em runtime por identidades restritas, sem valores em man
 
 Fundamentação: [ADR 001](../adrs/001-IDENTIDADE.md), [ADR 002](../adrs/002-REDE-AWS.md), [ADR 006](../adrs/006-NOTIFICACOES.md), [ADR 009](../adrs/009-SAM-AUTENTICACAO.md) e [ADR 010](../adrs/010-GATEWAY-REST-V2.md).
 
-Decisão de autenticação e envio: [ADR 011](../adrs/011-AUTENTICACAO-POR-CODIGO-E-EMAIL.md). Configuração hom/prd não comprova disponibilidade atual ou união X-Ray/OTLP.
+Decisão de autenticação e envio: [ADR 011](../adrs/011-AUTENTICACAO-POR-CODIGO-E-EMAIL.md). Em 02/11/2026, foram concluídas 48 verificações HTTP por ambiente em hom e prd, sem divergência dos resultados esperados ou respostas 5xx: login/perfis, código de acesso, status, aprovação/recusa, execução e entrega. As probes privadas responderam Healthy e o SMTP4dev capturou as mensagens nos dois ambientes. [Alcance da observabilidade e limites](003-DADOS-E-OBSERVABILIDADE.md#validação-em-hom-e-prd). Configuração ou conferência pontual não garantem disponibilidade futura ou união X-Ray/OTLP.

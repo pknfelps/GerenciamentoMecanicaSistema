@@ -1,6 +1,6 @@
 # ADR 011 — Código de acesso e transporte SMTP centralizado
 
-**Estado:** decisão aceita e implementada. Não representa entrega externa de e-mail ou garantia de operação em produção.
+**Estado:** decisão aceita e implementada; fluxo funcional conferido em hom e prd em 02/11/2026. Não representa entrega externa de e-mail ou garantia de disponibilidade produtiva.
 
 ## Decisão
 
@@ -13,6 +13,10 @@ API e auth montam o conteúdo e invocam EmailFunction por IAM no alias live do a
 SMTP4dev privado no EKS, mesma rede/NLB da base e listener SMTP próprio; caixa efêmera e relay desabilitado, sem entrega externa. Operador lê a captura via port-forward autorizado para simular acesso à caixa, nunca por endpoint público/debug ou permissão JWT Mechanic. Cliente inicia a solicitação; mecânico não gera acesso. O local usa SAM/Invoke v1 e mesma captura; auth mantém bootstrap produtivo hom/prd, com injeção apenas no ensaio/testes.
 
 Banco vazio recebe desafios/limites no Init.sql; sem migrations ou CHECKs/FKs/cascatas novos. Regras/locks/consumo em C#, cliente inexistente sem gravação/envio/limpeza, limites duráveis por UUID elegível, salt/verificador PBKDF2. Código oito dígitos/cinco minutos/cinco tentativas; cooldown 60 s/cinco pedidos por hora; limpeza oportunista limitada a 100 expirados por tabela.
+
+## Conferência nos dois ambientes
+
+Em 02/11/2026, pedido e captura do código, confirmação válida, rejeição de código incorreto e replay, consulta de status e decisão Approved/Refused foram conferidos em hom e prd. Cada ambiente teve duas OSs entregues e 11 mensagens capturadas. Não foram repetidos em prd os ensaios anteriores de limites/expiração, concorrência, indisponibilidade SMTP ou inspeção SQL direta; não se alega entrega à caixa pessoal.
 
 ## Limites e alternativas
 

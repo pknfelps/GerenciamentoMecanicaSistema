@@ -63,6 +63,6 @@ O Job grava 1.0.0/hash/horário na transação do esquema/seeds. Reexecução ex
 
 `mecanica_api` possui SELECT/INSERT/UPDATE/DELETE nas nove tabelas de domínio, incluindo histórico; não é append-only. `mecanica_auth` possui SELECT somente em id/name/document/status/email de customers e DML nas duas tabelas de desafios/limites. Ambos ficam sem acesso ao marcador pelos grants. Scripts SQL são a fonte das permissões, sem garantias adicionais presumidas pelo desenho.
 
-A configuração hom/prd não representa, por si, comprovação operacional de produção.
+A configuração hom/prd não representa, por si, comprovação operacional. Em 02/11/2026, ambas as instâncias foram conferidas disponíveis, privadas e criptografadas, e os fluxos de autenticação/OS passaram por HTTP nos dois ambientes. SQL direto, reconciliação histórica e retenção após DELETE permanecem no escopo anteriormente comprovado em hom; não foram repetidos em prd. Isso não comprova capacidade, recuperação ou disponibilidade futura.
 
 Referências: [RDS PostgreSQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html), [SQL/esquema](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/blob/develop/docs/SCHEMA.md) e [grants da API](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/blob/develop/sql/ProvisionApiUser.sql).

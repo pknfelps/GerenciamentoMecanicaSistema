@@ -1,6 +1,6 @@
 # RFC 003 — Histórico de OS, indicadores e observabilidade
 
-**Estado:** implementada; E5 encerrada por aceite e E6 concluída no escopo hom. Revisão de 21/10/2026; registro original 16/09. [Arquitetura](../README.md) · [Modelo e justificativa](../BANCO_E_MODELO.md)
+**Estado:** implementada; E5 encerrada por aceite e E6 concluída no escopo hom. Conferência funcional e de telemetria ampliada a prd em 02/11/2026, sem estender todos os ensaios anteriores da E6. Revisão de 02/11/2026; registro original 16/09. [Arquitetura](../README.md) · [Modelo e justificativa](../BANCO_E_MODELO.md)
 
 ## Persistência e durações
 
@@ -29,7 +29,7 @@ Falhas técnicas são failure + timeout; canceled fica separado. O percentual do
 
 ## Coleta, segurança e ciclo de vida
 
-API exporta HTTP/PostgreSQL, métricas técnicas/negócio/integrações e logs ao Collector EKS Contrib 0.161.0. Configuração está no manifesto; código identifica eventos/aplica segurança. Telemetria é opt-in local; overlay hom habilita e prd permanece false. Um provider de métricas nasce antes do bootstrap e é reutilizado pelo host, com encerramento limitado de 3.000 ms em falha inicial. Traces/logs preservam composição e console textual existentes.
+API exporta HTTP/PostgreSQL, métricas técnicas/negócio/integrações e logs ao Collector EKS Contrib 0.161.0. Configuração está no manifesto; código identifica eventos/aplica segurança. Telemetria é opt-in local; overlays hom e prd a habilitam. Um provider de métricas nasce antes do bootstrap e é reutilizado pelo host, com encerramento limitado de 3.000 ms em falha inicial. Traces/logs preservam composição e console textual existentes.
 
 Lambda compõe providers antes do runtime de autenticação e os reutiliza por handler; SAM habilita permanentemente OTel/X-Ray/New Relic. Layer Collector 0.22.0/Collector 0.151.0 local recebe OTLP loopback, com decouple e sem batch periódico adicional. A aplicação finaliza sinais antes do flush de até 500 ms compartilhados, preservando pelo menos 500 ms para resposta. Encerramento/freeze/filas não fornecem entrega garantida.
 
@@ -50,3 +50,13 @@ Logs Gateway podem ter lacunas. O cancelamento e a entrega de telemetria depende
 Fundamentação: [ADR 003](../adrs/003-BANCO-E-HISTORICO.md), [ADR 005](../adrs/005-OBSERVABILIDADE.md) e [ADR 006](../adrs/006-NOTIFICACOES.md).
 
 Invocações auth incluem pedido/confirmação; filtrar authenticated para logins. EmailFunction possui somente log JSON sanitizado no seu CloudWatch; não há OTel/coleta/dashboards/alertas próprios para ela.
+
+## Validação em hom e prd
+
+Em 02/11/2026, os dois ambientes provisionados passaram por 48 verificações HTTP cada, sem divergências dos códigos esperados ou respostas 5xx. Foram conferidos login/perfis, pedido/captura/confirmação do código Customer, rejeição de código incorreto/consumido, consulta de status e decisões Approved/Refused. Duas OSs por ambiente chegaram a Delivered; o SMTP4dev capturou 11 mensagens em cada um. API, Collector e SMTP4dev estavam prontos; as três probes privadas da API responderam Healthy e ambas as instâncias RDS estavam disponíveis, privadas e criptografadas.
+
+No New Relic, foram observados autenticação OTLP, 48 logs de acesso do Gateway, 23 métricas Kubernetes e 13 métricas CloudWatch por ambiente. Em hom, a rodada registrou duas criações, cinco amostras de etapas, um serviço completo e dez notificações de OS. Em prd, a API estava inicialmente sem telemetria; as operações anteriores não foram reconstruídas ou republicadas após a ativação.
+
+Após corrigir e implantar Telemetry__Enabled=true na API e X-Ray ativo no Gateway de prd, quatro novas chamadas comprovaram os três sinais OTLP: três amostras HTTP da API, excluindo probes (duas 200 e uma 404), sete spans da API (quatro PostgreSQL) e um log correlacionado; a autenticação registrou um span/log para sua resposta 400 esperada. Os quatro traces nativos foram conferidos na AWS e seus segmentos chegaram por xray.polling, incluindo quatro segmentos do Gateway. Não houve erro de exportação observado; SQL, URL completa, header Authorization e stack trace estavam ausentes dos atributos OTLP conferidos. O ensaio não comprova união dos dois caminhos.
+
+Esta rodada não repetiu em prd SQL direto/reconciliação dos indicadores, retenção após DELETE, falhas controladas, disparo/recebimento de alertas, carga, descarte/custos ou ensaios específicos de isolamento durante alterações entre ambientes. Os alertas de CPU/memória continuam sem teste de disparo por decisão do mantenedor. Resultados anteriores em hom não são automaticamente estendidos a prd; conferência pontual não garante disponibilidade futura, cobertura completa de logs ou entrega única.
