@@ -2,7 +2,7 @@
 
 # ADR 010 — Gateway REST Regional com VPC Link V2
 
-**Estado:** aceito em 12/10/2026, implementado e validado em hom; ambiente posteriormente removido.
+**Estado:** aceito em 12/10/2026 e implementado; entrada e integrações conferidas em hom e prd em 02/11/2026.
 
 **Contexto:** integrar API privada e função por contratos fixos, com ciclo de vida separado da base.
 
@@ -12,15 +12,15 @@ Terraform projeta OpenAPI 3.0 verificados: HTTP_PROXY para a API e AWS_PROXY par
 
 Base/auth são consumidos por SSM público; contratos por S3 com checksum/commit, sem Secrets ou estado remoto. API/auth novos exigem novo plano Gateway quando muda contrato/versão. Mantenedor informa environment/api_commit/auth_commit. Plan → aprovação sem AWS → apply do mesmo plano/SHA/contratos, artefato por ID e sete dias, sem replan.
 
-**Logs e tracing:** access logs JSON/sete dias contêm IDs, método/modelo de rota, status/latências/tamanho e xrayTraceId. Sem corpo/headers/query, execution logs OFF, data tracing/cache/métricas detalhadas por método desligados. X-Ray é configurado por variável/tfvars: hom true, prd false; padrão da variável false. A Lambda tem tracing nativo sempre ativo, independentemente dessa variável. CloudWatch/polling New Relic são diagnóstico com limites aceitos, sem união automática OTLP/X-Ray.
+**Logs e tracing:** access logs JSON/sete dias contêm IDs, método/modelo de rota, status/latências/tamanho e xrayTraceId. Sem corpo/headers/query, execution logs OFF, data tracing/cache/métricas detalhadas por método desligados. X-Ray é configurado por variável/tfvars: hom e prd true; padrão da variável false. A autenticação tem tracing nativo sempre ativo, independentemente dessa variável. CloudWatch/polling New Relic são diagnóstico com limites aceitos, sem união automática OTLP/X-Ray.
 
 Bootstrap possui service-linked role, role de logs e configuração regional persistentes; Gateway administra seu log group, integração, permissão de invocação e sete parâmetros gateway/v2. Endpoint é publicado em SSM e muda ao recriar; não versionar URL transitória como endereço disponível permanente.
 
-**Consequências e comprovação:** Gateway deve ser atualizado para nova versão numérica auth; acesso saudável depende de backends/banco. Descartá-lo antes de API/auth. Entrada pública, respostas/JWT e logs foram conferidos em hom; não estender a prd ou prometer cobertura completa dos logs.
+**Consequências e comprovação:** Gateway deve ser atualizado para nova versão numérica auth; acesso saudável depende de backends/banco. Descartá-lo antes de API/auth. Em 02/11/2026, as 48 chamadas funcionais de cada ambiente foram localizadas por request ID nos logs de acesso; o New Relic recebeu 48 registros do Gateway por ambiente na janela conferida. Após ativar X-Ray em prd, quatro novas chamadas tiveram seus traces conferidos na AWS e seus segmentos recebidos por xray.polling. Isso não garante cobertura completa de logs ou amostragem de todos os traces futuros.
 
 [Configuração do Gateway](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/gateway) · [Contratos](../CONTRATOS_ENTRE_REPOSITORIOS.md).
 
-Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados.
+Revisão documental de 02/11/2026. Endpoints mudam com a recriação; as conferências registram a implantação observada, sem garantir disponibilidade futura.
 
 <details>
 <summary>Histórico anterior à revisão E7 — registros preservados, sem vigência operacional</summary>

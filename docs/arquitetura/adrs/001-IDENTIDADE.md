@@ -2,7 +2,7 @@
 
 # ADR 001 — Separar identidade interna e acesso do cliente
 
-**Estado:** aceito e implementado; autenticação por documento/código e operações Customer conferidas em hom. Formalização original: 16/09/2026.
+**Estado:** aceito e implementado; autenticação por documento/código e operações Customer conferidas em hom e prd em 02/11/2026. Formalização original: 16/09/2026.
 
 **Contexto:** gestão de usuários, operação da oficina e decisão do cliente exigem permissões diferentes. A validação cadastral do cliente deve ocorrer na função serverless.
 
@@ -14,7 +14,7 @@ NameIdentifier UUID é emitido nos dois tipos de token. O UUID obrigatório é c
 
 **Consequências e prova:** autorização e isolamento são responsabilidade da API. Negativas, PATCH próprio, DELETE Admin, tokens anteriores e vínculo Customer/OS foram conferidos em hom. Não há proteção contra autoexclusão/último Admin nem endpoint de inativação. [Contrato normativo](../ACESSO_E_AUTENTICACAO.md) e [sequência](../diagramas/VALIDACAO_CPF.md).
 
-Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados.
+Revisão documental de 02/11/2026: login interno, restrições por perfil, código incorreto/consumido, consulta de status e aprovação/recusa Customer conferidos nos dois ambientes. PATCH/DELETE de usuários, inativação e demais cenários específicos anteriormente conferidos em hom não foram repetidos em prd.
 
 <details>
 <summary>Histórico anterior à revisão E7 — registros preservados, sem vigência operacional</summary>
