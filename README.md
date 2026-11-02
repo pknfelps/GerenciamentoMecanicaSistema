@@ -128,14 +128,14 @@ Gera artifacts/openapi/openapi.json, OpenAPI 3.0, sem AWS/JWT/persistência. Bui
 |---|---|
 | [pipeline](.github/workflows/pipeline.yml) | PR/manual: testes, cobertura/SonarCloud e build de imagem; sem push/deploy |
 | [auth-contracts](.github/workflows/auth-contracts.yml) | Verifica/empacota nupkg; publicação manual condicionada ao input publish |
-| [api-deploy](.github/workflows/api-deploy.yml) | Manual: Publicar → Implantar, sem aprovação intermediária; Release/OpenAPI/ECR/digest/Kustomize/rollout |
+| [api-deploy](.github/workflows/api-deploy.yml) | Push/merge ou manual: Publicar → Implantar, sem aprovação intermediária; Release/OpenAPI/ECR/digest/Kustomize/rollout |
 | [api-destroy](.github/workflows/api-destroy.yml) | Manual: checar Gateway, remover overlay/recursos da API e conferir ausência |
 | [aws-oidc-check](.github/workflows/aws-oidc-check.yml) | Diagnóstico manual de identidade/acesso, não prova completa de deploy |
 
-Deploy exige develop/hom ou main/prd, OIDC/Environments, bootstrap/base/Collector/banco/Job e email/v1 disponíveis e License Key cadastrada pelo mantenedor. Mesma revisão nos dois jobs; tag sha-commit-run-attempt e deploy por digest. Contrato/checksum S3 são imutáveis por commit. Não publica /api/v2/ nem usa estado de outro repositório. Aguarda rollout por 600 s; diagnóstico sem rollback automático próprio.
+Deploy automático por push/merge (ou manual) exige develop/hom ou main/prd, OIDC/Environments, bootstrap/base/Collector/banco/Job e email/v1 disponíveis e License Key cadastrada pelo mantenedor. Mesma revisão nos dois jobs; tag sha-commit-run-attempt e deploy por digest. Contrato/checksum S3 são imutáveis por commit. Não publica /api/v2/ nem usa estado de outro repositório. Aguarda rollout por 600 s; diagnóstico sem rollback automático próprio.
 
 [Kustomize base/hom/prd](deploy/kubernetes) e [workflow de deploy](.github/workflows/api-deploy.yml). Deployment/HPA/ServiceAccount pertencem à API; Service/NLB à infraestrutura. Base local Kustomize mantém referências locais anteriores; overlays AWS removem db-secrets e usam identidade/runtime AWS. Docker Hub dessa base não é o caminho de publicação AWS.
 
-Provisionar: bootstrap → base/Collector/SMTP4dev → banco/Job e email → API/auth → Gateway. Descartar: Gateway → API/auth → banco/email → base, com os bloqueios definidos nos [contratos entre repositórios](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md). ECR/artefatos/estados e recursos New Relic persistem. Sem deploy automático por push/merge ou aprovação implícita de operações futuras.
+Provisionar: bootstrap → base/Collector/SMTP4dev → banco/Job e email → API/auth → Gateway. Descartar: Gateway → API/auth → banco/email → base, com os bloqueios definidos nos [contratos entre repositórios](docs/arquitetura/CONTRATOS_ENTRE_REPOSITORIOS.md). ECR/artefatos/estados e recursos New Relic persistem. Push/merge em develop inicia api-deploy em hom; em main, em prd. O disparo manual permanece disponível. Deploy automático não provisiona dependências de outros repositórios: base, banco e email devem estar disponíveis antes do push; Gateway é atualizado depois de API/auth. Destroy continua exclusivamente manual.
 
 O endpoint do ambiente é publicado em /mecanica/<ambiente>/gateway/v2/endpoint. [GitHub Actions](https://github.com/pknfelps/GerenciamentoMecanicaSistema/actions) · [Arquitetura/ADRs/RFCs](docs/arquitetura/README.md) · [Dashboards e alertas](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/observability/newrelic/README.md).

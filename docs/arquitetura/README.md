@@ -13,7 +13,7 @@ Visão dos componentes, contratos, modelo de dados e decisões arquiteturais da 
 - EmailFunction privada concentra MIME/SMTP em todos os modos; API/auth invocam por SDK/IAM. SMTP4dev efêmero e privado, sem relay/entrega externa. Handler é aguardado após commit; sem fila/outbox.
 - OTel API/Lambda → Collectors → New Relic. Kubernetes/CloudWatch no Collector EKS; X-Ray por integração nativa separada. Somente W3C seleciona pai OTLP.
 - Três dashboards e cinco alertas como código, persistentes; New Relic administrado por workflow manual independente do descarte AWS.
-- SSM base/database/auth/gateway v2 e email/v1 configuram consumidores, sem protocolo de releases/prontidão. Base/banco/Gateway usam plano salvo/aprovação/apply; API/auth/email são manuais sem aprovação intermediária. Não há deploy automático após merge.
+- SSM base/database/auth/gateway v2 e email/v1 configuram consumidores, sem protocolo de releases/prontidão. Push/merge develop/hom ou main/prd inicia deploy por repositório. Base/banco/Gateway preservam plano salvo/aprovação/apply; API/auth/email não têm aprovação intermediária. No Serverless, email é implantado antes de auth; na infraestrutura, Gateway aguarda base. A ordem entre repositórios continua sob coordenação do mantenedor.
 
 ## Documentos
 

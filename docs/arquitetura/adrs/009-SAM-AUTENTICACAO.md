@@ -20,7 +20,7 @@
 
 Auth cria somente egress 5432 ao SG do banco e 443 para saída via NAT no SG pertencente à base. A role persistente permite limpeza posterior das ENIs. Sem IAM duplicado na stack ou permissão de Secret administrativo para a função.
 
-Auth-ci verifica pacote exato, testes .NET/PostgreSQL, SAM/actionlint; auth-publish tem testes/build SAM → publicação com artefato por ID da mesma execução. auth-provision e auth-destroy têm um job manual, sem Environment de aprovação intermediária. O disparo manual autoriza cada operação completa; SAM usa rollback padrão CloudFormation. Não há comandos CloudFormation diretos nem deploy por merge.
+Auth-ci verifica pacote exato, testes .NET/PostgreSQL, SAM/actionlint; auth-publish tem testes/build SAM → publicação com artefato por ID da mesma execução. auth-provision e auth-destroy têm um job manual, sem Environment de aprovação intermediária. O disparo manual autoriza cada operação completa; SAM usa rollback padrão CloudFormation. Não há comandos CloudFormation diretos. Desde 02/11/2026, serverless-deploy também inicia por push/merge develop/hom ou main/prd: publica os dois componentes no mesmo SHA, implanta email e só então auth, reutilizando os fluxos existentes. Os wrappers manuais e o destroy manual são preservados; comprovação do gatilho remoto após publicação.
 
 ## Seleção imutável do código
 
