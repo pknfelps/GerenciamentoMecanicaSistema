@@ -1,0 +1,31 @@
+name: Prd
+values:
+  - key: base_url
+    value: ''
+  - key: gateway_url
+    value: ''
+  - key: admin_token
+    value: ''
+  - key: mechanic_token
+    value: ''
+  - key: customer_token
+    value: ''
+  - key: customer_document
+    value: '662.119.730-63'
+  - key: customer_challenge_id
+    value: ''
+  - key: customer_code
+    value: ''
+  - key: user_id
+    value: ''
+  - key: customer_id
+    value: ''
+  - key: vehicle_id
+    value: ''
+  - key: order_id
+    value: ''
+  - key: service_id
+    value: ''
+  - key: material_id
+    value: ''
+color: 0

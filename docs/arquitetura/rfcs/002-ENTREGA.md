@@ -1,34 +1,47 @@
 # RFC 002 — Entrega e contratos entre componentes
 
-**Estado:** arquitetura aceita; reformulação autorizada em 2026-10-07. [ADR 008](../adrs/008-INFRAESTRUTURA-DECLARATIVA.md) substitui a operação por releases/controller. [Contratos v2](../CONTRATOS_ENTRE_REPOSITORIOS.md) são a referência operacional.
+**Estado:** implementada. [Arquitetura](../README.md) · [Contratos entre componentes](../CONTRATOS_ENTRE_REPOSITORIOS.md).
 
 ## Responsabilidades
 
-API mantém negócio/testes, imagem, Deployment/HPA, OpenAPI e Auth.Contracts. Infra mantém AWS em Terraform: rede/EKS/add-ons/SGs/NLB e unidade Gateway separada; Service NodePort e namespace são manifestos próprios. Banco mantém RDS/secrets/SQL/Job. Autenticação mantém código/testes/ZIP/Terraform da função. Bootstrap mantém S3/OIDC/ECR persistentes.
+| Repositório/unidade | Entrega |
+|---|---|
+| API | Negócio/testes, Dockerfile, imagem ECR por digest, Deployment/HPA/ServiceAccount, OpenAPI e Auth.Contracts |
+| Infra/base | VPC/EKS, add-ons, SGs, NLB/ASG, JWT/Pod Identity, Service/namespace, SMTP4dev efêmero e Collector Kubernetes |
+| Infra/Gateway | Entrada REST/VPC Link V2, contratos projetados, permissão da versão Lambda e logs |
+| Banco | RDS/credenciais/SQL, ConfigMap/Secrets temporários e Job database-init |
+| Serverless auth/email | Dois SAMs/ZIPs/stacks/roles, função/versão/alias/logs/egress e auth/v2 ou email/v1 |
+| Bootstrap persistente | S3/OIDC/ECR/IAM, metadados New Relic e identidades compartilhadas |
+| Infra/observability/newrelic | Três dashboards e cinco alertas, estado independente dos destroys AWS |
 
-NLB TCP 80 encaminha para instâncias do ASG na porta 30080. Service NodePort encaminha a 8080; health HTTP `/health/ready`. AWS acompanha entrada/saída das instâncias. Sem controller/Helm e sem EBS CSI sem uso; manter Pod Identity Agent/Metrics Server e t3.small 1/1/1.
+## Gatilhos, aprovação e estado
 
-## Pipelines e configuração
+CI preserva PR/manual. Push/merge em develop/hom ou main/prd inicia os deploys por repositório, com branch/ambiente conferidos antes das operações e o SHA da execução fixado. Disparos manuais seguem disponíveis; destroys e New Relic permanecem manuais. Gatilhos preparados localmente em 02/11/2026; comprovação remota após publicação.
 
-Estados próprios S3 versionados, locking nativo, hom/prd independentes, OIDC por componente. Configuração SSM v2 em recursos Terraform, consumo por data sources; secrets apenas referenciados, valores resolvidos em runtime ou em campos ephemeral/write-only. Não usar estado remoto de outro repositório como interface.
+Base/banco/Gateway: plan salva binário/texto → Environment de aprovação sem AWS → apply do mesmo SHA/plano/execução. Artefato por ID, sete dias; plano obsoleto exige nova execução/aprovação, sem replan no apply. Estados S3 próprios por componente/ambiente usam versionamento e lock nativo. Consumidores leem parâmetros públicos SSM v2, sem terraform_remote_state. SSM configura recursos; sua presença não comprova prontidão.
 
-Provisionamento e destroy manuais, três jobs: plan salva binário e texto, aprovação em hom-approval/prd-approval sem AWS, apply baixa o artefato daquela execução e usa o mesmo commit. Retenção sete dias; plano obsoleto requer nova execução. Nenhum replan, fingerprint, publicação por scripts ou apply automático em push. CI de infra/banco somente fmt/validate/Kustomize. Bootstrap administrativo usa comandos Terraform diretos e revisão do plano salvo.
+API: api-deploy por push/merge ou manual, Publicar → Implantar, sem aprovação intermediária. Testa Release/gera OpenAPI, publica contrato/checksum imutáveis, publica imagem linux/amd64 com tag por commit/run/attempt e aplica o digest conferido ao overlay. Aguarda rollout 600 s, com diagnóstico e sem rollback automático próprio. api-destroy tem job único; não administra Service/NLB/IAM/ECR.
 
-API: [workflow manual](../../../.github/workflows/api-deploy.yml) separado do CI, com dois jobs Publicar → Implantar. O disparo autoriza ambos, sem aprovação intermediária; usar develop/hom ou main/prd e Environments hom/prd existentes. Checkout do mesmo SHA, testes Release, push ECR linux/amd64 com tag sha-<commit>-<run_id>-<run_attempt> e deploy pelo digest retornado. O segundo job confirma o digest por BatchGetImage, troca a imagem via Kustomize nativo e aplica o overlay diretamente, aguardando rollout por 600 segundos. Falha exibe diagnóstico limitado sem rollback automático. Nenhuma leitura de Secrets pela pipeline, publicação SSM da API ou OpenAPI nessa entrega. [Operação](../../DEPLOY_API.md).
+Auth/email: wrappers auth-*/email-* usam reusable-ci/publish/provision/destroy com component validado, templates/configs/prefixos fixos e Environment no job chamado. Os checks obrigatórios configuration/dotnet são gates do auth-ci e abrangem solução/ambos os SAMs, sem filtros de caminho. Roles específicas compartilham subject de Environment; não há isolamento OIDC por arquivo. auth-publish testa/builda e transfere artefato por ID ao job de publicação. SAM package envia ZIP ao prefixo do ambiente/commit. O template publicado fixa CodeUri Bucket/Key/Version antes do checksum. Republicação idêntica conserva a versão original após comparar ZIP/template; divergência ou template antigo sem Version exige commit novo. auth-provision valida a versão S3 e executa sam deploy num job; auth-destroy usa sam delete num job. serverless-deploy inicia por push/merge, chama os mesmos reutilizáveis com github.sha e implanta email antes de auth; filas por componente/ambiente também coordenam com os wrappers manuais. Base/banco/email são pré-requisitos dos consumidores; não há orquestração entre repositórios. Disparo manual permanece disponível; rollback nativo CloudFormation permanece habilitado. No SAM CLI 1.167.0, CodeUri objeto preserva o ZIP no descarte; contratos/templates publicados e IAM persistem.
 
-Banco: apply entrega ConfigMap e Secrets temporários no namespace reservado; kubectl remove Job antigo, aplica YAML e aguarda Complete. Falha mostra diagnóstico/logs. Etapa always remove Secrets temporários; próximo refresh planeja recriação. Preservar senhas existentes na primeira adoção, gerar novas para ambientes novos sem rotacionar em cada apply. Init.sql/marcador/grants mantidos; sem smokes operacionais. Testes de negócio permanecem.
+Banco: apply entrega ConfigMap/Secrets temporários; kubectl executa Job estático e aguarda Complete por 900 s. Marcador/hash compatível evita reinicialização; banco incompatível falha. Cleanup remove Secrets temporários inclusive em erro. Credenciais ephemeral/write-only não são persistidas nos planos/estados; a revisão de escrita fixa evita rotação a cada apply.
 
-OpenAPI/ZIP/NuGet continuam imutáveis e versionados com SHA-256 no S3. Não há protocolo de releases de infraestrutura. Gateway é planejado e aplicado manualmente com contratos fixos após implantação dos backends.
+New Relic: newrelic-provision manual somente main, sem input de ambiente, com plan → newrelic-approval → apply salvo/conferência sem reparo. Dashboards/condições possuem filtro ou condições hom/prd. Estado shared/newrelic, User API Key e ciclo de vida são separados dos Collectors/License Key e dos destroys AWS.
 
-## Ordem e aceitação
+## Ordem de implantação e descarte
 
-1. Bootstrap: revisar/aplicar permissões, mantendo apenas descarte legado durante migração.
-2. Se houver controller/NLB legado, remover Service, esperar exclusão e só então remover controller.
-3. Base: plan/aprovação/apply AWS; kubectl aplica namespace e NodePort.
-4. Banco: plan/adotar credenciais/aprovação/apply; executar Job e limpar Secrets.
-5. Migrar consumidores para v2; aplicar runtimes/JWT/Gateway nas respectivas etapas.
-6. Adotar e retirar SSM v1 ativo em planos dedicados, preservando histórico; retirar permissões de limpeza legada.
+Provisionar: **bootstrap aprovado → base/Collector/SMTP4dev → banco/Job e email → API/auth → Gateway com revisões fixas e OpenAPI auth 2.0.0**. Metadados/License Key do Collector são pré-requisitos; API não entrega essa chave. Nova versão numérica auth exige atualizar o Gateway. A base não depende da aplicação para existir. No caminho automático, base-provision chama Gateway após seu apply. Gateway consulta a execução api-deploy mais recente da branch (precisa estar concluída com sucesso) e o OpenAPI auth implantado no SSM; salva as revisões no plano e não as recalcula no apply. O caminho manual preserva os dois SHAs explícitos. Em ambiente vazio, iniciar base manualmente, aguardar banco/email e API/auth; só depois fazer o push final da infraestrutura ou disparar Gateway manualmente. Ausência de dependências ou erro de consulta interrompe antes do plan do Gateway.
 
-Mantenedor coordena operações sequenciais por ambiente. Dependência alterada exige novo plano dos consumidores; não haverá outro mecanismo de coordenação. SSM é configuração, não prontidão. Validar health depois da API, marcador/hash do Job, ausência de senhas em estados/logs e isolamento dos Secrets.
+Descartar: **Gateway → API e auth → banco e email → base**. API/auth consultam REST API/VPC Link; banco consulta recursos API/Lambda/ENIs/egress; email consulta API/auth antes do sam delete; base consulta RDS/subnet group/SG do banco e função/ENIs/egress email. Consultas inválidas negam avanço, sem tratar erro como ausência. ENIs pendentes bloqueiam imediatamente; aguardar externamente e repetir, sem exclusão forçada. Banco precisa do EKS para a operação normal.
 
-Descarte: consumidores/Gateway → banco → base. Job sai antes do banco, manifestos antes de EKS; Terraform remove NLB e associação. Preservar bootstrap e outro ambiente. Não executar destroy para testar esta reformulação.
+Base remove Collector/manifestos antes do EKS. Banco remove Job antes do RDS; skip_final_snapshot=true para dados descartáveis. Bootstrap, artefatos, IAM persistente e unidade New Relic ficam fora do descarte normal. O mantenedor coordena componentes; locks/concurrency locais não são coordenação global entre repositórios.
+
+## Integridade
+
+OpenAPI/NuGet/template SAM usam SHA-256 e escrita condicional; conteúdo divergente não sobrescreve versão existente. ECR tem tags imutáveis e deploy por digest. ZIP SAM permanece em prefixo gravável/versionado: fixar VersionId estabiliza a seleção, sem tornar a chave write-once.
+
+Prd/coexistência, concorrência de publicação e rollback não foram exercitados como novos testes; dispensas/adiamento não equivalem a aprovação desses cenários.
+
+Decisões: [ADR 004](../adrs/004-ENTREGA-E-AMBIENTES.md), [ADR 008](../adrs/008-INFRAESTRUTURA-DECLARATIVA.md), [ADR 009](../adrs/009-SAM-AUTENTICACAO.md) e [ADR 010](../adrs/010-GATEWAY-REST-V2.md).
+
+[Workflows Serverless](https://github.com/pknfelps/GerenciamentoMecanicaServerless/blob/develop/.github/workflows).

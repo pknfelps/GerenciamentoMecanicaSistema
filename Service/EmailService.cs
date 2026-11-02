@@ -1,3 +1,4 @@
+using System.Net;
 using Domain.Interface.Custumer;
 using Domain.Interface.Order;
 using Domain.Interface.Vehicle;
@@ -20,11 +21,12 @@ namespace Service
                 """;
 
             await EmailSender.SendAsync(
+                "budget_available",
                 customer.Name,
                 customer.Email.Address,
                 "Serviço Finalizado",
                 body,
-                body);
+                "<p>" + WebUtility.HtmlEncode(body).Replace("\n", "<br>", StringComparison.Ordinal) + "</p>");
         }
 
         public async Task NotifyOrderStatus(ICustomer customer, IVehicle vehicle, OrderNotificationSnapshot order)
@@ -37,11 +39,12 @@ namespace Service
                 """;
 
             await EmailSender.SendAsync(
+                "status_changed",
                 customer.Name,
                 customer.Email.Address,
                 $"Atualização da ordem de serviço {order.OrderId}",
                 body,
-                body);
+                "<p>" + WebUtility.HtmlEncode(body).Replace("\n", "<br>", StringComparison.Ordinal) + "</p>");
         }
 
         private static string GetStatusDescription(WorkOrderStatus status) =>

@@ -1,4 +1,5 @@
-﻿using GerenciamentoMecanicaSistema.Contracts.Requests.Customer;
+﻿using Domain.Interface.Custumer;
+using GerenciamentoMecanicaSistema.Contracts.Requests.Customer;
 using GerenciamentoMecanicaSistema.Contracts.Responses.Customer;
 using NSubstitute;
 using Service.Interface;
@@ -21,8 +22,8 @@ namespace ControllerTests
 
         private readonly List<CustomerResult> ExistingCustomers =
         [
-            new CustomerResult(ExistingCustomerId, "Ciclano", "12.123.456/0001-12", "(11) 91234-5678", "ciclano@gmail.com"),
-            new CustomerResult(Guid.NewGuid(), "Beltrano", "12.123.456/0001-15", "(11) 93214-6578", "beltrano@gmail.com"),
+            new CustomerResult(ExistingCustomerId, "Ciclano", "12.123.456/0001-12", "(11) 91234-5678", "ciclano@gmail.com", CustomerStatus.Active),
+            new CustomerResult(Guid.NewGuid(), "Beltrano", "12.123.456/0001-15", "(11) 93214-6578", "beltrano@gmail.com", CustomerStatus.Inactive),
         ];
 
         private readonly CreateCustomerRequest CustomerToUpdate = new("Ciclano", "12.123.456/0001-12", "(11) 94321-8765", "ciclano.company@gmail.com");
@@ -236,6 +237,7 @@ namespace ControllerTests
                 Assert.That(response.Document, Is.EqualTo(result.Document));
                 Assert.That(response.Phone, Is.EqualTo(result.Phone));
                 Assert.That(response.Email, Is.EqualTo(result.Email));
+                Assert.That(response.Status, Is.EqualTo(result.Status.ToString()));
             });
         }
     }

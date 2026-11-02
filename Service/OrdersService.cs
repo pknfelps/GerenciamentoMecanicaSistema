@@ -41,7 +41,7 @@ namespace Service
 
             var customer = await DependenciesGateway.GetCustomerById(orderToCreate.CustomerId)
                 ?? throw new NotFoundException($"Cliente com ID \"{orderToCreate.CustomerId}\" não encontrado");
-            
+
             var vehicle = await DependenciesGateway.GetVehicleById(orderToCreate.VehicleId)
                 ?? throw new NotFoundException($"Veículo com ID \"{orderToCreate.VehicleId}\" não encontrado");
 
@@ -59,7 +59,7 @@ namespace Service
                     vehicle.LicensePlate.License,
                     services,
                     materials,
-                    DateTime.Now);
+                    DateTime.UtcNow);
 
                 if (await Repository.CreateOrder(order) == 0)
                     throw new ApplicationFailureException("Falha ao salvar a ordem");
@@ -100,6 +100,33 @@ namespace Service
             return orders.Select(WorkOrderResult.Create);
         }
 
+        public async Task<WorkOrderStatus> GetCustomerOrderStatus(Guid orderId, Guid customerId)
+        {
+            var order = await GetCustomerOrder(orderId, customerId);
+            return order.Status;
+        }
+
+        private async Task<IOrder> GetCustomerOrder(Guid orderId, Guid customerId)
+        {
+            if (orderId == Guid.Empty || customerId == Guid.Empty)
+                throw new InvalidRequestException("A identificação da ordem e do cliente deve ser informada");
+
+            var customer = await DependenciesGateway.GetCustomerById(customerId)
+                ?? throw new NotFoundException("Ordem não encontrada");
+            if (customer.Status != Domain.Interface.Custumer.CustomerStatus.Active)
+                throw new AccessDeniedException("Acesso não autorizado");
+            return await GetOwnedOrder(orderId, customer);
+        }
+
+        private async Task<IOrder> GetOwnedOrder(Guid orderId, Domain.Interface.Custumer.ICustomer customer)
+        {
+            var order = await Repository.GetOrder(orderId, customer_document: customer.Document.Id);
+            if (order is null || order.CustomerDocument.Id != customer.Document.Id)
+                throw new NotFoundException("Ordem não encontrada");
+
+            return order;
+        }
+
         public async Task<IEnumerable<DetailedWorkOrderResult>> GetOrders(Guid? id = null, string customerDocument = "", string vehicleLicensePlate = "")
         {
             if (!string.IsNullOrEmpty(customerDocument))
@@ -134,112 +161,81 @@ namespace Service
 
         public async Task StartDiagnosis(Guid orderId)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException("Ordem não encontrada");
-
-            order.StartDiagnosis();
-
-            var registry = await Repository.UpdateOrder(order);
-
-            if (registry == 0)
-                throw new ApplicationFailureException("Falha ao atualizar a ordem");
-
+            var order = await ChangeStatus(orderId, order => order.StartDiagnosis(), "Falha ao atualizar a ordem");
             await EventDispatcher.Publish(new OrderStatusChangedEvent(CreateNotificationSnapshot(order)));
         }
 
-        public async Task AddServiceToOrder(Guid orderId, UpdateOrderItemCommand<int> service)
+        public Task AddServiceToOrder(Guid orderId, UpdateOrderItemCommand<int> service)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException("Ordem não encontrada");
-
-            var orderService = order.Services.FirstOrDefault(x => x.Id == service.Id);
-            IMechanicalService serviceToPersist;
-            int registry;
-
-            if (orderService == null)
+            return TransactionManager.ExecuteInTransaction(async () =>
             {
-                var catalogService = await DependenciesGateway.GetServiceById(service.Id) ?? throw new NotFoundException($"Serviço com ID \"{service.Id}\" não encontrado");
-                var serviceToAdd = CreateOrderService(catalogService, service.Value);
-
-                serviceToPersist = order.AddService(serviceToAdd);
-
-                registry = await Repository.AddServiceToOrder(orderId, serviceToPersist);
-            }
-            else
-            {
-                serviceToPersist = order.AddService(CreateOrderService(orderService, service.Value));
-
-                registry = await Repository.UpdateServiceOfOrder(orderId, serviceToPersist);
-            }
-
-            if (registry == 0)
-                throw new ApplicationFailureException("Falha ao salvar o serviço da ordem");
-        }
-
-        public async Task RemoveServiceOfOrder(Guid orderId, UpdateOrderItemCommand<int> service)
-        {
-            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException("Ordem não encontrada");
-
-            var orderService = order.Services.FirstOrDefault(x => x.Id == service.Id) ?? throw new NotFoundException("Serviço não encontrado na ordem");
-            var updatedService = order.RemoveService(CreateOrderService(orderService, service.Value));
-
-            int registry;
-
-            if (updatedService.Amount == 0)
-                registry = await Repository.RemoveServiceFromOrder(orderId, service.Id);
-            else
-                registry = await Repository.UpdateServiceOfOrder(orderId, updatedService);
-
-            if (registry == 0)
-                throw new ApplicationFailureException("Falha ao atualizar o serviço da ordem");
-        }
-
-        public async Task AddMaterialToOrder(Guid orderId, UpdateOrderItemCommand<int> orderItem)
-        {
-            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException("Ordem não encontrada");
-
-            var material = order.Materials.FirstOrDefault(x => x.Id == orderItem.Id);
-
-            await TransactionManager.ExecuteInTransaction(async () =>
-            {
-                await StockService.ReserveMaterialAmount(orderItem.Id, orderItem.Value);
-
+                var order = await GetLockedOrder(orderId);
+                var existing = order.Services.FirstOrDefault(item => item.Id == service.Id);
                 int registry;
-
-                if (material == null)
+                if (existing is null)
                 {
-                    var stockItem = await DependenciesGateway.GetMaterialById(orderItem.Id) ?? throw new NotFoundException("Item não encontrado no estoque");
-                    var itemAdded = order.AddMaterial(CreateOrderMaterial(stockItem, orderItem.Value));
-
-                    registry = await Repository.AddMaterialToOrder(orderId, itemAdded);
+                    var catalogService = await DependenciesGateway.GetServiceById(service.Id)
+                        ?? throw new NotFoundException($"Serviço com ID \"{service.Id}\" não encontrado");
+                    registry = await Repository.AddServiceToOrder(orderId, order.AddService(CreateOrderService(catalogService, service.Value)));
                 }
                 else
-                {
-                    var updatedMaterial = order.AddMaterial(CreateOrderMaterial(material, orderItem.Value));
+                    registry = await Repository.UpdateServiceOfOrder(orderId, order.AddService(CreateOrderService(existing, service.Value)));
 
-                    registry = await Repository.UpdateMaterialFromOrder(orderId, updatedMaterial);
+                if (registry == 0)
+                    throw new ApplicationFailureException("Falha ao salvar o serviço da ordem");
+            });
+        }
+
+        public Task RemoveServiceOfOrder(Guid orderId, UpdateOrderItemCommand<int> service)
+        {
+            return TransactionManager.ExecuteInTransaction(async () =>
+            {
+                var order = await GetLockedOrder(orderId);
+                var existing = order.Services.FirstOrDefault(item => item.Id == service.Id)
+                    ?? throw new NotFoundException("Serviço não encontrado na ordem");
+                var updated = order.RemoveService(CreateOrderService(existing, service.Value));
+                var registry = updated.Amount == 0
+                    ? await Repository.RemoveServiceFromOrder(orderId, service.Id)
+                    : await Repository.UpdateServiceOfOrder(orderId, updated);
+                if (registry == 0)
+                    throw new ApplicationFailureException("Falha ao atualizar o serviço da ordem");
+            });
+        }
+
+        public Task AddMaterialToOrder(Guid orderId, UpdateOrderItemCommand<int> orderItem)
+        {
+            return TransactionManager.ExecuteInTransaction(async () =>
+            {
+                var order = await GetLockedOrder(orderId);
+                var material = order.Materials.FirstOrDefault(item => item.Id == orderItem.Id);
+                await StockService.ReserveMaterialAmount(orderItem.Id, orderItem.Value);
+                int registry;
+                if (material is null)
+                {
+                    var stockItem = await DependenciesGateway.GetMaterialById(orderItem.Id)
+                        ?? throw new NotFoundException("Item não encontrado no estoque");
+                    registry = await Repository.AddMaterialToOrder(orderId, order.AddMaterial(CreateOrderMaterial(stockItem, orderItem.Value)));
                 }
+                else
+                    registry = await Repository.UpdateMaterialFromOrder(orderId, order.AddMaterial(CreateOrderMaterial(material, orderItem.Value)));
 
                 if (registry == 0)
                     throw new ApplicationFailureException("Falha ao salvar o material da ordem");
             });
         }
 
-        public async Task RemoveMaterialFromOrder(Guid orderId, UpdateOrderItemCommand<int> orderItem)
+        public Task RemoveMaterialFromOrder(Guid orderId, UpdateOrderItemCommand<int> orderItem)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException("Ordem não encontrada");
-
-            await TransactionManager.ExecuteInTransaction(async () =>
+            return TransactionManager.ExecuteInTransaction(async () =>
             {
+                var order = await GetLockedOrder(orderId);
+                var existing = order.Materials.FirstOrDefault(item => item.Id == orderItem.Id)
+                    ?? throw new NotFoundException("Material não encontrado na ordem");
+                var updated = order.RemoveMaterial(CreateOrderMaterial(existing, orderItem.Value));
                 await StockService.RestoreMaterialAmount(orderItem.Id, orderItem.Value);
-
-                var material = order.Materials.FirstOrDefault(x => x.Id == orderItem.Id) ?? throw new NotFoundException("Material não encontrado na ordem");
-                var updatedMaterial = order.RemoveMaterial(CreateOrderMaterial(material, orderItem.Value));
-                int registry;
-
-                if (updatedMaterial.Amount == 0)
-                    registry = await Repository.RemoveMaterialFromOrder(orderId, updatedMaterial.Id);
-                else
-                    registry = await Repository.UpdateMaterialFromOrder(orderId, updatedMaterial);
-
+                var registry = updated.Amount == 0
+                    ? await Repository.RemoveMaterialFromOrder(orderId, updated.Id)
+                    : await Repository.UpdateMaterialFromOrder(orderId, updated);
                 if (registry == 0)
                     throw new ApplicationFailureException("Falha ao atualizar o material da ordem");
             });
@@ -247,128 +243,90 @@ namespace Service
 
         public async Task CompleteDiagnosis(Guid orderId)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException("Ordem não encontrada");
-
-            order.FinalizeDiagnosis();
-
-            var registry = await Repository.UpdateOrder(order);
-
-            if (registry == 0)
-                throw new ApplicationFailureException("Falha ao atualizar ordem");
-
+            var order = await ChangeStatus(orderId, order => order.FinalizeDiagnosis(), "Falha ao atualizar ordem");
             Logger.LogInformation(
-                "Diagnóstico concluído e evento de orçamento disponível será publicado. OrderId: {OrderId}. Status: {Status}. Budget: {Budget}",
-                order.Id,
-                order.Status,
-                order.Budget);
-
+                "Diagnóstico concluído e evento de orçamento disponível será publicado. OrderId: {OrderId}. Status: {Status}",
+                order.Id, order.Status);
             await EventDispatcher.Publish(new BudgetAvailableEvent(CreateNotificationSnapshot(order)));
         }
 
-        public async Task ApproveBudget(Guid orderId, ApproveOrderCommand approve)
+        public Task ApproveBudget(Guid orderId, ApproveOrderCommand approve, Guid customerId)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com ID \"{orderId}\" não encontrada");
-            var customerDocument = DocumentWrapper.CreateDocument(approve.CustomerDocument).Id;
-
-            if (order.CustomerDocument.Id != customerDocument)
-                throw new BusinessRuleException("Documento de aprovação não está de acordo com o documento do cliente da ordem");
-
-            order.ApproveService(approve.Approved);
-
-            if (!approve.Approved)
+            return TransactionManager.ExecuteInTransaction(async () =>
             {
-                await TransactionManager.ExecuteInTransaction(async () =>
-                {
-                    foreach (var item in order.Materials)
+                var customer = await DependenciesGateway.GetCustomerById(customerId)
+                    ?? throw new NotFoundException("Ordem não encontrada");
+                if (customer.Status != Domain.Interface.Custumer.CustomerStatus.Active)
+                    throw new AccessDeniedException("Acesso não autorizado");
+                await Repository.LockOrder(orderId);
+                var order = await GetOwnedOrder(orderId, customer);
+
+                order.ApproveService(approve.Approved);
+                if (!approve.Approved)
+                    foreach (var item in order.Materials.OrderBy(item => item.Id))
                         await StockService.RestoreMaterialAmount(item.Id, item.Amount);
 
-                    var registry = await Repository.UpdateOrder(order);
-
-                    if (registry == 0)
-                        throw new ApplicationFailureException("Falha ao aprovar ou recusar o orçamento");
-                });
-
-                return;
-            }
-
-            var registry = await Repository.UpdateOrder(order);
-
-            if (registry == 0)
-                throw new ApplicationFailureException("Falha ao aprovar ou recusar o orçamento");
+                if (await Repository.UpdateOrder(order) == 0)
+                    throw new ApplicationFailureException("Falha ao aprovar ou recusar o orçamento");
+            });
         }
 
         public async Task StartExecution(Guid orderId)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com ID \"{orderId}\" não encontrada");
-
-            order.StartService();
-
-            var registry = await Repository.UpdateOrder(order);
-
-            if (registry == 0)
-                throw new ApplicationFailureException("Falha ao iniciar a execução");
-
+            var order = await ChangeStatus(orderId, order => order.StartService(), "Falha ao iniciar a execução");
             await EventDispatcher.Publish(new OrderStatusChangedEvent(CreateNotificationSnapshot(order)));
         }
 
         public async Task CompleteExecution(Guid orderId)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com ID \"{orderId}\" não encontrada");
-
-            order.CompleteService(DateTime.Now);
-
-            await TransactionManager.ExecuteInTransaction(async () =>
+            var order = await TransactionManager.ExecuteInTransaction(async () =>
             {
-                foreach (var item in order.Materials)
+                var current = await GetLockedOrder(orderId);
+                current.CompleteService(DateTime.UtcNow);
+                foreach (var item in current.Materials.OrderBy(item => item.Id))
                     await StockService.ConsumeReservedAmount(item.Id, item.Amount);
-
-                var registry = await Repository.UpdateOrder(order);
-
-                if (registry == 0)
+                if (await Repository.UpdateOrder(current) == 0)
                     throw new ApplicationFailureException("Falha ao completar a execução");
+                return current;
             });
-
             await EventDispatcher.Publish(new OrderStatusChangedEvent(CreateNotificationSnapshot(order)));
         }
 
         public async Task DeliverVehicle(Guid orderId)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException($"Ordem com ID \"{orderId}\" não encontrada");
-
-            order.DeliverVehicle();
-
-            var registry = await Repository.UpdateOrder(order);
-
-            if (registry == 0)
-                throw new ApplicationFailureException("Falha ao registrar a entrega do veículo");
-
+            var order = await ChangeStatus(orderId, order => order.DeliverVehicle(), "Falha ao registrar a entrega do veículo");
             await EventDispatcher.Publish(new OrderStatusChangedEvent(CreateNotificationSnapshot(order)));
         }
 
-        public async Task DeleteOrder(Guid orderId)
+        public Task DeleteOrder(Guid orderId)
         {
-            var order = await Repository.GetOrder(orderId) ?? throw new NotFoundException("Ordem não encontrada");
-
-            if (order.Status is not WorkOrderStatus.Finished and not WorkOrderStatus.Delivered)
+            return TransactionManager.ExecuteInTransaction(async () =>
             {
-                await TransactionManager.ExecuteInTransaction(async () =>
-                {
-                    foreach (var item in order.Materials)
+                var order = await GetLockedOrder(orderId);
+                if (order.Status is not WorkOrderStatus.Finished and not WorkOrderStatus.Delivered)
+                    foreach (var item in order.Materials.OrderBy(item => item.Id))
                         await StockService.RestoreMaterialAmount(item.Id, item.Amount);
+                if (await Repository.DeleteOrder(orderId) == 0)
+                    throw new ApplicationFailureException("Falha ao excluir a ordem");
+            });
+        }
 
-                    var registry = await Repository.DeleteOrder(orderId);
+        private Task<IOrder> ChangeStatus(Guid orderId, Action<IOrder> transition, string failureMessage)
+        {
+            return TransactionManager.ExecuteInTransaction(async () =>
+            {
+                var order = await GetLockedOrder(orderId);
+                transition(order);
+                if (await Repository.UpdateOrder(order) == 0)
+                    throw new ApplicationFailureException(failureMessage);
+                return order;
+            });
+        }
 
-                    if (registry == 0)
-                        throw new ApplicationFailureException("Falha ao excluir a ordem");
-                });
-
-                return;
-            }
-
-            var registry = await Repository.DeleteOrder(orderId);
-
-            if (registry == 0)
-                throw new ApplicationFailureException("Falha ao excluir a ordem");
+        private async Task<IOrder> GetLockedOrder(Guid orderId)
+        {
+            await Repository.LockOrder(orderId);
+            return await Repository.GetOrder(orderId) ?? throw new NotFoundException("Ordem não encontrada");
         }
 
         private async Task<List<IMechanicalService>> ResolveServices(IReadOnlyCollection<UpdateOrderItemCommand<int>> requestedServices)
@@ -395,7 +353,7 @@ namespace Service
         {
             List<IMaterial> materials = [];
 
-            foreach (var requestedMaterial in requestedMaterials)
+            foreach (var requestedMaterial in requestedMaterials.OrderBy(item => item.Id))
             {
                 var stockMaterial = await DependenciesGateway.GetMaterialById(requestedMaterial.Id)
                     ?? throw new NotFoundException($"Material com ID \"{requestedMaterial.Id}\" não encontrado");

@@ -1,4 +1,4 @@
-using Dapper;
+using Infrastructure.Observability;
 using Domain.Interface.Service;
 using Infrastructure.Persistence.PostgreSql.Models;
 using Infrastructure.Persistence.PostgreSql.Querying;
@@ -8,7 +8,7 @@ using System.Data;
 
 namespace Infrastructure.Persistence.PostgreSql.Repositories
 {
-    public class CatalogRepository(IDbConnection connection, DbTransactionContext? transactionContext = null) : BaseRepository(connection, transactionContext), ICatalogRepository
+    public class CatalogRepository(IDbConnection connection, DbTransactionContext? transactionContext = null, IntegrationMetrics? metrics = null) : BaseRepository(connection, transactionContext, metrics), ICatalogRepository
     {
         public static string RegisterServiceSql { get; private set; } = """
             INSERT INTO catalog(id, description, hours, price_per_hour)
@@ -37,13 +37,13 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
 
         public async Task<int> RegisterService(IMechanicalService service)
         {
-            return await Connection.ExecuteAsync(RegisterServiceSql, MechanicalServiceDb.Create(service), Transaction);
+            return await Database.ExecuteAsync(RegisterServiceSql, MechanicalServiceDb.Create(service), Transaction);
         }
 
         public async Task<IEnumerable<IMechanicalService>> GetServices(Guid? id = null, string description = "")
         {
             var query = GetServicesSql.BuildQuery(BuildQueryParameters(id, description));
-            var catalog = await Connection.QueryAsync<MechanicalServiceDb>(query.Sql, query.Parameters, Transaction);
+            var catalog = await Database.QueryAsync<MechanicalServiceDb>(query.Sql, query.Parameters, Transaction);
 
             return catalog.Select(service => service.ToDomain());
         }
@@ -51,7 +51,7 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
         public async Task<IMechanicalService?> GetService(Guid? id = null, string description = "")
         {
             var query = GetServicesSql.BuildQuery(BuildQueryParameters(id, description));
-            var service = await Connection.QuerySingleOrDefaultAsync<MechanicalServiceDb>(query.Sql, query.Parameters, Transaction);
+            var service = await Database.QuerySingleOrDefaultAsync<MechanicalServiceDb>(query.Sql, query.Parameters, Transaction);
 
             if (service == null)
                 return null;
@@ -61,12 +61,12 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
 
         public async Task<int> UpdateService(IMechanicalService service)
         {
-            return await Connection.ExecuteAsync(UpdateServiceSql, MechanicalServiceDb.Create(service), Transaction);
+            return await Database.ExecuteAsync(UpdateServiceSql, MechanicalServiceDb.Create(service), Transaction);
         }
 
         public async Task<int> DeleteService(Guid serviceId)
         {
-            return await Connection.ExecuteAsync(DeleteServiceSql, new { Id = serviceId }, Transaction);
+            return await Database.ExecuteAsync(DeleteServiceSql, new { Id = serviceId }, Transaction);
         }
 
         private static Dictionary<string, object?> BuildQueryParameters(Guid? id = null, string description = "")

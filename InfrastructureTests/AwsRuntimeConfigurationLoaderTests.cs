@@ -1,3 +1,4 @@
+using Infrastructure.Observability;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
 using Amazon.SimpleSystemsManagement;
@@ -10,6 +11,7 @@ using System.Text.Json;
 
 namespace InfrastructureTests;
 
+[NonParallelizable]
 public class AwsRuntimeConfigurationLoaderTests
 {
     private const string JwtArn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:/mecanica/hom/base/jwt-test00";
@@ -42,6 +44,8 @@ public class AwsRuntimeConfigurationLoaderTests
         });
         var values = new Dictionary<string, string>
         {
+            ["email/v1/invocation-arn"] = "arn:aws:lambda:us-east-1:121754142617:function:mecanica-hom-email:live",
+            ["email/v1/contract-version"] = "1",
             ["base/v2/jwt-secret-arn"] = JwtArn,
             ["base/v2/jwt-issuer"] = "mecanica-hom-auth",
             ["base/v2/jwt-audience"] = "mecanica-hom-api",
@@ -75,6 +79,55 @@ public class AwsRuntimeConfigurationLoaderTests
     {
         _parameters.Dispose();
         _secrets.Dispose();
+    }
+
+    [Test]
+    public async Task SuccessfulBootstrapCountsTwoParametersCallsAndTwoSecretCalls()
+    {
+        using var listener = new IntegrationMetricListener();
+        using var metrics = new IntegrationMetrics();
+        var loader = new AwsRuntimeConfigurationLoader(_parameters, _secrets, metrics);
+
+        await loader.LoadAsync("hom", _certificatePath);
+
+        Assert.That(listener.Measurements.Select(point => (point["integration"], point["outcome"])), Is.EqualTo(new[]
+        {
+            ((object?)"ssm", (object?)"success"),
+            ((object?)"ssm", (object?)"success"),
+            ((object?)"secretsmanager", (object?)"success"),
+            ((object?)"secretsmanager", (object?)"success")
+        }));
+    }
+
+    [Test]
+    public void MissingParametersDoNotTurnTheSuccessfulSdkCallIntoATransportFailure()
+    {
+        _response.Parameters.Clear();
+        using var listener = new IntegrationMetricListener();
+        using var metrics = new IntegrationMetrics();
+        var loader = new AwsRuntimeConfigurationLoader(_parameters, _secrets, metrics);
+
+        Assert.ThrowsAsync<InvalidOperationException>(() => loader.LoadAsync("hom", _certificatePath));
+
+        Assert.That(listener.Measurements.Single()["outcome"], Is.EqualTo("success"));
+    }
+
+    [Test]
+    public void FailedSecretReadIsMeasuredBeforeItsExceptionIsSanitized()
+    {
+        _secrets.GetSecretValueAsync(Arg.Any<GetSecretValueRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<GetSecretValueResponse>(new TimeoutException("private-sdk-value")));
+        using var listener = new IntegrationMetricListener();
+        using var metrics = new IntegrationMetrics();
+        var loader = new AwsRuntimeConfigurationLoader(_parameters, _secrets, metrics);
+
+        var error = Assert.ThrowsAsync<InvalidOperationException>(() => loader.LoadAsync("hom", _certificatePath));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(listener.Measurements.Select(point => point["outcome"]), Is.EqualTo(new[] { "success", "success", "timeout" }));
+            Assert.That(error!.Message, Does.Not.Contain("private-sdk-value"));
+        });
     }
 
     [Test]
@@ -142,11 +195,11 @@ public class AwsRuntimeConfigurationLoaderTests
     public async Task LoadAsync_UsesPrdParameterNamespace()
     {
         foreach (var parameter in _response.Parameters)
-            parameter.Name = parameter.Name.Replace("/hom/", "/prd/");
+        { parameter.Name = parameter.Name.Replace("/hom/", "/prd/"); parameter.Value = parameter.Value.Replace("-hom-email", "-prd-email"); }
 
         await _loader.LoadAsync("prd", _certificatePath);
 
-        await _parameters.Received(1).GetParametersAsync(Arg.Is<GetParametersRequest>(request =>
+        await _parameters.Received(2).GetParametersAsync(Arg.Is<GetParametersRequest>(request =>
             request.Names.All(name => name.StartsWith("/mecanica/prd/"))), Arg.Any<CancellationToken>());
     }
 

@@ -1,4 +1,4 @@
-using Dapper;
+using Infrastructure.Observability;
 using Domain.Customer;
 using Domain.Interface.Vehicle;
 using Domain.Vehicle;
@@ -10,7 +10,7 @@ using System.Data;
 
 namespace Infrastructure.Persistence.PostgreSql.Repositories
 {
-    public class VehicleRepository(IDbConnection connection, DbTransactionContext? transactionContext = null) : BaseRepository(connection, transactionContext), IVehicleRepository
+    public class VehicleRepository(IDbConnection connection, DbTransactionContext? transactionContext = null, IntegrationMetrics? metrics = null) : BaseRepository(connection, transactionContext, metrics), IVehicleRepository
     {
         public static string RegisterVehicleSql { get; private set; } = """
                 INSERT INTO vehicles(id, customer_document, brand, model, year, license_plate)
@@ -39,13 +39,13 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
 
         public async Task<int> RegisterVehicle(IVehicle vehicle)
         {
-            return await Connection.ExecuteAsync(RegisterVehicleSql, VehicleDb.Create(vehicle), Transaction);
+            return await Database.ExecuteAsync(RegisterVehicleSql, VehicleDb.Create(vehicle), Transaction);
         }
 
         public async Task<IEnumerable<IVehicle>> GetVehicles(Guid? id = null, string license_plate = "")
         {
             var query = GetVehiclesSql.BuildQuery(BuildQueryParameters(id, license_plate));
-            var vehicles = await Connection.QueryAsync<VehicleDb>(query.Sql, query.Parameters, Transaction);
+            var vehicles = await Database.QueryAsync<VehicleDb>(query.Sql, query.Parameters, Transaction);
 
             return vehicles.Select(vehicle => vehicle.ToDomain());
         }
@@ -53,7 +53,7 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
         public async Task<IVehicle?> GetVehicle(Guid? id = null, string license_plate = "")
         {
             var query = GetVehiclesSql.BuildQuery(BuildQueryParameters(id, license_plate));
-            var vehicle = await Connection.QuerySingleOrDefaultAsync<VehicleDb?>(query.Sql, query.Parameters, Transaction);
+            var vehicle = await Database.QuerySingleOrDefaultAsync<VehicleDb?>(query.Sql, query.Parameters, Transaction);
 
             if (vehicle == null)
                 return null;
@@ -63,12 +63,12 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
 
         public async Task<int> UpdateVehicle(IVehicle vehicle)
         {
-            return await Connection.ExecuteAsync(UpdateVehicleSql, VehicleDb.Create(vehicle), Transaction);
+            return await Database.ExecuteAsync(UpdateVehicleSql, VehicleDb.Create(vehicle), Transaction);
         }
 
         public async Task<int> DeleteVehicle(Guid vehicleId)
         {
-            return await Connection.ExecuteAsync(DeleteVehicleSql, new { vehicleId }, Transaction);
+            return await Database.ExecuteAsync(DeleteVehicleSql, new { vehicleId }, Transaction);
         }
 
         private static Dictionary<string, object?> BuildQueryParameters(Guid? id = null, string license_plate = "")

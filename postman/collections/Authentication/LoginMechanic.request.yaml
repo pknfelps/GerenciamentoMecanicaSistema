@@ -1,0 +1,30 @@
+$kind: http-request
+name: LoginMechanic
+url: '{{base_url}}/Authentication'
+method: POST
+headers:
+- key: Content-Type
+  value: application/json
+- key: Accept
+  value: application/json
+body:
+  type: json
+  content: |
+    {
+      "Name": "Mechanic",
+      "Password": "Mechanic@123",
+      "Role": "Mechanic"
+    }
+scripts:
+- type: afterResponse
+  code: |-
+    pm.test("Login realizado com sucesso", () => {
+      pm.response.to.have.status(200);
+    });
+
+    if (pm.response.code === 200) {
+      const body = pm.response.text();
+      const token = body.startsWith('"') ? pm.response.json() : body;
+      pm.environment.set("mechanic_token", token);
+    }
+  language: text/javascript

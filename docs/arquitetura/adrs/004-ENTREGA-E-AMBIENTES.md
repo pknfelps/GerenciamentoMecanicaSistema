@@ -1,4 +1,27 @@
-# ADR 004 — Quatro repositórios e ambientes independentes
+# ADR 004 — Quatro repositórios e configuração por ambiente
+
+**Estado:** aceito e implementado, com fluxo hom comprovado. Coexistência/prd não exercitados; gatilhos automáticos preparados em 02/11/2026, com comprovação após publicação.
+
+**Contexto:** separar código, plataforma, banco e autenticação, preservando contratos/versionamento e descarte sem remover recursos compartilhados.
+
+**Decisão vigente:** API, infraestrutura, banco e autenticação têm repositórios/pipelines próprios. Develop corresponde a hom e main a prd. Recursos/SSM/roles e estados são separados por componente/ambiente; o bootstrap é persistente. Terraform usa S3 versionado/locking nativo, sem DynamoDB; auth usa stack SAM/CloudFormation. Metadados SSM v2 são configuração, não release/prontidão; consumidores não leem estados de outros repositórios.
+
+CI preserva validações de PR/manual. Push/merge em develop/hom ou main/prd inicia deploy em cada repositório: API publica/implanta, banco planeja/aplica e inicializa, Serverless publica ambos os componentes e implanta email antes de auth, infraestrutura aplica base antes de chamar Gateway. Terraform mantém plano salvo → aprovação → apply exato; SAM/API não ganham aprovação intermediária. Os gatilhos foram autorizados e preparados localmente em 02/11/2026; a execução automática real será comprovada após publicar as alterações. Disparos manuais continuam disponíveis; destroy e New Relic permanecem manuais.
+
+Imagens usam ECR/digest; OpenAPI/NuGet/template SAM são publicados com checksum e escrita condicional. ZIP SAM tem chave versionada gravável, mas o template fixa VersionId. Estado/dashboards/alertas New Relic são compartilhados e independentes dos destroys AWS. [RFC 002](../rfcs/002-ENTREGA.md).
+
+**Alternativas e consequências:** OIDC substitui chaves duráveis no GitHub. Bootstrap e artefatos persistem entre ativações. Locks/concurrency de um repositório não serializam todos os componentes; o mantenedor coordena a ordem. Não há candidatos/release v1/gerações no fluxo vigente; os registros v1 abaixo são históricos.
+
+Coexistência/concorrência/rollback dispensados não viram testes aprovados.
+
+Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados.
+
+<details>
+<summary>Histórico anterior à revisão E7 — registros preservados, sem vigência operacional</summary>
+
+Os estados locais, planos pendentes e alternativas abaixo registram o momento em que foram escritos. A decisão e o alcance atuais estão acima; este histórico não autoriza operações nem reabre pendências aceitas.
+
+> **Revisão de 2026-10-11:** auth usa SAM/ZIP conforme [ADR 009](009-SAM-AUTENTICACAO.md), com deploy/descarte manuais completos e sem aprovação intermediária. SAM conduz deploy/descarte; sam delete remove ZIP atual/templates operacionais, preservando outras revisões/contratos/bucket/IAM. Sem comandos CloudFormation diretos. Bootstrap/base/banco/Gateway continuam Terraform/plan aprovado. Inventário sem recursos/estado auth permitiu retirar seu código Terraform sem destroy. Bootstrap CI/SAM aplicado e conferido; primeira implantação SAM pendente.
 
 > **Revisão vigente (2026-10-07):** [ADR 008](008-INFRAESTRUTURA-DECLARATIVA.md) substitui controller e protocolo de releases/prontidão por NLB Terraform, NodePort, SSM v2 e planos salvos com aprovação. Os complementos anteriores abaixo são histórico; demais decisões permanecem.
 
@@ -17,3 +40,5 @@
 **Revisão em 2026-10-02:** o banco alvo passou a RDS PostgreSQL `db.t3.micro` ([ADR 007](007-RDS-FREE-PLAN.md)). O perfil `database-release`, seus campos de EKS e a ordem de prontidão permanecem; no release do banco, a identidade planejada muda de ARN de cluster Aurora para ARN de instância RDS antes da primeira publicação.
 
 **Comprovação:** E1/E2/E6 devem validar proteções, identidade restrita, versões consumidas, manifesto real e destruição isolada. [RFC 002](../rfcs/002-ENTREGA.md).
+
+</details>

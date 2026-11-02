@@ -51,7 +51,7 @@ namespace DomainTests.User
         [Test]
         public void MustNotUseUserNameAsPassword()
         {
-            var user = new Domain.User.User("Password@123", Roles.Manager.ToString());
+            var user = new Domain.User.User("Password@123", Roles.Mechanic.ToString());
 
             Assert.Catch<DomainValidationException>(() => new Password("Password@123", user));
         }

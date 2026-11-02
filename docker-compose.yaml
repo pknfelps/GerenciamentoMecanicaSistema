@@ -15,13 +15,8 @@ services:
       Jwt__Audience: ${JWT_AUDIENCE:-mecanica}
       Jwt__Issuer: ${JWT_ISSUER:-admin}
       Jwt__Key: ${JWT_KEY:?Defina JWT_KEY no arquivo .env}
-      EmailSettings__Host: smtp
-      EmailSettings__Port: 25
-      EmailSettings__Username: ""
-      EmailSettings__Password: ""
-      EmailSettings__SenderName: ${EMAIL_SENDER_NAME:-Mecânica}
-      EmailSettings__SenderEmail: ${EMAIL_SENDER_ADDRESS:-noreply@mecanica.local}
-      EmailSettings__UseTls: "false"
+      Email__InvocationEndpoint: ${EMAIL_INVOCATION_ENDPOINT:-http://host.docker.internal:3001}
+      Email__FunctionName: EmailFunction
     ports:
       - "127.0.0.1:${API_PORT:-8080}:8080"
     depends_on:
@@ -61,11 +56,27 @@ services:
     ports:
       - "127.0.0.1:${SMTP_WEB_PORT:-3000}:80"
       - "127.0.0.1:${SMTP_PORT:-2525}:25"
-    volumes:
-      - smtp_data:/smtp4dev
+    working_dir: /app
+    environment:
+      HOME: /smtp4dev
+    configs:
+      - source: smtp4dev_settings
+        target: /app/appsettings.json
+    tmpfs:
+      - /smtp4dev:noexec,nosuid,size=32m
+      - /tmp:noexec,nosuid,size=16m
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:80/"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     restart: unless-stopped
     init: true
 
 volumes:
   db_data:
-  smtp_data:
+
+configs:
+  smtp4dev_settings:
+    file: ./deploy/smtp4dev/appsettings.json

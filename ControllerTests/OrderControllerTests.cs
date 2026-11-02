@@ -15,7 +15,7 @@ namespace ControllerTests
     {
         private IOrdersService OrderService { get; set; }
 
-        private static readonly DetailedWorkOrderResult ExistingOrder = new(Guid.NewGuid(), "123.456.789-12", "TST1234", 0.0m, "Received", DateTime.Now, DateTime.MinValue, [], [], TimeSpan.Zero);
+        private static readonly DetailedWorkOrderResult ExistingOrder = new(Guid.NewGuid(), "123.456.789-12", "TST1234", 0.0m, "Received", DateTime.UtcNow, null, [], [], null);
         private static readonly Guid ExistingServiceId = Guid.NewGuid();
         private static readonly Guid ExistingMaterialId = Guid.NewGuid();
         private static readonly Guid ExistingCustomerId = Guid.NewGuid();
@@ -141,7 +141,7 @@ namespace ControllerTests
                 throw new NotFoundException("Recurso não encontrado");
             });
 
-            OrderService.ApproveBudget(Arg.Any<Guid>(), Arg.Any<ApproveOrderCommand>()).Returns(callInfo =>
+            OrderService.ApproveBudget(Arg.Any<Guid>(), Arg.Any<ApproveOrderCommand>(), Arg.Any<Guid>()).Returns(callInfo =>
             {
                 var id = callInfo.ArgAt<Guid>(0);
 
@@ -192,10 +192,13 @@ namespace ControllerTests
             });
         }
 
-        [Test]
-        public async Task MustCreateOrder()
+        [TestCase("Orders")]
+        [TestCase("Orders/")]
+        public async Task MustCreateOrderWithLocationThatPreservesPublicAddress(string path)
         {
-            var response = await TestClient.PostAsJsonAsync($"orders", OrderToCreate);
+            TestClient.DefaultRequestHeaders.Add("X-Forwarded-Host", "untrusted.example");
+            TestClient.DefaultRequestHeaders.Add("X-Forwarded-Proto", "http");
+            var response = await TestClient.PostAsJsonAsync(path, OrderToCreate);
             var createdOrder = await response.Content.ReadFromJsonAsync<CreateOrderResponse>();
 
             await OrderService.Received(1).CreateServiceOrder(
@@ -205,7 +208,25 @@ namespace ControllerTests
             {
                 Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
                 Assert.That(createdOrder?.Id, Is.EqualTo(ExistingOrder.Id));
-                Assert.That(response.Headers.Location?.Query, Does.Contain(ExistingOrder.Id.ToString()));
+                Assert.That(response.Headers.Location, Is.Not.Null);
+            });
+
+            var location = response.Headers.Location!;
+            Assert.That(location.IsAbsoluteUri, Is.False);
+            Assert.Multiple(() =>
+            {
+                Assert.That(new Uri(new Uri($"https://gateway.example/hom/{path}"), location).AbsoluteUri,
+                    Is.EqualTo($"https://gateway.example/hom/Orders/{ExistingOrder.Id}/status"));
+                Assert.That(new Uri(new Uri($"https://gateway.example/prd/{path}"), location).AbsoluteUri,
+                    Is.EqualTo($"https://gateway.example/prd/Orders/{ExistingOrder.Id}/status"));
+            });
+
+            var statusResponse = await TestClient.GetAsync(new Uri(response.RequestMessage!.RequestUri!, location));
+            var orderStatus = await statusResponse.Content.ReadFromJsonAsync<OrderStatusResponse>();
+            Assert.Multiple(() =>
+            {
+                Assert.That(statusResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+                Assert.That(orderStatus?.Id, Is.EqualTo(ExistingOrder.Id));
             });
         }
 
@@ -522,21 +543,23 @@ namespace ControllerTests
         [Test]
         public async Task MustApproveBudget()
         {
-            var approve = new ApproveOrderRequest(ExistingOrder.CustomerDocument, true);
+            UseToken("Customer");
+            var approve = new ApproveOrderRequest(true);
             var response = await TestClient.PatchAsJsonAsync($"orders/{ExistingOrder.Id}/budget", approve);
 
-            await OrderService.Received(1).ApproveBudget(ExistingOrder.Id, approve.ToCommand());
+            await OrderService.Received(1).ApproveBudget(ExistingOrder.Id, approve.ToCommand(), TestIdentityId);
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         }
 
         [Test]
         public async Task MustReturnNotFoundIfTryApproveBudgetThatNotExists()
         {
-            var approve = new ApproveOrderRequest(ExistingOrder.CustomerDocument, true);
+            UseToken("Customer");
+            var approve = new ApproveOrderRequest(true);
             var response = await TestClient.PatchAsJsonAsync($"orders/{Guid.NewGuid()}/budget", approve);
 
-            await OrderService.Received(1).ApproveBudget(Arg.Any<Guid>(), approve.ToCommand());
+            await OrderService.Received(1).ApproveBudget(Arg.Any<Guid>(), approve.ToCommand(), TestIdentityId);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         }
@@ -544,9 +567,10 @@ namespace ControllerTests
         [Test]
         public async Task MustReturnBadRequestIfTryApproveBudgetWithInvalidModel()
         {
+            UseToken("Customer");
             var response = await TestClient.PatchAsJsonAsync($"orders/0000/budget", new { Teste = "teste" });
 
-            await OrderService.ReceivedWithAnyArgs(0).ApproveBudget(Arg.Any<Guid>(), Arg.Any<ApproveOrderCommand>());
+            await OrderService.ReceivedWithAnyArgs(0).ApproveBudget(Arg.Any<Guid>(), Arg.Any<ApproveOrderCommand>(), Arg.Any<Guid>());
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }

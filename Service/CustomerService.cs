@@ -53,9 +53,9 @@ namespace Service
 
         public async Task UpdateCustomer(Guid id, CreateCustomerCommand customer)
         {
-            _ = await Repository.GetCustomer(id) ?? throw new NotFoundException("Cliente não existe no sistema");
+            var existingCustomer = await Repository.GetCustomer(id) ?? throw new NotFoundException("Cliente não existe no sistema");
 
-            ICustomer customerToUpdate = new Customer(id, customer.Name, customer.Document, customer.Phone, customer.Email);
+            ICustomer customerToUpdate = new Customer(id, customer.Name, customer.Document, customer.Phone, customer.Email, existingCustomer.Status);
 
             var registry = await Repository.UpdateCustomer(customerToUpdate);
 
@@ -75,7 +75,7 @@ namespace Service
 
         private static CustomerResult CreateResult(ICustomer customer)
         {
-            return new(customer.Id, customer.Name, customer.Document.Id, customer.Phone.Number, customer.Email.Address);
+            return new(customer.Id, customer.Name, customer.Document.Id, customer.Phone.Number, customer.Email.Address, customer.Status);
         }
     }
 }

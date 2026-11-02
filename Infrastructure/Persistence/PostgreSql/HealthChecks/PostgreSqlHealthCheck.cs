@@ -1,10 +1,11 @@
+using Infrastructure.Observability;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Npgsql;
 
 namespace Infrastructure.Persistence.PostgreSql.HealthChecks
 {
-    public sealed class PostgreSqlHealthCheck(IConfiguration configuration) : IHealthCheck
+    public sealed class PostgreSqlHealthCheck(IConfiguration configuration, IntegrationMetrics? metrics = null) : IHealthCheck
     {
         private const string ConnectionStringName = "DefaultConnection";
         private const int ConnectionTimeoutSeconds = 2;
@@ -26,7 +27,8 @@ namespace Infrastructure.Persistence.PostgreSql.HealthChecks
                 };
 
                 await using var connection = new NpgsqlConnection(connectionStringBuilder.ConnectionString);
-                await connection.OpenAsync(cancellationToken);
+                await IntegrationMetrics.MeasureAsync(metrics, "postgresql", "connection.open", "readiness",
+                    async () => { await connection.OpenAsync(cancellationToken); return true; }, cancellationToken);
 
                 return HealthCheckResult.Healthy();
             }

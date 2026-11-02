@@ -5,6 +5,7 @@ using Domain.Interface.Stock;
 using Domain.Interface.Vehicle;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
+using NSubstitute.Extensions;
 using Service.Interface.Persistence;
 using Service;
 using Service.Interface;
@@ -20,17 +21,49 @@ namespace ServiceTests
 {
     public class OrdersServiceTests
     {
+        [Test]
+        public async Task InactiveCustomerCannotReadOwnOrder()
+        {
+            var customer = new Domain.Customer.Customer(ExistingCustomer.Id, ExistingCustomer.Name, ExistingCustomer.Document,
+                ExistingCustomer.Phone, ExistingCustomer.Email, CustomerStatus.Inactive);
+            DependenciesGateway.Configure().GetCustomerById(customer.Id).Returns(customer);
+            Assert.ThrowsAsync<AccessDeniedException>(() => Service.GetCustomerOrderStatus(ExistingReceivedOrder.Id, customer.Id));
+            await Repository.DidNotReceiveWithAnyArgs().GetOrder(default);
+        }
+
+        [TestCase("other")]
+        [TestCase("missing-customer")]
+        [TestCase("missing-order")]
+        public async Task CustomerCannotReadOrModifyAnUnownedOrder(string scenario)
+        {
+            var customerId = scenario switch
+            {
+                "other" => ExistingFailCustomer.Id,
+                "missing-customer" => Guid.NewGuid(),
+                _ => ExistingCustomer.Id
+            };
+            var orderId = scenario == "missing-order" ? Guid.NewGuid() : ExistingReceivedOrder.Id;
+            var read = Assert.ThrowsAsync<NotFoundException>(() => Service.GetCustomerOrderStatus(orderId, customerId));
+            var write = Assert.ThrowsAsync<NotFoundException>(() => Service.ApproveBudget(orderId, new(false), customerId));
+            Assert.That(read!.Message, Is.EqualTo("Ordem não encontrada"));
+            Assert.That(write!.Message, Is.EqualTo(read.Message));
+            await Repository.DidNotReceiveWithAnyArgs().UpdateOrder(default!);
+            await StockService.DidNotReceiveWithAnyArgs().RestoreMaterialAmount(Guid.Empty, 0);
+            await EventDispatcher.DidNotReceiveWithAnyArgs().Publish(default!);
+        }
+
         private IOrdersService Service { get; set; }
         private IOrdersRepository Repository { get; set; }
         private IOrderDependenciesGateway DependenciesGateway { get; set; }
         private IStockService StockService { get; set; }
         private ITransactionManager TransactionManager { get; set; }
         private IApplicationEventDispatcher EventDispatcher { get; set; }
+        private ILogger<OrdersService> Logger { get; set; }
 
-        private static CustomerResult ExistingCustomer { get; } = new(Guid.NewGuid(), "Teste", "417.384.220-11", "(11) 91234-5678", "teste@gmail.com");
+        private static CustomerResult ExistingCustomer { get; } = new(Guid.NewGuid(), "Teste", "417.384.220-11", "(11) 91234-5678", "teste@gmail.com", CustomerStatus.Active);
         private static ICustomer ExistingCustomerDomain { get; } = CreateSubstituteCustomer(ExistingCustomer.Id, ExistingCustomer.Name, ExistingCustomer.Document, ExistingCustomer.Phone, ExistingCustomer.Email);
 
-        private static CustomerResult ExistingFailCustomer { get; } = new(Guid.NewGuid(), "Teste", "662.119.730-63", "(11) 91234-5678", "teste@gmail.com");
+        private static CustomerResult ExistingFailCustomer { get; } = new(Guid.NewGuid(), "Teste", "662.119.730-63", "(11) 91234-5678", "teste@gmail.com", CustomerStatus.Active);
         private static ICustomer ExistingFailCustomerDomain { get; } = CreateSubstituteCustomer(ExistingFailCustomer.Id, ExistingFailCustomer.Name, ExistingFailCustomer.Document, ExistingFailCustomer.Phone, ExistingFailCustomer.Email);
 
         private static VehicleResult ExistingVehicle { get; } = new(Guid.NewGuid(), ExistingCustomer.Document, "Honda", "Civic", 2026, "CVC2026");
@@ -242,6 +275,13 @@ namespace ServiceTests
                 return customers.FirstOrDefault(x => x.Document.Id == document);
             });
 
+            Repository.Configure().GetOrder(Arg.Is<Guid?>(id => id.HasValue), Arg.Is<string>(document => !string.IsNullOrEmpty(document))).Returns(callInfo =>
+            {
+                var id = callInfo.ArgAt<Guid?>(0);
+                var document = callInfo.ArgAt<string>(1);
+                return orders.FirstOrDefault(order => order.Id == id && order.CustomerDocument.Id == document);
+            });
+
             DependenciesGateway.GetVehicleByLicensePlate(Arg.Any<string>()).Returns(callInfo =>
             {
                 var license = callInfo.ArgAt<string>(0);
@@ -292,11 +332,13 @@ namespace ServiceTests
             TransactionManager = Substitute.For<ITransactionManager>();
             TransactionManager.ExecuteInTransaction(Arg.Any<Func<Task>>()).Returns(callInfo => callInfo.Arg<Func<Task>>()());
             TransactionManager.ExecuteInTransaction(Arg.Any<Func<Task<Guid>>>()).Returns(callInfo => callInfo.Arg<Func<Task<Guid>>>()());
+            TransactionManager.ExecuteInTransaction(Arg.Any<Func<Task<IOrder>>>()).Returns(callInfo => callInfo.Arg<Func<Task<IOrder>>>()());
 
             EventDispatcher = Substitute.For<IApplicationEventDispatcher>();
             EventDispatcher.Publish(Arg.Any<IApplicationEvent>()).Returns(Task.CompletedTask);
 
-            Service = new OrdersService(Repository, DependenciesGateway, StockService, TransactionManager, EventDispatcher, Substitute.For<ILogger<OrdersService>>());
+            Logger = Substitute.For<ILogger<OrdersService>>();
+            Service = new OrdersService(Repository, DependenciesGateway, StockService, TransactionManager, EventDispatcher, Logger);
         }
 
         [Test]
@@ -482,10 +524,7 @@ namespace ServiceTests
                 Assert.That(ordersList[0].DateCreated.Hour, Is.EqualTo(ExistingReceivedOrder.DateCreated.Hour));
                 Assert.That(ordersList[0].DateCreated.Minute, Is.EqualTo(ExistingReceivedOrder.DateCreated.Minute));
                 Assert.That(ordersList[0].DateCreated.Second, Is.EqualTo(ExistingReceivedOrder.DateCreated.Second));
-                Assert.That(ordersList[0].DateFinished.Date, Is.EqualTo(ExistingReceivedOrder.DateFinished.Date));
-                Assert.That(ordersList[0].DateFinished.Hour, Is.EqualTo(ExistingReceivedOrder.DateFinished.Hour));
-                Assert.That(ordersList[0].DateFinished.Minute, Is.EqualTo(ExistingReceivedOrder.DateFinished.Minute));
-                Assert.That(ordersList[0].DateFinished.Second, Is.EqualTo(ExistingReceivedOrder.DateFinished.Second));
+                Assert.That(ordersList[0].DateFinished, Is.EqualTo(ExistingReceivedOrder.DateFinished));
             });
 
             Assert.That(ordersList[1], Is.Not.Null);
@@ -501,10 +540,7 @@ namespace ServiceTests
                 Assert.That(ordersList[1].DateCreated.Hour, Is.EqualTo(ExistingOrderInDiagnosis.DateCreated.Hour));
                 Assert.That(ordersList[1].DateCreated.Minute, Is.EqualTo(ExistingOrderInDiagnosis.DateCreated.Minute));
                 Assert.That(ordersList[1].DateCreated.Second, Is.EqualTo(ExistingOrderInDiagnosis.DateCreated.Second));
-                Assert.That(ordersList[1].DateFinished.Date, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Date));
-                Assert.That(ordersList[1].DateFinished.Hour, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Hour));
-                Assert.That(ordersList[1].DateFinished.Minute, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Minute));
-                Assert.That(ordersList[1].DateFinished.Second, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Second));
+                Assert.That(ordersList[1].DateFinished, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished));
             });
 
             Assert.That(ordersList[2], Is.Not.Null);
@@ -520,10 +556,7 @@ namespace ServiceTests
                 Assert.That(ordersList[2].DateCreated.Hour, Is.EqualTo(ExistingTestOrder.DateCreated.Hour));
                 Assert.That(ordersList[2].DateCreated.Minute, Is.EqualTo(ExistingTestOrder.DateCreated.Minute));
                 Assert.That(ordersList[2].DateCreated.Second, Is.EqualTo(ExistingTestOrder.DateCreated.Second));
-                Assert.That(ordersList[2].DateFinished.Date, Is.EqualTo(ExistingTestOrder.DateFinished.Date));
-                Assert.That(ordersList[2].DateFinished.Hour, Is.EqualTo(ExistingTestOrder.DateFinished.Hour));
-                Assert.That(ordersList[2].DateFinished.Minute, Is.EqualTo(ExistingTestOrder.DateFinished.Minute));
-                Assert.That(ordersList[2].DateFinished.Second, Is.EqualTo(ExistingTestOrder.DateFinished.Second));
+                Assert.That(ordersList[2].DateFinished, Is.EqualTo(ExistingTestOrder.DateFinished));
             });
         }
 
@@ -549,10 +582,7 @@ namespace ServiceTests
                 Assert.That(order.DateCreated.Hour, Is.EqualTo(ExistingReceivedOrder.DateCreated.Hour));
                 Assert.That(order.DateCreated.Minute, Is.EqualTo(ExistingReceivedOrder.DateCreated.Minute));
                 Assert.That(order.DateCreated.Second, Is.EqualTo(ExistingReceivedOrder.DateCreated.Second));
-                Assert.That(order.DateFinished.Date, Is.EqualTo(ExistingReceivedOrder.DateFinished.Date));
-                Assert.That(order.DateFinished.Hour, Is.EqualTo(ExistingReceivedOrder.DateFinished.Hour));
-                Assert.That(order.DateFinished.Minute, Is.EqualTo(ExistingReceivedOrder.DateFinished.Minute));
-                Assert.That(order.DateFinished.Second, Is.EqualTo(ExistingReceivedOrder.DateFinished.Second));
+                Assert.That(order.DateFinished, Is.EqualTo(ExistingReceivedOrder.DateFinished));
             });
         }
 
@@ -588,10 +618,7 @@ namespace ServiceTests
                 Assert.That(order.DateCreated.Hour, Is.EqualTo(ExistingReceivedOrder.DateCreated.Hour));
                 Assert.That(order.DateCreated.Minute, Is.EqualTo(ExistingReceivedOrder.DateCreated.Minute));
                 Assert.That(order.DateCreated.Second, Is.EqualTo(ExistingReceivedOrder.DateCreated.Second));
-                Assert.That(order.DateFinished.Date, Is.EqualTo(ExistingReceivedOrder.DateFinished.Date));
-                Assert.That(order.DateFinished.Hour, Is.EqualTo(ExistingReceivedOrder.DateFinished.Hour));
-                Assert.That(order.DateFinished.Minute, Is.EqualTo(ExistingReceivedOrder.DateFinished.Minute));
-                Assert.That(order.DateFinished.Second, Is.EqualTo(ExistingReceivedOrder.DateFinished.Second));
+                Assert.That(order.DateFinished, Is.EqualTo(ExistingReceivedOrder.DateFinished));
             });
         }
 
@@ -625,10 +652,7 @@ namespace ServiceTests
                 Assert.That(ordersList[0].DateCreated.Hour, Is.EqualTo(ExistingReceivedOrder.DateCreated.Hour));
                 Assert.That(ordersList[0].DateCreated.Minute, Is.EqualTo(ExistingReceivedOrder.DateCreated.Minute));
                 Assert.That(ordersList[0].DateCreated.Second, Is.EqualTo(ExistingReceivedOrder.DateCreated.Second));
-                Assert.That(ordersList[0].DateFinished.Date, Is.EqualTo(ExistingReceivedOrder.DateFinished.Date));
-                Assert.That(ordersList[0].DateFinished.Hour, Is.EqualTo(ExistingReceivedOrder.DateFinished.Hour));
-                Assert.That(ordersList[0].DateFinished.Minute, Is.EqualTo(ExistingReceivedOrder.DateFinished.Minute));
-                Assert.That(ordersList[0].DateFinished.Second, Is.EqualTo(ExistingReceivedOrder.DateFinished.Second));
+                Assert.That(ordersList[0].DateFinished, Is.EqualTo(ExistingReceivedOrder.DateFinished));
             });
 
             Assert.That(ordersList[1], Is.Not.Null);
@@ -644,10 +668,7 @@ namespace ServiceTests
                 Assert.That(ordersList[1].DateCreated.Hour, Is.EqualTo(ExistingOrderInDiagnosis.DateCreated.Hour));
                 Assert.That(ordersList[1].DateCreated.Minute, Is.EqualTo(ExistingOrderInDiagnosis.DateCreated.Minute));
                 Assert.That(ordersList[1].DateCreated.Second, Is.EqualTo(ExistingOrderInDiagnosis.DateCreated.Second));
-                Assert.That(ordersList[1].DateFinished.Date, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Date));
-                Assert.That(ordersList[1].DateFinished.Hour, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Hour));
-                Assert.That(ordersList[1].DateFinished.Minute, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Minute));
-                Assert.That(ordersList[1].DateFinished.Second, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Second));
+                Assert.That(ordersList[1].DateFinished, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished));
             });
 
             Assert.That(ordersList[2], Is.Not.Null);
@@ -663,10 +684,7 @@ namespace ServiceTests
                 Assert.That(ordersList[2].DateCreated.Hour, Is.EqualTo(ExistingTestOrder.DateCreated.Hour));
                 Assert.That(ordersList[2].DateCreated.Minute, Is.EqualTo(ExistingTestOrder.DateCreated.Minute));
                 Assert.That(ordersList[2].DateCreated.Second, Is.EqualTo(ExistingTestOrder.DateCreated.Second));
-                Assert.That(ordersList[2].DateFinished.Date, Is.EqualTo(ExistingTestOrder.DateFinished.Date));
-                Assert.That(ordersList[2].DateFinished.Hour, Is.EqualTo(ExistingTestOrder.DateFinished.Hour));
-                Assert.That(ordersList[2].DateFinished.Minute, Is.EqualTo(ExistingTestOrder.DateFinished.Minute));
-                Assert.That(ordersList[2].DateFinished.Second, Is.EqualTo(ExistingTestOrder.DateFinished.Second));
+                Assert.That(ordersList[2].DateFinished, Is.EqualTo(ExistingTestOrder.DateFinished));
             });
         }
 
@@ -703,10 +721,7 @@ namespace ServiceTests
                 Assert.That(ordersList[0].DateCreated.Hour, Is.EqualTo(ExistingReceivedOrder.DateCreated.Hour));
                 Assert.That(ordersList[0].DateCreated.Minute, Is.EqualTo(ExistingReceivedOrder.DateCreated.Minute));
                 Assert.That(ordersList[0].DateCreated.Second, Is.EqualTo(ExistingReceivedOrder.DateCreated.Second));
-                Assert.That(ordersList[0].DateFinished.Date, Is.EqualTo(ExistingReceivedOrder.DateFinished.Date));
-                Assert.That(ordersList[0].DateFinished.Hour, Is.EqualTo(ExistingReceivedOrder.DateFinished.Hour));
-                Assert.That(ordersList[0].DateFinished.Minute, Is.EqualTo(ExistingReceivedOrder.DateFinished.Minute));
-                Assert.That(ordersList[0].DateFinished.Second, Is.EqualTo(ExistingReceivedOrder.DateFinished.Second));
+                Assert.That(ordersList[0].DateFinished, Is.EqualTo(ExistingReceivedOrder.DateFinished));
             });
 
             Assert.That(ordersList[1], Is.Not.Null);
@@ -722,10 +737,7 @@ namespace ServiceTests
                 Assert.That(ordersList[1].DateCreated.Hour, Is.EqualTo(ExistingOrderInDiagnosis.DateCreated.Hour));
                 Assert.That(ordersList[1].DateCreated.Minute, Is.EqualTo(ExistingOrderInDiagnosis.DateCreated.Minute));
                 Assert.That(ordersList[1].DateCreated.Second, Is.EqualTo(ExistingOrderInDiagnosis.DateCreated.Second));
-                Assert.That(ordersList[1].DateFinished.Date, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Date));
-                Assert.That(ordersList[1].DateFinished.Hour, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Hour));
-                Assert.That(ordersList[1].DateFinished.Minute, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Minute));
-                Assert.That(ordersList[1].DateFinished.Second, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished.Second));
+                Assert.That(ordersList[1].DateFinished, Is.EqualTo(ExistingOrderInDiagnosis.DateFinished));
             });
 
             Assert.That(ordersList[2], Is.Not.Null);
@@ -741,10 +753,7 @@ namespace ServiceTests
                 Assert.That(ordersList[2].DateCreated.Hour, Is.EqualTo(ExistingTestOrder.DateCreated.Hour));
                 Assert.That(ordersList[2].DateCreated.Minute, Is.EqualTo(ExistingTestOrder.DateCreated.Minute));
                 Assert.That(ordersList[2].DateCreated.Second, Is.EqualTo(ExistingTestOrder.DateCreated.Second));
-                Assert.That(ordersList[2].DateFinished.Date, Is.EqualTo(ExistingTestOrder.DateFinished.Date));
-                Assert.That(ordersList[2].DateFinished.Hour, Is.EqualTo(ExistingTestOrder.DateFinished.Hour));
-                Assert.That(ordersList[2].DateFinished.Minute, Is.EqualTo(ExistingTestOrder.DateFinished.Minute));
-                Assert.That(ordersList[2].DateFinished.Second, Is.EqualTo(ExistingTestOrder.DateFinished.Second));
+                Assert.That(ordersList[2].DateFinished, Is.EqualTo(ExistingTestOrder.DateFinished));
             });
         }
 
@@ -1019,7 +1028,7 @@ namespace ServiceTests
             await StockService.ReceivedWithAnyArgs(0).ReserveMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(0).RemoveMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<Guid>());
             await Repository.ReceivedWithAnyArgs(0).UpdateMaterialFromOrder(Arg.Any<Guid>(), Arg.Any<IMaterial>());
-            await StockService.ReceivedWithAnyArgs(1).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
+            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
         [Test]
@@ -1056,6 +1065,14 @@ namespace ServiceTests
             await EventDispatcher.Received(1).Publish(Arg.Is<BudgetAvailableEvent>(notification =>
                 notification.Order.OrderId == ExistingOrderInDiagnosis.Id
                 && notification.Order.Status == WorkOrderStatus.WaitingForApproval));
+
+            var arguments = Logger.ReceivedCalls().Single(call => call.GetMethodInfo().Name == nameof(ILogger.Log)).GetArguments();
+            var properties = ((IEnumerable<KeyValuePair<string, object?>>)arguments[2]!).ToDictionary(pair => pair.Key, pair => pair.Value);
+            Assert.That(arguments[0], Is.EqualTo(LogLevel.Information));
+            Assert.That(arguments[3], Is.Null);
+            Assert.That(properties.Keys, Is.EquivalentTo(new[] { "OrderId", "Status", "{OriginalFormat}" }));
+            Assert.That(properties["OrderId"], Is.EqualTo(ExistingOrderInDiagnosisId));
+            Assert.That(properties["Status"], Is.EqualTo(WorkOrderStatus.WaitingForApproval));
         }
 
         [Test]
@@ -1081,30 +1098,29 @@ namespace ServiceTests
         [Test]
         public async Task MustApproveBudget()
         {
-            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(ExistingReceivedOrder.CustomerDocument.Id, true));
+            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(true), ExistingCustomer.Id);
 
-            await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
+            await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id, ExistingCustomer.Document);
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
-        public async Task MustApproveBudgetWithUnformattedDocument()
+        public async Task ApprovalUsesOnlyTheAuthenticatedCustomerIdentity()
         {
-            var unformattedDocument = string.Concat(ExistingReceivedOrder.CustomerDocument.Id.Where(char.IsDigit));
 
-            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(unformattedDocument, true));
+            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(true), ExistingCustomer.Id);
 
-            await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
+            await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id, ExistingCustomer.Document);
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
 
         [Test]
         public async Task MustRefuseBudget()
         {
-            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(ExistingReceivedOrder.CustomerDocument.Id, false));
+            await Service.ApproveBudget(ExistingReceivedOrder.Id, new(false), ExistingCustomer.Id);
 
-            await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id);
+            await Repository.Received(1).GetOrder(ExistingReceivedOrder.Id, ExistingCustomer.Document);
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
@@ -1112,9 +1128,9 @@ namespace ServiceTests
         [Test]
         public async Task MustRefuseBudgetWithPartsToRestore()
         {
-            await Service.ApproveBudget(ExistingOrderInDiagnosisId, new(ExistingOrderInDiagnosis.CustomerDocument.Id, false));
+            await Service.ApproveBudget(ExistingOrderInDiagnosisId, new(false), ExistingCustomer.Id);
 
-            await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId);
+            await Repository.Received(1).GetOrder(ExistingOrderInDiagnosisId, ExistingCustomer.Document);
             await StockService.ReceivedWithAnyArgs(2).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.Received(1).UpdateOrder(Arg.Any<IOrder>());
         }
@@ -1122,7 +1138,7 @@ namespace ServiceTests
         [Test]
         public async Task MustNotApproveOrRefuseBudgetIfOrderNotExists()
         {
-            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(Guid.NewGuid(), new("681.487.685-11", false)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(Guid.NewGuid(), new(false), ExistingCustomer.Id));
 
             await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
@@ -1130,21 +1146,24 @@ namespace ServiceTests
         }
 
         [Test]
-        public async Task MustNotApproveOrRefuseBudgetWithWrongDocument()
+        public async Task InactiveCustomerCannotReadOrDecideBeforeTheOrderIsQueried()
         {
-            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(ExistingOrderInDiagnosisId, new("000.000.000-00", false)));
-
-            await Repository.ReceivedWithAnyArgs(1).GetOrder(Arg.Any<Guid>());
-            await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
-            await Repository.ReceivedWithAnyArgs(0).UpdateOrder(Arg.Any<IOrder>());
+            var inactive = Substitute.For<ICustomer>();
+            inactive.Status.Returns(CustomerStatus.Inactive);
+            DependenciesGateway.Configure().GetCustomerById(Arg.Any<Guid>()).Returns(Task.FromResult<ICustomer?>(inactive));
+            Assert.ThrowsAsync<AccessDeniedException>(() => Service.GetCustomerOrderStatus(ExistingReceivedOrder.Id, ExistingCustomer.Id));
+            Assert.ThrowsAsync<AccessDeniedException>(() => Service.ApproveBudget(ExistingReceivedOrder.Id, new(false), ExistingCustomer.Id));
+            await Repository.DidNotReceiveWithAnyArgs().GetOrder(default);
+            await Repository.DidNotReceiveWithAnyArgs().LockOrder(default);
+            await Repository.DidNotReceiveWithAnyArgs().UpdateOrder(default!);
         }
 
         [Test]
         public async Task MustFailToApproveOrRefuseBudget()
         {
-            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(ExistingTestOrder.Id, new(ExistingTestOrder.CustomerDocument.Id, false)));
+            Assert.CatchAsync<ApplicationBaseException>(async () => await Service.ApproveBudget(ExistingTestOrder.Id, new(false), ExistingCustomer.Id));
 
-            await Repository.Received(1).GetOrder(ExistingTestOrder.Id);
+            await Repository.Received(1).GetOrder(ExistingTestOrder.Id, ExistingCustomer.Document);
             await StockService.ReceivedWithAnyArgs(0).RestoreMaterialAmount(Arg.Any<Guid>(), Arg.Any<int>());
             await Repository.ReceivedWithAnyArgs(1).UpdateOrder(Arg.Any<IOrder>());
         }
@@ -1352,8 +1371,8 @@ namespace ServiceTests
             order.Materials.Returns(parts);
             order.Budget.Returns(budget);
             order.Status.Returns(status);
-            order.DateCreated.Returns(DateTime.Now);
-            order.DateFinished.Returns(DateTime.MinValue);
+            order.DateCreated.Returns(DateTime.UtcNow);
+            order.DateFinished.Returns((DateTime?)null);
 
             order.AddService(Arg.Any<IMechanicalService>()).Returns(callInfo =>
             {

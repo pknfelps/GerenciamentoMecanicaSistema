@@ -6,7 +6,7 @@ namespace DomainTests.User
     public class UserTests
     {
         private static readonly string NameUser = "Fulano";
-        private static readonly string RoleUser = Roles.Manager.ToString();
+        private static readonly string RoleUser = Roles.Mechanic.ToString();
 
         [Test]
         public void MustCreateUser()
@@ -40,6 +40,33 @@ namespace DomainTests.User
         public void MustNotCreateUserIfCargoIsInvalid()
         {
             Assert.Catch<DomainValidationException>(() => new Domain.User.User(NameUser, "Customer"));
+        }
+        
+        [TestCase("Admin")]
+        [TestCase("Mechanic")]
+        public void AcceptsOnlyNamedInternalRoles(string role)
+        {
+            Assert.That(new Domain.User.User("Fulano", role).Role.ToString(), Is.EqualTo(role));
+        }
+
+        [TestCase("User")]
+        [TestCase("Manager")]
+        [TestCase("Customer")]
+        [TestCase("0")]
+        [TestCase("1")]
+        [TestCase("99")]
+        [TestCase("Admin, Mechanic")]
+        [TestCase("admin")]
+        [TestCase(" Mechanic ")]
+        public void RejectsInvalidOrNumericRole(string role)
+        {
+            Assert.Throws<DomainValidationException>(() => new Domain.User.User("Fulano", role));
+        }
+
+        [Test]
+        public void RejectsEmptyUserId()
+        {
+            Assert.Throws<DomainValidationException>(() => new Domain.User.User(Guid.Empty, "Fulano", "Admin"));
         }
     }
 }

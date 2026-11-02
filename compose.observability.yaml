@@ -1,0 +1,12 @@
+name: mecanica-observability
+
+services:
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.161.0
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./observability/collector-local.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "127.0.0.1:4318:4318"
+    mem_limit: 256m
+    cpus: 0.5

@@ -8,9 +8,10 @@ using Service.Interface.Results.Stock;
 
 namespace Service
 {
-    public class StockService(IStockRepository repository) : IStockService
+    public class StockService(IStockRepository repository, ITransactionManager transactionManager) : IStockService
     {
         private IStockRepository Repository { get; set; } = repository;
+        private ITransactionManager TransactionManager { get; } = transactionManager;
 
         public async Task RegisterNewMaterial(CreateMaterialCommand material)
         {
@@ -43,49 +44,25 @@ namespace Service
             return MaterialResult.Create(material);
         }
 
-        public async Task AddMaterialAmount(Guid id, int value)
+        public Task AddMaterialAmount(Guid id, int value) => ChangeAmount(id, material => material.AddAmount(value));
+
+        public Task RemoveMaterialAmount(Guid id, int value) => ChangeAmount(id, material => material.RemoveAmount(value));
+
+        public Task ReserveMaterialAmount(Guid id, int value) => ChangeAmount(id, material => material.ReserveAmount(value));
+
+        public Task RestoreMaterialAmount(Guid id, int value) => ChangeAmount(id, material => material.RestoreAmount(value));
+
+        public Task ConsumeReservedAmount(Guid id, int value) => ChangeAmount(id, material => material.ConsumeReservedAmount(value));
+
+        private Task ChangeAmount(Guid id, Action<IMaterial> change)
         {
-            var materialDb = await Repository.GetMaterial(id) ?? throw new NotFoundException("Item ainda não cadastrado");
-
-            materialDb.AddAmount(value);
-
-            await UpdateItemAmount(materialDb);
-        }
-
-        public async Task RemoveMaterialAmount(Guid id, int value)
-        {
-            var materialDb = await Repository.GetMaterial(id) ?? throw new NotFoundException("Item ainda não cadastrado");
-
-            materialDb.RemoveAmount(value);
-
-            await UpdateItemAmount(materialDb);
-        }
-
-        public async Task ReserveMaterialAmount(Guid id, int value)
-        {
-            var materialDb = await Repository.GetMaterial(id) ?? throw new NotFoundException("Item ainda não cadastrado");
-
-            materialDb.ReserveAmount(value);
-
-            await UpdateItemAmount(materialDb);
-        }
-
-        public async Task RestoreMaterialAmount(Guid id, int value)
-        {
-            var materialDb = await Repository.GetMaterial(id) ?? throw new NotFoundException("Item ainda não cadastrado");
-
-            materialDb.RestoreAmount(value);
-
-            await UpdateItemAmount(materialDb);
-        }
-
-        public async Task ConsumeReservedAmount(Guid id, int value)
-        {
-            var materialDb = await Repository.GetMaterial(id) ?? throw new NotFoundException("Item ainda não cadastrado");
-
-            materialDb.ConsumeReservedAmount(value);
-
-            await UpdateItemAmount(materialDb);
+            return TransactionManager.ExecuteInTransaction(async () =>
+            {
+                await Repository.LockMaterial(id);
+                var material = await Repository.GetMaterial(id) ?? throw new NotFoundException("Item ainda não cadastrado");
+                change(material);
+                await UpdateItemAmount(material);
+            });
         }
 
         public async Task UpdateMaterialPrice(Guid id, decimal value)

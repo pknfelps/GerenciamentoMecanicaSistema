@@ -1,4 +1,9 @@
 $kind: http-request
-url: "{{base_url}}/orders/{{order_id}}/status"
+name: GetOrderStatus
+url: '{{base_url}}/Orders/{{order_id}}/status'
 method: GET
-order: 2000
+auth:
+  type: bearer
+  credentials:
+  - key: token
+    value: '{{customer_token}}'

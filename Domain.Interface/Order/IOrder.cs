@@ -14,8 +14,8 @@ namespace Domain.Interface.Order
         decimal Budget { get; }
         WorkOrderStatus Status { get; }
         DateTime DateCreated { get; }
-        DateTime DateFinished { get; }
-        TimeSpan Duration { get; }
+        DateTime? DateFinished { get; }
+        TimeSpan? Duration { get; }
 
         void StartDiagnosis();
         IMechanicalService AddService(IMechanicalService serviceToAdd);

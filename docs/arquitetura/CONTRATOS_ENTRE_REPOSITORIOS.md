@@ -1,104 +1,108 @@
-# Contratos entre repositórios
+# Contratos operacionais entre repositórios
 
-**Versão:** 2.1.0 — 2026-10-08. [ADR 008](adrs/008-INFRAESTRUTURA-DECLARATIVA.md) substitui o protocolo v1 de releases/prontidão. Base/banco/JWT hom aplicados; infraestrutura JWT conferida com No changes, versão preservada e isolamento IAM simulado. Runtimes, prd e migração dos consumidores permanecem pendentes.
+## Fontes e convenções
 
-## Propriedade e ambientes
+Conta 121754142617, região us-east-1; environment hom|prd validado. Metadados base/database/auth/gateway usam v2; email usa `/mecanica/<ambiente>/email/v1/<campo>`. Todos são String; listas usam JSON. Não há terraform_remote_state entre repositórios, release/candidato/geração v1 ou validade de prontidão por timestamp. SSM configura destinos; Job/rollout/HTTP comprovam operação.
 
-| Componente | Proprietário | Responsabilidade |
-|---|---|---|
-| api | GerenciamentoMecanicaSistema | Negócio/testes, imagem ECR, Deployment/HPA, OpenAPI, Auth.Contracts |
-| base | GerenciamentoMecanicaInfraestrutura | Rede/EKS/add-ons, SGs, NLB Terraform, Service NodePort e namespace reservado |
-| gateway | GerenciamentoMecanicaInfraestrutura | Estado separado para REST API/VPC Link, OpenAPI composto e permissão Lambda |
-| database | GerenciamentoMecanicaBancoDados | RDS, credenciais API/auth, esquema/seeds e Job próprio |
-| auth | GerenciamentoMecanicaAutenticacao | Código/testes/ZIP, Terraform/IAM da função, contrato Validate |
-
-API não reaplica o Service. A AWS associa instâncias do ASG ao target group; não há controller. Não consumir estado Terraform de outro repositório.
-
-Conta `121754142617`, região `us-east-1`; `develop`/hom e `main`/prd. Bootstrap persistente em `shared/bootstrap/terraform.tfstate`; componentes em `<ambiente>/<base|gateway|database|auth>/terraform.tfstate`. Workspace default, backend S3 criptografado/versionado com `use_lockfile=true`.
-
-Buckets `mecanica-tfstate-121754142617-us-east-1` e `mecanica-artifacts-121754142617-us-east-1`; ECR `121754142617.dkr.ecr.us-east-1.amazonaws.com/mecanica/api`. Descarte preserva bootstrap e outro ambiente.
-
-Roles OIDC: `arn:aws:iam::121754142617:role/mecanica/pipelines/mecanica-<ambiente>-<componente>-github`. Infra usa `AWS_BASE_ROLE_ARN`/`AWS_GATEWAY_ROLE_ARN`; banco/API/auth usam `AWS_ROLE_ARN`. Manter `AWS_REGION=us-east-1`, `TF_STATE_BUCKET` e `ARTIFACTS_BUCKET` onde aplicáveis. Environments hom/prd autorizam OIDC; hom-approval/prd-approval exigem revisão humana e não recebem credenciais AWS.
-
-Publicação/deploy da API reutiliza somente hom/prd e AWS_REGION/AWS_ROLE_ARN, sem Environment/job de aprovação. O disparo manual autoriza o fluxo completo; as aprovações de provisionamento Terraform permanecem separadas.
-
-## SSM v2
-
-Namespace `/mecanica/<ambiente>/<componente>/v2/<campo>`, recursos `aws_ssm_parameter`, String/Standard. Escalares usam strings, números decimal, listas arrays JSON. Valores secretos ficam exclusivamente no Secrets Manager. Consumidores Terraform usam `data.aws_ssm_parameter`, `with_decryption=false` e `jsondecode` para listas. Como IDs públicos retornam sensíveis pelo provider, pode-se usar `nonsensitive` apenas nesses campos públicos.
-
-Exemplo de consumo:
-
-```hcl
-data "aws_ssm_parameter" "database_endpoint" {
-  name            = "/mecanica/${var.environment}/database/v2/endpoint"
-  with_decryption = false
-}
-```
-
-Os parâmetros representam configuração, sem status ready, release, candidato, geração, tentativa, fingerprint, validade ou prova de acesso. O sucesso é o workflow concluído, o Job Complete e a validação do consumidor. O mantenedor serializa alterações de cada ambiente; mudanças de dependência exigem novo plano dos consumidores, inclusive quando eles aguardam aprovação.
-
-### Base
-
-| Campos publicados | Formato/uso |
+| Produtor | Fonte do catálogo |
 |---|---|
-| vpc-id | ID da VPC do ambiente |
-| workload-subnet-ids, database-subnet-ids | Arrays JSON de duas subnets/AZs |
-| cluster-name, cluster-arn | EKS; provider e kubeconfig |
-| namespace, init-namespace | default para API; database-init para banco |
-| api-security-group-id, init-security-group-id | SG efetivo do EKS, podem coincidir |
-| auth-security-group-id | SG reservado para Lambda |
-| api-service-name, api-service-port, api-node-port | svc-gerenciamento-api, 80, 30080 |
-| nlb-arn, nlb-dns-name, nlb-security-group-id, nlb-target-group-arn | Referências do NLB Terraform |
-| nlb-listener-port, nlb-listener-protocol, api-integration-uri | 80, TCP, URI HTTP privada para Gateway |
-| ecr-repository-url | ECR compartilhado do bootstrap |
-| jwt-secret-arn | Secret /mecanica/<ambiente>/base/jwt, JSON com somente key |
-| jwt-issuer, jwt-audience | mecanica-<ambiente>-auth e mecanica-<ambiente>-api |
+| Base | Infraestrutura/terraform/metadata.tf |
+| Banco | BancoDados/terraform/metadata.tf |
+| Auth | Serverless/templates/auth.yaml, AWS::SSM::Parameter |
+| Email | Serverless/templates/email.yaml, AWS::SSM::Parameter |
+| Gateway | Infraestrutura/gateway/metadata.tf |
 
-NLB interno TCP 80 → instâncias TCP 30080 → Service/Pod 8080. Health check HTTP `/health/ready` na porta 30080; `externalTrafficPolicy: Cluster`. Targets só ficarão saudáveis depois do deploy da API e acesso ao banco. A base não depende da API para criar NLB/target group.
+**Não há publicador `/api/v2/` no código entregue.** A API consome base/database/email; imagem/contrato da API são selecionados por digest/commit dos workflows. Campos de observabilidade são declarados nos manifestos/SAM e não se tornam parâmetros SSM apenas por terem sido planejados anteriormente.
 
-JWT: Secret próprio de cada ambiente, chave HS256 de 64 caracteres alfanuméricos gerada por ephemeral Random e persistida por secret_string_wo com revisão fixa 1. Não há rotação a cada execução nem chave em SSM/estado/plano/outputs. O descarte autorizado da base exclui o Secret sem janela de recuperação; consumidores devem ser descartados antes. Infraestrutura JWT hom aplicada e conferida em 08/10; prd e consumo dos runtimes pendentes.
+## Base v2
 
-A base administra a role mecanica-<ambiente>-api-runtime e a associação Pod Identity para default/gerenciamento-api. A confiança exige o cluster ARN, namespace e ServiceAccount exatos. A policy read-jwt permite o Secret JWT e os três parâmetros JWT; a nova read-database permite somente o Secret database/api e seis parâmetros database/v2 (endpoint, port, database-name, api-secret-arn, api-db-user, ssl-mode) do ambiente. A segunda policy está implementada; o mantenedor confirmou o sucesso do deploy da infra hom em 08/10; sem leitura da credencial auth, do Secret administrativo RDS ou de outro ambiente. Os ARNs do banco são construídos na base sem data sources SSM do banco, preservando base → banco → API. O repositório da API implementa ServiceAccount/Deployment nos overlays hom/prd; sua aplicação será na publicação/deploy. Não conceder leitura JWT às pipelines API/auth/base. A role Lambda será criada na etapa própria da função.
-
-Consumo pelo SDK .NET: resolver os três parâmetros SSM e AWSCURRENT na inicialização; preencher Jwt:Key, Jwt:Issuer e Jwt:Audience e manter a chave em memória, sem consulta por requisição. A API já implementa esse carregamento junto à credencial RDS, ativado por Runtime__Environment=hom|prd; IAM/manifestos estão preparados e o deploy da infra hom foi informado pelo mantenedor; publicação/deploy da API e validação real permanecem pendentes. Sem esse campo, preserva o modo local; campo presente inválido impede a inicialização. Falha de leitura ou configuração inválida impede inicialização, sem fallback local e sem cópia para Secrets Kubernetes. HS256, expiração, claims e tolerância de relógio permanecem iguais. [Inicialização da API](../INICIALIZACAO_AWS.md) e [procedimento JWT](https://github.com/pknfelps/GerenciamentoMecanicaInfraestrutura/blob/develop/docs/JWT_COMPARTILHADO.md).
-
-Campos futuros da base, adicionados somente quando implementados: `newrelic-secret-arn`, `newrelic-otlp-endpoint`, `otel-collector-endpoint`. Issuer/audience/chave JWT são distintos entre hom/prd e compatíveis entre API/função no ambiente. JWT e observabilidade não são pré-requisitos do Job do banco.
-
-### Banco
-
-| Campos publicados | Formato/uso |
+| Campos | Uso |
 |---|---|
-| instance-arn, endpoint, port, database-name, security-group-id | RDS privado, 5432/mecanica, SG próprio |
-| api-secret-arn, api-db-user | Secret persistente e mecanica_api |
-| auth-secret-arn, auth-db-user | Secret persistente e mecanica_auth |
-| schema-version, sql-sha256, ssl-mode | 1.0.0, hash de Init.sql, verify-full; configuração esperada, sem atestar execução |
+| vpc-id, workload-subnet-ids, database-subnet-ids | Rede e listas JSON de subnets |
+| cluster-name, cluster-arn | Cluster EKS |
+| namespace, init-namespace | default e database-init |
+| api-security-group-id, init-security-group-id | SG efetivo do EKS; podem coincidir |
+| auth-security-group-id, email-security-group-id, gateway-security-group-id | SGs reservados auth/email e VPC Link V2 |
+| smtp-host, smtp-port | DNS do NLB interno e porta SMTP TCP 2525; usados somente por email-provision |
+| api-service-name, api-service-port, api-node-port | svc-gerenciamento-api, 80 e 30080 |
+| nlb-arn, nlb-dns-name, nlb-security-group-id, nlb-target-group-arn | NLB interno e destino |
+| nlb-listener-port, nlb-listener-protocol, api-integration-uri | 80, TCP e URI HTTP privada |
+| ecr-repository-url | Repositório compartilhado mecanica/api |
+| jwt-secret-arn, jwt-issuer, jwt-audience | Referência JWT, mecanica-<ambiente>-auth e mecanica-<ambiente>-api |
 
-Secret administrativo gerenciado pelo RDS é usado exclusivamente na inicialização. Não publicar essa referência para consumidores de aplicação. API/auth não usam o usuário administrativo. Secret JSON de aplicação contém engine/host/port/dbname/username/password; consumidores usam endpoint/port/database-name atuais do SSM e somente username/password do Secret. Assim uma mudança de endpoint não exige rotacionar senha.
+Secret JWT é JSON com key, gerado via valores ephemeral/write-only e revisão fixa, sem valor em SSM/planos/estado. API usa Pod Identity default/gerenciamento-api; Lambda usa auth-runtime persistente. Cada runtime lê AWSCURRENT no bootstrap e mantém em memória; alteração de chave exige reinicialização. API consulta configuração e Secret do banco API; função consulta somente a credencial auth. EmailFunction não recebe banco/JWT/SSM/Secrets em runtime; SMTP é configuração resolvida no deploy. Sem fallback local em modo AWS ou cópia JWT para Secret Kubernetes.
 
-Terraform importa metadados de credenciais existentes; lê seu valor somente como ephemeral para preservá-lo na primeira versão write-only. Em ambiente novo gera senha criptográfica de 40 caracteres uma vez. Revisão write-only fixa em 1: nenhuma rotação por execução; rotação futura exige alteração/revisão explícita e novo provisionamento SQL. Nunca importar versões comuns de secrets nem habilitar TF_LOG, pois podem expor valores.
+O Collector usa endpoint interno fixado nos overlays, namespace observability e Pod Identity própria. Sua License Key está no Secret persistente `/mecanica/<ambiente>/observability/newrelic-license-key`; não existe newrelic-secret-arn/otel-collector-endpoint publicado automaticamente em base/v2. Overlay API hom habilita OTel; prd mantém false. SAM habilita permanentemente os sinais da função.
 
-ConfigMap `database-init-input` contém SQL/hash/host/CA pública. Secrets temporários `database-init-admin`, `database-init-api`, `database-init-auth` ficam apenas no namespace `database-init`, entregues com `data_wo` e removidos por kubectl ao final, também em falha. Refresh seguinte planeja recriação. API tem Edit em default; banco em database-init. Essa fronteira protege objetos Kubernetes; não é isolamento de tráfego PostgreSQL por namespace.
+## Banco v2
 
-Job `k8s/database-init.yaml`: banco vazio cria esquema/seeds e marcador na mesma transação; marcador idêntico preserva data original e apenas provisiona roles/grants; SQL/hash/versão incompatível ou tabelas sem marcador interrompem. O ConfigMap e seu hash usam LF, como o SQL versionado no Git, preservando o marcador entre Windows/Linux sem modificar Init.sql. Não há SQL de smoke nem manifesto de release. Reiniciar API não inicializa banco.
+| Campos | Uso |
+|---|---|
+| instance-arn, endpoint, port, database-name, security-group-id | RDS, 5432/mecanica e SG |
+| api-secret-arn, api-db-user | Credencial mecanica_api |
+| auth-secret-arn, auth-db-user | Credencial mecanica_auth |
+| schema-version, sql-sha256, ssl-mode | 1.0.0, SHA-256 do Init.sql e verify-full |
 
-### API, autenticação e Gateway (integração posterior)
+Referências não demonstram que o Job concluiu. O Job cria esquema/seeds/marcador atomicamente em banco vazio, exige versão/hash compatível em reexecução e provisiona grants. ConfigMap contém SQL/host/CA/hash; Secrets temporários admin/API/auth são write-only e removidos ao final inclusive em erro. Senha AWSCURRENT/revisão fixa não é rotacionada em todo apply. API/função não recebem acesso ao Secret administrativo.
 
-API mantém Deployment/HPA/probes/testes de negócio; runtime resolve credencial restrita e JWT em default. Função consome subnets/SG de base, endpoint e auth-secret-arn do banco e JWT; Gateway consome nlb-arn/URI e ARN qualificado da versão Lambda. Seus Terraform futuros publicam campos v2 próprios: API image-uri/deployment-name/openapi-key/auth-contracts-version; auth function-name/function-version/invocation-arn/zip-key/openapi-key/auth-contracts-version; gateway API/VPC Link/endpoint. Sem releases ou tentativas.
+Credencial API tem DML nas nove tabelas de domínio, inclusive histórico; credencial auth tem SELECT somente id/name/document/status/email de customers e SELECT/INSERT/UPDATE/DELETE nas duas tabelas de desafios/limites. Nenhuma recebe o marcador operacional. Endpoint/porta/database são lidos do SSM, não de campos antigos eventualmente persistidos no Secret. [Modelo/grants](BANCO_E_MODELO.md).
 
-Gateway é planejado/aprovado/aplicado manualmente depois dos backends, usando versões fixas dos dois contratos. Não haverá chamada automática a um workflow para promover releases. Permissão de invocação pertence ao Gateway; função usa versão numérica, não `$LATEST`.
+## Auth v2
 
-## Artefatos e contrato de negócio
+| Campo | Uso |
+|---|---|
+| function-name | Nome mecanica-<ambiente>-auth |
+| function-version | Versão numérica publicada |
+| invocation-arn | ARN qualificado pela versão numérica |
+| zip-key | Chave nativa SAM do ZIP |
+| openapi-key | contracts/auth/<commit>/openapi.json |
+| auth-contracts-version | Pacote JWT Auth.Contracts 1.0.0; distinto do OpenAPI HTTP auth 2.0.0 |
 
-Imagem ECR por digest; OpenAPI em `contracts/api|auth/<commit>/openapi.json`; ZIP em `lambda/<commit>/`; pacote em `packages/GerenciamentoMecanica.Auth.Contracts/<versão>/`. Preservar distribuição imutável S3, SHA-256, escrita condicional e referências fixas já implementadas. O pacote é independente da ativação de infraestrutura; S3 não é feed NuGet nativo. [Procedimento do pacote](PACOTE_AUTH_CONTRACTS.md).
+Stack SAM administra esses parâmetros e o alias live auxiliar. Gateway consome a versão numérica, não live ou $LATEST; mudança de versão exige novo plano Gateway. Auth-runtime pertence ao bootstrap, SG à base e ingresso PostgreSQL ao banco; auth administra somente seus egress, função/versão/alias/logs/SSM. [ADR 009](adrs/009-SAM-AUTENTICACAO.md).
 
-HTTP/JWT, CPF/CNPJ, claims, códigos, roles e vínculo da OS permanecem no [contrato de acesso](ACESSO_E_AUTENTICACAO.md). Esta mudança não altera regras de negócio nem remove testes da aplicação/função. Formatos OpenAPI e pacote mantêm versionamento próprio, independente do segmento v2 do SSM.
+## Email v1
 
-## Operação e migração
+| Campo | Uso |
+|---|---|
+| function-name | mecanica-<ambiente>-email |
+| function-version | Versão numérica publicada, somente referência operacional |
+| invocation-arn | ARN do alias live exato do ambiente |
+| contract-version | String 1, contrato Invoke v1 |
+| zip-key | Chave nativa SAM do ZIP email |
 
-Infra/banco: disparo manual → plan salvo e textual → aprovação protegida sem AWS → apply do mesmo artefato/commit, retenção sete dias. Terraform recusa plano obsoleto do próprio estado; gerar outra execução para revisão. CI somente fmt/validate/renderização. Aprovação deve revisar remoções intencionais e preservação de VPC/EKS/RDS; não é autorização geral para replanejar/aplicar.
+Stack email é independente de auth. API/auth carregam invocation-arn e contract-version na inicialização reutilizada, sem lookup por mensagem. Pipelines consumidoras conferem essas duas chaves antes do deploy; isso não comprova saúde SMTP. Runtime usa IAM Invoke somente do alias live correspondente, sem URL/Gateway público ou endpoint override AWS. Compatibilidade v1 permite atualizar o alias sem recompilar consumidores; mudança incompatível exige contrato/migração de consumidor próprios, não adaptação automática de dados SQL.
 
-API: `.github/workflows/api-deploy.yml`, manual, dois jobs Publicar → Implantar, sem aprovação intermediária. Exige develop/hom ou main/prd, conta/região/role/repositório exatos e checkout do SHA da execução em ambos os jobs; concurrency por ambiente sem cancelar execução em curso. Lê somente ecr-repository-url, cluster-name e namespace da base v2. Publica no ECR compartilhado mecanica/api, tag imutável sha-<commit completo>-<run_id>-<run_attempt>; transmite URI por digest via output da action de build. Deploy confirma BatchGetImage, cluster mecanica-<ambiente>-eks e namespace default, substitui pending com kustomize edit set image no checkout temporário e usa kubectl apply -k no overlay. Rollout até 600 segundos, conferência da imagem desejada e diagnóstico limitado em falha, sem rollback automático. Pipeline não lê Secrets; Pod Identity entrega credencial/JWT ao runtime. Nenhuma publicação de campos API v2/OpenAPI/Gateway nesta entrega. Publicar o workflow também em main para disponibilizar Run workflow; primeira execução develop/hom. [Procedimento](../DEPLOY_API.md).
+A base mantém SMTP4dev efêmero no namespace smtp4dev, listener TCP 2525 no NLB existente e NodePort 30025 no mesmo ASG. Web somente ClusterIP e port-forward autorizado; sem relay/PVC. SMTP privado demonstrativo não usa TLS/autenticação; não o descrever como entrega externa ou criptografia. Perda da caixa exige novo pedido respeitando limites.
 
-Migrar base v2 e namespace; adotar banco/credenciais v2 e executar Job; migrar consumidores; só então importar parâmetros v1 ativos em plano dedicado e retirá-los em outro plano aprovado. `legacy_parameter_names` vazio depois da adoção programa sua remoção. Excluir históricos de attempts da lista. Procedimentos de NLB legado e SSM estão em Infra/docs/MIGRACAO_DECLARATIVA.md.
+## Gateway v2
 
-Descarte em ordem Gateway/consumidores → banco → base. API usa api-destroy.yml: um job manual, sem aprovação intermediária, OIDC existente, develop/hom ou main/prd, mesmo grupo de concurrency do API deploy. Lê cluster-name/namespace da base v2, remove o overlay com kubectl delete -k/cascade foreground e confirma ausência de recursos/pods; executá-lo antes de database-destroy e base-destroy, enquanto SSM/cluster existem. Não remove Service/NLB, Secrets, IAM ou ECR. Banco remove Job antes do apply de destroy; base remove manifestos antes de EKS. NLB/associação/SSM v2 são removidos pelo Terraform. Bootstrap nunca integra esse descarte. Validação de destroy somente quando houver descarte solicitado, sem destruir para testar a reformulação.
+| Campo | Uso |
+|---|---|
+| rest-api-id, vpc-link-id, stage-name | Identidade do Gateway/VPC Link/stage |
+| endpoint | URL atual de negócio, incluindo stage |
+| api-openapi-key, auth-openapi-key | Contratos selecionados pelos commits |
+| auth-invocation-arn | Versão Lambda integrada |
+
+Endpoint muda após destroy/recreate; não é URL estável a ser hardcoded no consumidor ou evidência de disponibilidade enquanto o ambiente está desligado. Gateway valida OpenAPI 3.0/formato/rotas/identidade da versão e compõe HTTP_PROXY/AWS_PROXY. Não é validação semântica completa de todos os DTOs. Health/Swagger/OpenAPI não são publicados.
+
+## Artefatos e integridade
+
+| Artefato | Seleção/proteção |
+|---|---|
+| Imagem API | ECR mecanica/api, tag por commit/run/attempt, deploy por digest |
+| Contrato API | contracts/api/<commit>/openapi.json e checksum |
+| Contrato auth | contracts/auth/<commit>/openapi.json e checksum |
+| Template SAM | contracts/auth/<commit>/sam-<ambiente>.json e checksum |
+| ZIP auth/email | sam/<auth ou email>/<ambiente>/<commit>/chave-de-conteudo; Bucket/Key/Version fixos no template |
+| Template email | contracts/email/<commit>/sam-<ambiente>.json e checksum; sem OpenAPI público |
+| Auth.Contracts | packages/GerenciamentoMecanica.Auth.Contracts/1.0.0/ e checksum; versão exata no consumidor |
+
+OpenAPI/template/NuGet usam escrita condicional e comparação de bytes em reexecução, sem sobrescrever conteúdo divergente. ZIP é exceção de gravação condicional do SAM; VersionId fixa a seleção, sem tornar a chave imutável. Republicação idêntica conserva a versão original depois de comparar os bytes do ZIP/template. Templates antigos sem Version exigem commit novo; provision usa head-object --version-id e SAM Code.S3ObjectVersion.
+
+API gera OpenAPI 3.0 da mesma revisão via OpenApiGenerateDocuments=true, sem inicializar AWS/JWT/banco. Auth publica contrato 3.0 estático sem destino/extensões AWS. NuGet 1.0.0 tem hash fixado no workflow consumidor; API referencia o projeto local. Contratos são globais por commit/versão, não Secret ou prova de exclusividade de ambiente. S3 é armazenamento do nupkg, não feed NuGet nativo.
+
+## Ordem e responsabilidade operacional
+
+Bootstrap aprovado → base/Collector/SMTP4dev → banco/Job e email-publish/email-provision (independentes) → API e auth-publish/auth-provision → Gateway com commits fixos e OpenAPI auth 2.0.0. Push/merge em develop/hom ou main/prd inicia o deploy do respectivo repositório. Terraform base/banco/Gateway e New Relic mantêm plano salvo/aprovação/apply exato; API/auth/email não têm aprovação intermediária. Serverless publica ambos no SHA da execução e implanta email antes de auth. Na infraestrutura, o caminho automático base-provision chama Gateway somente após concluir a base. O Gateway fixa a revisão da execução api-deploy mais recente da branch, exigindo sucesso, e a revisão auth implantada no SSM; ambas ficam no plano aprovado. Sem orquestração entre repositórios: em ambiente vazio, começar com base-provision manual, aguardar banco/email, publicar API/auth e só depois iniciar o Gateway por novo push da infraestrutura ou dispatch. Consultas inválidas e dependências ausentes interrompem, sem espera/retry próprios. Destroy e New Relic permanecem manuais.
+
+Destroy: Gateway → API/auth → banco/email → base, com checagens diretas dos consumidores. Erros/ENIs pendentes bloqueiam; sem novo marcador SSM, exclusão forçada ou espera automática. Email-destroy exige API/auth ausentes; base-destroy exige banco/email ausentes. SAM CLI 1.167.0 preserva ZIP com CodeUri objeto; contratos, ECR, estados, IAM bootstrap e recursos New Relic persistem.

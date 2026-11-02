@@ -42,11 +42,12 @@ namespace ServiceTests
             await EmailService.NotifyBudget(customer, vehicle, order);
 
             await EmailSender.Received(1).SendAsync(
+                "budget_available",
                 customer.Name,
                 customer.Email.Address,
                 "Serviço Finalizado",
                 Arg.Is<string>(body => body.Contains(customer.Name) && body.Contains(vehicle.Model) && body.Contains(order.Budget.ToString())),
-                Arg.Is<string>(body => body.Contains(customer.Name) && body.Contains(vehicle.Model) && body.Contains(order.Budget.ToString())));
+                Arg.Is<string>(body => body.Contains(customer.Name) && body.Contains(vehicle.Model) && body.Contains(order.Budget.ToString())), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -70,11 +71,12 @@ namespace ServiceTests
             await EmailService.NotifyOrderStatus(customer, vehicle, order);
 
             await EmailSender.Received(1).SendAsync(
+                "status_changed",
                 customer.Name,
                 customer.Email.Address,
                 Arg.Is<string>(subject => subject.Contains(order.OrderId.ToString())),
                 Arg.Is<string>(body => body.Contains(customer.Name) && body.Contains(vehicle.Model) && body.Contains("em execução")),
-                Arg.Is<string>(body => body.Contains(customer.Name) && body.Contains(vehicle.Model) && body.Contains("em execução")));
+                Arg.Is<string>(body => System.Net.WebUtility.HtmlDecode(body).Contains(customer.Name) && System.Net.WebUtility.HtmlDecode(body).Contains(vehicle.Model) && System.Net.WebUtility.HtmlDecode(body).Contains("em execução")), Arg.Any<CancellationToken>());
         }
     }
 }

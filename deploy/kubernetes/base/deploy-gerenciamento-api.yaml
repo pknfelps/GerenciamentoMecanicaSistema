@@ -19,6 +19,11 @@ spec:
         - name: gerenciamento-api
           image: felipejesusoliveira/gerenciamentomecanicasistema:sha-9bab7a5fe26ecce419c87c0d740b37d9ed255fd5
           imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: observability
+              mountPath: /app/Observability/observability.json
+              subPath: observability.json
+              readOnly: true
           ports:
           - containerPort: 8080
             protocol: TCP
@@ -62,3 +67,7 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 2
             failureThreshold: 3
+      volumes:
+        - name: observability
+          configMap:
+            name: mecanica-api-observability

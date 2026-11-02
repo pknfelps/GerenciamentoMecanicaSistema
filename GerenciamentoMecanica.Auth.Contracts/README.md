@@ -6,11 +6,11 @@ Pacote .NET 10, versão inicial **1.0.0**, com validação/normalização de doc
 
 `DocumentRules.Parse(string?)` identifica CPF ou CNPJ e retorna `NormalizedDocument`, com `Type` e `Value`. `DocumentRules.Normalize(string?)` retorna somente a máscara canônica. Use essa entrada genérica para validar o documento do cliente; use as regras específicas quando o tipo já for conhecido.
 
-Os cálculos preservam a aceitação legada de pontuação arbitrária e sequências repetidas que passam nos dígitos verificadores. A entrada genérica rejeita letras e espaços, assim como as regras específicas, antes de identificar o tipo; o wrapper do domínio passa a delegar a ela sem eliminar esses caracteres previamente. O contrato HTTP da futura função exige uma verificação de formato estrito antes da normalização; essa adequação/testes pertencem à E3. Não usar normalização como evidência de existência ou elegibilidade do cliente.
+Os cálculos preservam a aceitação legada de pontuação arbitrária e sequências repetidas que passam nos dígitos verificadores. A entrada genérica rejeita letras e espaços, assim como as regras específicas, antes de identificar o tipo; o wrapper do domínio passa a delegar a ela sem eliminar esses caracteres previamente. O parser HTTP da AuthFunction aplica uma verificação de formato estrito antes da normalização. Não usar normalização como evidência de existência ou elegibilidade do cliente.
 
-`new JwtIssuer(key, issuer, audience).Generate(name, role, id?)` mantém HS256, expiração UTC + 10 minutos e os nomes serializados de Name/Role. O ID opcional acrescenta NameIdentifier para o contrato E0; o login interno continua usando a sobrecarga sem ID até a adequação E4. Roles e identidade são responsabilidade do consumidor, obtidas do cadastro autenticado. O pacote não autoriza rotas nem decide elegibilidade.
+`new JwtIssuer(key, issuer, audience).Generate(name, role, id?)` mantém HS256, expiração UTC + 10 minutos e os nomes serializados de Name/Role. O ID opcional acrescenta NameIdentifier; API e AuthFunction fornecem o UUID do cadastro autenticado. Roles e identidade são responsabilidade do consumidor, obtidas do cadastro autenticado. O pacote não autoriza rotas nem decide elegibilidade.
 
-O `TimeProvider` opcional existe para testes. A API conserva seus parâmetros de validação, incluindo a tolerância de relógio, e sua exigência de chave com pelo menos 32 caracteres.
+O `TimeProvider` opcional existe para testes. A API valida assinatura, emissor, audiência e expiração com ClockSkew zero e exige chave com pelo menos 32 caracteres.
 
 ## Build independente
 
@@ -21,10 +21,10 @@ dotnet test Auth.Contracts.Tests -c Release
 pwsh -File scripts/Pack-AuthContracts.ps1
 ```
 
-O pacote e seu SHA-256 ficam em `artifacts/auth-contracts`. O workflow `auth-contracts` testa/empacota sem Docker, Aurora ou EKS; a publicação é uma ação manual explícita do workflow, com OIDC e Environment compatível com a branch.
+O pacote e seu SHA-256 ficam em `artifacts/auth-contracts`. O workflow `auth-contracts` testa/empacota sem Docker, banco ou EKS; a publicação é uma ação manual explícita do workflow, com OIDC e Environment compatível com a branch.
 
 ## Consumo
 
-A API usa ProjectReference; a função usa PackageReference com `Version="[1.0.0]"`. S3 é armazenamento do nupkg, não endpoint NuGet. Baixar o pacote e seu sidecar `.sha256`, conferir o hash e só então disponibilizá-lo no feed local. O repositório de autenticação contém o script de consumo e o teste independente do pacote.
+A API usa ProjectReference; a função usa PackageReference com `Version="[1.0.0]"`. S3 é armazenamento do nupkg, não endpoint NuGet. Baixar o pacote e seu sidecar `.sha256`, conferir o hash e só então disponibilizá-lo no feed local. O workflow Serverless baixa e confere o pacote antes do restore; ContractTests verifica sua compatibilidade, sem script consumidor próprio.
 
-Não usar versão flutuante, checkout da API no build da função ou valores secretos no pacote. A versão inicial permanece 1.0.0 enquanto não publicada. Após a primeira publicação, atualizações do conteúdo exigem nova versão; não sobrescrever uma versão existente. A publicação remota e o consumo com a role auth ainda precisam ser executados após integração do workflow.
+Não usar versão flutuante, checkout da API no build da função ou valores secretos no pacote. A versão 1.0.0 é consumida pelo Serverless. Mudanças de conteúdo exigem nova versão; não sobrescrever uma versão existente.

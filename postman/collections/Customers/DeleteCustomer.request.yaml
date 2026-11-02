@@ -1,4 +1,9 @@
 $kind: http-request
-url: "{{base_url}}/customers/{{customer_id}}"
+name: DeleteCustomer
+url: '{{base_url}}/Customers/{{customer_id}}'
 method: DELETE
-order: 4000
+auth:
+  type: bearer
+  credentials:
+  - key: token
+    value: '{{mechanic_token}}'

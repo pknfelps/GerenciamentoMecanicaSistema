@@ -1,8 +1,29 @@
-﻿using Domain.Interface.Exceptions;
+﻿using Domain.Interface.Custumer;
+using Domain.Interface.Exceptions;
 namespace DomainTests.Customer
 {
     public class CustomerTests
     {
+        [Test]
+        public void NewCustomerIsActive()
+        {
+            var customer = new Domain.Customer.Customer("Fulano", "662.119.730-63", "11912345678", "fulano@example.com");
+            Assert.That(customer.Status, Is.EqualTo(CustomerStatus.Active));
+        }
+
+        [Test]
+        public void CanRebuildInactiveCustomer()
+        {
+            var customer = new Domain.Customer.Customer(Guid.NewGuid(), "Fulano", "662.119.730-63", "11912345678", "fulano@example.com", CustomerStatus.Inactive);
+            Assert.That(customer.Status, Is.EqualTo(CustomerStatus.Inactive));
+        }
+
+        [Test]
+        public void RejectsUndefinedCustomerStatus()
+        {
+            Assert.Throws<DomainValidationException>(() => new Domain.Customer.Customer(Guid.NewGuid(), "Fulano", "662.119.730-63", "11912345678", "fulano@example.com", (CustomerStatus)99));
+        }
+
         [Test]
         public void MustCreateCustomerWithoutId()
         {
@@ -42,7 +63,7 @@ namespace DomainTests.Customer
         {
             Guid clienteId = Guid.NewGuid();
 
-            Domain.Customer.Customer cliente = new(clienteId, "Fulano", "662.119.730-63", "11 91234-5678", "fulano@gmail.com");
+            Domain.Customer.Customer cliente = new(clienteId, "Fulano", "662.119.730-63", "11 91234-5678", "fulano@gmail.com", CustomerStatus.Active);
 
             Assert.That(cliente, Is.Not.Null);
 
@@ -76,7 +97,7 @@ namespace DomainTests.Customer
         [Test]
         public void MustNotCreateCustomerWithEmptyId()
         {
-            Assert.Catch<DomainValidationException>(() => new Domain.Customer.Customer(Guid.Empty, "Fulano", "662.119.730-63", "11 91234-5678", "fulano@gmail.com"));
+            Assert.Catch<DomainValidationException>(() => new Domain.Customer.Customer(Guid.Empty, "Fulano", "662.119.730-63", "11 91234-5678", "fulano@gmail.com", CustomerStatus.Active));
         }
 
         [Test]

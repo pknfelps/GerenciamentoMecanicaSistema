@@ -10,6 +10,7 @@ docs/plano-fase-3
 .postman
 media-output
 output
+artifacts
 **/.terraform
 **/*.tfstate
 **/*.tfstate.*

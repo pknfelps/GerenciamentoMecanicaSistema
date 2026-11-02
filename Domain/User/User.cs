@@ -13,17 +13,15 @@ namespace Domain.User
 
         public User(Guid id, string name, string role)
         {
+            if (id == Guid.Empty)
+                throw new DomainValidationException("O ID do usuário deve ser preenchido");
+
             if (string.IsNullOrWhiteSpace(name))
                 throw new DomainValidationException("Nome deve ser preenchido");
-            if (string.IsNullOrWhiteSpace(role))
-                throw new DomainValidationException("Cargo deve ser preenchido");
-
-            if (!Enum.TryParse(role, out Roles cargoParsed))
-                throw new DomainValidationException($"Cargo \"{role}\" inválido");
 
             Id = id;
             Name = name;
-            Role = cargoParsed;
+            Role = UserRoleRules.Parse(role);
         }
     }
 }

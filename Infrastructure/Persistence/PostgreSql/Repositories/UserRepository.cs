@@ -1,4 +1,4 @@
-using Dapper;
+using Infrastructure.Observability;
 using Domain.Interface.User;
 using Domain.User;
 using Infrastructure.Persistence.PostgreSql.Models;
@@ -9,7 +9,7 @@ using System.Data;
 
 namespace Infrastructure.Persistence.PostgreSql.Repositories
 {
-    public class UserRepository(IDbConnection connection, DbTransactionContext? transactionContext = null) : BaseRepository(connection, transactionContext), IUserRepository
+    public class UserRepository(IDbConnection connection, DbTransactionContext? transactionContext = null, IntegrationMetrics? metrics = null) : BaseRepository(connection, transactionContext, metrics), IUserRepository
     {
         public static string RegisterUserSql { get; private set; } = """
                 INSERT INTO users(id, name, password, role)
@@ -28,14 +28,46 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
                 WHERE name = @Name AND role = @Role;
                 """;
 
+        public static string GetUserByIdSql { get; private set; } = """
+                SELECT id, name, role
+                FROM users
+                WHERE id = @Id;
+                """;
+
+        public async Task<IUser?> GetUserById(Guid id)
+        {
+            var user = await Database.QuerySingleOrDefaultAsync<UserDb>(GetUserByIdSql, new { Id = id }, Transaction);
+            return user?.ToDomain();
+        }
+
+        public static string UpdateUserSql { get; private set; } = """
+                UPDATE users
+                SET name = COALESCE(@Name, name), password = COALESCE(@PasswordHash, password)
+                WHERE id = @Id;
+                """;
+
+        public async Task<int> UpdateUser(Guid id, string? name, string? passwordHash)
+        {
+            return await Database.ExecuteAsync(UpdateUserSql, new { Id = id, Name = name, PasswordHash = passwordHash }, Transaction);
+        }
+
+        public static string DeleteUserSql { get; private set; } = """
+                DELETE FROM users WHERE id = @Id;
+                """;
+
+        public async Task<int> DeleteUser(Guid id)
+        {
+            return await Database.ExecuteAsync(DeleteUserSql, new { Id = id }, Transaction);
+        }
+
         public async Task<int> RegisterUser(IUserCredentials credentials)
         {
-            return await Connection.ExecuteAsync(RegisterUserSql, UserDb.Create(credentials), Transaction);
+            return await Database.ExecuteAsync(RegisterUserSql, UserDb.Create(credentials), Transaction);
         }
 
         public async Task<IUser?> GetUser(string name, string role)
         {
-            var usuario = await Connection.QuerySingleOrDefaultAsync<UserDb?>(GetUserSql, new { Name = name, Role = role }, Transaction);
+            var usuario = await Database.QuerySingleOrDefaultAsync<UserDb?>(GetUserSql, new { Name = name, Role = role }, Transaction);
 
             if (usuario == null)
                 return null;
@@ -45,7 +77,7 @@ namespace Infrastructure.Persistence.PostgreSql.Repositories
 
         public async Task<IUserCredentials?> GetUserCredentials(string name, string role)
         {
-            var user = await Connection.QuerySingleOrDefaultAsync<UserDb?>(
+            var user = await Database.QuerySingleOrDefaultAsync<UserDb?>(
                 GetUserCredentialsSql,
                 new { Name = name, Role = role },
                 Transaction);

@@ -1,3 +1,4 @@
+using Infrastructure.Observability;
 using Amazon.Runtime;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
@@ -12,7 +13,7 @@ namespace Infrastructure.Configuration;
 
 public sealed class AwsRuntimeConfigurationLoader(
     IAmazonSimpleSystemsManagement parameters,
-    IAmazonSecretsManager secrets)
+    IAmazonSecretsManager secrets, IntegrationMetrics? metrics = null)
 {
     private const string EnvironmentKey = "Runtime:Environment";
     private static readonly TimeSpan InitializationTimeout = TimeSpan.FromSeconds(45);
@@ -20,7 +21,7 @@ public sealed class AwsRuntimeConfigurationLoader(
     public static async Task<Dictionary<string, string?>?> LoadIfConfiguredAsync(
         IConfiguration configuration,
         string certificatePath,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, IntegrationMetrics? metrics = null)
     {
         if (!configuration.AsEnumerable().Any(entry =>
             string.Equals(entry.Key, EnvironmentKey, StringComparison.OrdinalIgnoreCase)))
@@ -42,7 +43,7 @@ public sealed class AwsRuntimeConfigurationLoader(
                 RetryMode = RequestRetryMode.Standard,
                 MaxErrorRetry = 2
             });
-            return await new AwsRuntimeConfigurationLoader(parameterClient, secretClient)
+            return await new AwsRuntimeConfigurationLoader(parameterClient, secretClient, metrics)
                 .LoadAsync(environment!, certificatePath, cancellationToken);
         }
         catch (AmazonClientException)
@@ -72,13 +73,22 @@ public sealed class AwsRuntimeConfigurationLoader(
                 databasePrefix + "endpoint", databasePrefix + "port", databasePrefix + "database-name",
                 databasePrefix + "api-secret-arn", databasePrefix + "api-db-user", databasePrefix + "ssl-mode"
             ];
-            var response = await parameters.GetParametersAsync(new GetParametersRequest
-            {
-                Names = [.. names],
-                WithDecryption = false
-            }, deadline.Token).WaitAsync(deadline.Token);
+            var response = await IntegrationMetrics.MeasureAsync(metrics, "ssm", "get_parameters", "bootstrap",
+                () => parameters.GetParametersAsync(new GetParametersRequest
+                {
+                    Names = [.. names],
+                    WithDecryption = false
+                }, deadline.Token).WaitAsync(deadline.Token), cancellationToken);
 
             var values = ReadParameters(response, names);
+            var emailPrefix = $"/mecanica/{environment}/email/v1/";
+            string[] emailNames = [emailPrefix + "invocation-arn", emailPrefix + "contract-version"];
+            var emailResponse = await IntegrationMetrics.MeasureAsync(metrics, "ssm", "get_parameters", "bootstrap",
+                () => parameters.GetParametersAsync(new GetParametersRequest { Names = [.. emailNames], WithDecryption = false }, deadline.Token)
+                    .WaitAsync(deadline.Token), cancellationToken);
+            var emailValues = ReadParameters(emailResponse, emailNames);
+            if (emailValues[emailNames[0]] != $"arn:aws:lambda:us-east-1:121754142617:function:mecanica-{environment}-email:live" || emailValues[emailNames[1]] != "1")
+                throw new ConfigurationValidationException("Email invocation metadata is invalid.");
             var port = ReadPort(values[databasePrefix + "port"]);
             if (values[databasePrefix + "api-db-user"] != "mecanica_api")
                 throw new ConfigurationValidationException("Database API user parameter must be mecanica_api.");
@@ -88,14 +98,14 @@ public sealed class AwsRuntimeConfigurationLoader(
                 throw new ConfigurationValidationException("RDS root certificate is missing from the published application.");
 
             stage = "read JWT secret";
-            var jwt = await ReadSecretAsync(values[basePrefix + "jwt-secret-arn"], deadline.Token);
+            var jwt = await ReadSecretAsync(values[basePrefix + "jwt-secret-arn"], deadline.Token, cancellationToken);
             using var jwtDocument = ParseSecret(jwt, "JWT");
             var key = ReadSecretField(jwtDocument.RootElement, "key", "JWT");
             if (key.Length < 32)
                 throw new ConfigurationValidationException("JWT signing key must contain at least 32 characters.");
 
             stage = "read database API secret";
-            var database = await ReadSecretAsync(values[databasePrefix + "api-secret-arn"], deadline.Token);
+            var database = await ReadSecretAsync(values[databasePrefix + "api-secret-arn"], deadline.Token, cancellationToken);
             using var databaseDocument = ParseSecret(database, "Database API");
             var username = ReadSecretField(databaseDocument.RootElement, "username", "Database API");
             var password = ReadSecretField(databaseDocument.RootElement, "password", "Database API");
@@ -119,6 +129,8 @@ public sealed class AwsRuntimeConfigurationLoader(
             // Publish all four values together; failed reads never leave partial configuration.
             return new Dictionary<string, string?>
             {
+                ["Email:FunctionName"] = emailValues[emailNames[0]],
+                ["Email:ContractVersion"] = "1",
                 ["Jwt:Key"] = key,
                 ["Jwt:Issuer"] = values[basePrefix + "jwt-issuer"],
                 ["Jwt:Audience"] = values[basePrefix + "jwt-audience"],
@@ -140,13 +152,14 @@ public sealed class AwsRuntimeConfigurationLoader(
         }
     }
 
-    private async Task<string?> ReadSecretAsync(string arn, CancellationToken cancellationToken)
+    private async Task<string?> ReadSecretAsync(string arn, CancellationToken cancellationToken, CancellationToken callerCancellation)
     {
-        var response = await secrets.GetSecretValueAsync(new GetSecretValueRequest
-        {
-            SecretId = arn,
-            VersionStage = "AWSCURRENT"
-        }, cancellationToken).WaitAsync(cancellationToken);
+        var response = await IntegrationMetrics.MeasureAsync(metrics, "secretsmanager", "get_secret_value", "bootstrap",
+            () => secrets.GetSecretValueAsync(new GetSecretValueRequest
+            {
+                SecretId = arn,
+                VersionStage = "AWSCURRENT"
+            }, cancellationToken).WaitAsync(cancellationToken), callerCancellation);
         return response.SecretString;
     }
 

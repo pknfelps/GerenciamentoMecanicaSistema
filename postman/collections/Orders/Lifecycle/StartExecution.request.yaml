@@ -1,4 +1,9 @@
 $kind: http-request
-url: "{{base_url}}/orders/{{order_id}}/execution/start"
+name: StartExecution
+url: '{{base_url}}/Orders/{{order_id}}/execution/start'
 method: PATCH
-order: 4000
+auth:
+  type: bearer
+  credentials:
+  - key: token
+    value: '{{mechanic_token}}'

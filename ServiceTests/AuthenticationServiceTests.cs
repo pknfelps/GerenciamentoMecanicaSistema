@@ -2,6 +2,7 @@ using Domain.Interface.User;
 using Domain.User;
 using Service.Interface.Authentication;
 using NSubstitute;
+using NSubstitute.Extensions;
 using Service.Interface.Persistence;
 using Service;
 using Service.Interface;
@@ -37,7 +38,7 @@ namespace ServiceTests
 
         private static CreateUserCommand ExistingUserCommand { get; } = new("Admin", "Admin@123", "Admin");
         private static CreateUserCommand ExistingUserWithWrongPassword { get; } = new("Admin", "Teste@123", "Admin");
-        private static CreateUserCommand UnexistingUser { get; } = new("Fulano", "Fulano@123", "Usuario");
+        private static CreateUserCommand UnexistingUser { get; } = new("Fulano", "Fulano@123", "Admin");
 
         [SetUp]
         public void SetUp()
@@ -57,7 +58,7 @@ namespace ServiceTests
                 return null;
             });
 
-            TokenGenerator.Generate(Arg.Any<string>(), Arg.Any<string>()).Returns(GeneratedToken);
+            TokenGenerator.Generate(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Guid>()).Returns(GeneratedToken);
             PasswordHasher.Verify(ExistingUserCommand.Password, PasswordHash).Returns(true);
 
             AuthenticationService = new AuthenticationService(UsuarioRepository, TokenGenerator, PasswordHasher);
@@ -71,7 +72,7 @@ namespace ServiceTests
             Assert.That(token, Is.EqualTo(GeneratedToken));
 
             await UsuarioRepository.Received(1).GetUserCredentials(ExistingUser.Name, ExistingUser.Role.ToString());
-            TokenGenerator.Received(1).Generate(ExistingUser.Name, ExistingUser.Role.ToString());
+            TokenGenerator.Received(1).Generate(ExistingUser.Name, ExistingUser.Role.ToString(), ExistingUser.Id);
             PasswordHasher.Received(1).Verify(ExistingUserCommand.Password, PasswordHash);
         }
 
@@ -83,7 +84,7 @@ namespace ServiceTests
             Assert.That(string.IsNullOrEmpty(token), Is.True);
 
             await UsuarioRepository.Received(1).GetUserCredentials(UnexistingUser.Name, UnexistingUser.Role);
-            TokenGenerator.DidNotReceiveWithAnyArgs().Generate(default!, default!);
+            TokenGenerator.DidNotReceiveWithAnyArgs().Generate(default!, default!, Guid.Empty);
             PasswordHasher.DidNotReceiveWithAnyArgs().Verify(default!, default!);
         }
 
@@ -95,8 +96,34 @@ namespace ServiceTests
             Assert.That(string.IsNullOrEmpty(token), Is.True);
 
             await UsuarioRepository.Received(1).GetUserCredentials(ExistingUserWithWrongPassword.Name, ExistingUserWithWrongPassword.Role);
-            TokenGenerator.DidNotReceiveWithAnyArgs().Generate(default!, default!);
+            TokenGenerator.DidNotReceiveWithAnyArgs().Generate(default!, default!, Guid.Empty);
             PasswordHasher.Received(1).Verify(ExistingUserWithWrongPassword.Password, PasswordHash);
+        }
+        
+        [TestCase("User")]
+        [TestCase("Manager")]
+        [TestCase("Customer")]
+        [TestCase("1")]
+        [TestCase("Admin, Mechanic")]
+        public async Task InvalidRoleDoesNotQueryCredentialsOrEmitToken(string role)
+        {
+            Assert.ThrowsAsync<Domain.Interface.Exceptions.DomainValidationException>(() =>
+                AuthenticationService.Authenticate(new CreateUserCommand("Fulano", "Fulano@123", role)));
+            await UsuarioRepository.DidNotReceiveWithAnyArgs().GetUserCredentials(default!, default!);
+            TokenGenerator.DidNotReceiveWithAnyArgs().Generate(default!, default!, Guid.Empty);
+        }
+
+        [Test]
+        public async Task MechanicUsesIdentityFromStoredCredentials()
+        {
+            var user = new User(Guid.NewGuid(), "Stored mechanic", "Mechanic");
+            UsuarioRepository.Configure().GetUserCredentials("Requested name", "Mechanic")
+                .Returns(new UserCredentials(user, PasswordHash));
+
+            var token = await AuthenticationService.Authenticate(new CreateUserCommand("Requested name", ExistingUserCommand.Password, "Mechanic"));
+
+            Assert.That(token, Is.EqualTo(GeneratedToken));
+            TokenGenerator.Received(1).Generate(user.Name, "Mechanic", user.Id);
         }
     }
 }

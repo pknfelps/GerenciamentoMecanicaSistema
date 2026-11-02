@@ -1,5 +1,6 @@
 using Domain.Interface.Custumer;
 using NSubstitute;
+using NSubstitute.Extensions;
 using Service.Interface.Persistence;
 using Service;
 using Service.Interface;
@@ -48,8 +49,8 @@ namespace ServiceTests
             }
         }
 
-        private static CustomerResult ExistingCustomerResult { get; } = new(ExistingCustomerId, "Ciclano", "10.359.666/0001-94", "(11) 91234-5678", "ciclano@gmail.com");
-        private static CustomerResult ExistingCustomer2Result { get; } = new(ExistingCustomer2Id, "Beltrano", "65.457.513/0001-71", "(11) 91234-5678", "beltrano@gmail.com");
+        private static CustomerResult ExistingCustomerResult { get; } = new(ExistingCustomerId, "Ciclano", "10.359.666/0001-94", "(11) 91234-5678", "ciclano@gmail.com", CustomerStatus.Active);
+        private static CustomerResult ExistingCustomer2Result { get; } = new(ExistingCustomer2Id, "Beltrano", "65.457.513/0001-71", "(11) 91234-5678", "beltrano@gmail.com", CustomerStatus.Active);
         private static CreateCustomerCommand ExistingCustomerCommand { get; } = new("Ciclano", "10.359.666/0001-94", "(11) 91234-5678", "ciclano@gmail.com");
         private static CreateCustomerCommand CustomerToUpdate { get; } = new("Ciclano", "10.359.666/0001-94", "(11) 94321-8765", "ciclano.company@gmail.com");
         private static CreateCustomerCommand CustomerToFailUpdateOrDelete { get; } = new("Beltrano", "65.457.513/0001-71", "(11) 91234-5678", "beltrano@gmail.com");
@@ -131,6 +132,7 @@ namespace ServiceTests
             await CustomerService.RegisterCustomer(CustomerToCreate);
 
             await CustomerRepository.ReceivedWithAnyArgs(1).RegisterCustomer(Arg.Any<ICustomer>());
+            await CustomerRepository.Received(1).RegisterCustomer(Arg.Is<ICustomer>(customer => customer.Status == CustomerStatus.Active));
         }
 
         [Test]
@@ -216,6 +218,19 @@ namespace ServiceTests
             var customer = new CreateCustomerCommand("Teste", "358.410.168-64", "(11) 21245-6458", "teste@gmail.com");
 
             Assert.CatchAsync<ApplicationBaseException>(async () => await CustomerService.UpdateCustomer(Guid.NewGuid(), customer));
+        }
+
+        [Test]
+        public async Task MustPreserveInactiveStatusWhenUpdatingCustomer()
+        {
+            var existing = ExistingCustomer;
+            existing.Status.Returns(CustomerStatus.Inactive);
+            CustomerRepository.Configure().GetCustomer(id: ExistingCustomerId).Returns(existing);
+
+            await CustomerService.UpdateCustomer(ExistingCustomerId, CustomerToUpdate);
+
+            await CustomerRepository.Received(1).UpdateCustomer(Arg.Is<ICustomer>(customer =>
+                customer.Id == ExistingCustomerId && customer.Status == CustomerStatus.Inactive));
         }
 
         [Test]

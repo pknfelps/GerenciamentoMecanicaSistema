@@ -1,16 +1,28 @@
 using Domain.Interface.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interface.Exceptions;
+using System.Diagnostics;
+using GerenciamentoMecanicaSistema.Controllers;
+using GerenciamentoMecanicaSistema.Observability;
+using Microsoft.AspNetCore.Mvc.Controllers;
 
 namespace GerenciamentoMecanicaSistema.Middleware
 {
-    public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+    public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger,
+        OrderBusinessMetrics? metrics = null)
     {
         private RequestDelegate Next { get; } = next;
         private ILogger<ExceptionHandlingMiddleware> Logger { get; } = logger;
 
         public async Task InvokeAsync(HttpContext context)
         {
+            var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText ?? "unmatched";
+            var method = context.Request.Method is "GET" or "POST" or "PUT" or "PATCH" or "DELETE" or "HEAD" or "OPTIONS"
+                ? context.Request.Method
+                : "OTHER";
+            var requestId = context.TraceIdentifier;
+            var traceId = Activity.Current?.TraceId.ToString() ?? "unavailable";
+
             try
             {
                 await Next(context);
@@ -18,26 +30,37 @@ namespace GerenciamentoMecanicaSistema.Middleware
             catch (ApplicationBaseException exception)
             {
                 Logger.LogWarning(
-                    exception,
-                    "Erro de aplicação tratado. Path: {Path}. StatusCode: {StatusCode}",
-                    context.Request.Path,
-                    GetStatusCode(exception));
+                    "Erro de aplicação tratado. StatusCode: {StatusCode}. ExceptionType: {ExceptionType}. RequestId: {RequestId}. TraceId: {TraceId}. HttpMethod: {HttpMethod}. Route: {Route}",
+                    GetStatusCode(exception),
+                    exception.GetType().FullName, requestId, traceId, method, route);
 
                 await WriteProblemDetails(context, exception, GetStatusCode(exception));
             }
             catch (DomainBaseException exception)
             {
                 Logger.LogWarning(
-                    exception,
-                    "Erro de domínio tratado. Path: {Path}. StatusCode: {StatusCode}",
-                    context.Request.Path,
-                    GetStatusCode(exception));
+                    "Erro de domínio tratado. StatusCode: {StatusCode}. ExceptionType: {ExceptionType}. RequestId: {RequestId}. TraceId: {TraceId}. HttpMethod: {HttpMethod}. Route: {Route}",
+                    GetStatusCode(exception),
+                    exception.GetType().FullName, requestId, traceId, method, route);
 
                 await WriteProblemDetails(context, exception, GetStatusCode(exception));
             }
+            catch (OperationCanceledException exception) when (context.RequestAborted.IsCancellationRequested)
+            {
+                if (!context.Response.HasStarted)
+                    context.Response.StatusCode = StatusCodes.Status499ClientClosedRequest;
+
+                Logger.LogInformation(
+                    "Requisição cancelada pelo cliente. StatusCode: {StatusCode}. ExceptionType: {ExceptionType}. RequestId: {RequestId}. TraceId: {TraceId}. HttpMethod: {HttpMethod}. Route: {Route}",
+                    context.Response.StatusCode,
+                    exception.GetType().FullName, requestId, traceId, method, route);
+            }
             catch (Exception exception)
             {
-                Logger.LogError(exception, "Erro inesperado durante a requisição. Path: {Path}", context.Request.Path);
+                Logger.LogError(
+                    "Erro inesperado durante a requisição. StatusCode: {StatusCode}. ExceptionType: {ExceptionType}. RequestId: {RequestId}. TraceId: {TraceId}. HttpMethod: {HttpMethod}. Route: {Route}",
+                    StatusCodes.Status500InternalServerError,
+                    exception.GetType().FullName, requestId, traceId, method, route);
 
                 await WriteProblemDetails(
                     context,
@@ -46,12 +69,20 @@ namespace GerenciamentoMecanicaSistema.Middleware
                     "Erro interno do servidor",
                     "Ocorreu um erro inesperado ao processar a requisição.");
             }
+            finally
+            {
+                if (context.Response.StatusCode == StatusCodes.Status500InternalServerError && !context.RequestAborted.IsCancellationRequested
+                    && context.GetEndpoint()?.Metadata.GetMetadata<ControllerActionDescriptor>() is { } action
+                    && action.ControllerTypeInfo.AsType() == typeof(OrdersController))
+                    metrics?.RecordProcessingFailure(action.MethodInfo.Name);
+            }
         }
 
         private static int GetStatusCode(ApplicationBaseException exception) =>
             exception switch
             {
                 InvalidRequestException => StatusCodes.Status400BadRequest,
+                AccessDeniedException => StatusCodes.Status403Forbidden,
                 NotFoundException => StatusCodes.Status404NotFound,
                 ConflictException => StatusCodes.Status409Conflict,
                 BusinessRuleException => StatusCodes.Status422UnprocessableEntity,
@@ -91,6 +122,7 @@ namespace GerenciamentoMecanicaSistema.Middleware
             statusCode switch
             {
                 StatusCodes.Status400BadRequest => "Requisição inválida",
+                StatusCodes.Status403Forbidden => "Acesso negado",
                 StatusCodes.Status404NotFound => "Recurso não encontrado",
                 StatusCodes.Status409Conflict => "Conflito",
                 StatusCodes.Status422UnprocessableEntity => "Regra de negócio violada",

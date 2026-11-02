@@ -1,5 +1,34 @@
 # ADR 008 — Infraestrutura e banco declarativos
 
+**Estado:** aceito em 07/10/2026, implementado e validado em hom; complementado pelos ADRs [009](009-SAM-AUTENTICACAO.md) e [010](010-GATEWAY-REST-V2.md).
+
+**Contexto:** wrappers/controller/publicadores e protocolo de candidatos/prontidão aumentaram a manutenção. A operação deve ser legível nas ferramentas proprietárias dos recursos.
+
+**Decisão vigente:** bootstrap/base/banco/Gateway e recursos New Relic em Terraform; objetos Kubernetes em manifestos/Kustomize próprios; auth em SAM/CloudFormation. Workflows usam comandos diretos. Não há controller de LoadBalancer nem protocolo operacional de releases v1.
+
+- Base administra NLB/listener TCP 80, target group de instâncias 30080 e associação ASG. Service NodePort leva a 8080; health HTTP /health/ready. VPC Link V2 usa SG reservado e avaliação inbound PrivateLink **on**, substituindo a proposta off para V1.
+- Um nó t3.small com min/desired/max 1, HPA 1–3 pods; Metrics Server e Pod Identity Agent. Sem EBS CSI não utilizado ou escalador de nós. Namespace database-init e Service pertencem à base; Collector tem Kustomization/namespace/RBAC próprios.
+- SSM v2 é configuração pública, com escalares String/listas JSON e referências de Secrets. Não há candidato, geração, fingerprint ou marcador de validade de 24 horas como prontidão. Sucesso vem de Job/rollout e integração funcional.
+- Banco administra RDS/SQL/ConfigMap e Secrets Kubernetes temporários via valores ephemeral/write-only. Marcador versão/hash/data verifica compatibilidade; revisão de escrita fixa evita rotação a cada apply. Job usa administrador somente na inicialização; cleanup always remove credenciais temporárias.
+- API tem acesso Edit restrito a default; banco Edit em database-init e View em default para checar dependências. Isso não isola tráfego de rede por namespace. IAM/SGs e credenciais PostgreSQL são controles distintos. Collector tem RBAC de leitura e token Kubernetes somente no pod, além de Pod Identity para AWS.
+- Base/banco/Gateway/New Relic preservam plano salvo → aprovação sem AWS → apply exato, sete dias e mesmo SHA/artefato. API/auth têm os fluxos manuais descritos nos ADRs próprios, sem essa aprovação intermediária. Bootstrap continua administrativo, com revisão/aprovação do plano salvo.
+- O mantenedor coordena ordem entre repositórios. Locks protegem estados, não todo o ambiente. Destroy checa recursos consumidores diretamente, sem marcadores SSM adicionais ou leitura de estado externo; consultas falhas bloqueiam.
+
+**Consequências e comprovação:** código/manifestos separados por proprietário, sem helpers próprios para gerar infraestrutura. Credenciais de runtime e roles são persistentes no bootstrap para permitir limpeza de ENIs da Lambda. Testes de negócio permanecem nos projetos .NET; suites operacionais/Collector removidas não foram recriadas.
+
+Não executar alterações, destruição ou recuperação automaticamente a partir do histórico.
+
+Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados.
+
+<details>
+<summary>Histórico anterior à revisão E7 — registros preservados, sem vigência operacional</summary>
+
+Os estados locais, planos pendentes e alternativas abaixo registram o momento em que foram escritos. A decisão e o alcance atuais estão acima; este histórico não autoriza operações nem reabre pendências aceitas.
+
+> **Complemento aprovado — 12/10/2026:** [ADR 010](010-GATEWAY-REST-V2.md) define VPC Link V2 com SG reservado, substituindo a exceção inbound PrivateLink off por on. Gateway possui estado/workflows separados e contratos no artefato do plano salvo; base continua proprietária dos SGs/NLB.
+
+> **Revisão de 2026-10-11:** [ADR 009](009-SAM-AUTENTICACAO.md) substitui exclusivamente o provisionamento Terraform de auth por SAM/CloudFormation com ZIP. Bootstrap/base/banco/Gateway permanecem Terraform; auth/v2 pertence à stack e role auth-runtime ao bootstrap persistente. Template/workflows validados localmente; novo bootstrap e implantação pendentes. Registros de plan/apply Terraform auth abaixo são históricos; seu código foi retirado após inventário sem recursos/estado, sem destroy ou exclusão de estado.
+
 **Estado:** aceito pelo mantenedor; implementação local autorizada em 2026-10-07. Aplicações AWS dependem de plano e aprovação.
 
 **Contexto:** wrappers, publicadores, protocolos de prontidão e testes operacionais próprios aumentaram a manutenção além da necessidade do projeto. Recursos e fluxo devem ser legíveis nas ferramentas que os administram.
@@ -13,6 +42,7 @@
 - O Job estático executa inicialização e provisionamento de usuários. Banco tem Edit apenas em `database-init`; API apenas em `default`, sem acesso aos Secrets administrativos. Essa é uma fronteira de autorização Kubernetes; a rede PostgreSQL ainda usa os SGs publicados de API/Job e Lambda.
 - Provisionamento e destroy são manuais: plan salvo → Environment protegido de aprovação, sem AWS → apply do mesmo binário/commit/execução. Artefato de plano retido por sete dias. Plano rejeitado por estado alterado exige nova execução; não há replan após aprovação. CI de infra/banco executa somente fmt, validate e Kustomize. Remover scripts de teste, mocks, testes Terraform e SQLs de smoke; preservar testes de negócio da API/função.
 - Operações de um ambiente são sequenciais, coordenadas pelo mantenedor. Alterar dependências exige novo plano dos consumidores. Locks protegem estados próprios, sem mecanismo novo entre repositórios.
+- **2026-10-09 — Lambda de autenticação:** role mecanica-<ambiente>-auth-runtime e policy de execução pertencem ao bootstrap persistente. O serviço pode concluir a limpeza de ENIs depois de DeleteFunction; remover a role no estado auth impediria essa limpeza. Auth consulta a role por data source e administra função/versões/logs/SSM e somente duas regras de saída do SG reservado pertencente à base. Manter role/permissões e aguardar liberação das ENIs antes do descarte da rede. A pipeline auth recebe uma policy gerenciada própria, PassRole limitado à Lambda e nenhum acesso aos valores de Secrets ou escrita na role runtime. Runtime lê apenas os nove parâmetros e AWSCURRENT de JWT/database-auth do ambiente, com Deny de operações EC2 pelo código condicionado a lambda:SourceFunctionArn. Artefatos ZIP/OpenAPI publicados precedem o plan; fixar versão S3/hash do ZIP e publicar ARN Lambda de versão numérica. Gateway continua dono da permissão de invocação. Implementação local não autoriza plano/apply AWS. [Permissões VPC e limpeza](https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html).
 
 **Migração:** preservar nomes, endereços, backends e VPC/EKS/RDS. Usar imports nativos para secrets existentes e para adotar/retirar parâmetros v1 ativos em planos dedicados; históricos de tentativas permanecem. Migrar produtores/consumidores para v2 antes de retirar v1. Se houver NLB/controller antigos, remover primeiro o Service e aguardar exclusão do NLB pelo controller; depois desinstalar o controller e aplicar o NLB Terraform. Permissões de descarte legado permanecem apenas durante a transição.
 
@@ -21,3 +51,8 @@
 **Substitui:** exigência de controller em ADR 002/D01 e protocolo de releases/prontidão em ADR 004/D09/RFC 002. Demais decisões de rede, negócio, JWT e distribuição imutável de artefatos permanecem.
 
 Referências: [ASG e target groups](https://docs.aws.amazon.com/autoscaling/ec2/userguide/attach-load-balancer-asg.html), [dados temporários Terraform](https://developer.hashicorp.com/terraform/language/manage-sensitive-data), [AWS write-only](https://raw.githubusercontent.com/hashicorp/terraform-provider-aws/v6.58.0/website/docs/r/secretsmanager_secret_version.html.markdown), [Kubernetes write-only](https://raw.githubusercontent.com/hashicorp/terraform-provider-kubernetes/v3.3.0/docs/resources/secret_v1.md).
+
+**2026-10-09 — CI/publicacao auth:** role CI persistente no bootstrap, separada das roles de deploy e restrita a leitura do pacote Auth.Contracts 1.0.0/checksum. CI usa comandos padrao .NET/Terraform/actionlint, preserva testes da aplicacao e remove wrappers/mocks operacionais de consumo. Publicacao manual separada do provisionamento, artefatos imutaveis por commit com SHA-256 e escrita condicional. Provisionamento/destroy auth mantem tres jobs e aplicam somente plano salvo aprovado. Nenhum script monta manifestos, recompila no apply ou implementa protocolo de releases. Environments de aprovacao sem AWS, configurados antes do uso; role CI exige novo plano aprovado. Validacao funcional/deploy continuam manuais pelo mantenedor.
+**2026-10-09 — Simplificacao autorizada dos workflows auth:** remover lint OpenAPI e Node/Redocly de CI/publicacao, preservando verificacao do NuGet e todos os testes .NET. Conferir branch/ambiente somente no inicio; usar OIDC/IAM e restricoes Terraform para conta/regiao/backend. Publicacao separa ZIP e contrato, com checksums S3 e reutilizacao somente de bytes identicos. Provision/destroy leem o checksum do ZIP sem baixar novamente os artefatos, mantem plan → aprovacao → apply salvo e nao repetem verificacoes de quota/configuracao no apply. Quota suficiente e limpeza de ENIs sao pre-requisitos/procedimentos administrativos, sem novos scripts. Destroy ainda requer commit/hash pelos inputs atuais do Terraform; backend e plano determinam o descarte.
+
+</details>
