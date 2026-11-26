@@ -1,6 +1,6 @@
 # ADR 008 — Infraestrutura e banco declarativos
 
-**Estado:** aceito em 07/10/2026, implementado e validado em hom; complementado pelos ADRs [009](009-SAM-AUTENTICACAO.md) e [010](010-GATEWAY-REST-V2.md).
+**Estado:** aceito em 07/10/2026 e implementado; componentes implantados e fluxo funcional conferidos em hom e prd em 02/11/2026. Complementado pelos ADRs [009](009-SAM-AUTENTICACAO.md) e [010](010-GATEWAY-REST-V2.md).
 
 **Contexto:** wrappers/controller/publicadores e protocolo de candidatos/prontidão aumentaram a manutenção. A operação deve ser legível nas ferramentas proprietárias dos recursos.
 
@@ -11,14 +11,14 @@
 - SSM v2 é configuração pública, com escalares String/listas JSON e referências de Secrets. Não há candidato, geração, fingerprint ou marcador de validade de 24 horas como prontidão. Sucesso vem de Job/rollout e integração funcional.
 - Banco administra RDS/SQL/ConfigMap e Secrets Kubernetes temporários via valores ephemeral/write-only. Marcador versão/hash/data verifica compatibilidade; revisão de escrita fixa evita rotação a cada apply. Job usa administrador somente na inicialização; cleanup always remove credenciais temporárias.
 - API tem acesso Edit restrito a default; banco Edit em database-init e View em default para checar dependências. Isso não isola tráfego de rede por namespace. IAM/SGs e credenciais PostgreSQL são controles distintos. Collector tem RBAC de leitura e token Kubernetes somente no pod, além de Pod Identity para AWS.
-- Base/banco/Gateway/New Relic preservam plano salvo → aprovação sem AWS → apply exato, sete dias e mesmo SHA/artefato. API/auth têm os fluxos manuais descritos nos ADRs próprios, sem essa aprovação intermediária. Bootstrap continua administrativo, com revisão/aprovação do plano salvo.
+- Base/banco/Gateway/New Relic preservam plano salvo → aprovação sem AWS → apply exato, sete dias e mesmo SHA/artefato. API/auth têm deploy automático por push/merge e disparos manuais descritos nos ADRs próprios, sem essa aprovação intermediária. Bootstrap continua administrativo, com revisão/aprovação do plano salvo.
 - O mantenedor coordena ordem entre repositórios. Locks protegem estados, não todo o ambiente. Destroy checa recursos consumidores diretamente, sem marcadores SSM adicionais ou leitura de estado externo; consultas falhas bloqueiam.
 
 **Consequências e comprovação:** código/manifestos separados por proprietário, sem helpers próprios para gerar infraestrutura. Credenciais de runtime e roles são persistentes no bootstrap para permitir limpeza de ENIs da Lambda. Testes de negócio permanecem nos projetos .NET; suites operacionais/Collector removidas não foram recriadas.
 
 Não executar alterações, destruição ou recuperação automaticamente a partir do histórico.
 
-Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados.
+Revisão documental de 02/11/2026. Conferência funcional em prd não equivale a ensaio de descarte, recuperação, concorrência ou isolamento durante alterações entre ambientes.
 
 <details>
 <summary>Histórico anterior à revisão E7 — registros preservados, sem vigência operacional</summary>

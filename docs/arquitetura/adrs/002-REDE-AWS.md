@@ -1,6 +1,6 @@
 # ADR 002 — Gateway REST com backend privado no EKS
 
-**Estado:** aceito e validado em hom; detalhamento vigente no [ADR 010](010-GATEWAY-REST-V2.md).
+**Estado:** aceito, com fluxo integrado conferido em hom e prd em 02/11/2026; detalhamento vigente no [ADR 010](010-GATEWAY-REST-V2.md).
 
 **Contexto:** oferecer entrada gerenciada mantendo aplicação/banco privados, com uso em janelas educacionais e reutilização do EKS/Terraform.
 
@@ -10,9 +10,9 @@ Cada ambiente tem VPC, duas AZs com subnets públicas/workloads/banco, NAT/EIP �
 
 **Alternativas e consequências:** HTTP API não foi adotada; REST atende à composição OpenAPI e tracing/logs escolhidos. Cache/execution logs/data tracing ficam desligados. Um nó/NAT e banco Single-AZ limitam disponibilidade; não representam capacidade produtiva validada ou alta disponibilidade entre AZs. Gateway/NLB/EKS/NAT e armazenamento têm custos próprios.
 
-**Comprovação:** entrada Gateway, JWT, rede privada, pull ECR, probes e HPA foram conferidos nas evidências de hom. Coexistência/prd e carga não foram testados. [Componentes](../diagramas/COMPONENTES.md).
+**Comprovação:** entrada Gateway, JWT, backends privados, imagem implantada e probes saudáveis conferidos em hom e prd em 02/11/2026, com ambos provisionados. HPA configurado nos dois; demonstração de escala permanece restrita à validação anterior de hom. Não houve ensaio específico de isolamento durante alterações/descarte entre ambientes nem teste de carga. [Componentes](../diagramas/COMPONENTES.md).
 
-Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados.
+Revisão documental de 02/11/2026. Conferência funcional dos dois ambientes não certifica capacidade, alta disponibilidade ou os cenários dispensados.
 
 <details>
 <summary>Histórico anterior à revisão E7 — registros preservados, sem vigência operacional</summary>

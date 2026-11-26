@@ -32,7 +32,7 @@ Conta 121754142617, região us-east-1; environment hom|prd validado. Metadados b
 
 Secret JWT é JSON com key, gerado via valores ephemeral/write-only e revisão fixa, sem valor em SSM/planos/estado. API usa Pod Identity default/gerenciamento-api; Lambda usa auth-runtime persistente. Cada runtime lê AWSCURRENT no bootstrap e mantém em memória; alteração de chave exige reinicialização. API consulta configuração e Secret do banco API; função consulta somente a credencial auth. EmailFunction não recebe banco/JWT/SSM/Secrets em runtime; SMTP é configuração resolvida no deploy. Sem fallback local em modo AWS ou cópia JWT para Secret Kubernetes.
 
-O Collector usa endpoint interno fixado nos overlays, namespace observability e Pod Identity própria. Sua License Key está no Secret persistente `/mecanica/<ambiente>/observability/newrelic-license-key`; não existe newrelic-secret-arn/otel-collector-endpoint publicado automaticamente em base/v2. Overlay API hom habilita OTel; prd mantém false. SAM habilita permanentemente os sinais da função.
+O Collector usa endpoint interno fixado nos overlays, namespace observability e Pod Identity própria. Sua License Key está no Secret persistente `/mecanica/<ambiente>/observability/newrelic-license-key`; não existe newrelic-secret-arn/otel-collector-endpoint publicado automaticamente em base/v2. Overlays API hom e prd habilitam OTel. SAM habilita permanentemente os sinais da autenticação; EmailFunction mantém somente logs JSON no CloudWatch.
 
 ## Banco v2
 

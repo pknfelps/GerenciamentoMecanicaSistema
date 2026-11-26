@@ -1,6 +1,6 @@
 # ADR 007 — RDS PostgreSQL no ambiente educacional
 
-**Estado:** decisão aceita em 02/10/2026; RDS 16.15 e fluxo integrado comprovados em hom. Substitui Aurora/auto-pause do [ADR 003](003-BANCO-E-HISTORICO.md), preservando histórico/banco descartável.
+**Estado:** decisão aceita em 02/10/2026; RDS 16.15 e fluxo integrado conferidos em hom e prd em 02/11/2026. Substitui Aurora/auto-pause do [ADR 003](003-BANCO-E-HISTORICO.md), preservando histórico/banco descartável.
 
 **Contexto histórico:** a criação Aurora Serverless v2 desta conta falhou com FreeTierRestrictionError. O mantenedor rejeitou mudar de plano para viabilizar aquela topologia e escolheu RDS PostgreSQL db.t3.micro. Isso registra a decisão tomada; não define elegibilidade geral de todas as contas ou tarifas atuais.
 
@@ -10,11 +10,11 @@ SSM database/v2 publica endpoint/porta/database/ssl-mode/schema/hash e referênc
 
 **Alternativas e consequências:** preservar PostgreSQL/SQL/Dapper evita remodelar as transações existentes. RDS provisionado não pausa/escala a zero automaticamente. O ciclo econômico escolhido é destruir/recriar dados educacionais, não manter armazenamento/backups gratuitos ou alta disponibilidade produtiva. db.t3.micro/nó único foram avaliados em fluxos funcionais, sem prova de capacidade sob carga.
 
-Não se alega ausência total de cobrança ou de dados históricos. Prd/coexistência e carga não testados. Não executar recuperação/limpeza de estado como parte desta revisão.
+Não se alega ausência total de cobrança ou de dados históricos. Em 02/11/2026, ambas as instâncias estavam disponíveis, privadas e criptografadas, com acessos funcionais da API/autenticação. SQL direto e descarte não foram repetidos em prd; isolamento durante alterações entre ambientes e carga não foram ensaiados. Não executar recuperação/limpeza de estado como parte desta revisão.
 
 Referência: [RDS PostgreSQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html). O registro original de transição fica no histórico abaixo.
 
-Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados.
+Revisão documental de 02/11/2026. Validação funcional não certifica capacidade, recuperação ou disponibilidade futura.
 
 <details>
 <summary>Histórico anterior à revisão E7 — registros preservados, sem vigência operacional</summary>

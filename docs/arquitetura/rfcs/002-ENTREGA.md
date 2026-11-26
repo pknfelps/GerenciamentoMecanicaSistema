@@ -16,7 +16,7 @@
 
 ## Gatilhos, aprovação e estado
 
-CI preserva PR/manual. Push/merge em develop/hom ou main/prd inicia os deploys por repositório, com branch/ambiente conferidos antes das operações e o SHA da execução fixado. Disparos manuais seguem disponíveis; destroys e New Relic permanecem manuais. Gatilhos preparados localmente em 02/11/2026; comprovação remota após publicação.
+CI preserva PR/manual. Push/merge em develop/hom ou main/prd inicia os deploys por repositório, com branch/ambiente conferidos antes das operações e o SHA da execução fixado. Disparos manuais seguem disponíveis; destroys e New Relic permanecem manuais. Gatilhos automáticos configurados em 02/11/2026; a conferência funcional dos ambientes não substitui auditoria de cada execução das pipelines.
 
 Base/banco/Gateway: plan salva binário/texto → Environment de aprovação sem AWS → apply do mesmo SHA/plano/execução. Artefato por ID, sete dias; plano obsoleto exige nova execução/aprovação, sem replan no apply. Estados S3 próprios por componente/ambiente usam versionamento e lock nativo. Consumidores leem parâmetros públicos SSM v2, sem terraform_remote_state. SSM configura recursos; sua presença não comprova prontidão.
 
@@ -40,7 +40,7 @@ Base remove Collector/manifestos antes do EKS. Banco remove Job antes do RDS; sk
 
 OpenAPI/NuGet/template SAM usam SHA-256 e escrita condicional; conteúdo divergente não sobrescreve versão existente. ECR tem tags imutáveis e deploy por digest. ZIP SAM permanece em prefixo gravável/versionado: fixar VersionId estabiliza a seleção, sem tornar a chave write-once.
 
-Prd/coexistência, concorrência de publicação e rollback não foram exercitados como novos testes; dispensas/adiamento não equivalem a aprovação desses cenários.
+Em 02/11/2026, hom e prd estavam provisionados e passaram pela conferência funcional dos componentes e da telemetria descrita na [RFC 003](003-DADOS-E-OBSERVABILIDADE.md#validação-em-hom-e-prd). Não houve ensaio específico de isolamento durante alterações/descarte entre ambientes, concorrência de publicação ou rollback. As comprovações anteriores de descarte, custos e integridade de artefatos mantêm seu alcance original; dispensas não equivalem a testes aprovados.
 
 Decisões: [ADR 004](../adrs/004-ENTREGA-E-AMBIENTES.md), [ADR 008](../adrs/008-INFRAESTRUTURA-DECLARATIVA.md), [ADR 009](../adrs/009-SAM-AUTENTICACAO.md) e [ADR 010](../adrs/010-GATEWAY-REST-V2.md).
 

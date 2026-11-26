@@ -50,4 +50,6 @@ Os ADRs mantêm registros anteriores em seções de histórico explicitamente se
 
 ## Limites
 
-Topologia de um nó/NAT único/RDS Single-AZ, SMTP4dev efêmero sem entrega externa e telemetria sem garantia única. Workflows de implantação são manuais; preparação hom/prd não certifica operação em produção. X-Ray e OTLP permanecem separados.
+Em 02/11/2026, fluxos funcionais e telemetria foram conferidos em hom e prd; o alcance exato e os ensaios não repetidos estão na [RFC 003](rfcs/003-DADOS-E-OBSERVABILIDADE.md#validação-em-hom-e-prd). Os overlays da API e os tfvars do Gateway habilitam, respectivamente, OTel e X-Ray nos dois ambientes.
+
+Topologia de um nó/NAT único/RDS Single-AZ, SMTP4dev efêmero sem entrega externa e telemetria sem garantia única. Deploys iniciam por push/merge ou disparo manual, com as aprovações Terraform preservadas; destroys e New Relic permanecem manuais. Conferência funcional não certifica capacidade, alta disponibilidade ou disponibilidade futura. X-Ray e OTLP permanecem separados.

@@ -20,7 +20,7 @@
 
 Auth cria somente egress 5432 ao SG do banco e 443 para saída via NAT no SG pertencente à base. A role persistente permite limpeza posterior das ENIs. Sem IAM duplicado na stack ou permissão de Secret administrativo para a função.
 
-Auth-ci verifica pacote exato, testes .NET/PostgreSQL, SAM/actionlint; auth-publish tem testes/build SAM → publicação com artefato por ID da mesma execução. auth-provision e auth-destroy têm um job manual, sem Environment de aprovação intermediária. O disparo manual autoriza cada operação completa; SAM usa rollback padrão CloudFormation. Não há comandos CloudFormation diretos. Desde 02/11/2026, serverless-deploy também inicia por push/merge develop/hom ou main/prd: publica os dois componentes no mesmo SHA, implanta email e só então auth, reutilizando os fluxos existentes. Os wrappers manuais e o destroy manual são preservados; comprovação do gatilho remoto após publicação.
+Auth-ci verifica pacote exato, testes .NET/PostgreSQL, SAM/actionlint; auth-publish tem testes/build SAM → publicação com artefato por ID da mesma execução. auth-provision e auth-destroy têm um job manual, sem Environment de aprovação intermediária. O disparo manual autoriza cada operação completa; SAM usa rollback padrão CloudFormation. Não há comandos CloudFormation diretos. Desde 02/11/2026, serverless-deploy também inicia por push/merge develop/hom ou main/prd: publica os dois componentes no mesmo SHA, implanta email e só então auth, reutilizando os fluxos existentes. Os wrappers manuais e o destroy manual são preservados; a conferência funcional dos ambientes não substitui auditoria de cada gatilho remoto.
 
 ## Seleção imutável do código
 
@@ -38,9 +38,9 @@ sam delete usa o prefixo operacional sam/auth/<ambiente>/changesets. No SAM CLI 
 
 SAM fixa OTel/X-Ray/New Relic sempre ativos, layer Collector 0.22.0 e YAML empacotado. Função não recebe License Key em variáveis; extensão a lê pelo Secrets Manager e compartilha a role da função. W3C da aplicação e X-Ray nativo ficam separados. [ADR 005](005-OBSERVABILIDADE.md).
 
-Sem novo build/deploy/destroy nesta revisão; prd não validado.
+Em 02/11/2026, auth/email estavam Active e com atualização Successful em hom e prd. Pedido/captura/confirmação de código, rejeição de código incorreto/consumido e uso do JWT Customer foram conferidos nos dois ambientes; os sinais OTLP da autenticação chegaram ao New Relic. Não houve novo ensaio de descarte, rollback ou concorrência em prd.
 
-Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados.
+Revisão documental de 02/11/2026. Comprovações anteriores de VersionId e descarte permanecem no seu escopo original; não são estendidas pela conferência funcional.
 
 <details>
 <summary>Histórico anterior à revisão E7 — registros preservados, sem vigência operacional</summary>

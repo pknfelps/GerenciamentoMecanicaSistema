@@ -8,6 +8,10 @@ Captura SMTP4dev privada/efêmera é usada em todos os modos, sem entrega extern
 
 Notificação após commit da OS continua sendo aguardada e sua falha tratada não desfaz a operação. Auth só ativa desafio após captured; falha tenta invalidar sem reembolsar limite. Sem outbox/fila, recuperação automática, processamento independente da requisição ou entrega única. Interrupção/timeout pode perder ou duplicar mensagem.
 
+## Conferência funcional
+
+Em 02/11/2026, o fluxo de código de acesso e as notificações das OSs aprovadas/recusadas produziram 11 mensagens capturadas por ambiente em hom e prd. Código incorreto e reutilização do código consumido foram rejeitados. A rodada não provocou falha SMTP nem repetiu em prd os ensaios anteriores de indisponibilidade e alertas realizados em hom; captura permanece distinta de entrega externa.
+
 ## Evolução futura
 
 O transporte em função serverless já foi implementado. A evolução futura é tornar o processamento das notificações de OS independente da resposta HTTP, reduzindo a espera e permitindo tratamento controlado de indisponibilidade. Ainda exige decisões sobre publicação confiável após commit, idempotência, retentativas, mensagens que falham, operação e custos. Não há fila/outbox ou tecnologia adicional escolhida nesta entrega. Usar Task/await ou invocar Lambda sincronamente não equivale a esse desacoplamento. A autenticação mantém sua regra de só liberar o desafio após captura; não presumir mudança automática para o mesmo fluxo futuro.

@@ -1,20 +1,20 @@
 # ADR 004 — Quatro repositórios e configuração por ambiente
 
-**Estado:** aceito e implementado, com fluxo hom comprovado. Coexistência/prd não exercitados; gatilhos automáticos preparados em 02/11/2026, com comprovação após publicação.
+**Estado:** aceito e implementado; fluxos funcionais conferidos em hom e prd em 02/11/2026, com ambos provisionados. Isso não constitui ensaio de isolamento durante alterações/descarte nem de concorrência entre pipelines.
 
 **Contexto:** separar código, plataforma, banco e autenticação, preservando contratos/versionamento e descarte sem remover recursos compartilhados.
 
 **Decisão vigente:** API, infraestrutura, banco e autenticação têm repositórios/pipelines próprios. Develop corresponde a hom e main a prd. Recursos/SSM/roles e estados são separados por componente/ambiente; o bootstrap é persistente. Terraform usa S3 versionado/locking nativo, sem DynamoDB; auth usa stack SAM/CloudFormation. Metadados SSM v2 são configuração, não release/prontidão; consumidores não leem estados de outros repositórios.
 
-CI preserva validações de PR/manual. Push/merge em develop/hom ou main/prd inicia deploy em cada repositório: API publica/implanta, banco planeja/aplica e inicializa, Serverless publica ambos os componentes e implanta email antes de auth, infraestrutura aplica base antes de chamar Gateway. Terraform mantém plano salvo → aprovação → apply exato; SAM/API não ganham aprovação intermediária. Os gatilhos foram autorizados e preparados localmente em 02/11/2026; a execução automática real será comprovada após publicar as alterações. Disparos manuais continuam disponíveis; destroy e New Relic permanecem manuais.
+CI preserva validações de PR/manual. Push/merge em develop/hom ou main/prd inicia deploy em cada repositório: API publica/implanta, banco planeja/aplica e inicializa, Serverless publica ambos os componentes e implanta email antes de auth, infraestrutura aplica base antes de chamar Gateway. Terraform mantém plano salvo → aprovação → apply exato; SAM/API não ganham aprovação intermediária. Gatilhos automáticos configurados em 02/11/2026; a conferência funcional dos ambientes não substitui auditoria de cada execução das pipelines. Disparos manuais continuam disponíveis; destroy e New Relic permanecem manuais.
 
 Imagens usam ECR/digest; OpenAPI/NuGet/template SAM são publicados com checksum e escrita condicional. ZIP SAM tem chave versionada gravável, mas o template fixa VersionId. Estado/dashboards/alertas New Relic são compartilhados e independentes dos destroys AWS. [RFC 002](../rfcs/002-ENTREGA.md).
 
 **Alternativas e consequências:** OIDC substitui chaves duráveis no GitHub. Bootstrap e artefatos persistem entre ativações. Locks/concurrency de um repositório não serializam todos os componentes; o mantenedor coordena a ordem. Não há candidatos/release v1/gerações no fluxo vigente; os registros v1 abaixo são históricos.
 
-Coexistência/concorrência/rollback dispensados não viram testes aprovados.
+Ensaios específicos de coexistência com alterações/descarte, concorrência e rollback dispensados não viram testes aprovados.
 
-Revisão documental de 21/10/2026. Implementação e validações de hom não comprovam prd ou testes dispensados.
+Revisão documental de 02/11/2026. Validação funcional em prd não estende a esse ambiente as comprovações anteriores de descarte, custos ou proteção de artefatos.
 
 <details>
 <summary>Histórico anterior à revisão E7 — registros preservados, sem vigência operacional</summary>
