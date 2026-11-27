@@ -13,8 +13,6 @@ namespace DependencyInjection
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
             services.AddTransient<ICustomerService, CustomerService>();
-            services.AddTransient<IUserService, UserService>();
-            services.AddTransient<IAuthenticationService, AuthenticationService>();
             services.AddTransient<IStockService, StockService>();
             services.AddTransient<IVehicleService, VehicleService>();
             services.AddTransient<ICatalogService, CatalogService>();

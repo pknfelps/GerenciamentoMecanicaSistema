@@ -27,6 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\GerenciamentoMecanica.Auth.Contracts\GerenciamentoMecanica.Auth.Contracts.csproj" />
     <ProjectReference Include="..\GerenciamentoMecanicaSistema\GerenciamentoMecanicaSistema.csproj" />
   </ItemGroup>
 

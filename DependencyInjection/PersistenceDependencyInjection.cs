@@ -39,7 +39,6 @@ namespace DependencyInjection
             services.AddScoped<ITransactionManager, TransactionManager>();
             services.AddScoped<ICustomerRepository, CustomerRepository>();
             services.AddScoped<ICustomerAccessSyncRepository, CustomerAccessSyncRepository>();
-            services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IStockRepository, StockRepository>();
             services.AddScoped<IVehicleRepository, VehicleRepository>();
             services.AddScoped<ICatalogRepository, CatalogRepository>();

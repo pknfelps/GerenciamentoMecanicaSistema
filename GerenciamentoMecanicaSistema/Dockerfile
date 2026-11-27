@@ -8,7 +8,6 @@ COPY ["GerenciamentoMecanicaSistema/GerenciamentoMecanicaSistema.csproj", "Geren
 COPY ["DependencyInjection/DependencyInjection.csproj", "DependencyInjection/"]
 COPY ["Domain.Interface/Domain.Interface.csproj", "Domain.Interface/"]
 COPY ["Domain/Domain.csproj", "Domain/"]
-COPY ["GerenciamentoMecanica.Auth.Contracts/GerenciamentoMecanica.Auth.Contracts.csproj", "GerenciamentoMecanica.Auth.Contracts/"]
 COPY ["Infrastructure/Infrastructure.csproj", "Infrastructure/"]
 COPY ["Service.Interface/Service.Interface.csproj", "Service.Interface/"]
 COPY ["Service/Service.csproj", "Service/"]
