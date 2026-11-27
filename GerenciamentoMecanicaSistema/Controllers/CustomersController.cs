@@ -21,6 +21,8 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden, Description = "Perfil sem permissão para esta operação")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Corpo da requisição malformado")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
+        [ProducesResponseType(StatusCodes.Status409Conflict, Description = "Conflito cadastral")]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Sincronização de acesso pendente")]
         public async Task<IActionResult> RegisterCustomer([FromBody] CreateCustomerRequest customer)
         {
             await CustomerService.RegisterCustomer(customer.ToCommand());
@@ -47,6 +49,8 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden, Description = "Perfil sem permissão para esta operação")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
+        [ProducesResponseType(StatusCodes.Status409Conflict, Description = "Conflito cadastral")]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Sincronização de acesso pendente")]
         public async Task<IActionResult> UpdateCustomer([FromRoute, GuidValidation] Guid id, [FromBody] CreateCustomerRequest customer)
         {
             await CustomerService.UpdateCustomer(id, customer.ToCommand());
@@ -61,6 +65,7 @@ namespace GerenciamentoMecanicaSistema.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden, Description = "Perfil sem permissão para esta operação")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Description = "Requisição malformada")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Description = "Erro interno do servidor")]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Sincronização de acesso pendente")]
         public async Task<IActionResult> DeleteCustomer([FromRoute, GuidValidation] Guid id)
         {
             await CustomerService.DeleteCustomer(id);

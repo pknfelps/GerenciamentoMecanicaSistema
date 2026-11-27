@@ -3,6 +3,7 @@ using Amazon.Runtime;
 using Infrastructure.Authentication;
 using Infrastructure.Email;
 using Service.Interface.Authentication;
+using Service.Interface.CustomerAccess;
 using Service.Interface.Email;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,8 @@ public static class InfrastructureDependencyInjection
             ? new AmazonLambdaClient(email.ClientConfiguration())
             : new AmazonLambdaClient(new BasicAWSCredentials("local", "local"), email.ClientConfiguration()));
         services.AddScoped<IEmailSender>(provider => new LambdaEmailSender(provider.GetRequiredService<IAmazonLambda>(), email.FunctionName, () => requestCancellation?.Invoke(provider) ?? default));
+        services.AddSingleton<ICustomerAccessSynchronizer>(provider =>
+            LambdaCustomerAccessSynchronizer.Create(configuration, usesAwsConfiguration, () => requestCancellation?.Invoke(provider) ?? default));
         return services;
     }
 }

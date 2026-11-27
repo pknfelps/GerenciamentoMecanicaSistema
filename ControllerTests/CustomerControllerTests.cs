@@ -9,6 +9,7 @@ using Service.Interface.Results.Customer;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
+using System.Text.Json;
 
 namespace ControllerTests
 {
@@ -27,6 +28,20 @@ namespace ControllerTests
         ];
 
         private readonly CreateCustomerRequest CustomerToUpdate = new("Ciclano", "12.123.456/0001-12", "(11) 94321-8765", "ciclano.company@gmail.com");
+
+        [Test]
+        public async Task PendingAccessSynchronizationReturnsRetryableProblemWithThePersistedCustomerId()
+        {
+            CustomerService.RegisterCustomer(Arg.Any<CreateCustomerCommand>())
+                .Returns(_ => throw new CustomerAccessSyncPendingException(ExistingCustomerId));
+
+            using var response = await TestClient.PostAsJsonAsync("/Customers", CustomerToRegister);
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.ServiceUnavailable));
+            Assert.That(response.Content.Headers.ContentType!.MediaType, Is.EqualTo("application/problem+json"));
+            using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            Assert.That(body.RootElement.GetProperty("code").GetString(), Is.EqualTo("CUSTOMER_ACCESS_SYNC_PENDING"));
+            Assert.That(body.RootElement.GetProperty("customerId").GetGuid(), Is.EqualTo(ExistingCustomerId));
+        }
 
         protected override void MockService()
         {
