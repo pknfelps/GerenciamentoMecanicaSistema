@@ -5,8 +5,9 @@
 ```mermaid
 flowchart LR
     U["Oficina / cliente"] -->|HTTPS| GW["Gateway REST Regional"]
-    GW -->|"POST request-code / verify-code"| AUTH["AuthFunction .NET 10 - versao numerica"]
+    GW -->|"Authentication, Users e codigo de cliente"| AUTH["AuthFunction .NET 10 - versao numerica"]
     GW -->|"HTTP_PROXY rotas da API"| VL["VPC Link V2"]
+    API -->|"Sincronizar acesso - IAM / alias live"| AUTH
     API -->|"SDK Invoke - IAM / alias live"| EMAIL["EmailFunction .NET 10 - privada"]
     AUTH -->|"SDK Invoke - IAM / alias live"| EMAIL
     subgraph VPC["VPC do ambiente - duas AZs"]
@@ -23,10 +24,14 @@ flowchart LR
             COL["Collector - observability"]
             JOB["Job temporario - database-init"]
         end
-        DB[("RDS PostgreSQL 16.15 - Single-AZ")]
+        subgraph RDS["RDS PostgreSQL 16.15 - Single-AZ"]
+            DB[("mecanica")]
+            ID[("mecanica_identity")]
+        end
         API -->|"mecanica_api - TLS VerifyFull"| DB
-        ENIA -->|"Cliente / desafios - mecanica_auth - TLS"| DB
-        JOB -->|"Inicializar SQL e grants - TLS"| DB
+        ENIA -->|"mecanica_auth - TLS VerifyFull"| ID
+        JOB -->|"SQL, seeds e grants"| DB
+        JOB -->|"SQL, seeds e grants"| ID
         API -->|"OTLP interno"| COL
         NAT["NAT unico"] --> INTERNET["APIs AWS / New Relic"]
         API -.-> NAT
@@ -59,9 +64,9 @@ NLB/listeners/targets/ASG pertencem à base, sem Load Balancer Controller. HTTP 
 | API | Imagem/Deployment/HPA/ServiceAccount e regras de OS |
 | Serverless auth SAM | AuthFunction/versões/alias/logs/egress e auth/v2 |
 | Serverless email SAM | EmailFunction/versões/alias/logs/egress SMTP e email/v1 |
-| Gateway Terraform | REST/VPC Link/duas permissões Invoke e logs/gateway/v2 |
+| Gateway Terraform | REST/VPC Link/permissões Invoke por operação de identidade e logs/gateway/v2 |
 
-Provisionar bootstrap/base → banco e email → API/auth → Gateway. Descartar Gateway → API/auth → banco/email → base. Banco vazio e mensagens são descartáveis; artefatos/IAM/estado compartilhados persistem. [Contratos e bloqueios](../CONTRATOS_ENTRE_REPOSITORIOS.md).
+Provisionar bootstrap/base → banco → email → auth → API → Gateway. Descartar Gateway → API/auth → banco/email → base. Banco vazio e mensagens são descartáveis; artefatos/IAM/estado compartilhados persistem. [Contratos e bloqueios](../CONTRATOS_ENTRE_REPOSITORIOS.md).
 
 ## Observabilidade preservada
 

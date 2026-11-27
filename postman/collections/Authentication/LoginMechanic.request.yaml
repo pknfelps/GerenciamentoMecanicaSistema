@@ -1,6 +1,6 @@
 $kind: http-request
 name: LoginMechanic
-url: '{{base_url}}/Authentication'
+url: '{{gateway_url}}/Authentication'
 method: POST
 headers:
 - key: Content-Type
@@ -9,22 +9,23 @@ headers:
   value: application/json
 body:
   type: json
-  content: |
-    {
-      "Name": "Mechanic",
-      "Password": "Mechanic@123",
-      "Role": "Mechanic"
-    }
+  content: '{{identity_body}}'
 scripts:
+- type: beforeRequest
+  code: |-
+    pm.environment.unset("mechanic_token");
+    pm.variables.set("identity_body", JSON.stringify({
+      name: pm.environment.get("mechanic_name"),
+      password: pm.environment.get("mechanic_password"),
+      role: "Mechanic"
+    }));
+  language: text/javascript
 - type: afterResponse
   code: |-
-    pm.test("Login realizado com sucesso", () => {
+    pm.test("Login retorna um JWT como string JSON", () => {
       pm.response.to.have.status(200);
-    });
-
-    if (pm.response.code === 200) {
-      const body = pm.response.text();
-      const token = body.startsWith('"') ? pm.response.json() : body;
+      const token = pm.response.json();
+      pm.expect(token).to.match(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
       pm.environment.set("mechanic_token", token);
-    }
+    });
   language: text/javascript

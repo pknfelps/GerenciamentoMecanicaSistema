@@ -1,14 +1,34 @@
 $kind: http-request
 name: GetUser
-url: '{{base_url}}/Users'
+url: '{{gateway_url}}/Users'
 method: GET
 auth:
   type: bearer
   credentials:
   - key: token
     value: '{{admin_token}}'
+headers:
+- key: Accept
+  value: application/json
 queryParams:
 - key: name
-  value: Teste
+  value: '{{test_user_name}}'
 - key: role
   value: Mechanic
+scripts:
+- type: beforeRequest
+  code: |-
+    pm.environment.unset("user_id");
+  language: text/javascript
+- type: afterResponse
+  code: |-
+    pm.test("Admin consulta o usuário de teste e recebe seu UUID", () => {
+      pm.response.to.have.status(200);
+      const user = pm.response.json();
+      pm.expect(user.name).to.equal(pm.environment.get("test_user_name"));
+      pm.expect(user.role).to.equal("Mechanic");
+      pm.expect(user).not.to.have.property("password");
+      pm.expect(user.id).to.match(/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i);
+      pm.environment.set("user_id", user.id);
+    });
+  language: text/javascript

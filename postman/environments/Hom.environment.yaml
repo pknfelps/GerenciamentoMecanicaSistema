@@ -4,6 +4,28 @@ values:
     value: ''
   - key: gateway_url
     value: ''
+  - key: admin_name
+    value: 'Admin'
+  - key: admin_password
+    value: ''
+  - key: admin_updated_name
+    value: ''
+  - key: admin_updated_password
+    value: ''
+  - key: mechanic_name
+    value: 'Mechanic'
+  - key: mechanic_password
+    value: ''
+  - key: test_user_name
+    value: 'Conta Teste'
+  - key: test_user_password
+    value: ''
+  - key: test_user_updated_name
+    value: 'Conta Teste Atualizada'
+  - key: test_user_updated_password
+    value: ''
+  - key: test_user_token
+    value: ''
   - key: admin_token
     value: ''
   - key: mechanic_token
@@ -12,6 +34,8 @@ values:
     value: ''
   - key: customer_document
     value: '662.119.730-63'
+  - key: new_customer_document
+    value: '529.982.247-25'
   - key: customer_challenge_id
     value: ''
   - key: customer_code

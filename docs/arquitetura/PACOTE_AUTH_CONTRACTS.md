@@ -2,13 +2,13 @@
 
 [Arquitetura](README.md) · [Contratos operacionais](CONTRATOS_ENTRE_REPOSITORIOS.md) · [API do pacote](../../GerenciamentoMecanica.Auth.Contracts/README.md)
 
-Revisão de 21/10/2026. GerenciamentoMecanica.Auth.Contracts 1.0.0/.NET 10 compartilha CPF/CNPJ numérico e JWT. API referencia o projeto local; autenticação usa PackageReference exata [1.0.0], sem checkout ou ProjectReference entre repositórios. Pacote já publicado e consumo remoto comprovado; isso não constitui prova independente de todas as funções do sistema.
+GerenciamentoMecanica.Auth.Contracts 1.0.0/.NET 10 compartilha CPF/CNPJ numérico e JWT. A API publica o pacote e compila as regras de documento compartilhadas no domínio. A AuthFunction usa PackageReference exata [1.0.0], sem checkout ou ProjectReference entre repositórios. Pacote já publicado e consumo remoto comprovado; isso não constitui prova independente de todas as funções do sistema.
 
 ## Conteúdo e compatibilidade
 
 DocumentRules/CpfRules/CnpjRules preservam cálculos/canonização do legado; pacote não inclui controllers, banco ou domínio de OS. A Lambda faz validação estrita de formato antes de delegar dígitos/máscara; não é suporte a CNPJ alfanumérico. A API adapta FormatException para suas regras de domínio.
 
-JwtIssuer usa HS256, Name/Role, ID opcional como NameIdentifier e prazo UTC de dez minutos. Os emissores atuais de API/Lambda **já fornecem UUID persistido**; opcionalidade do pacote não significa que as operações próprias aceitam identidade inválida. Validação API mantém ClockSkew de cinco minutos. O pacote não conhece Secrets, issuer/audience de ambientes ou revogação de sessão.
+JwtIssuer usa HS256, Name/Role, ID opcional como NameIdentifier e prazo UTC de dez minutos. A AuthFunction fornece o UUID persistido ao emitir os JWTs. A API valida o token com ClockSkew zero. O pacote não conhece Secrets, issuer/audience de ambientes ou revogação de sessão.
 
 ## Produzir e publicar
 

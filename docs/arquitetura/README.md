@@ -6,14 +6,14 @@ Visão dos componentes, contratos, modelo de dados e decisões arquiteturais da 
 
 ## Visão vigente
 
-- Entrada REST Regional → VPC Link V2 → NLB interno Terraform → NodePort → API .NET no EKS. POST request-code/verify-code usa AuthFunction .NET 10/SAM e versão numérica.
+- Entrada REST Regional → VPC Link V2 → NLB interno Terraform → NodePort → API .NET no EKS. As sete operações de autenticação e contas internas usam AuthFunction .NET 10/SAM e versão numérica.
 - Um nó t3.small, HPA 1–3 pods, NAT único e RDS PostgreSQL 16.15/db.t3.micro Single-AZ privado com TLS VerifyFull. Sem Aurora/auto-pause, Load Balancer Controller ou escalador de nós.
-- Admin/Mechanic internos; Customer emitido após documento e código de uso único. JWT HS256/UUID; autorização e vínculo na API, sem authorizer JWT no Gateway.
-- SQL 1.0.0/Job em banco vazio; histórico transacional preservado após DELETE de OS, não após destruição do banco.
+- A AuthFunction emite JWT HS256 para Admin/Mechanic por senha e Customer por código. API e AuthFunction autorizam as operações sob sua responsabilidade. A API valida titularidade nas operações de OS.
+- O Job inicializa mecanica (2.1.0) e mecanica_identity (1.0.0). O histórico transacional da OS fica em mecanica e é preservado após excluir a OS.
 - EmailFunction privada concentra MIME/SMTP em todos os modos; API/auth invocam por SDK/IAM. SMTP4dev efêmero e privado, sem relay/entrega externa. Handler é aguardado após commit; sem fila/outbox.
 - OTel API/Lambda → Collectors → New Relic. Kubernetes/CloudWatch no Collector EKS; X-Ray por integração nativa separada. Somente W3C seleciona pai OTLP.
 - Três dashboards e cinco alertas como código, persistentes; New Relic administrado por workflow manual independente do descarte AWS.
-- SSM base/database/auth/gateway v2 e email/v1 configuram consumidores, sem protocolo de releases/prontidão. Push/merge develop/hom ou main/prd inicia deploy por repositório. Base/banco/Gateway preservam plano salvo/aprovação/apply; API/auth/email não têm aprovação intermediária. No Serverless, email é implantado antes de auth; na infraestrutura, Gateway aguarda base. A ordem entre repositórios continua sob coordenação do mantenedor.
+- SSM base/database/auth/gateway v2 e email/v1 configuram consumidores. Banco e API publicam a conclusão da inicialização e do rollout, respectivamente. Push/merge develop/hom ou main/prd inicia deploy por repositório. Base/banco/Gateway preservam plano salvo/aprovação/apply; API/auth/email não têm aprovação intermediária. No Serverless, email é implantado antes de auth; na infraestrutura, Gateway aguarda base. A ordem entre repositórios continua sob coordenação do mantenedor.
 
 ## Documentos
 
@@ -22,7 +22,7 @@ Visão dos componentes, contratos, modelo de dados e decisões arquiteturais da 
 | [Componentes](diagramas/COMPONENTES.md) | Rede, proprietários, identidades e caminhos de observabilidade |
 | [Validação CPF/CNPJ](diagramas/VALIDACAO_CPF.md) | Parsing, bootstrap reutilizável, JWT e autorização das próprias OSs |
 | [Abertura de OS](diagramas/ABERTURA_OS.md) | Login, transação, notificação aguardada e métricas após retorno |
-| [ER completo](diagramas/DADOS.md) | Doze tabelas, chaves físicas e correlação histórica sem FK |
+| [ER completo](diagramas/DADOS.md) | Dois databases, chaves físicas e correlação histórica |
 | [Banco e modelo](BANCO_E_MODELO.md) | Justificativa PostgreSQL/RDS, alternativas, alterações, relações e limites |
 | [Contratos HTTP/JWT/Invoke](CONTRATOS_AUTENTICACAO_E_EMAIL.md) | Regras de autenticação e transporte interno |
 | [Acesso/autenticação](ACESSO_E_AUTENTICACAO.md) | Matriz HTTP, códigos, claims e sessões |

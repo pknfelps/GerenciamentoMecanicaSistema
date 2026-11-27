@@ -5,10 +5,11 @@ sequenceDiagram
     actor C as Cliente / Postman
     participant G as Gateway
     participant F as AuthFunction
-    participant D as PostgreSQL
+    participant D as mecanica_identity
     participant E as EmailFunction
     participant S as SMTP4dev privado
     participant A as API
+    participant O as mecanica
     C->>G: POST request-code com document
     G->>F: AWS_PROXY para versao numerica
     F->>F: Validar JSON, limites UTF-8 e documento
@@ -16,7 +17,7 @@ sequenceDiagram
         F-->>C: 400 sem bootstrap SQL/AWS
     else Entrada valida
         F->>F: Obter runtime reutilizavel ou inicializar
-        F->>D: Consultar cadastro e elegibilidade
+        F->>D: Consultar customer_access e elegibilidade
         alt Ausente, Inactive ou email inutilizavel
             F-->>C: 202 generico sem escrita ou envio
         else Cliente elegivel
@@ -49,7 +50,7 @@ sequenceDiagram
         C->>G: GET status ou PATCH budget com Bearer
         G->>A: HTTP_PROXY via VPC Link e NLB
         A->>A: Validar JWT, perfil e exp sem ClockSkew
-        A->>D: Exigir Customer Active e OS do mesmo UUID
+        A->>O: Exigir Customer Active e OS do mesmo UUID
         A-->>C: Status ou 200 Approved / Refused apos commit
     end
 ```

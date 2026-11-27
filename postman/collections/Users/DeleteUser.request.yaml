@@ -1,6 +1,6 @@
 $kind: http-request
 name: DeleteUser
-url: '{{base_url}}/Users'
+url: '{{gateway_url}}/Users'
 method: DELETE
 auth:
   type: bearer
@@ -10,3 +10,12 @@ auth:
 queryParams:
 - key: id
   value: '{{user_id}}'
+scripts:
+- type: afterResponse
+  code: |-
+    pm.test("Admin exclui a conta de teste", () => {
+      pm.response.to.have.status(204);
+      pm.environment.unset("user_id");
+      pm.environment.unset("test_user_token");
+    });
+  language: text/javascript

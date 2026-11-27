@@ -1,16 +1,33 @@
 $kind: http-request
 name: UpdateOwnUserAdmin
-url: '{{base_url}}/Users'
+url: '{{gateway_url}}/Users'
 method: PATCH
 auth:
   type: bearer
   credentials:
   - key: token
     value: '{{admin_token}}'
+headers:
+- key: Content-Type
+  value: application/json
+- key: Accept
+  value: application/json
 body:
   type: json
-  content: |
-    {
-      "name": "Admin atualizado",
-      "password": "NovaSenha@123"
-    }
+  content: '{{identity_body}}'
+scripts:
+- type: beforeRequest
+  code: |-
+    const name = pm.environment.get("admin_updated_name");
+    const password = pm.environment.get("admin_updated_password");
+    const body = {};
+    if (name) body.name = name;
+    if (password) body.password = password;
+    pm.variables.set("identity_body", JSON.stringify(body));
+  language: text/javascript
+- type: afterResponse
+  code: |-
+    pm.test("Conta atualizada", () => {
+      pm.response.to.have.status(204);
+    });
+  language: text/javascript
