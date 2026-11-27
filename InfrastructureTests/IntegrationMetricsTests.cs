@@ -1,6 +1,12 @@
+using Amazon.Lambda;
+using Amazon.Lambda.Model;
+using Infrastructure.Authentication;
 using Infrastructure.Observability;
 using Npgsql;
+using NSubstitute;
+using Service.Interface.CustomerAccess;
 using System.Diagnostics.Metrics;
+using System.Text.Json;
 
 namespace InfrastructureTests;
 
@@ -105,6 +111,42 @@ public sealed class IntegrationMetricsTests
         IntegrationMetrics.Measure(metrics, integration, operation, purpose, () => true);
 
         Assert.That(listener.Measurements, Is.Empty);
+    }
+
+    [Test]
+    public async Task IdentityInvocationRecordsOnlyTransportResultAndNeverRecordsCustomerData()
+    {
+        using var listener = new IntegrationMetricListener();
+        using var metrics = new IntegrationMetrics();
+        var lambda = Substitute.For<IAmazonLambda>();
+        var customerId = Guid.NewGuid();
+        var command = new CustomerAccessCommand(customerId, 1, new("private name", "private document", "private email", "Active"));
+        lambda.InvokeAsync(Arg.Any<InvokeRequest>(), Arg.Any<CancellationToken>()).Returns(
+            _ => Task.FromResult(new InvokeResponse
+            {
+                StatusCode = 200,
+                Payload = new MemoryStream(JsonSerializer.SerializeToUtf8Bytes(new { version = 1, customerId, revision = 1, outcome = "applied" }))
+            }),
+            _ => Task.FromException<InvokeResponse>(new AmazonLambdaException("private database detail")));
+        using var client = new LambdaCustomerAccessSynchronizer(lambda, "AuthFunction", metrics: metrics);
+
+        var applied = await client.SynchronizeAsync(command);
+        var pending = await client.SynchronizeAsync(command);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(applied, Is.EqualTo(CustomerAccessSyncOutcome.Applied));
+            Assert.That(pending, Is.EqualTo(CustomerAccessSyncOutcome.Pending));
+            Assert.That(listener.Measurements.Select(point => point["outcome"]), Is.EqualTo(new[] { "success", "failure" }));
+            foreach (var point in listener.Measurements)
+            {
+                Assert.That(point.Keys, Is.EquivalentTo(new[] { "integration", "operation", "purpose", "outcome" }));
+                Assert.That(point["integration"], Is.EqualTo("lambda"));
+                Assert.That(point["operation"], Is.EqualTo("invoke_auth"));
+                Assert.That(point["purpose"], Is.EqualTo("application"));
+                Assert.That(JsonSerializer.Serialize(point), Does.Not.Contain("private").And.Not.Contain(customerId.ToString()));
+            }
+        });
     }
 
     [Test]
