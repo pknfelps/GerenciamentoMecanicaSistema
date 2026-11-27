@@ -110,6 +110,8 @@ jobs:
         env:
           NAMESPACE: ${{ steps.target.outputs.namespace }}
         run: |
+          aws ssm put-parameter --name "/mecanica/$DEPLOY_ENVIRONMENT/api/v2/deployment" \
+            --type String --overwrite --value pending > /dev/null
           kubectl delete -k "deploy/kubernetes/overlays/$DEPLOY_ENVIRONMENT" \
             --namespace "$NAMESPACE" --ignore-not-found=true --cascade=foreground --wait=true --timeout=600s
 
@@ -122,6 +124,7 @@ jobs:
           test -z "$remaining"
           pods="$(kubectl get pods,replicasets --namespace "$NAMESPACE" -l app=gerenciamento-api -o name)"
           test -z "$pods"
+          aws ssm delete-parameter --name "/mecanica/$DEPLOY_ENVIRONMENT/api/v2/deployment"
           printf 'API removida de %s/default.\n\nCommit do manifesto: %s\n\nPróximo: database-destroy somente após auth-destroy; depois base-destroy no mesmo ambiente.\n' \
             "$DEPLOY_ENVIRONMENT" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
 
