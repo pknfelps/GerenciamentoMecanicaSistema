@@ -7,6 +7,7 @@ using Service.Interface;
 using Service.Interface.Exceptions;
 using Service.Interface.Commands.Customer;
 using Service.Interface.Results.Customer;
+using Service.Interface.CustomerAccess;
 
 namespace ServiceTests
 {
@@ -14,6 +15,8 @@ namespace ServiceTests
     {
         private ICustomerService CustomerService { get; set; }
         private ICustomerRepository CustomerRepository { get; set; }
+        private ICustomerAccessSyncRepository AccessSync { get; set; }
+        private ICustomerAccessSynchronizer Identity { get; set; }
 
         private static CreateCustomerCommand CustomerToCreate { get; } = new("Fulano", "66211973063", "11912345678", "fulano@gmail.com");
         private static CreateCustomerCommand CustomerToCreateFormated { get; set; } = new("Fulano", "662.119.730-63", "(11) 91234-5678", "fulano@gmail.com");
@@ -123,7 +126,24 @@ namespace ServiceTests
                 return 0;
             });
 
-            CustomerService = new CustomerService(CustomerRepository);
+            AccessSync = Substitute.For<ICustomerAccessSyncRepository>();
+            AccessSync.MarkPendingAsync(Arg.Any<Guid>(), Arg.Any<string>()).Returns(1L);
+            AccessSync.ConfirmAsync(Arg.Any<Guid>(), Arg.Any<long>()).Returns(true);
+            Identity = Substitute.For<ICustomerAccessSynchronizer>();
+            var inTransaction = false;
+            Identity.SynchronizeAsync(Arg.Any<CustomerAccessCommand>()).Returns(_ =>
+            {
+                Assert.That(inTransaction, Is.False);
+                return CustomerAccessSyncOutcome.Applied;
+            });
+            var transactions = Substitute.For<ITransactionManager>();
+            transactions.ExecuteInTransaction(Arg.Any<Func<Task<CustomerAccessCommand?>>>()).Returns(async call =>
+            {
+                inTransaction = true;
+                try { return await call.Arg<Func<Task<CustomerAccessCommand?>>>()(); }
+                finally { inTransaction = false; }
+            });
+            CustomerService = new CustomerService(CustomerRepository, AccessSync, transactions, Identity);
         }
 
         [Test]
@@ -139,6 +159,70 @@ namespace ServiceTests
         public async Task MustNotCreateCustomerIfExists()
         {
             Assert.CatchAsync<ApplicationBaseException>(async () => await CustomerService.RegisterCustomer(ExistingCustomerCommand));
+        }
+
+        [Test]
+        public async Task RepeatsOnlyTheSamePendingRegistrationUsingItsOriginalIdAndRevision()
+        {
+            ICustomer? saved = null;
+            CustomerRepository.Configure().RegisterCustomer(Arg.Any<ICustomer>()).Returns(call =>
+            {
+                saved = call.Arg<ICustomer>();
+                return 1;
+            });
+            CustomerRepository.Configure().GetCustomer(document: CustomerToCreateFormated.Document).Returns(_ => saved);
+            AccessSync.FindAsync(Arg.Any<Guid>()).Returns(new CustomerAccessSyncState(1, "create", true));
+            Identity.Configure().SynchronizeAsync(Arg.Any<CustomerAccessCommand>()).Returns(
+                CustomerAccessSyncOutcome.Pending, CustomerAccessSyncOutcome.Applied);
+
+            var failure = Assert.ThrowsAsync<CustomerAccessSyncPendingException>(() => CustomerService.RegisterCustomer(CustomerToCreate));
+            Assert.That(failure!.CustomerId, Is.EqualTo(saved!.Id));
+            var different = new CreateCustomerCommand("Outro Cliente", CustomerToCreate.Document, CustomerToCreate.Phone, CustomerToCreate.Email);
+            Assert.ThrowsAsync<ConflictException>(() => CustomerService.RegisterCustomer(different));
+            await CustomerService.RegisterCustomer(CustomerToCreateFormated);
+
+            await CustomerRepository.ReceivedWithAnyArgs(1).RegisterCustomer(default!);
+            await AccessSync.Received(1).MarkPendingAsync(saved.Id, "create");
+            await Identity.Received(2).SynchronizeAsync(Arg.Is<CustomerAccessCommand>(x => x.CustomerId == saved.Id
+                && x.Revision == 1 && x.Access!.Document == CustomerToCreateFormated.Document));
+        }
+
+        [Test]
+        public async Task RetriesPendingRevocationAfterOperationalDeletion()
+        {
+            CustomerRepository.Configure().GetCustomer(id: ExistingCustomerId).Returns(_ => ExistingCustomer, _ => null);
+            AccessSync.FindAsync(ExistingCustomerId).Returns(new CustomerAccessSyncState(1, "revoke", true));
+            Identity.Configure().SynchronizeAsync(Arg.Any<CustomerAccessCommand>()).Returns(
+                CustomerAccessSyncOutcome.Pending, CustomerAccessSyncOutcome.Applied);
+
+            Assert.ThrowsAsync<CustomerAccessSyncPendingException>(() => CustomerService.DeleteCustomer(ExistingCustomerId));
+            await CustomerService.DeleteCustomer(ExistingCustomerId);
+
+            await CustomerRepository.Received(1).DeleteCustomer(ExistingCustomerId);
+            await Identity.Received(2).SynchronizeAsync(Arg.Is<CustomerAccessCommand>(x => x.CustomerId == ExistingCustomerId
+                && x.Revision == 1 && x.Action == "revoke" && x.Access == null));
+        }
+
+        [Test]
+        public async Task PhoneOnlyUpdateDoesNotInvokeIdentityWhenAlreadySynchronized()
+        {
+            var existing = ExistingCustomer;
+            var input = new CreateCustomerCommand(existing.Name, existing.Document.Id, "11943218765", existing.Email.Address);
+            AccessSync.FindAsync(existing.Id).Returns(new CustomerAccessSyncState(2, "update", false));
+
+            await CustomerService.UpdateCustomer(existing.Id, input);
+
+            await Identity.DidNotReceiveWithAnyArgs().SynchronizeAsync(default!);
+            await AccessSync.DidNotReceiveWithAnyArgs().MarkPendingAsync(default, default!);
+        }
+
+        [Test]
+        public async Task OlderAcknowledgementDoesNotConfirmTheCurrentMutation()
+        {
+            AccessSync.ConfirmAsync(ExistingCustomerId, 1).Returns(false);
+            Assert.ThrowsAsync<CustomerAccessSyncPendingException>(() => CustomerService.UpdateCustomer(ExistingCustomerId, CustomerToUpdate));
+            await Identity.Received(1).SynchronizeAsync(Arg.Is<CustomerAccessCommand>(x => x.CustomerId == ExistingCustomerId
+                && x.Access!.Email == CustomerToUpdate.Email));
         }
 
         [Test]

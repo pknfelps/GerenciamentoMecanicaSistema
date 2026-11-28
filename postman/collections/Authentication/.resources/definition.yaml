@@ -1,2 +1,2 @@
 $kind: collection
-description: API de autenticação para efetuar login no sistema.
+description: Login interno e código Customer pelo Gateway, com emissão do JWT pela AuthFunction.

@@ -17,6 +17,7 @@ services:
       Jwt__Key: ${JWT_KEY:?Defina JWT_KEY no arquivo .env}
       Email__InvocationEndpoint: ${EMAIL_INVOCATION_ENDPOINT:-http://host.docker.internal:3001}
       Email__FunctionName: EmailFunction
+      CustomerAccess__InvocationEndpoint: ${CUSTOMER_ACCESS_INVOCATION_ENDPOINT:-http://host.docker.internal:3002}
     ports:
       - "127.0.0.1:${API_PORT:-8080}:8080"
     depends_on:

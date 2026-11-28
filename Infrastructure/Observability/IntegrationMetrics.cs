@@ -48,9 +48,9 @@ public sealed class IntegrationMetrics : IDisposable
 
     private void Record(string integration, string operation, string purpose, string outcome)
     {
-        if (integration is not ("postgresql" or "ssm" or "secretsmanager")
+        if (integration is not ("postgresql" or "ssm" or "secretsmanager" or "lambda")
             || operation is not ("connection.open" or "command.execute" or "transaction.begin" or "transaction.commit"
-                or "transaction.rollback" or "get_parameters" or "get_secret_value")
+                or "transaction.rollback" or "get_parameters" or "get_secret_value" or "invoke_auth")
             || purpose is not ("application" or "bootstrap" or "readiness" or "telemetry"))
             return;
 

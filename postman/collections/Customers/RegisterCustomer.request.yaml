@@ -11,8 +11,15 @@ body:
   type: json
   content: |
     {
-      "Name": "Ciclano",
-      "Document": "{{customer_document}}",
+      "Name": "Cliente Teste",
+      "Document": "{{new_customer_document}}",
       "Phone": "11912345678",
-      "Email": "ciclano@gmail.com"
+      "Email": "cliente.auth14@example.invalid"
     }
+scripts:
+- type: afterResponse
+  code: |-
+    pm.test("Cadastro operacional e acesso ao cliente confirmados", () => {
+      pm.response.to.have.status(201);
+    });
+  language: text/javascript

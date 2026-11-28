@@ -1,9 +1,23 @@
 $kind: http-request
 name: GetOwnUser
-url: '{{base_url}}/Users'
+url: '{{gateway_url}}/Users'
 method: GET
 auth:
   type: bearer
   credentials:
   - key: token
-    value: '{{mechanic_token}}'
+    value: '{{test_user_token}}'
+headers:
+- key: Accept
+  value: application/json
+scripts:
+- type: afterResponse
+  code: |-
+    pm.test("Mechanic consulta a própria conta", () => {
+      pm.response.to.have.status(200);
+      const user = pm.response.json();
+      pm.expect(user.id).to.equal(pm.environment.get("user_id"));
+      pm.expect(user.role).to.equal("Mechanic");
+      pm.expect(user).not.to.have.property("password");
+    });
+  language: text/javascript

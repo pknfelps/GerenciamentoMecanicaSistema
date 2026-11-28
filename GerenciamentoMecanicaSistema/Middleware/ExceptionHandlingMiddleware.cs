@@ -87,6 +87,7 @@ namespace GerenciamentoMecanicaSistema.Middleware
                 ConflictException => StatusCodes.Status409Conflict,
                 BusinessRuleException => StatusCodes.Status422UnprocessableEntity,
                 ApplicationFailureException => StatusCodes.Status500InternalServerError,
+                CustomerAccessSyncPendingException => StatusCodes.Status503ServiceUnavailable,
                 _ => StatusCodes.Status500InternalServerError
             };
 
@@ -115,6 +116,14 @@ namespace GerenciamentoMecanicaSistema.Middleware
                 Instance = context.Request.Path
             };
 
+            if (exception is CustomerAccessSyncPendingException pending)
+            {
+                problemDetails.Extensions["code"] = CustomerAccessSyncPendingException.Code;
+                problemDetails.Extensions["customerId"] = pending.CustomerId;
+                await context.Response.WriteAsJsonAsync(problemDetails, options: null,
+                    contentType: "application/problem+json", cancellationToken: context.RequestAborted);
+                return;
+            }
             await context.Response.WriteAsJsonAsync(problemDetails, context.RequestAborted);
         }
 
@@ -126,6 +135,7 @@ namespace GerenciamentoMecanicaSistema.Middleware
                 StatusCodes.Status404NotFound => "Recurso não encontrado",
                 StatusCodes.Status409Conflict => "Conflito",
                 StatusCodes.Status422UnprocessableEntity => "Regra de negócio violada",
+                StatusCodes.Status503ServiceUnavailable => "Sincronização de acesso pendente",
                 _ => "Erro interno do servidor"
             };
     }

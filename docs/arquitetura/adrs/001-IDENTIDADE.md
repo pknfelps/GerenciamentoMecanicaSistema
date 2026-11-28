@@ -6,7 +6,7 @@
 
 **Contexto:** gestão de usuários, operação da oficina e decisão do cliente exigem permissões diferentes. A validação cadastral do cliente deve ocorrer na função serverless.
 
-**Decisão vigente:** users contém somente Admin/Mechanic. Admin cadastra/consulta/remove usuários; ambos atualizam somente a própria conta pelo UUID do JWT. Mechanic opera cadastros e OS; Admin não herda esse acesso. Customer é emitido pela Lambda após CPF/CNPJ e código de uso único para customers Active, sem senha, e só consulta status/decide orçamento das próprias OSs. A API verifica JWT/perfil/vínculo, sem authorizer adicional no Gateway.
+**Decisão vigente.** A AuthFunction possui users e emite o JWT de Admin/Mechanic por senha. Admin cadastra, consulta e remove usuários. Ambos atualizam a própria conta pelo UUID do JWT. Mechanic opera cadastros e OS. A AuthFunction autentica Customer por documento e código de uso único com customer_access. A API verifica JWT, perfil, cadastro e vínculo nas operações de OS. [Acesso e autenticação](../ACESSO_E_AUTENTICACAO.md).
 
 NameIdentifier UUID é emitido nos dois tipos de token. O UUID obrigatório é conferido nas operações próprias; outras rotas preservam autenticação por assinatura/perfil sem consulta global ao cadastro. Senha é hash PBKDF2, JWT usa HS256/dez minutos e a validação usa ClockSkew zero. PATCH/DELETE não implementam revogação centralizada; as duas operações Customer verificam cadastro Active e vínculo, bloqueando inativação após emissão. Recriar nome não transfere identidade.
 

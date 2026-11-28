@@ -1,6 +1,6 @@
 $kind: http-request
 name: Login
-url: '{{base_url}}/Authentication'
+url: '{{gateway_url}}/Authentication'
 method: POST
 headers:
 - key: Content-Type
@@ -9,22 +9,23 @@ headers:
   value: application/json
 body:
   type: json
-  content: |
-    {
-      "Name": "Admin",
-      "Password": "Admin@123",
-      "Role": "Admin"
-    }
+  content: '{{identity_body}}'
 scripts:
+- type: beforeRequest
+  code: |-
+    pm.environment.unset("admin_token");
+    pm.variables.set("identity_body", JSON.stringify({
+      name: pm.environment.get("admin_name"),
+      password: pm.environment.get("admin_password"),
+      role: "Admin"
+    }));
+  language: text/javascript
 - type: afterResponse
   code: |-
-    pm.test("Login realizado com sucesso", () => {
+    pm.test("Login retorna um JWT como string JSON", () => {
       pm.response.to.have.status(200);
-    });
-
-    if (pm.response.code === 200) {
-      const body = pm.response.text();
-      const token = body.startsWith('"') ? pm.response.json() : body;
+      const token = pm.response.json();
+      pm.expect(token).to.match(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
       pm.environment.set("admin_token", token);
-    }
+    });
   language: text/javascript

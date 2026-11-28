@@ -6,20 +6,20 @@ Especificação HTTP, JWT e Invoke da API, AuthFunction e EmailFunction. A auten
 
 ## 1. Fronteiras e compatibilidade
 
-- AuthFunction autentica clientes por documento e código de uso único. Não consulta OSs nem envia SMTP diretamente.
+- AuthFunction autentica clientes por documento e código de uso único. A função também autentica Admin e Mechanic por senha e administra suas contas. As operações de contas internas e a sincronização privada do cadastro de acesso estão em [Acesso e autenticação](ACESSO_E_AUTENTICACAO.md).
 - EmailFunction recebe mensagens prontas e concentra MIME/conexão/envio SMTP. Não consulta clientes, desafios ou OSs, não emite JWT e não tem endpoint HTTP público.
 - API valida o JWT, o cadastro Active, a titularidade e as regras da OS. Não chama autenticação antes de cada operação.
 - SMTP4dev captura mensagens em hom/prd demonstrativos; sem relay, entrega externa ou persistência da caixa. O acesso operacional à captura simula o recebimento pelo cliente.
 - POST /customers/validate não integra o contrato ou o Gateway. Não manter emissão por documento isolado, entrada REQUEST/Authorizer ou token vinculado a orçamento/OS.
 - Não alterar o pacote GerenciamentoMecanica.Auth.Contracts 1.0.0 para transportar contratos de e-mail. Preservar seus formatos de identidade/assinatura na implementação do JWT.
 
-## 2. Regras HTTP comuns
+## 2. Regras HTTP da autenticação por código
 
 Rotas novas recebem POST com Content-Type application/json, objeto JSON UTF-8 de até 4 KiB e somente as propriedades definidas. Rejeitar propriedades duplicadas/desconhecidas, arrays, valores nulos, tipos incorretos e corpo inválido com 400. Nomes das propriedades seguem a comparação sem distinção de maiúsculas já usada no projeto; duplicações consideram essa mesma comparação. O parser aceita a representação base64 do evento Gateway quando corretamente declarada, aplicando o limite ao conteúdo decodificado.
 
 document é string com CPF/CNPJ numérico válido, com ou sem as máscaras existentes do DocumentRules; normalizar pelo pacote compartilhado. Não aceitar outro documento por header/query nem selecionar cliente pelo JWT enviado a essas duas rotas. Authorization não evita as verificações nem renova uma sessão.
 
-Todas as respostas da autenticação usam Cache-Control: no-store. Sucessos usam application/json; erros usam application/problem+json com type=about:blank, status, title, detail e instance, preservando a forma atual do envelope. instance usa somente a rota reconhecida fixa, nunca caminho/query recebidos; para rota desconhecida, usar marcador fixo /customers/auth. Nunca retornar documento, destinatário, código ou causa interna em erro.
+As respostas da autenticação por código usam Cache-Control: no-store. Sucessos usam application/json; erros usam application/problem+json com type=about:blank, status, title, detail e instance, preservando a forma atual do envelope. instance usa somente a rota reconhecida fixa, nunca caminho/query recebidos; para rota desconhecida, usar marcador fixo /customers/auth. Nunca retornar documento, destinatário, código ou causa interna em erro.
 
 | Código | Title | Detail |
 |---|---|---|

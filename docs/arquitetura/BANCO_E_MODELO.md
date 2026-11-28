@@ -19,17 +19,19 @@ RDS provisionado não escala a zero. A economia escolhida é destruir/recriar o 
 
 ## Relações e responsabilidades
 
-O [ER](diagramas/DADOS.md) inclui as doze tabelas do Init.sql, incluindo as duas tabelas de autenticação:
+O [ER](diagramas/DADOS.md) mostra os dois databases PostgreSQL da mesma instância RDS. A API possui o operacional mecanica. A AuthFunction possui mecanica_identity.
 
-| Grupo | Relação e finalidade |
+| Tabela ou relação | Finalidade |
 |---|---|
-| `users` | Identidades internas Admin/Mechanic, UUID e hash de senha; sem FK com OS |
+| `users` (identidade) | Identidades internas Admin/Mechanic, UUID e hash de senha; sem FK com OS |
 | `customers` → `vehicles` | Documento único do cliente referenciado pelo veículo |
 | `customers`/`vehicles` → `orders` | OS referencia documento/placa; a API também valida que o veículo pertence ao cliente |
 | `orders` → `order_services` → `catalog` | Itens com descrição, horas, preço e quantidade da OS |
 | `orders` → `order_materials` → `stock` | Itens com nome, marca, preço e quantidade da OS |
 | `order_status_history` | Linha temporal com UUID da OS, sequência, estados, UTC e motivo; sem FK para sobreviver ao DELETE |
-| `schema_initialization` | Marcador operacional do Job; não é domínio nem mecanismo de migrações |
+| `customer_access_sync` (operacional) | Registra revisão, operação e pendência da sincronização privada do cadastro de acesso |
+| `customer_access` (identidade) | Cópia por UUID com nome, documento, e-mail, situação e revisão. Revogação conserva UUID, revisão e estado |
+| `schema_initialization` (nos dois databases) | Marcador operacional do Job |
 | `customer_auth_challenges`/`customer_auth_request_limits` | Desafios e limites por UUID do cliente existente; sem FK, cascata ou regras de negócio no SQL; operações transacionais e fluxo por código implementados em C# |
 
 As referências por documento/placa foram preservadas. UUID identifica entidades nos contratos/JWT, mas nem todas as FKs físicas são UUID. Os itens não possuem PK/UNIQUE composto no SQL atual. O documento não acrescenta relações, índices, cascades ou constraints ausentes.
@@ -37,7 +39,7 @@ As referências por documento/placa foram preservadas. UUID identifica entidades
 ## Mudanças entregues
 
 - `customers.status` obrigatório, default `Active`; domínio aceita Active/Inactive e PATCH cadastral preserva o estado. Não há endpoint de inativação.
-- `users.role` separa Admin/Mechanic. Customer é emitido a partir de `customers`, sem usuário interno.
+- `users.role` separa Admin/Mechanic. A AuthFunction emite Customer a partir de `customer_access`.
 - Removidas datas/duração persistidas em `orders`; projeções usam o histórico, evitando fontes temporais divergentes.
 - Histórico registra criação Received/sequence=1 e transições UTC; `ServiceCompleted` distingue conclusão de `BudgetRejected`.
 - Itens conservam os valores usados pela OS; mudanças posteriores do cadastro não os reprecificam automaticamente.
@@ -59,10 +61,10 @@ Métricas HTTP de negócio são registradas após operação confirmada e podem 
 
 ## Inicialização e credenciais
 
-O Job grava 1.0.0/hash/horário na transação do esquema/seeds. Reexecução exige um único marcador compatível; banco não vazio sem marcador ou hash divergente falha. Grants são provisionados depois. Secrets temporários do Job são removidos ao final, inclusive em falha; Terraform usa ephemeral/write-only, sem senha em planos/estados.
+O Job grava a versão (2.1.0 operacional e 1.0.0 identidade), o hash do SQL e o horário no marcador de cada database. Reexecução exige um marcador compatível em cada banco. Os grants são aplicados após a inicialização dos esquemas. Após sucesso do Job e remoção das credenciais temporárias, a pipeline do banco confirma a prontidão dos dois databases no catálogo SSM.
 
-`mecanica_api` possui SELECT/INSERT/UPDATE/DELETE nas nove tabelas de domínio, incluindo histórico; não é append-only. `mecanica_auth` possui SELECT somente em id/name/document/status/email de customers e DML nas duas tabelas de desafios/limites. Ambos ficam sem acesso ao marcador pelos grants. Scripts SQL são a fonte das permissões, sem garantias adicionais presumidas pelo desenho.
+mecanica_api aplica DML nas nove tabelas operacionais, inclusive histórico e customer_access_sync. mecanica_auth aplica DML nas quatro tabelas de identidade. Os grants restringem a conexão ao database de cada aplicação e preservam as tabelas schema_initialization sob controle do Job.
 
-A configuração hom/prd não representa, por si, comprovação operacional. Em 02/11/2026, ambas as instâncias foram conferidas disponíveis, privadas e criptografadas, e os fluxos de autenticação/OS passaram por HTTP nos dois ambientes. SQL direto, reconciliação histórica e retenção após DELETE permanecem no escopo anteriormente comprovado em hom; não foram repetidos em prd. Isso não comprova capacidade, recuperação ou disponibilidade futura.
+A configuração hom/prd não representa, por si, comprovação operacional. Na revisão anterior à separação dos databases, em 02/11/2026, ambas as instâncias foram conferidas disponíveis, privadas e criptografadas, e os fluxos de autenticação/OS passaram por HTTP nos dois ambientes. SQL direto, reconciliação histórica e retenção após DELETE permanecem no escopo anteriormente comprovado em hom; não foram repetidos em prd. Isso não comprova capacidade, recuperação ou disponibilidade futura.
 
 Referências: [RDS PostgreSQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html), [SQL/esquema](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/blob/develop/docs/SCHEMA.md) e [grants da API](https://github.com/pknfelps/GerenciamentoMecanicaBancoDados/blob/develop/sql/ProvisionApiUser.sql).

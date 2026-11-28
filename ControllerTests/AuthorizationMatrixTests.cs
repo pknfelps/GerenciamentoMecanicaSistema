@@ -14,9 +14,6 @@ public sealed class AuthorizationMatrixTests
     private const string OrderId = "11111111-1111-1111-1111-111111111111";
     private static readonly (string Method, string Path, string Roles)[] Routes =
     [
-        ("POST", "/Users", "Admin"), ("GET", "/Users", "Admin,Mechanic"),
-        ("PATCH", "/Users", "Admin,Mechanic"),
-        ("DELETE", "/Users?id=" + OrderId, "Admin"),
         ("POST", "/Customers", "Mechanic"), ("GET", "/Customers", "Mechanic"),
         ("PATCH", $"/Customers/{OrderId}", "Mechanic"), ("DELETE", $"/Customers/{OrderId}", "Mechanic"),
         ("POST", "/Vehicles", "Mechanic"), ("GET", "/Vehicles", "Mechanic"),
@@ -71,10 +68,20 @@ public sealed class AuthorizationMatrixTests
         }
     }
 
-    [TestCase("Mechanic", "/Users", null, false)]
-    [TestCase("Mechanic", "/Users", "invalid", false)]
-    [TestCase("Mechanic", "/Users", "00000000-0000-0000-0000-000000000000", false)]
-    [TestCase("Mechanic", "/Users", OrderId, true)]
+    [TestCase("POST", "/Authentication", null)]
+    [TestCase("POST", "/Users", "Admin")]
+    [TestCase("GET", "/Users", "Mechanic")]
+    [TestCase("PATCH", "/Users", "Mechanic")]
+    [TestCase("DELETE", "/Users?id=" + OrderId, "Admin")]
+    public async Task IdentityOperationsAreNotServedByTheApi(string method, string path, string? role)
+    {
+        using var request = new HttpRequestMessage(new HttpMethod(method), path);
+        if (role is not null)
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AuthorizationTestTokens.Create(role, IdentityId.ToString()));
+        using var response = await client.SendAsync(request);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+    }
+
     [TestCase("Customer", "/Orders/" + OrderId + "/status", null, false)]
     [TestCase("Customer", "/Orders/" + OrderId + "/status", "invalid", false)]
     [TestCase("Customer", "/Orders/" + OrderId + "/status", "00000000-0000-0000-0000-000000000000", false)]
@@ -85,7 +92,7 @@ public sealed class AuthorizationMatrixTests
     [TestCase("Customer", "/Orders/" + OrderId + "/budget", OrderId, true)]
     public async Task InvalidRequiredIdentityIsChallengedBeforeService(string role, string path, string? id, bool duplicate)
     {
-        factory.OrderServiceMock.ClearReceivedCalls(); factory.UserServiceMock.ClearReceivedCalls();
+        factory.OrderServiceMock.ClearReceivedCalls();
         using var request = new HttpRequestMessage(path.EndsWith("budget", StringComparison.Ordinal) ? HttpMethod.Patch : HttpMethod.Get, path);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AuthorizationTestTokens.Create(role, id, duplicate));
         if (request.Method == HttpMethod.Patch) request.Content = JsonContent.Create(new { approved = true });
@@ -93,10 +100,8 @@ public sealed class AuthorizationMatrixTests
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
         await factory.OrderServiceMock.DidNotReceiveWithAnyArgs().GetCustomerOrderStatus(Guid.Empty, Guid.Empty);
         await factory.OrderServiceMock.DidNotReceiveWithAnyArgs().ApproveBudget(Guid.Empty, default!, Guid.Empty);
-        await factory.UserServiceMock.DidNotReceiveWithAnyArgs().GetOwnUser(Guid.Empty, default!, default!);
     }
 
-    [TestCase("Admin", "/Users")]
     [TestCase("Mechanic", "/Stock")]
     public async Task IdentityIsNotRequiredGlobally(string role, string path)
     {

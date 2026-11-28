@@ -68,6 +68,16 @@ jobs:
           dotnet build GerenciamentoMecanicaSistema.slnx --configuration Release --no-restore -p:OpenApiGenerateDocuments=true
           dotnet test GerenciamentoMecanicaSistema.slnx --configuration Release --no-build --no-restore
 
+      - name: Verificar propriedade das rotas do OpenAPI
+        run: |
+          jq -e '
+            (.openapi | startswith("3.0.")) and
+            (.paths | has("/Customers") and has("/Orders/{id}/status")) and
+            all(.paths | keys[]; ascii_downcase as $path |
+              $path != "/authentication" and $path != "/users" and
+              $path != "/customers/validate" and ($path | startswith("/customers/auth/") | not))
+          ' artifacts/openapi/openapi.json > /dev/null
+
       - name: Autenticar na AWS por OIDC
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
@@ -199,12 +209,15 @@ jobs:
           esac
           cluster="$(aws ssm get-parameter --name "/mecanica/$DEPLOY_ENVIRONMENT/base/v2/cluster-name" --query Parameter.Value --output text)"
           namespace="$(aws ssm get-parameter --name "/mecanica/$DEPLOY_ENVIRONMENT/base/v2/namespace" --query Parameter.Value --output text)"
+          vpc="$(aws ssm get-parameter --name "/mecanica/$DEPLOY_ENVIRONMENT/base/v2/vpc-id" --query Parameter.Value --output text)"
           test "$cluster" = "mecanica-$DEPLOY_ENVIRONMENT-eks"
           test "$namespace" = default
+          [[ "$vpc" =~ ^vpc-[0-9a-f]+$ ]]
           available="$(aws ecr batch-get-image --repository-name "$ECR_REPOSITORY" --image-ids "imageDigest=$IMAGE_DIGEST" --query 'images[0].imageId.imageDigest' --output text)"
           test "$available" = "$IMAGE_DIGEST"
           echo "cluster=$cluster" >> "$GITHUB_OUTPUT"
           echo "namespace=$namespace" >> "$GITHUB_OUTPUT"
+          echo "vpc=$vpc" >> "$GITHUB_OUTPUT"
 
       - name: Conferir contrato de envio privado
         run: |
@@ -217,6 +230,30 @@ jobs:
             any(.[]; (.Name | endswith("/invocation-arn")) and .Value == $arn) and
             any(.[]; (.Name | endswith("/contract-version")) and .Value == "1"))
           ' "$RUNNER_TEMP/email.json" > /dev/null || { echo '::error::Conclua email-provision com contrato v1 antes do deploy da API.'; exit 1; }
+
+      - name: Conferir banco inicializado e AuthFunction
+        run: |
+          set -euo pipefail
+          database="/mecanica/$DEPLOY_ENVIRONMENT/database/v2"
+          if ! target="$(aws ssm get-parameter --name "$database/initialization-target" --query 'Parameter.Value' --output text)" ||
+             ! ready="$(aws ssm get-parameter --name "$database/initialized" --query 'Parameter.Value' --output text)" ||
+             ! jq -e --argjson target "$target" '
+               (.commit | test("^[0-9a-f]{40}$")) and del(.commit) == $target and
+               .operationalVersion == "2.1.0" and .identityVersion == "1.0.0"
+             ' <<< "$ready" > /dev/null; then
+            echo '::error::Conclua database-provision com os dois schemas inicializados antes de implantar a API.'
+            exit 1
+          fi
+          auth="/mecanica/$DEPLOY_ENVIRONMENT/auth/v2"
+          function="mecanica-$DEPLOY_ENVIRONMENT-auth"
+          if ! contract="$(aws ssm get-parameter --name "$auth/api-sync-version" --query 'Parameter.Value' --output text)" ||
+             ! version="$(aws ssm get-parameter --name "$auth/function-version" --query 'Parameter.Value' --output text)" ||
+             ! live="$(aws lambda get-alias --function-name "$function" --name live --query 'FunctionVersion' --output text)" ||
+             ! [[ "$version" =~ ^[1-9][0-9]*$ ]] || [ "$contract" != "1:$version" ] || [ "$live" != "$version" ]; then
+            echo '::error::Conclua auth-provision com o contrato de sincronizacao v1 no alias live do ambiente.'
+            exit 1
+          fi
+          printf 'Banco inicializado na revisão `%s`. AuthFunction na versão `%s`.\n' "$(jq -r .commit <<< "$ready")" "$version" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Instalar kubectl
         uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
@@ -244,16 +281,24 @@ jobs:
         run: |
           cd "deploy/kubernetes/overlays/$DEPLOY_ENVIRONMENT"
           kustomize edit set image "felipejesusoliveira/gerenciamentomecanicasistema=$IMAGE_URI"
+          aws ssm put-parameter --name "/mecanica/$DEPLOY_ENVIRONMENT/api/v2/deployment" \
+            --type String --overwrite --value pending > /dev/null
           kubectl apply -k .
 
       - name: Aguardar rollout e conferir imagem
         env:
           KUBECONFIG: ${{ runner.temp }}/api-kubeconfig
           NAMESPACE: ${{ steps.target.outputs.namespace }}
+          VPC_ID: ${{ steps.target.outputs.vpc }}
         run: |
           kubectl rollout status deployment/deploy-gerenciamento-api --namespace "$NAMESPACE" --timeout=600s
           configured="$(kubectl get deployment deploy-gerenciamento-api --namespace "$NAMESPACE" -o 'jsonpath={.spec.template.spec.containers[?(@.name=="gerenciamento-api")].image}')"
           test "$configured" = "$IMAGE_URI"
+          deployment="$(jq -cn --arg environment "$DEPLOY_ENVIRONMENT" --arg commit "$GITHUB_SHA" \
+            --arg imageDigest "$IMAGE_DIGEST" --arg vpc "$VPC_ID" \
+            '{environment: $environment, commit: $commit, imageDigest: $imageDigest, vpc: $vpc}')"
+          aws ssm put-parameter --name "/mecanica/$DEPLOY_ENVIRONMENT/api/v2/deployment" \
+            --type String --overwrite --value "$deployment" > /dev/null
           printf 'Deploy concluído em %s/default.\n\nCommit: %s\n\nImagem: %s\n' \
             "$DEPLOY_ENVIRONMENT" "$GITHUB_SHA" "$IMAGE_URI" >> "$GITHUB_STEP_SUMMARY"
 

@@ -6,20 +6,22 @@
 sequenceDiagram
     actor M as Mecânico
     participant G as API Gateway
+    participant I as AuthFunction
+    participant ID as mecanica_identity
     participant A as Controller da API
     participant S as OrdersService
-    participant D as PostgreSQL
+    participant D as mecanica
     participant N as Handler de notificação
     participant E as Adaptador Invoke
     participant L as EmailFunction
     participant P as SMTP4dev privado
     participant F as Filtro de métricas HTTP
     M->>G: POST /Authentication com name, password e role
-    G->>A: HTTP proxy
-    A->>D: Consultar credenciais internas
-    D-->>A: Cadastro e hash
-    A->>A: Validar senha e emitir JWT com UUID
-    A-->>G: 200 com token ou erro de login
+    G->>I: AWS_PROXY para versão numérica
+    I->>ID: Consultar credenciais internas
+    ID-->>I: Cadastro e hash
+    I->>I: Validar senha e emitir JWT com UUID
+    I-->>G: 200 com token ou erro de login
     G-->>M: Resposta
     opt Login válido e abertura solicitada
         M->>G: POST /Orders com cliente, veículo, itens e Bearer

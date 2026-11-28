@@ -1,4 +1,4 @@
-> O Gateway publica request-code/verify-code (POST), OpenAPI auth 2.0.0 e permissões de invocação para a versão numérica. A rota customers/validate foi retirada; não há Authorizer ou endpoint público email.
+> O Gateway usa OpenAPI auth 2.1.0 para integrar as sete operações de identidade à versão numérica da AuthFunction.
 
 # ADR 010 — Gateway REST Regional com VPC Link V2
 
@@ -8,9 +8,9 @@
 
 **Decisão vigente:** unidade gateway/ e estado/workflows próprios no repositório infra. REST Regional com stage hom/prd; VPC Link V2 em subnets privadas usa SG reservado da base. SG permite Gateway → NLB TCP 80 e avaliação inbound PrivateLink fica **on**. NLB/ASG/NodePort pertencem à base, sem controller.
 
-Terraform projeta OpenAPI 3.0 verificados: HTTP_PROXY para a API e AWS_PROXY para versão numérica Lambda; normaliza nomes de parâmetros variáveis mantendo mapeamento ao backend. Não publica health/ANY/rota genérica. Remove modelos/security Bearer incompatíveis do documento importado, preservando os contratos originais completos. Autorização JWT/perfil/vínculo permanece na API, sem authorizer.
+Terraform projeta OpenAPI 3.0 verificados: HTTP_PROXY para a API e AWS_PROXY para versão numérica Lambda; normaliza nomes de parâmetros variáveis mantendo mapeamento ao backend. Não publica health/ANY/rota genérica. Remove modelos/security Bearer incompatíveis do documento importado, preservando os contratos originais completos. API e AuthFunction validam o JWT e autorizam suas rotas.
 
-Base/auth são consumidos por SSM público; contratos por S3 com checksum/commit, sem Secrets ou estado remoto. API/auth novos exigem novo plano Gateway quando muda contrato/versão. Mantenedor informa environment/api_commit/auth_commit. Plan → aprovação sem AWS → apply do mesmo plano/SHA/contratos, artefato por ID e sete dias, sem replan.
+O workflow lê os metadados de base, auth e deploy da API no SSM do ambiente e verifica os checksums dos contratos no S3. API/auth novos exigem novo plano Gateway quando muda contrato/versão. Mantenedor informa environment/api_commit/auth_commit. Plan → aprovação sem AWS → apply do mesmo plano/SHA/contratos, artefato por ID e sete dias, sem replan.
 
 **Logs e tracing:** access logs JSON/sete dias contêm IDs, método/modelo de rota, status/latências/tamanho e xrayTraceId. Sem corpo/headers/query, execution logs OFF, data tracing/cache/métricas detalhadas por método desligados. X-Ray é configurado por variável/tfvars: hom e prd true; padrão da variável false. A autenticação tem tracing nativo sempre ativo, independentemente dessa variável. CloudWatch/polling New Relic são diagnóstico com limites aceitos, sem união automática OTLP/X-Ray.
 

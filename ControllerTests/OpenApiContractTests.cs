@@ -79,7 +79,6 @@ public sealed class OpenApiContractTests
     }
 
     [TestCase("/Customers", "post")]
-    [TestCase("/Users", "get")]
     [TestCase("/Vehicles", "post")]
     [TestCase("/Catalog", "get")]
     [TestCase("/Stock", "get")]
@@ -94,7 +93,6 @@ public sealed class OpenApiContractTests
         Assert.That(security[0].GetProperty("Bearer").GetArrayLength(), Is.Zero);
     }
 
-    [TestCase("/Authentication", "post")]
     [TestCase("/health/live", "get")]
     [TestCase("/health/ready", "get")]
     [TestCase("/health/startup", "get")]
@@ -106,23 +104,12 @@ public sealed class OpenApiContractTests
     }
 
     [Test]
-    public void PreservesAuthenticationBodyAndResponsesAndOrderRouteParameter()
+    public void OrderStatusDescribesRequiredUuidPathParameter()
     {
-        var authentication = Operation("/Authentication", "post");
-        var request = authentication.GetProperty("requestBody").GetProperty("content")
-            .GetProperty("application/json").GetProperty("schema");
-        var schemaName = request.GetProperty("$ref").GetString()!.Split('/')[^1];
-        var properties = document.RootElement.GetProperty("components").GetProperty("schemas")
-            .GetProperty(schemaName).GetProperty("properties");
         var orderId = Operation("/Orders/{id}/status", "get").GetProperty("parameters")[0];
 
         Assert.Multiple(() =>
         {
-            Assert.That(properties.TryGetProperty("name", out _), Is.True);
-            Assert.That(properties.TryGetProperty("password", out _), Is.True);
-            Assert.That(authentication.GetProperty("responses").TryGetProperty("200", out _), Is.True);
-            Assert.That(authentication.GetProperty("responses").TryGetProperty("400", out _), Is.True);
-            Assert.That(authentication.GetProperty("responses").TryGetProperty("401", out _), Is.True);
             Assert.That(orderId.GetProperty("name").GetString(), Is.EqualTo("id"));
             Assert.That(orderId.GetProperty("in").GetString(), Is.EqualTo("path"));
             Assert.That(orderId.GetProperty("required").GetBoolean(), Is.True);
@@ -162,39 +149,14 @@ public sealed class OpenApiContractTests
     private JsonElement Operation(string path, string method) =>
         document.RootElement.GetProperty("paths").GetProperty(path).GetProperty(method);
 
-    [Test]
-    public void UserDeleteDescribesRequiredUuidQueryBearerAndEmptyResponse()
+    [TestCase("/Authentication")]
+    [TestCase("/Users")]
+    public void ExcludesPathsOwnedByAuthFunction(string path)
     {
-        var operation = Operation("/Users", "delete");
-        Assert.That(operation.GetProperty("security")[0].TryGetProperty("Bearer", out _), Is.True);
-        foreach (var code in new[] { "204", "400", "401", "403", "404", "500" })
-            Assert.That(operation.GetProperty("responses").TryGetProperty(code, out _), Is.True, code);
-        var parameter = operation.GetProperty("parameters").EnumerateArray().Single();
-        Assert.That(parameter.GetProperty("name").GetString(), Is.EqualTo("id"));
-        Assert.That(parameter.GetProperty("in").GetString(), Is.EqualTo("query"));
-        Assert.That(parameter.GetProperty("required").GetBoolean(), Is.True);
-        Assert.That(parameter.GetProperty("schema").GetProperty("format").GetString(), Is.EqualTo("uuid"));
-        Assert.That(operation.TryGetProperty("requestBody", out _), Is.False);
-        Assert.That(operation.GetProperty("responses").GetProperty("204").TryGetProperty("content", out _), Is.False);
+        Assert.That(document.RootElement.GetProperty("paths").EnumerateObject()
+            .Any(entry => entry.Name.Equals(path, StringComparison.OrdinalIgnoreCase)), Is.False);
     }
 
-    [Test]
-    public void OwnUserPatchDescribesOptionalFieldsBearerAndResponses()
-    {
-        var operation = Operation("/Users", "patch");
-        Assert.That(operation.GetProperty("security")[0].TryGetProperty("Bearer", out _), Is.True);
-        foreach (var code in new[] { "204", "400", "401", "403", "404", "409", "500" })
-            Assert.That(operation.GetProperty("responses").TryGetProperty(code, out _), Is.True, code);
-        var schema = document.RootElement.GetProperty("components").GetProperty("schemas").GetProperty("UpdateOwnUserRequest");
-        Assert.That(schema.GetProperty("properties").EnumerateObject().Select(p => p.Name), Is.EquivalentTo(new[] { "name", "password" }));
-        Assert.That(!schema.TryGetProperty("required", out var required) || required.GetArrayLength() == 0, Is.True);
-        Assert.That(schema.GetProperty("additionalProperties").GetBoolean(), Is.False);
-        Assert.That(schema.GetProperty("properties").GetProperty("name").GetProperty("maxLength").GetInt32(), Is.EqualTo(100));
-        Assert.That(operation.GetProperty("responses").GetProperty("204").TryGetProperty("content", out _), Is.False);
-    }
-
-    [TestCase("/Users", "post", new[] { "401", "403" })]
-    [TestCase("/Users", "get", new[] { "401", "403", "404" })]
     [TestCase("/Orders/{id}/status", "get", new[] { "401", "403", "404" })]
     [TestCase("/Orders/{id}/budget", "patch", new[] { "401", "403", "404", "422" })]
     public void DescribesApplicableResponses(string path, string method, string[] responses)
@@ -205,19 +167,15 @@ public sealed class OpenApiContractTests
     }
 
     [Test]
-    public void CustomerStatusAppearsOnlyInResponseAndRolesRemainStrings()
+    public void CustomerStatusAppearsOnlyInResponse()
     {
         var schemas = document.RootElement.GetProperty("components").GetProperty("schemas");
         var response = schemas.GetProperty("CustomerResponse").GetProperty("properties");
         var request = schemas.GetProperty("CreateCustomerRequest").GetProperty("properties");
-        var user = schemas.GetProperty("CreateUserRequest").GetProperty("properties");
         Assert.Multiple(() =>
         {
             Assert.That(response.GetProperty("status").GetProperty("type").GetString(), Is.EqualTo("string"));
             Assert.That(request.TryGetProperty("status", out _), Is.False);
-            Assert.That(user.GetProperty("role").GetProperty("type").GetString(), Is.EqualTo("string"));
-            Assert.That(user.GetProperty("role").GetProperty("description").GetString(), Does.Contain("Admin").And.Contain("Mechanic"));
-            Assert.That(user.TryGetProperty("id", out _), Is.False);
         });
     }
 }

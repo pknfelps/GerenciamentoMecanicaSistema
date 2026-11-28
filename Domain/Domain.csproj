@@ -14,8 +14,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GerenciamentoMecanica.Auth.Contracts\GerenciamentoMecanica.Auth.Contracts.csproj" />
     <ProjectReference Include="..\Domain.Interface\Domain.Interface.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Share document validation with AuthFunction without including the JWT issuer in the API. -->
+    <Compile Include="../GerenciamentoMecanica.Auth.Contracts/CpfRules.cs" Link="Customer/Shared/CpfRules.cs" />
+    <Compile Include="../GerenciamentoMecanica.Auth.Contracts/CnpjRules.cs" Link="Customer/Shared/CnpjRules.cs" />
+    <Compile Include="../GerenciamentoMecanica.Auth.Contracts/DocumentRules.cs" Link="Customer/Shared/DocumentRules.cs" />
+    <Compile Include="../GerenciamentoMecanica.Auth.Contracts/DocumentValidation.cs" Link="Customer/Shared/DocumentValidation.cs" />
   </ItemGroup>
 
 </Project>

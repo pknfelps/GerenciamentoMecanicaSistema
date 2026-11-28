@@ -2,7 +2,7 @@
 
 ## Fontes e convenções
 
-Conta 121754142617, região us-east-1; environment hom|prd validado. Metadados base/database/auth/gateway usam v2; email usa `/mecanica/<ambiente>/email/v1/<campo>`. Todos são String; listas usam JSON. Não há terraform_remote_state entre repositórios, release/candidato/geração v1 ou validade de prontidão por timestamp. SSM configura destinos; Job/rollout/HTTP comprovam operação.
+Conta 121754142617, região us-east-1; environment hom|prd validado. Metadados base/database/auth/gateway usam v2; email usa `/mecanica/<ambiente>/email/v1/<campo>`. Todos são String; listas usam JSON. Não há terraform_remote_state entre repositórios, release/candidato/geração v1 ou validade de prontidão por timestamp. SSM configura destinos. O Job registra a inicialização dos bancos e a API registra o rollout concluído. Testes HTTP verificam a operação do ambiente.
 
 | Produtor | Fonte do catálogo |
 |---|---|
@@ -10,9 +10,10 @@ Conta 121754142617, região us-east-1; environment hom|prd validado. Metadados b
 | Banco | BancoDados/terraform/metadata.tf |
 | Auth | Serverless/templates/auth.yaml, AWS::SSM::Parameter |
 | Email | Serverless/templates/email.yaml, AWS::SSM::Parameter |
+| API | Sistema/.github/workflows/api-deploy.yml |
 | Gateway | Infraestrutura/gateway/metadata.tf |
 
-**Não há publicador `/api/v2/` no código entregue.** A API consome base/database/email; imagem/contrato da API são selecionados por digest/commit dos workflows. Campos de observabilidade são declarados nos manifestos/SAM e não se tornam parâmetros SSM apenas por terem sido planejados anteriormente.
+A API consome base/database/auth/email e publica o registro de deploy em api/v2. Configuração de observabilidade permanece nos manifestos da API e templates SAM.
 
 ## Base v2
 
@@ -41,11 +42,13 @@ O Collector usa endpoint interno fixado nos overlays, namespace observability e 
 | instance-arn, endpoint, port, database-name, security-group-id | RDS, 5432/mecanica e SG |
 | api-secret-arn, api-db-user | Credencial mecanica_api |
 | auth-secret-arn, auth-db-user | Credencial mecanica_auth |
-| schema-version, sql-sha256, ssl-mode | 1.0.0, SHA-256 do Init.sql e verify-full |
+| auth-database-name | Database mecanica_identity da AuthFunction |
+| schema-version, sql-sha256, ssl-mode | 2.1.0, SHA-256 do Init.sql e verify-full |
+| initialization-target, initialized | Configuração esperada e confirmação de ambos os esquemas, com instância, versões e hashes |
 
-Referências não demonstram que o Job concluiu. O Job cria esquema/seeds/marcador atomicamente em banco vazio, exige versão/hash compatível em reexecução e provisiona grants. ConfigMap contém SQL/host/CA/hash; Secrets temporários admin/API/auth são write-only e removidos ao final inclusive em erro. Senha AWSCURRENT/revisão fixa não é rotacionada em todo apply. API/função não recebem acesso ao Secret administrativo.
+O Job inicializa e verifica os dois bancos vazios. Cada banco tem transação e marcador próprios. Reexecução exige versão/hash compatíveis. O workflow publica initialized após o Job e a remoção dos Secrets temporários. Serverless e API comparam o registro publicado com initialization-target antes de implantar.
 
-Credencial API tem DML nas nove tabelas de domínio, inclusive histórico; credencial auth tem SELECT somente id/name/document/status/email de customers e SELECT/INSERT/UPDATE/DELETE nas duas tabelas de desafios/limites. Nenhuma recebe o marcador operacional. Endpoint/porta/database são lidos do SSM, não de campos antigos eventualmente persistidos no Secret. [Modelo/grants](BANCO_E_MODELO.md).
+mecanica_api acessa o database operacional. mecanica_auth acessa o database de identidade, com contas internas, cópia de acesso e desafios/limites de clientes. As tabelas schema_initialization ficam sob controle do Job. [Modelo e grants](BANCO_E_MODELO.md).
 
 ## Auth v2
 
@@ -56,7 +59,8 @@ Credencial API tem DML nas nove tabelas de domínio, inclusive histórico; crede
 | invocation-arn | ARN qualificado pela versão numérica |
 | zip-key | Chave nativa SAM do ZIP |
 | openapi-key | contracts/auth/<commit>/openapi.json |
-| auth-contracts-version | Pacote JWT Auth.Contracts 1.0.0; distinto do OpenAPI HTTP auth 2.0.0 |
+| api-sync-version | String 1:<versão numérica> do contrato privado de sincronização por Invoke no alias live |
+| auth-contracts-version | Pacote JWT Auth.Contracts 1.0.0; distinto do OpenAPI HTTP auth 2.1.0 |
 
 Stack SAM administra esses parâmetros e o alias live auxiliar. Gateway consome a versão numérica, não live ou $LATEST; mudança de versão exige novo plano Gateway. Auth-runtime pertence ao bootstrap, SG à base e ingresso PostgreSQL ao banco; auth administra somente seus egress, função/versão/alias/logs/SSM. [ADR 009](adrs/009-SAM-AUTENTICACAO.md).
 
@@ -73,6 +77,10 @@ Stack SAM administra esses parâmetros e o alias live auxiliar. Gateway consome 
 Stack email é independente de auth. API/auth carregam invocation-arn e contract-version na inicialização reutilizada, sem lookup por mensagem. Pipelines consumidoras conferem essas duas chaves antes do deploy; isso não comprova saúde SMTP. Runtime usa IAM Invoke somente do alias live correspondente, sem URL/Gateway público ou endpoint override AWS. Compatibilidade v1 permite atualizar o alias sem recompilar consumidores; mudança incompatível exige contrato/migração de consumidor próprios, não adaptação automática de dados SQL.
 
 A base mantém SMTP4dev efêmero no namespace smtp4dev, listener TCP 2525 no NLB existente e NodePort 30025 no mesmo ASG. Web somente ClusterIP e port-forward autorizado; sem relay/PVC. SMTP privado demonstrativo não usa TLS/autenticação; não o descrever como entrega externa ou criptografia. Perda da caixa exige novo pedido respeitando limites.
+
+## API v2
+
+api/v2/deployment registra ambiente, commit, digest ECR e VPC após rollout concluído. Durante implantação ou descarte o registro fica pendente. A versão numérica anunciada em api-sync-version deve ser a mesma do alias live antes do deploy da API. O Gateway exige o registro ativo para selecionar a revisão do contrato.
 
 ## Gateway v2
 
@@ -99,10 +107,10 @@ Endpoint muda após destroy/recreate; não é URL estável a ser hardcoded no co
 
 OpenAPI/template/NuGet usam escrita condicional e comparação de bytes em reexecução, sem sobrescrever conteúdo divergente. ZIP é exceção de gravação condicional do SAM; VersionId fixa a seleção, sem tornar a chave imutável. Republicação idêntica conserva a versão original depois de comparar os bytes do ZIP/template. Templates antigos sem Version exigem commit novo; provision usa head-object --version-id e SAM Code.S3ObjectVersion.
 
-API gera OpenAPI 3.0 da mesma revisão via OpenApiGenerateDocuments=true, sem inicializar AWS/JWT/banco. Auth publica contrato 3.0 estático sem destino/extensões AWS. NuGet 1.0.0 tem hash fixado no workflow consumidor; API referencia o projeto local. Contratos são globais por commit/versão, não Secret ou prova de exclusividade de ambiente. S3 é armazenamento do nupkg, não feed NuGet nativo.
+API gera OpenAPI 3.0 da mesma revisão via OpenApiGenerateDocuments=true, sem inicializar AWS/JWT/banco. Auth publica contrato 3.0 estático sem destino/extensões AWS. NuGet 1.0.0 tem hash fixado no workflow consumidor; A API publica o pacote e usa a fonte das regras de documento em seu domínio. Contratos são globais por commit/versão, não Secret ou prova de exclusividade de ambiente. S3 é armazenamento do nupkg, não feed NuGet nativo.
 
 ## Ordem e responsabilidade operacional
 
-Bootstrap aprovado → base/Collector/SMTP4dev → banco/Job e email-publish/email-provision (independentes) → API e auth-publish/auth-provision → Gateway com commits fixos e OpenAPI auth 2.0.0. Push/merge em develop/hom ou main/prd inicia o deploy do respectivo repositório. Terraform base/banco/Gateway e New Relic mantêm plano salvo/aprovação/apply exato; API/auth/email não têm aprovação intermediária. Serverless publica ambos no SHA da execução e implanta email antes de auth. Na infraestrutura, o caminho automático base-provision chama Gateway somente após concluir a base. O Gateway fixa a revisão da execução api-deploy mais recente da branch, exigindo sucesso, e a revisão auth implantada no SSM; ambas ficam no plano aprovado. Sem orquestração entre repositórios: em ambiente vazio, começar com base-provision manual, aguardar banco/email, publicar API/auth e só depois iniciar o Gateway por novo push da infraestrutura ou dispatch. Consultas inválidas e dependências ausentes interrompem, sem espera/retry próprios. Destroy e New Relic permanecem manuais.
+Bootstrap aprovado → base/Collector/SMTP4dev → database-provision e Job → serverless-deploy (EmailFunction antes de AuthFunction) → api-deploy → Gateway. Em ambiente vazio, executar a base primeiro por disparo manual. Push/merge develop/hom ou main/prd executa os workflows do respectivo repositório. O workflow automático da infraestrutura chama o Gateway após o apply da base. O Gateway resolve as revisões implantadas pelos metadados do ambiente e verifica os checksums dos contratos. Os SHAs informados por disparo manual devem corresponder às revisões implantadas. Antes do apply aprovado, a pipeline confere novamente as dependências que formaram o plano. Deploys e descartes permanecem coordenados pelo mantenedor.
 
 Destroy: Gateway → API/auth → banco/email → base, com checagens diretas dos consumidores. Erros/ENIs pendentes bloqueiam; sem novo marcador SSM, exclusão forçada ou espera automática. Email-destroy exige API/auth ausentes; base-destroy exige banco/email ausentes. SAM CLI 1.167.0 preserva ZIP com CodeUri objeto; contratos, ECR, estados, IAM bootstrap e recursos New Relic persistem.
